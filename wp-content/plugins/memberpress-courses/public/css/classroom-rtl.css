@@ -1,0 +1,80 @@
+#mpcs-sidebar .mpcs-sidebar-wrapper {
+  border-left: 2px solid #e8ebef;
+  border-right: unset;
+}
+#mpcs-main {
+  margin-right: auto;
+  margin-left: 0;
+}
+#mpcs-navbar i {
+  display: inline-block;
+  transform: rotateY(180deg);
+}
+.mpcs-sidebar-with-accordion #mpcs-sidebar .mpcs-section-header:after {
+  right: auto;
+  left: 20px;
+}
+.mpcs-course-with-accordion #mpcs-main .mpcs-section-header:after {
+  right: auto;
+  left: 20px;
+}
+.mpcs-lesson .mpcs-lesson-button {
+  margin-left: 0;
+  margin-right: auto;
+}
+#mpcs-main #bookmark a {
+  padding-right: 0.5em;
+  margin-right: 0;
+}
+#mpcs-main #bookmark i {
+  transform: rotateY(180deg);
+  display: inline-block;
+}
+.dropdown.dropdown-right .menu {
+  left: 0;
+  right: auto;
+}
+#mpcs-sidebar .mpcs-sidebar-menu a.is-active {
+  border-left: none;
+  border-right: 5px solid #2b3637;
+}
+.tile .tile-content:not(:first-child) {
+  padding-right: 0.4rem;
+  padding-left: 0;
+}
+#mpcs-main #bookmark a {
+  margin-right: 0;
+  margin-left: 0.5em;
+}
+.mpcs-quiz-question-option .mpcs-quiz-question-option-label {
+  padding-left: 0;
+  padding-right: 12px;
+}
+.mpcs-quiz-question-error {
+  margin: 0 8px 0 0;
+}
+.mpcs-quiz-question-error-inner {
+  float: right;
+  border-left: none;
+  border-right: 5px solid #c73412;
+}
+.dropdown {
+  text-align: right;
+}
+.dropdown .menu {
+  left: auto;
+  right: 0;
+}
+.mpcs-cards .card-footer img {
+  float: right;
+  margin-right: 0;
+  margin-left: 5px;
+}
+.mpcs-progress-ring .inner {
+  left: auto;
+  right: 2px;
+}
+#mpcs-sidebar-header .course-progress {
+  margin-left: 0;
+  margin-right: 1em;
+}

@@ -1,0 +1,259 @@
+/* Global smooth scroll for anchor links */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Main container for the dictionary */
+.financial-dictionary-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    width: 100%; 
+    padding: 15px; /* This padding will be visually overcome by the nav bar */
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fff;
+    box-sizing: border-box; /* Ensure padding doesn't add to width */
+    overflow-x: hidden; /* Prevent horizontal scrollbar if calc/margins are slightly off */
+}
+
+/* Navigation Bar Styling - Desktop (Horizontal Top) */
+#financial-dictionary-nav {
+    /* display: flex; /* This is implicitly handled by .fd-nav-inner being the flex container now if nav itself isn't display:flex */
+    /* flex-wrap: wrap; */
+    /* justify-content: center; */
+    
+    padding-top: 10px; /* Vertical padding */
+    padding-bottom: 10px; /* Vertical padding */
+    /* Horizontal padding removed, handled by negative margins and inner padding */
+
+    margin-bottom: 20px;
+    border-bottom: 2px solid #0073aa; /* WordPress blue */
+    list-style: none;
+
+    /* Make it break out of parent's padding and span full width */
+    margin-left: -15px; /* Counteract parent's left padding of 15px */
+    margin-right: -15px; /* Counteract parent's right padding of 15px */
+    width: calc(100% + 30px); /* 100% of parent's content-box + 15px left + 15px right */
+    box-sizing: border-box; /* Ensures width calculation is consistent */
+}
+
+#financial-dictionary-nav .fd-nav-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* This centers the actual 'a' tags if they don't fill a line due to flex-basis content */
+    width: 100%; /* Take full width of the parent #financial-dictionary-nav */
+    padding-left: 15px; /* Re-apply the horizontal padding internally to align links */
+    padding-right: 15px; /* Re-apply the horizontal padding internally to align links */
+    box-sizing: border-box; /* So internal padding doesn't add to the 100% width */
+}
+
+#financial-dictionary-nav a {
+    flex-grow: 1; /* Allow items to grow and take up available space on the line */
+    flex-basis: 0; /* Distribute space based on a zero starting point for more equal sizing */
+    padding: 8px 10px; /* Adjusted padding */
+    margin: 4px; /* This creates the spacing between items */
+    text-decoration: none;
+    color: #0073aa;
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    line-height: 1.2; /* Ensure consistent height */
+    text-align: center; /* Center text within each link */
+}
+
+#financial-dictionary-nav a:hover,
+#financial-dictionary-nav a:focus {
+    background-color: #0073aa;
+    color: #fff;
+    border-color: #005a87;
+}
+
+#financial-dictionary-nav a.disabled {
+    color: #aaa;
+    background-color: #f0f0f0;
+    border-color: #e0e0e0;
+    /* cursor: not-allowed; // Optional: if you want to make them non-interactive visually */
+}
+#financial-dictionary-nav a.disabled:hover {
+    background-color: #f0f0f0;
+    color: #aaa;
+    border-color: #e0e0e0;
+}
+
+
+/* Content Area Styling */
+.financial-dictionary-content {
+    margin-top: 20px;
+    /* Content respects the container's original padding implicitly */
+}
+
+.fd-term-section {
+    margin-bottom: 30px; /* Reduced margin */
+    padding-top: 60px; 
+    margin-top: -60px;
+}
+
+.fd-term-section h2 {
+    font-size: 1.6em; /* Adjusted size */
+    color: #23282d;
+    border-bottom: 1px solid #e0e0e0; /* Thinner border */
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.fd-term-list {
+    list-style: none;
+    padding-left: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive columns for terms */
+    gap: 10px;
+}
+
+.fd-term-list-item a {
+    display: block;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #0073aa;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fd-term-list-item a:hover,
+.fd-term-list-item a:focus {
+    background-color: #eef7ff;
+    border-color: #cce3f6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.no-terms-message {
+    color: #777;
+    font-style: italic;
+    padding: 10px 0;
+}
+
+/* Responsive adjustments */
+
+/* Tablet & Mobile (max-width: 768px) - Fixed Right Navigation */
+@media (max-width: 768px) {
+    #financial-dictionary-nav {
+        /* Revert full-width styles for fixed behavior */
+        margin-left: 0;
+        margin-right: 0;
+        width: 70px; /* Width of the fixed nav bar */
+        /* position: fixed; right: 0; top: 0; etc. from previous version */
+        position: fixed;
+        right: 0;
+        top: 0; 
+        height: 100%; 
+        background-color: #f0f0f0; 
+        border-left: 1px solid #ccc;
+        border-bottom: none; 
+        padding-top: 0; /* Reset vertical padding */
+        padding-bottom: 0; /* Reset vertical padding */
+        margin-bottom: 0;
+        z-index: 1000; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: flex-start; 
+        align-items: stretch; 
+    }
+
+    /* Check for WordPress admin bar and adjust top position */
+    body.admin-bar #financial-dictionary-nav {
+        top: 32px; 
+        height: calc(100% - 32px);
+    }
+    @media screen and (max-width: 782px) { 
+        body.admin-bar #financial-dictionary-nav {
+            top: 46px;
+            height: calc(100% - 46px);
+        }
+    }
+
+    #financial-dictionary-nav .fd-nav-inner {
+        /* Styles for inner content of fixed nav */
+        overflow-y: auto; 
+        overflow-x: hidden;
+        flex-grow: 1; 
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px 0; /* Padding inside the scrollable area of fixed nav */
+        width: 100%; /* Ensure it fills the fixed nav */
+    }
+
+    #financial-dictionary-nav a {
+        /* Reset flex properties for vertical layout in fixed nav */
+        flex-grow: 0;
+        flex-basis: auto;
+        width: auto; 
+        text-align: center;
+        margin: 4px 8px; 
+        padding: 10px 5px; 
+        font-size: 0.9em;
+        border-radius: 3px;
+    }
+
+    .financial-dictionary-content {
+        margin-right: 75px; 
+    }
+
+    .fd-term-section {
+        padding-top: 40px; 
+        margin-top: -40px; 
+    }
+    body.admin-bar .fd-term-section {
+        padding-top: 75px; 
+        margin-top: -75px;
+    }
+     @media screen and (max-width: 782px) {
+        body.admin-bar .fd-term-section {
+            padding-top: 90px; 
+            margin-top: -90px;
+        }
+    }
+
+    .fd-term-list {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+    }
+}
+
+/* Mobile (e.g., iPhones) - Further refinements if needed, mostly covered by tablet */
+@media (max-width: 480px) {
+    .financial-dictionary-container {
+        padding: 10px 5px; /* Less padding on very small screens for the main container */
+         /* Note: The nav bar will still try to break out of this with negative margins based on 15px.
+            This might need fine-tuning if the container padding itself changes significantly.
+            For now, assuming the 15px breakout is still desired relative to a conceptual 15px grid.
+            If container padding becomes 5px, negative margins should be -5px.
+            Let's keep the negative margins at -15px for consistency with the desktop base.
+            The visual effect will be that the nav extends 10px beyond the container's 5px padding.
+         */
+    }
+
+    #financial-dictionary-nav {
+        /* For fixed nav on mobile */
+        width: 60px; 
+    }
+     #financial-dictionary-nav a {
+        /* Styles for 'a' tags within the fixed nav on mobile remain largely the same as tablet */
+        margin: 3px 5px;
+        font-size: 0.85em;
+        /* flex-grow and flex-basis are already reset in the (max-width: 768px) block */
+    }
+
+    .financial-dictionary-content {
+        margin-right: 65px; 
+    }
+    
+    .fd-term-list {
+        grid-template-columns: 1fr; 
+    }
+
+    .fd-term-section h2 {
+        font-size: 1.4em;
+    }
+}

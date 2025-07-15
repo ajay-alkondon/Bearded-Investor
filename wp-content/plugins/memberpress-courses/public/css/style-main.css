@@ -1,0 +1,753 @@
+/*!**********************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./public/src/style.scss ***!
+  \**********************************************************************************************************************************************************************************************************************************************/
+#mpcs-course-builder,
+#mpcs-course-resources,
+#mpcs-course-certificates,
+#mpcs-course-settings {
+  box-shadow: none;
+}
+#mpcs-course-builder .inside,
+#mpcs-course-resources .inside,
+#mpcs-course-certificates .inside,
+#mpcs-course-settings .inside {
+  border-bottom: none;
+}
+#mpcs-course-builder .postbox-header,
+#mpcs-course-resources .postbox-header,
+#mpcs-course-certificates .postbox-header,
+#mpcs-course-settings .postbox-header {
+  display: none;
+}
+
+#mpcs-course-settings,
+#mpcs-course-certificates {
+  max-width: 800px;
+  margin-left: 25px;
+}
+#mpcs-course-settings .inside,
+#mpcs-course-certificates .inside {
+  padding: 0;
+  margin: 0;
+  margin-top: 20px;
+}
+#mpcs-course-settings .components-toggle-control .components-form-toggle,
+#mpcs-course-certificates .components-toggle-control .components-form-toggle {
+  min-width: auto;
+}
+
+#mpcs-certificates-settings .components-color-picker {
+  max-width: 302px;
+}
+#mpcs-certificates-settings .components-text-control__input,
+#mpcs-certificates-settings .components-textarea-control__input {
+  width: 300px;
+}
+#mpcs-certificates-settings .mpcs-cert-expires .components-text-control__input {
+  width: 79px;
+  margin-right: 0.5em;
+}
+#mpcs-certificates-settings .components-button {
+  border: solid 1px #ccc;
+  margin-right: 25px;
+}
+#mpcs-certificates-settings .mpcs-certificate-style-selector {
+  display: flex;
+  width: 100%;
+}
+#mpcs-certificates-settings .mpcs-certificate-style-selector .mpcs-certificate-style {
+  border: 0.5em solid transparent;
+  margin: 1em;
+  cursor: pointer;
+}
+#mpcs-certificates-settings .mpcs-certificate-style-selector .mpcs-certificate-style:hover {
+  border: 0.5em solid #0a4b78;
+}
+#mpcs-certificates-settings .mpcs-certificate-style-selector .mpcs-certificate-style.selected {
+  border: 0.5em solid #0a4b78;
+}
+#mpcs-certificates-settings .components-toggle-control .components-form-toggle {
+  min-width: auto;
+}
+
+.mepr-curriculum-builder,
+.mpcs-resources-builder {
+  font-size: 1.1em;
+  max-width: 800px;
+  margin-left: 5px;
+}
+.mepr-curriculum-builder .mepr-actions,
+.mepr-curriculum-builder .mepr-title,
+.mpcs-resources-builder .mepr-actions,
+.mpcs-resources-builder .mepr-title {
+  display: flex;
+  align-items: center;
+}
+.mepr-curriculum-builder .components-button,
+.mpcs-resources-builder .components-button {
+  height: 30px;
+}
+.mepr-curriculum-builder .editable-input,
+.mpcs-resources-builder .editable-input {
+  margin-right: 15px;
+}
+.mepr-curriculum-builder .editable-input.active,
+.mpcs-resources-builder .editable-input.active {
+  width: 60%;
+  margin-right: 10px;
+}
+.mepr-curriculum-builder .editable-input.active input,
+.mpcs-resources-builder .editable-input.active input {
+  width: 100%;
+}
+.mepr-curriculum-builder .editable-input h3,
+.mpcs-resources-builder .editable-input h3 {
+  margin: 0.25em 0;
+  font-weight: 500;
+}
+.mepr-curriculum-builder .mepr-actions a,
+.mpcs-resources-builder .mepr-actions a {
+  margin-right: 5px;
+  transition: 1.3s;
+  line-height: 1;
+}
+.mepr-curriculum-builder .mepr-actions .mpcs-quiz-view-attempts, .mepr-curriculum-builder .mepr-actions .mpcs-publish-lesson,
+.mpcs-resources-builder .mepr-actions .mpcs-quiz-view-attempts,
+.mpcs-resources-builder .mepr-actions .mpcs-publish-lesson {
+  font-size: 11px;
+  margin-left: 7px;
+}
+.mepr-curriculum-builder .mepr-lesson,
+.mpcs-resources-builder .mepr-lesson {
+  display: flex;
+  min-height: 30px;
+  line-height: 30px;
+  padding-left: 25px;
+}
+.mepr-curriculum-builder .mepr-lesson .editable-input,
+.mpcs-resources-builder .mepr-lesson .editable-input {
+  padding-left: 10px;
+}
+.mepr-curriculum-builder .mepr-lesson .mepr-lesson-drag-handle,
+.mpcs-resources-builder .mepr-lesson .mepr-lesson-drag-handle {
+  width: 1rem;
+  cursor: grab;
+  position: relative;
+  top: -2px;
+}
+.mepr-curriculum-builder .mepr-quiz, .mepr-curriculum-builder .mepr-assignment,
+.mpcs-resources-builder .mepr-quiz,
+.mpcs-resources-builder .mepr-assignment {
+  display: flex;
+  min-height: 30px;
+  line-height: 30px;
+  padding-left: 25px;
+}
+.mepr-curriculum-builder .mepr-quiz .editable-input, .mepr-curriculum-builder .mepr-assignment .editable-input,
+.mpcs-resources-builder .mepr-quiz .editable-input,
+.mpcs-resources-builder .mepr-assignment .editable-input {
+  padding-left: 10px;
+}
+.mepr-curriculum-builder .mepr-quiz .mepr-lesson-drag-handle, .mepr-curriculum-builder .mepr-assignment .mepr-lesson-drag-handle,
+.mpcs-resources-builder .mepr-quiz .mepr-lesson-drag-handle,
+.mpcs-resources-builder .mepr-assignment .mepr-lesson-drag-handle {
+  width: 1rem;
+  cursor: grab;
+  position: relative;
+  top: -2px;
+}
+.mepr-curriculum-builder .mepr-add-controls,
+.mpcs-resources-builder .mepr-add-controls {
+  margin-top: 5px;
+  margin-left: 71px;
+  color: #6D6E6F;
+}
+.mepr-curriculum-builder .mepr-add-controls .mpcs-add-controls-or,
+.mpcs-resources-builder .mepr-add-controls .mpcs-add-controls-or {
+  margin: 0 10px;
+}
+.mepr-curriculum-builder .mpcs-addable-lesson,
+.mpcs-resources-builder .mpcs-addable-lesson {
+  display: flex;
+  margin: 0 0 10px 41px;
+  min-height: 30px;
+  line-height: 30px;
+  border-top: 1px solid #4073D1;
+  border-bottom: 1px solid #4073D1;
+}
+.mepr-curriculum-builder .mpcs-addable-lesson input,
+.mpcs-resources-builder .mpcs-addable-lesson input {
+  flex-grow: 1;
+}
+.mepr-curriculum-builder .mpcs-addable-lesson input,
+.mepr-curriculum-builder .mpcs-addable-lesson input:focus,
+.mpcs-resources-builder .mpcs-addable-lesson input,
+.mpcs-resources-builder .mpcs-addable-lesson input:focus {
+  border: none !important;
+  padding: 0 0 0 10px !important;
+  box-shadow: none !important;
+}
+.mepr-curriculum-builder .mpcs-add-lesson,
+.mepr-curriculum-builder .mpcs-add-quiz, .mepr-curriculum-builder .mpcs-add-assignment,
+.mpcs-resources-builder .mpcs-add-lesson,
+.mpcs-resources-builder .mpcs-add-quiz,
+.mpcs-resources-builder .mpcs-add-assignment {
+  cursor: pointer;
+}
+.mepr-curriculum-builder .mpcs-add-section,
+.mpcs-resources-builder .mpcs-add-section {
+  font-size: 18px;
+  font-weight: 500;
+  color: #6D6E6F;
+  margin: 1em 0 0.25em 1.1em;
+  cursor: pointer;
+}
+.mepr-curriculum-builder .mpcs-add-section i,
+.mpcs-resources-builder .mpcs-add-section i {
+  font-size: 16px;
+  margin-right: 5px;
+}
+.mepr-curriculum-builder .mpcs-addable-section,
+.mpcs-resources-builder .mpcs-addable-section {
+  margin: 1em 0 0.25em 2.3em;
+}
+.mepr-curriculum-builder .mpcs-addable-section input,
+.mpcs-resources-builder .mpcs-addable-section input {
+  font-size: 16px;
+}
+.mepr-curriculum-builder .mepr-toggle-lessons svg,
+.mpcs-resources-builder .mepr-toggle-lessons svg {
+  display: block;
+}
+.mepr-curriculum-builder .mepr-resource-section,
+.mpcs-resources-builder .mepr-resource-section {
+  overflow: hidden;
+}
+.mepr-curriculum-builder .mepr-resource-section .mepr-title,
+.mepr-curriculum-builder .mepr-resource-section .mpcs-custom-resource-field,
+.mpcs-resources-builder .mepr-resource-section .mepr-title,
+.mpcs-resources-builder .mepr-resource-section .mpcs-custom-resource-field {
+  margin-left: 1.7rem;
+}
+.mepr-curriculum-builder .mepr-resource-section h3.text-gray-500,
+.mpcs-resources-builder .mepr-resource-section h3.text-gray-500 {
+  color: rgb(107, 114, 128);
+}
+.mepr-curriculum-builder .mepr-course-section .mepr-title,
+.mepr-curriculum-builder .mepr-resource-section .mepr-title,
+.mpcs-resources-builder .mepr-course-section .mepr-title,
+.mpcs-resources-builder .mepr-resource-section .mepr-title {
+  padding: 0.2rem 0;
+  margin-top: 0.4rem;
+  min-height: 2rem;
+}
+.mepr-curriculum-builder .mepr-course-section .mepr-section-drag-handle,
+.mepr-curriculum-builder .mepr-resource-section .mepr-section-drag-handle,
+.mpcs-resources-builder .mepr-course-section .mepr-section-drag-handle,
+.mpcs-resources-builder .mepr-resource-section .mepr-section-drag-handle {
+  width: 1rem;
+  cursor: grab;
+}
+.mepr-curriculum-builder .smooth-dnd-container:first-child,
+.mpcs-resources-builder .smooth-dnd-container:first-child {
+  min-height: 15px;
+}
+
+.mpcs-resources-builder .smooth-dnd-container {
+  min-height: 15px;
+}
+
+.mepr-curriculum-panel {
+  font-size: 1em;
+}
+.mepr-curriculum-panel .mepr-lesson {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0.4rem 0;
+  line-height: 1.5;
+  padding-left: 4px;
+}
+.mepr-curriculum-panel .mepr-lesson.hovered {
+  background: #eee;
+}
+.mepr-curriculum-panel .mepr-lesson.mpcs-card {
+  box-shadow: 0 0.05rem 0.2rem rgba(48, 55, 66, 0.3);
+  transition: 0.3s;
+}
+.mepr-curriculum-panel .mepr-quiz, .mepr-curriculum-panel .mepr-assignment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0.4rem 0;
+  line-height: 1.5;
+  padding-left: 4px;
+}
+.mepr-curriculum-panel .mepr-quiz.hovered, .mepr-curriculum-panel .mepr-assignment.hovered {
+  background: #eee;
+}
+.mepr-curriculum-panel .mepr-quiz.mpcs-card, .mepr-curriculum-panel .mepr-assignment.mpcs-card {
+  box-shadow: 0 0.05rem 0.2rem rgba(48, 55, 66, 0.3);
+  transition: 0.3s;
+}
+.mepr-curriculum-panel .mpcs-card-wrapper {
+  overflow: visible !important;
+}
+.mepr-curriculum-panel .editable-input {
+  width: 70%;
+}
+.mepr-curriculum-panel .editable-input span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mepr-curriculum-panel .mepr-lesson-drag-handle {
+  width: 7%;
+}
+.mepr-curriculum-panel .mepr-lesson-drag-handle svg {
+  display: block;
+}
+.mepr-curriculum-panel .mepr-actions {
+  display: flex;
+  align-items: center;
+  width: 20%;
+}
+.mepr-curriculum-panel .mepr-actions a {
+  margin-right: 2px;
+}
+.mepr-curriculum-panel .mpcs-lessons-pagination {
+  display: flex;
+  margin-top: 10px;
+}
+.mepr-curriculum-panel .mpcs-lessons-pagination a {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+.mepr-curriculum-panel .mpcs-lessons-pagination #mpcs-nav-prev span {
+  margin-left: 3px;
+}
+.mepr-curriculum-panel .mpcs-lessons-pagination #mpcs-nav-next {
+  margin-left: auto;
+}
+.mepr-curriculum-panel .mpcs-lessons-pagination #mpcs-nav-next span {
+  margin-right: 1px;
+}
+.mepr-curriculum-panel .mpcs-search-lessons {
+  position: relative;
+}
+.mepr-curriculum-panel .mpcs-search-lessons input[type=text] {
+  width: 100%;
+  margin-bottom: 10px;
+  outline: 0px !important;
+  box-shadow: none !important;
+}
+.mepr-curriculum-panel .mpcs-search-lessons input[type=text]:focus {
+  outline: 0px;
+  box-shadow: none;
+  border: 1px solid #7e8993;
+}
+.mepr-curriculum-panel .mpcs-search-lessons .loader {
+  position: absolute;
+  right: 5px;
+  top: calc(50% - 14px);
+}
+.mepr-curriculum-panel .mpcs-search-quizzes, .mepr-curriculum-panel .mpcs-search-assignments {
+  position: relative;
+}
+.mepr-curriculum-panel .mpcs-search-quizzes input[type=text], .mepr-curriculum-panel .mpcs-search-assignments input[type=text] {
+  width: 100%;
+  margin-bottom: 10px;
+  outline: 0px !important;
+  box-shadow: none !important;
+}
+.mepr-curriculum-panel .mpcs-search-quizzes input[type=text]:focus, .mepr-curriculum-panel .mpcs-search-assignments input[type=text]:focus {
+  outline: 0px;
+  box-shadow: none;
+  border: 1px solid #7e8993;
+}
+.mepr-curriculum-panel .mpcs-search-quizzes .loader, .mepr-curriculum-panel .mpcs-search-assignments .loader {
+  position: absolute;
+  right: 5px;
+  top: calc(50% - 14px);
+}
+
+.mepr-curriculum-builder a,
+.mpcs-resources-builder a,
+.mepr-curriculum-panel a,
+#mpcs-admin-header a {
+  text-decoration: none;
+  cursor: pointer;
+}
+.mepr-curriculum-builder a:focus,
+.mpcs-resources-builder a:focus,
+.mepr-curriculum-panel a:focus,
+#mpcs-admin-header a:focus {
+  border: 0;
+  outline: none !important;
+  box-shadow: none;
+  -webkit-appearance: none;
+}
+.mepr-curriculum-builder svg,
+.mpcs-resources-builder svg,
+.mepr-curriculum-panel svg,
+#mpcs-admin-header svg {
+  vertical-align: middle;
+}
+.mepr-curriculum-builder input:focus,
+.mpcs-resources-builder input:focus,
+.mepr-curriculum-panel input:focus,
+#mpcs-admin-header input:focus {
+  border: 1px solid #666 !important;
+  outline: none !important;
+  box-shadow: 0 0 0px #fff !important;
+  -webkit-appearance: none;
+}
+.mepr-curriculum-builder button,
+.mpcs-resources-builder button,
+.mepr-curriculum-panel button,
+#mpcs-admin-header button {
+  border: none;
+  margin: 0;
+  outline: none;
+  background: none;
+  text-decoration: none;
+  box-shadow: none;
+  border-color: transparent;
+  cursor: pointer;
+}
+.mepr-curriculum-builder .align-children,
+.mpcs-resources-builder .align-children,
+.mepr-curriculum-panel .align-children,
+#mpcs-admin-header .align-children {
+  display: inline-flex;
+  align-items: center;
+}
+
+#mpcs-course-builder .inside,
+#mpcs-course-resources .inside {
+  padding-left: 0;
+}
+
+#mpcs-course-builder > h2,
+#mpcs-course-builder > button,
+#mpcs-course-settings > h2,
+#mpcs-course-settings > button {
+  display: none;
+}
+
+.edit-post-layout__metaboxes {
+  border-top: 0 !important;
+}
+
+.edit-post-layout__metaboxes:not(:empty) .edit-post-meta-boxes-area {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.edit-post-layout .interface-interface-skeleton__content {
+  background-color: #fff !important;
+}
+
+#mpcs-course-builder .handle-actions,
+#mpcs-course-settings .handle-actions {
+  display: none;
+}
+
+#mpcs-course-builder,
+#mpcs-course-settings,
+.components-panel__body.mepr-curriculum-panel {
+  display: none;
+}
+
+.mepr-lesson-ghost,
+.mepr-section-ghost {
+  background: #fff;
+  cursor: grabbing;
+  box-shadow: 0px 0px 1px rgba(0, 0, 0, 0.3);
+}
+
+.sections-drop-preview {
+  background-color: rgba(150, 150, 200, 0.1);
+  border: 1px dashed #abc;
+  margin: 5px 45px 5px 5px;
+}
+
+.lessons-drop-preview {
+  background-color: rgba(150, 150, 200, 0.1);
+  border: 1px dashed #abc;
+  margin: 5px;
+}
+
+/* form specific formatting */
+.form-group {
+  display: flex;
+  flex-direction: row;
+  padding-bottom: 1em;
+}
+.form-group.--with-space > * + * {
+  margin-left: 0.5rem;
+}
+.form-group.--block {
+  display: block;
+}
+.form-group.--unshrink > :last-child {
+  flex-shrink: 0;
+  flex-grow: 1;
+}
+
+.form-group label {
+  flex: none;
+  display: block;
+  min-width: 30%;
+  font-weight: bold;
+  font-size: 1em;
+}
+
+.form-group label.right-inline {
+  text-align: right;
+  padding-right: 8px;
+  padding-left: 10px;
+  width: auto;
+}
+
+.form-group .input-control {
+  flex: 1 1 auto;
+  display: block;
+  margin-bottom: 10px;
+  margin-right: 8px;
+  padding: 4px;
+  margin-top: -4px;
+}
+
+.form-group label > span {
+  vertical-align: middle;
+}
+
+.form-group .light-text {
+  font-weight: normal;
+}
+
+.form-group .remove-button {
+  color: red;
+  cursor: pointer;
+  padding-left: 10px;
+}
+.form-group .preview-image {
+  max-height: 100px;
+  max-width: 180px;
+}
+
+@media (max-width: 768px) {
+  .form-group {
+    flex-direction: column;
+  }
+  .form-group .input-control {
+    margin-top: 2px;
+  }
+  .form-group label.right-inline {
+    text-align: left;
+    padding-right: 0;
+    padding-left: 0;
+  }
+}
+.flash-section {
+  background-color: red;
+}
+
+.mepr-title.mpcs-border-blink {
+  border: 1px #ccc dashed;
+  animation: blink 0.4s;
+  animation-iteration-count: 3;
+  animation-delay: 0.7s;
+  box-shadow: 0 0.05rem 0.2rem rgba(48, 55, 66, 0.3);
+}
+
+@keyframes blink {
+  50% {
+    border-color: #fff;
+  }
+}
+.notransition {
+  transition: none !important;
+  transform: none !important;
+}
+
+.mepr-course-section > .smooth-dnd-container > .smooth-dnd-stretcher-element {
+  background: black;
+  display: none;
+}
+
+.mepr-curriculum-lessons .editable-input,
+.mepr-curriculum-assignments .editable-input,
+.mepr-curriculum-quizzes .editable-input {
+  display: flex;
+  align-items: center;
+}
+.mepr-curriculum-lessons .editable-input .link-icon,
+.mepr-curriculum-assignments .editable-input .link-icon,
+.mepr-curriculum-quizzes .editable-input .link-icon {
+  margin-left: 2px;
+}
+
+.mepr-lesson-meta,
+.mepr-assignment-meta,
+.mepr-quiz-meta {
+  width: 100%;
+  padding-left: 7%;
+  font-style: italic;
+}
+
+.mpcs-vex .vex-content {
+  border-radius: 5px;
+  text-align: center;
+}
+.mpcs-vex .vex-dialog-button {
+  float: none !important;
+  margin: 0 0.5em 0 0.5em !important;
+}
+
+.mpcs-link-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.downloads-modal, .links-modal {
+  max-width: 600px;
+  /* Adjust to your preferred size */
+  width: 100%;
+}
+
+.links-modal .components-modal__content {
+  padding: 4px 32px 62px;
+}
+.links-modal .resources_download__footer {
+  display: flex;
+  justify-content: right;
+}
+
+.mpdl-icon:before {
+  font-size: 28px;
+  margin-left: 0 !important;
+  margin-right: 10px !important;
+}
+
+.visuallyhidden {
+  clip: rect(0 0 0 0);
+  border: 0;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.resources_download {
+  padding: 1rem 0;
+}
+.resources_download__item {
+  padding: 0 !important;
+}
+.resources_download__item span,
+.resources_download__item label {
+  display: flex;
+  align-items: center;
+}
+.resources_download__item label {
+  padding: 9.2px 12px;
+  justify-content: space-between;
+}
+.resources_download__item label:hover {
+  background: rgba(var(--wp-admin-theme-color--rgb), 0.04);
+}
+.resources_download__item .dashicon {
+  color: var(--wp-components-color-accent, var(--wp-admin-theme-color, #3858e9));
+}
+.resources_download__thumb {
+  -o-object-fit: cover;
+     object-fit: cover;
+  width: 28px;
+  height: 28px;
+  margin-right: 9px;
+  padding-left: 2px;
+  padding-right: 2px;
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+.resources_download__footer {
+  position: absolute;
+  bottom: 0;
+  background: #fff;
+  margin: 0;
+  padding: 10px 34px;
+  border-top: 1px solid #ddd;
+  width: 100%;
+  left: 0;
+}
+
+.mpcs-resources-builder .mepr-download {
+  display: flex;
+}
+.mpcs-resources-builder .mpcs-link-button {
+  padding: 0;
+}
+
+.text-error {
+  color: #cc1818;
+  margin-top: 0;
+}
+
+.mpcs-classic-editor .mpcs-classic-editor-tabs {
+  float: right;
+  position: relative;
+  z-index: 1;
+}
+.mpcs-classic-editor .mpcs-classic-editor-tabs > button {
+  float: left;
+  box-sizing: content-box;
+  position: relative;
+  top: 1px;
+  background: #f0f0f1;
+  color: #646970;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.46153846;
+  height: 20px;
+  margin: 5px 0 0 5px;
+  padding: 3px 8px 4px;
+  border: 1px solid #dcdcde;
+}
+.mpcs-classic-editor.mpcs-classic-editor-mode-tmce .mpcs-classic-editor-tabs > button.mpcs-switch-tmce {
+  background: #f6f7f7;
+  color: #50575e;
+  border-bottom-color: #f6f7f7;
+}
+.mpcs-classic-editor.mpcs-classic-editor-mode-html .mpcs-classic-editor-tabs > button.mpcs-switch-html {
+  background: #fff;
+  color: #50575e;
+  border-bottom-color: #fff;
+}
+.mpcs-classic-editor .mpcs-classic-editor-field {
+  border: 1px solid #dcdcde;
+  clear: both;
+}
+.mpcs-classic-editor .mpcs-classic-editor-field textarea {
+  font-family: Consolas, Monaco, monospace;
+  font-size: 13px;
+  padding: 10px;
+  margin: 0;
+  line-height: 150%;
+  border: 0;
+  outline: 0;
+  display: block;
+  resize: vertical;
+  box-sizing: border-box;
+  width: 100%;
+  box-shadow: none;
+}
+
+/*# sourceMappingURL=style-main.css.map*/

@@ -1,0 +1,86 @@
+.mpcs-form-wrapper {
+  background: #fff;
+  padding: 2em;
+}
+
+.wp-heading-description {
+  margin-top: 0;
+  margin-bottom: 2em;
+}
+
+.regular-text,
+.form-field input[type=text] {
+  width: 25em;
+}
+
+#mpcs-course-email-tags {
+  display: none;
+  position: relative;
+}
+
+#mpcs-course-email-tags ul li {
+  padding: 0.7em 0;
+  /* font-size: 14px; */
+  border-bottom: 1px solid #f0f0f0;
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#mpcs-course-email-tags ul li:hover {
+  background: #f9f9f9;
+  cursor: pointer;
+}
+
+#mpcs-course-email-tags ul li span {
+  padding: 1px;
+  font-size: 14px;
+}
+
+#mpcs-course-email-tags ul li span:first-child {
+  background: #eee;
+  display: inline-block;
+  font-size: 16px;
+}
+
+#mpcs-course-email-tags ul li span:not(:first-child) {
+  text-align: right;
+  margin-top: 3px;
+  width: 50%;
+}
+
+#mpcs-email-tag-list {
+  overflow: auto; /* Enables scrolling */
+  max-height: 300px; /* Sets maximum height */
+  scrollbar-width: thin; /* For Firefox: makes scrollbar thinner */
+  scrollbar-color: #ccc #fff; /* For Firefox: scrollbar color (thumb, track) */
+}
+
+/* For Chrome, Safari, and Opera */
+#mpcs-email-tag-list::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+#mpcs-email-tag-list::-webkit-scrollbar-track {
+  background: white; /* Background of the scrollbar track */
+}
+
+#mpcs-email-tag-list::-webkit-scrollbar-thumb {
+  background: #ccc; /* Color of the scrollbar thumb */
+  border-radius: 10px; /* Rounded corners */
+}
+
+#mpcs-email-tag-list::-webkit-scrollbar-thumb:hover {
+  background: #aaa; /* Color of the scrollbar thumb on hover */
+}
+
+#mpcs-insert-tag-button {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 8px 3px 2px;
+}
+
+#mpcs-reset-default-button {
+  border: 1px solid #d63638;
+}

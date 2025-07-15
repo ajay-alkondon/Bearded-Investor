@@ -1,0 +1,25 @@
+{
+    "name": "caseproof/ground-level-in-product-notifications",
+    "description": "The GroundLevel In-Product Notifications package.",
+    "license": "GPL-3.0",
+    "authors": [
+        {
+            "name": "Team Caseproof",
+            "email": "developers@caseproof.com"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "MemberPress\\GroundLevel\\InProductNotifications\\": ""
+        }
+    },
+    "require": {
+        "php": ">=7.4",
+        "caseproof/ground-level-container": "^0.19.2",
+        "caseproof/ground-level-mothership": "^0.19.2",
+        "caseproof/ground-level-support": "^0.19.2"
+    }
+}

@@ -1,0 +1,24 @@
+{
+    "name": "caseproof/ground-level-database",
+    "description": "The GroundLevel Database package.",
+    "license": "GPL-3.0",
+    "authors": [
+        {
+            "name": "Team Caseproof",
+            "email": "developers@caseproof.com"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "GroundLevel\\Database\\": ""
+        }
+    },
+    "require": {
+        "php": ">=7.4",
+        "caseproof/ground-level-support": "^0.10.0",
+        "caseproof/ground-level-query-builder": "^0.10.0"
+    }
+}
