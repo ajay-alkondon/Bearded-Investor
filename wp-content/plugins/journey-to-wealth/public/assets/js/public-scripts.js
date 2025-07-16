@@ -124,7 +124,6 @@
         
         const $centerText = $container.find('.jtw-donut-center-text');
         const $topText = $container.find('.jtw-donut-top-text');
-        const $ratioText = $container.find('.jtw-donut-ratio-text');
 
         const donutChart = new Chart(ctx, {
             type: 'doughnut',
@@ -156,7 +155,6 @@
 
             $topText.html(`<div class="numerator-label">${data.numeratorLabel}</div><div class="numerator-value">US$${formatLargeNumber(data.numeratorValue)}</div>`);
             $centerText.html(`<div class="denominator-label">${data.denominatorLabel}</div><div class="denominator-value">US$${formatLargeNumber(data.denominatorValue)}</div>`);
-            $ratioText.html(`<div class="ratio-value">${parseFloat(data.ratio).toFixed(1)}x</div><div class="ratio-label">${$card.find('.jtw-metric-title').text()}</div>`);
         }
 
         $interactiveCards.on('click', function() {

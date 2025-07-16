@@ -368,18 +368,25 @@ class Journey_To_Wealth_Public {
                 ];
 
                 $pe_ratio = isset($overview['PERatio']) && $overview['PERatio'] !== 'None' ? (float)$overview['PERatio'] : 0;
-                $peg_ratio = isset($overview['PEGRatio']) && $overview['PEGRatio'] !== 'None' ? (float)$overview['PEGRatio'] : 0;
-                $growth_rate = ($pe_ratio > 0 && $peg_ratio > 0) ? ($pe_ratio / $peg_ratio) : 0;
-                $dividend_yield = isset($overview['DividendYield']) ? (float)$overview['DividendYield'] * 100 : 0;
+                $peg_value = isset($overview['PEGRatio']) && $overview['PEGRatio'] !== 'None' ? (float)$overview['PEGRatio'] : 'N/A';
                 
-                $peg_value = $growth_rate > 0 ? $pe_ratio / $growth_rate : 0;
-                $pegy_value = ($growth_rate + $dividend_yield) > 0 ? $pe_ratio / ($growth_rate + $dividend_yield) : 0;
+                $growth_rate = 'N/A';
+                if (is_numeric($pe_ratio) && is_numeric($peg_value) && $peg_value > 0) {
+                    $growth_rate = ($pe_ratio / $peg_value);
+                }
+
+                $dividend_yield_percent = isset($overview['DividendYield']) && is_numeric($overview['DividendYield']) ? (float)$overview['DividendYield'] * 100 : 0;
+
+                $pegy_value = 'N/A';
+                if (is_numeric($pe_ratio) && is_numeric($growth_rate) && ($growth_rate + $dividend_yield_percent) > 0) {
+                    $pegy_value = $pe_ratio / ($growth_rate + $dividend_yield_percent);
+                }
 
                 $peg_pegy_data = [
                     'peg' => $peg_value,
                     'pegy' => $pegy_value,
-                    'defaultGrowth' => $growth_rate,
-                    'dividendYield' => $dividend_yield
+                    'defaultGrowth' => is_numeric($growth_rate) ? $growth_rate : 5,
+                    'dividendYield' => $dividend_yield_percent
                 ];
                 $stock_price = !is_wp_error($quote) ? (float)($quote['05. price'] ?? 0) : 0;
                 $eps = (float)($overview['EPS'] ?? 0);
@@ -917,7 +924,7 @@ class Journey_To_Wealth_Public {
         // P/E Ratio Box
         $output .= $this->create_interactive_metric_card('P/E Ratio', $key_metrics_data['peRatio'], [
             'interactive-type' => 'donut',
-            'numerator-label' => 'Ear',
+            'numerator-label' => 'Earnings',
             'numerator-value' => $net_income,
             'denominator-label' => 'Market Cap',
             'denominator-value' => $market_cap,
@@ -962,7 +969,6 @@ class Journey_To_Wealth_Public {
         $output .= '<canvas id="jtw-key-metrics-donut-chart"></canvas>';
         $output .= '<div class="jtw-donut-top-text"></div>';
         $output .= '<div class="jtw-donut-center-text"></div>';
-        $output .= '<div class="jtw-donut-ratio-text"></div>';
         $output .= '</div>';
 
         // PEG/PEGY Calculator Container (hidden by default)
