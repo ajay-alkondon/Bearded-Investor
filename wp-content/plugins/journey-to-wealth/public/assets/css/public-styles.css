@@ -298,10 +298,11 @@
 
 .jtw-interactive-element-container {
     position: relative;
+    min-height: 300px;
 }
 .jtw-interactive-donut-container { position: relative; width: 100%; max-width: 300px; margin: 0 auto; }
 .jtw-donut-top-text, .jtw-donut-center-text, .jtw-donut-ratio-text { position: absolute; text-align: center; pointer-events: none; }
-.jtw-donut-top-text { top: 10%; left: 50%; transform: translateX(-50%); }
+.jtw-donut-top-text { top: -20px; left: 50%; transform: translateX(-50%); }
 .jtw-donut-top-text .numerator-label { font-size: 1em; color: var(--jtw-text-medium); }
 .jtw-donut-top-text .numerator-value { font-size: 1.2em; font-weight: 600; }
 .jtw-donut-center-text { top: 50%; left: 50%; transform: translate(-50%, -50%); }
