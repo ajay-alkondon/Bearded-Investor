@@ -110,10 +110,22 @@ class Alpha_Vantage_Client {
         $data = $this->do_request( $params, $transient_key, $this->cache_expiration_short );
         if (is_wp_error($data)) return $data;
 
-        if ( ! isset( $data['Global Quote'] ) || empty( $data['Global Quote'] ) ) {
+        // Define the possible keys for the quote data
+        $delayed_key = 'Global Quote - DATA DELAYED BY 15 MINUTES';
+        $standard_key = 'Global Quote';
+
+        // Check for the delayed data key first
+        if ( isset( $data[$delayed_key] ) && ! empty( $data[$delayed_key] ) ) {
+            return $data[$delayed_key];
+        } 
+        // Fallback to the standard key
+        elseif ( isset( $data[$standard_key] ) && ! empty( $data[$standard_key] ) ) {
+            return $data[$standard_key];
+        } 
+        // If neither key is found, return an error
+        else {
             return new WP_Error( 'no_global_quote_data', sprintf( __( 'No global quote data found for symbol %s.', 'journey-to-wealth' ), $symbol ) );
         }
-        return $data['Global Quote'];
     }
     
     public function get_income_statement( $symbol ) {
@@ -190,10 +202,21 @@ class Alpha_Vantage_Client {
 
         $data = $this->do_request( $params, $transient_key, $this->cache_expiration_long );
         if (is_wp_error($data)) return $data;
-
-        if ( !isset( $data['Time Series (Daily)'] ) ) {
+        
+        $delayed_key = 'Time Series (Daily) - DATA DELAYED BY 15 MINUTES';
+        $standard_key = 'Time Series (Daily)';
+        
+        // If the delayed key exists, normalize it to the standard key for consistent use in the plugin.
+        if (isset( $data[$delayed_key] )) {
+            $data[$standard_key] = $data[$delayed_key];
+            unset($data[$delayed_key]);
+        } 
+        
+        // Now, check if the standard key exists (either originally or after being renamed).
+        if ( !isset( $data[$standard_key] ) ) {
             return new WP_Error( 'no_daily_data', sprintf( __( 'No daily time series data found for %s.', 'journey-to-wealth' ), $symbol ) );
         }
+
         return $data;
     }
 
