@@ -37,9 +37,6 @@ class Alpha_Vantage_Client {
             return $cached_data;
         }
 
-        // Ensure we use 15-minute delayed data for all requests.
-        $params['entitlement'] = 'delayed';
-
         $request_url = add_query_arg( $params, $this->base_url );
         $response = wp_remote_get( $request_url, array( 'timeout' => 20 ) );
 
@@ -102,7 +99,12 @@ class Alpha_Vantage_Client {
     public function get_global_quote( $symbol ) {
         if ( empty( $this->api_key ) ) return new WP_Error( 'api_key_missing', __( 'API Key not configured.', 'journey-to-wealth' ) );
         $symbol = sanitize_text_field( strtoupper( $symbol ) );
-        $params = array( 'function' => 'GLOBAL_QUOTE', 'symbol' => $symbol, 'apikey' => $this->api_key );
+        $params = array( 
+            'function' => 'GLOBAL_QUOTE', 
+            'symbol' => $symbol, 
+            'apikey' => $this->api_key,
+            'entitlement' => 'delayed' // Use 15-minute delayed data
+        );
         $transient_key = 'jtw_quote_' . md5( $symbol );
 
         $data = $this->do_request( $params, $transient_key, $this->cache_expiration_short );
@@ -177,7 +179,13 @@ class Alpha_Vantage_Client {
     public function get_daily_adjusted( $symbol ) {
         if ( empty( $this->api_key ) ) return new WP_Error( 'api_key_missing', __( 'API Key not configured.', 'journey-to-wealth' ) );
         $symbol = sanitize_text_field( strtoupper( $symbol ) );
-        $params = array( 'function' => 'TIME_SERIES_DAILY_ADJUSTED', 'symbol' => $symbol, 'outputsize' => 'full', 'apikey' => $this->api_key );
+        $params = array( 
+            'function' => 'TIME_SERIES_DAILY_ADJUSTED', 
+            'symbol' => $symbol, 
+            'outputsize' => 'full', 
+            'apikey' => $this->api_key,
+            'entitlement' => 'delayed' // Use 15-minute delayed data
+        );
         $transient_key = 'jtw_daily_adjusted_' . md5( $symbol );
 
         $data = $this->do_request( $params, $transient_key, $this->cache_expiration_long );
