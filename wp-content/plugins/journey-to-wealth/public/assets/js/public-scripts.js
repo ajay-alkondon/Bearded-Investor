@@ -180,125 +180,102 @@
         }
     }
 
+    /**
+     * Initializes the Fair Value Analysis nested donut chart.
+     * @param {jQuery} $container The container element for the valuation section.
+     */
     function initializeValuationChart($container) {
+        if (window.jtwFairValueChart instanceof Chart) {
+            window.jtwFairValueChart.destroy();
+        }
+
         const $chartContainer = $container.find('#jtw-valuation-chart-container');
         if (!$chartContainer.length) return;
+
+        const canvas = $container.find('#jtw-valuation-chart')[0];
+        if (!canvas) return;
         
+        const ctx = canvas.getContext('2d');
         const currentPrice = parseFloat($chartContainer.data('current-price'));
         const fairValue = parseFloat($chartContainer.data('fair-value'));
         const percentageDiff = parseFloat($chartContainer.data('percentage-diff'));
-
-        const ctx = document.getElementById('jtw-valuation-chart');
-        if (!ctx) return;
         
-        const dynamicBackgroundPlugin = {
-            id: 'dynamicBackground',
-            beforeDatasetsDraw(chart, args, options) {
-                const { ctx, chartArea: { top, bottom, left, right, width, height }, scales: { x, y } } = chart;
+        let verdict = 'Fairly Valued';
+        let color = 'var(--jtw-yellow-neutral)'; // Neutral
+        if (percentageDiff > 20) {
+            verdict = 'Undervalued';
+            color = 'var(--jtw-green-positive)'; // Green
+        } else if (percentageDiff < -20) {
+            verdict = 'Overvalued';
+            color = 'var(--jtw-red-negative)'; // Red
+        }
+
+        const centerTextPlugin = {
+            id: 'centerText',
+            afterDraw: (chart) => {
+                const config = chart.options.plugins.centerText;
+                const ctx = chart.ctx;
+                const { top, left, width, height } = chart.chartArea;
+                const x = left + width / 2;
+                const y = top + height / 2;
+
                 ctx.save();
-                
-                const fairValueData = chart.data.datasets[0].data[1]; 
-                const undervaluedLimit = fairValueData * 1.2;
-                const overvaluedLimit = fairValueData * 0.8;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 1.2rem sans-serif';
+                ctx.fillStyle = config.color;
+                ctx.fillText(config.verdict, x, y - 10);
 
-                const undervaluedPixel = x.getPixelForValue(undervaluedLimit);
-                const overvaluedPixel = x.getPixelForValue(overvaluedLimit);
-                
-                ctx.fillStyle = '#4CAF50';
-                ctx.fillRect(left, top, overvaluedPixel - left, height);
-                ctx.fillStyle = '#FFC107';
-                ctx.fillRect(overvaluedPixel, top, undervaluedPixel - overvaluedPixel, height);
-                ctx.fillStyle = '#F44336';
-                ctx.fillRect(undervaluedPixel, top, right - undervaluedPixel, height);
-
+                if (config.verdict !== 'Fairly Valued') {
+                    ctx.font = 'normal 1rem sans-serif';
+                    ctx.fillStyle = '#6c757d'; // var(--jtw-text-light)
+                    ctx.fillText(`by ${Math.abs(config.percentageDiff).toFixed(1)}%`, x, y + 15);
+                }
                 ctx.restore();
             }
         };
 
-        const customLabelsPlugin = {
-            id: 'customLabelsAndLines',
-            afterDraw: (chart) => {
-                const ctx = chart.ctx;
-                chart.data.datasets.forEach((dataset, i) => {
-                    const meta = chart.getDatasetMeta(i);
-                    if (!meta.hidden) {
-                        meta.data.forEach((element, index) => {
-                            const label = chart.data.labels[index];
-                            const value = dataset.data[index];
-                            const {x, y, base, width, height} = element;
-                            
-                            const labelFontSize = Math.max(height * 0.20, 8);
-                            const valueFontSize = Math.max(height * 0.25, 10);
+        const maxVal = Math.max(fairValue, currentPrice) * 1.05;
 
-                            const totalTextHeight = labelFontSize + valueFontSize + 4;
-                            const textYPosition = y - (totalTextHeight / 2);
-
-                            ctx.save();
-                            ctx.fillStyle = 'white';
-                            ctx.textBaseline = 'top';
-                            ctx.font = `bold ${labelFontSize}px Arial`;
-                            ctx.fillText(label, base + 15, textYPosition);
-                            ctx.font = `bold ${valueFontSize}px Arial`;
-                            ctx.fillText('$' + value.toFixed(2), base + 15, textYPosition + labelFontSize + 4);
-                            ctx.restore();
-                        });
-                    }
-                });
-            }
-        };
-        
-        const valuationChart = new Chart(ctx, {
-            type: 'bar',
+        window.jtwFairValueChart = new Chart(ctx, {
+            type: 'doughnut',
             data: {
-                labels: ['Current Price', 'Fair Value'],
+                labels: ['Value', 'Remainder'],
                 datasets: [{
-                    data: [currentPrice, fairValue],
-                    backgroundColor: [ 'rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.5)'],
-                    borderColor: 'transparent',
-                    borderWidth: 0,
-                    barThickness: function(context) {
-                        const chart = context.chart;
-                        const { chartArea } = chart;
-                        if (!chartArea) return 20;
-                        return chartArea.height * 0.4;
-                    },
+                    label: 'Fair Value',
+                    data: [fairValue, Math.max(0, maxVal - fairValue)],
+                    backgroundColor: [color, '#f0f2f5'],
+                    borderColor: ['#fff'],
+                    borderWidth: 2,
+                    cutout: '80%',
+                }, {
+                    label: 'Current Price',
+                    data: [currentPrice, Math.max(0, maxVal - currentPrice)],
+                    backgroundColor: ['var(--jtw-primary-blue)', '#f0f2f5'],
+                    borderColor: ['#fff'],
+                    borderWidth: 2,
+                    cutout: '60%',
                 }]
             },
             options: {
-                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { enabled: false }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        ticks: { display: false },
-                        grid: { display: false, drawBorder: false }
-                    },
-                    y: {
-                        grid: { display: false, drawBorder: false },
-                        ticks: { display: false }
+                    tooltip: { enabled: false },
+                    centerText: {
+                        verdict: verdict,
+                        percentageDiff: percentageDiff,
+                        color: color
                     }
                 }
             },
-            plugins: [dynamicBackgroundPlugin, customLabelsPlugin]
+            plugins: [centerTextPlugin]
         });
-        
-        $container.find('.jtw-valuation-range-container').remove();
-        
-        let annotationText = '';
-        if (percentageDiff > 20) {
-            annotationText = percentageDiff.toFixed(1) + '% Undervalued';
-        } else if (percentageDiff < -20) {
-            annotationText = Math.abs(percentageDiff).toFixed(1) + '% Overvalued';
-        } else {
-            annotationText = 'Fairly Valued';
-        }
-        const $annotation = $('<div class="jtw-valuation-annotation"></div>').text(annotationText);
-        $chartContainer.append($annotation);
     }
 
     function initializeHistoricalCharts($container) {

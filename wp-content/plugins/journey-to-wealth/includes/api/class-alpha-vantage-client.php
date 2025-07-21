@@ -37,6 +37,9 @@ class Alpha_Vantage_Client {
             return $cached_data;
         }
 
+        // Ensure we use 15-minute delayed data for all requests.
+        $params['entitlement'] = 'delayed';
+
         $request_url = add_query_arg( $params, $this->base_url );
         $response = wp_remote_get( $request_url, array( 'timeout' => 20 ) );
 

@@ -397,6 +397,7 @@ class Journey_To_Wealth_Public {
             case 'intrinsic-valuation':
                 $latest_price = !is_wp_error($company_data['quote']) ? (float)($company_data['quote']['05. price'] ?? 0) : 0;
                 $valuation_data = $this->get_valuation_results($company_data['overview'], $company_data['income_statement'], $company_data['balance_sheet'], $company_data['cash_flow'], $company_data['earnings'], $company_data['treasury_yield'], $latest_price, $company_data['daily_data']);
+                
                 $valuation_summary = [ 'current_price' => $latest_price, 'fair_value' => 0, 'percentage_diff' => 0 ];
                 $valid_models = [];
                 foreach ($valuation_data as $result) {
@@ -404,12 +405,31 @@ class Journey_To_Wealth_Public {
                         $valid_models[] = $result['intrinsic_value_per_share'];
                     }
                 }
+                
                 if (!empty($valid_models)) {
                     $valuation_summary['fair_value'] = array_sum($valid_models) / count($valid_models);
                     if ($latest_price > 0) {
-                        $valuation_summary['percentage_diff'] = (($valuation_summary['fair_value'] - $latest_price) / $latest_price) * 100;
+                        // This calculation is now based on the difference from fair value, not just a raw percentage.
+                        $valuation_summary['percentage_diff'] = round(abs(($latest_price - $valuation_summary['fair_value']) / $valuation_summary['fair_value']) * 100);
                     }
                 }
+
+                // Add verdict and color for the new chart
+                $fair_value = $valuation_summary['fair_value'];
+                $verdict = 'Fairly Valued';
+                $color = '#ffc107'; // Yellow
+                if ($fair_value > 0) {
+                    if ($latest_price < $fair_value * 0.9) {
+                        $verdict = 'Undervalued';
+                        $color = '#28a745'; // Green
+                    } elseif ($latest_price > $fair_value * 1.1) {
+                        $verdict = 'Overvalued';
+                        $color = '#dc3545'; // Red
+                    }
+                }
+                $valuation_summary['verdict'] = $verdict;
+                $valuation_summary['color'] = $color;
+
                 $html = $this->build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $company_data['overview']);
                 break;
         }
@@ -1034,11 +1054,31 @@ class Journey_To_Wealth_Public {
     private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details) {
         $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section">';
         $output .= '<h4>' . esc_html__('Fair Value Analysis', 'journey-to-wealth') . '</h4>';
+    
         if ($valuation_summary['fair_value'] > 0) {
-            $output .= '<div class="jtw-valuation-chart-container" id="jtw-valuation-chart-container" data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '" data-percentage-diff="' . esc_attr($valuation_summary['percentage_diff']) . '"><canvas id="jtw-valuation-chart"></canvas></div>';
+            $output .= '<div class="jtw-fair-value-container">';
+            $output .= '<div class="jtw-fair-value-summary">';
+            $output .= '<p>Current Price: <strong>$' . esc_html(number_format($valuation_summary['current_price'], 2)) . '</strong></p>';
+            $output .= '<p>Estimated Fair Value: <strong>$' . esc_html(number_format($valuation_summary['fair_value'], 2)) . '</strong></p>';
+            $output .= '</div>';
+            
+            // This hidden div will hold the data for the JS chart
+            $output .= '<div id="jtw-fair-value-donut-data" ';
+            $output .= 'data-current-price="' . esc_attr($valuation_summary['current_price']) . '" ';
+            $output .= 'data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '" ';
+            $output .= 'data-percentage-diff="' . esc_attr($valuation_summary['percentage_diff']) . '" ';
+            $output .= 'data-verdict="' . esc_attr($valuation_summary['verdict']) . '" ';
+            $output .= 'data-color="' . esc_attr($valuation_summary['color']) . '"></div>';
+
+            // This is the canvas for the chart
+            $output .= '<div class="jtw-fair-value-chart-container">';
+            $output .= '<canvas id="jtw-fair-value-donut-chart"></canvas>';
+            $output .= '</div>';
+            $output .= '</div>'; // End jtw-fair-value-container
         } else {
             $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('Not enough data to calculate an average fair value.', 'journey-to-wealth') . '</strong></p></div>';
         }
+    
         $output .= '<div class="jtw-valuation-summary-box-container">';
         foreach ($valuation_data as $model_name => $result) {
             if (is_wp_error($result)) {
