@@ -37,10 +37,13 @@ class Journey_To_Wealth_Public {
     public function enqueue_scripts() {
         wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js', array('jquery'), '3.9.1', true );
         wp_enqueue_script( 'chartjs-adapter-date-fns', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', array('chartjs'), '1.1.0', true );
+        // Enqueue the datalabels plugin and make it dependent on chartjs
+        wp_enqueue_script( 'chartjs-plugin-datalabels', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0/dist/chartjs-plugin-datalabels.min.js', array('chartjs'), '2.1.0', true );
         
         $script_path = plugin_dir_path( __FILE__ ) . 'assets/js/public-scripts.js';
         $script_version = file_exists($script_path) ? $this->version . '.' . filemtime( $script_path ) : $this->version;
-        wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns' ), $script_version, true );
+        // Add the datalabels plugin as a dependency for the main script
+        wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels' ), $script_version, true );
         
         $analysis_page_slug = get_option('jtw_analysis_page_slug', 'stock-valuation-analysis');
         $analysis_page_url = site_url( '/' . $analysis_page_slug . '/' );
@@ -1039,16 +1042,17 @@ class Journey_To_Wealth_Public {
         $output .= '<h4>' . esc_html__('Fair Value Analysis', 'journey-to-wealth') . '</h4>';
     
         if ($valuation_summary['fair_value'] > 0) {
-            $output .= '<div class="jtw-fair-value-container">'; // A general container for flex layout if needed
+            $output .= '<div class="jtw-fair-value-container">';
             $output .= '<div class="jtw-fair-value-summary">';
             $output .= '<p>Current Price: <strong>$' . esc_html(number_format($valuation_summary['current_price'], 2)) . '</strong></p>';
             $output .= '<p>Estimated Fair Value: <strong>$' . esc_html(number_format($valuation_summary['fair_value'], 2)) . '</strong></p>';
             $output .= '</div>';
             
             // CORRECTED: This container now has the class and ID the JS is looking for.
-            $output .= '<div class="jtw-valuation-chart-container" ';
+            $output .= '<div id="jtw-valuation-chart-container" class="jtw-valuation-chart-container" ';
             $output .= 'data-current-price="' . esc_attr($valuation_summary['current_price']) . '" ';
-            $output .= 'data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '">';
+            $output .= 'data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '" ';
+            $output .= 'data-percentage-diff="' . esc_attr($valuation_summary['percentage_diff']) . '">';
             $output .= '<canvas id="jtw-valuation-chart"></canvas>';
             $output .= '</div>';
 
