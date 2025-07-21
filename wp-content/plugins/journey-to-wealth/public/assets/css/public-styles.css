@@ -354,15 +354,13 @@
 
 
 /* --- Intrinsic Valuation Section --- */
-/* MODIFIED for Donut Chart */
 .jtw-valuation-chart-container { 
     position: relative; 
     width: 100%; 
-    max-width: 280px; /* Control max size */
-    height: 280px; /* Make it square */
-    margin: 20px auto 0; /* Center it */
+    max-width: 280px; 
+    height: 280px; 
+    margin: 20px auto 0; 
 }
-/* REMOVED .jtw-valuation-annotation */
 
 .jtw-valuation-summary-box-container { padding-top: 20px; }
 .jtw-valuation-summary-box { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--jtw-border-color-light); background: none; }

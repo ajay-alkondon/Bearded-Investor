@@ -189,23 +189,35 @@
             window.jtwFairValueChart.destroy();
         }
 
-        const $chartContainer = $container.find('#jtw-valuation-chart-container');
-        if (!$chartContainer.length) return;
+        const $chartContainer = $container.find('.jtw-valuation-chart-container');
+        if (!$chartContainer.length) {
+            console.error("Valuation chart container not found.");
+            return;
+        }
 
         const canvas = $container.find('#jtw-valuation-chart')[0];
-        if (!canvas) return;
+        if (!canvas) {
+            console.error("Valuation chart canvas element not found.");
+            return;
+        }
         
         const ctx = canvas.getContext('2d');
         const currentPrice = parseFloat($chartContainer.data('current-price'));
         const fairValue = parseFloat($chartContainer.data('fair-value'));
-        const percentageDiff = parseFloat($chartContainer.data('percentage-diff'));
+        
+        if (isNaN(currentPrice) || isNaN(fairValue)) {
+            console.error("Invalid current price or fair value data for chart.");
+            return;
+        }
+        
+        const percentageDiff = ((currentPrice - fairValue) / fairValue) * 100;
         
         let verdict = 'Fairly Valued';
         let color = 'var(--jtw-yellow-neutral)'; // Neutral
-        if (percentageDiff > 20) {
+        if (percentageDiff < -20) {
             verdict = 'Undervalued';
             color = 'var(--jtw-green-positive)'; // Green
-        } else if (percentageDiff < -20) {
+        } else if (percentageDiff > 20) {
             verdict = 'Overvalued';
             color = 'var(--jtw-red-negative)'; // Red
         }
