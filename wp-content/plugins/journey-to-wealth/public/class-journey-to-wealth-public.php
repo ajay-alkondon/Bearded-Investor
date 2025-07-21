@@ -1039,18 +1039,17 @@ class Journey_To_Wealth_Public {
         $output .= '<h4>' . esc_html__('Fair Value Analysis', 'journey-to-wealth') . '</h4>';
     
         if ($valuation_summary['fair_value'] > 0) {
-            $output .= '<div class="jtw-fair-value-container">';
+            $output .= '<div class="jtw-fair-value-container">'; // A general container for flex layout if needed
             $output .= '<div class="jtw-fair-value-summary">';
             $output .= '<p>Current Price: <strong>$' . esc_html(number_format($valuation_summary['current_price'], 2)) . '</strong></p>';
             $output .= '<p>Estimated Fair Value: <strong>$' . esc_html(number_format($valuation_summary['fair_value'], 2)) . '</strong></p>';
             $output .= '</div>';
             
-            // The container for the chart, with data attributes for the JS to use
-            $output .= '<div class="jtw-fair-value-chart-container" ';
+            // CORRECTED: This container now has the class and ID the JS is looking for.
+            $output .= '<div class="jtw-valuation-chart-container" ';
             $output .= 'data-current-price="' . esc_attr($valuation_summary['current_price']) . '" ';
-            $output .= 'data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '" ';
-            $output .= 'data-percentage-diff="' . esc_attr($valuation_summary['percentage_diff']) . '">';
-            $output .= '<canvas id="jtw-fair-value-donut-chart"></canvas>';
+            $output .= 'data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '">';
+            $output .= '<canvas id="jtw-valuation-chart"></canvas>';
             $output .= '</div>';
 
             $output .= '</div>'; // End jtw-fair-value-container
