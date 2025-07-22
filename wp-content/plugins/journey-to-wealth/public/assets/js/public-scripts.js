@@ -16,6 +16,12 @@
 (function ($) {
     'use strict';
 
+    // Register Chart.js plugins globally and only once.
+    // This resolves the '_labels' error.
+    if (window.ChartDataLabels) {
+        Chart.register(ChartDataLabels);
+    }
+
     function getLocalizedText(key, fallbackText) {
         if (typeof jtw_public_params !== 'undefined' && jtw_public_params[key]) {
             return jtw_public_params[key];
@@ -248,9 +254,6 @@
 
         const maxVal = Math.max(fairValue, currentPrice) * 1.05;
 
-        // Register the plugins
-        Chart.register(ChartDataLabels, centerTextPlugin);
-
         window.jtwFairValueChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -261,16 +264,14 @@
                     data: [fairValue, Math.max(0, maxVal - fairValue)],
                     backgroundColor: [verdictColor, '#f0f2f5'],
                     borderColor: '#fff',
-                    borderWidth: 2,
-                    // This creates the outer ring
+                    borderWidth: 0,
                     cutout: '80%', 
                 }, {
                     label: 'Current Price',
                     data: [currentPrice, Math.max(0, maxVal - currentPrice)],
                     backgroundColor: ['var(--jtw-primary-blue)', '#f0f2f5'],
                     borderColor: '#fff',
-                    borderWidth: 2,
-                    // This creates the inner ring, making it the same width as the outer one and adjacent
+                    borderWidth: 0,
                     cutout: '60%', 
                 }]
             },
@@ -312,6 +313,7 @@
                     }
                 }
             },
+            plugins: [centerTextPlugin] // Pass the custom plugin here
         });
     }
 
