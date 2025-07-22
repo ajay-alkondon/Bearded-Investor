@@ -189,7 +189,7 @@
             window.jtwFairValueChart.destroy();
         }
 
-        const $chartContainer = $container.find('.jtw-valuation-chart-container');
+        const $chartContainer = $container.find('#jtw-valuation-chart-container');
         if (!$chartContainer.length) {
             console.error("Valuation chart container not found.");
             return;
@@ -204,22 +204,21 @@
         const ctx = canvas.getContext('2d');
         const currentPrice = parseFloat($chartContainer.data('current-price'));
         const fairValue = parseFloat($chartContainer.data('fair-value'));
+        const percentageDiff = parseFloat($chartContainer.data('percentage-diff'));
         
         if (isNaN(currentPrice) || isNaN(fairValue)) {
             console.error("Invalid current price or fair value data for chart.");
             return;
         }
         
-        const percentageDiff = ((currentPrice - fairValue) / fairValue) * 100;
-        
         let verdict = 'Fairly Valued';
-        let color = 'var(--jtw-yellow-neutral)'; // Neutral
-        if (percentageDiff < -20) {
+        let verdictColor = 'var(--jtw-yellow-neutral)';
+        if (percentageDiff > 20) {
             verdict = 'Undervalued';
-            color = 'var(--jtw-green-positive)'; // Green
-        } else if (percentageDiff > 20) {
+            verdictColor = 'var(--jtw-green-positive)';
+        } else if (percentageDiff < -20) {
             verdict = 'Overvalued';
-            color = 'var(--jtw-red-negative)'; // Red
+            verdictColor = 'var(--jtw-red-negative)';
         }
 
         const centerTextPlugin = {
@@ -234,14 +233,14 @@
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.font = 'bold 1.2rem sans-serif';
+                ctx.font = 'bold 1.8rem sans-serif';
                 ctx.fillStyle = config.color;
-                ctx.fillText(config.verdict, x, y - 10);
+                ctx.fillText(config.verdict, x, y - 15);
 
                 if (config.verdict !== 'Fairly Valued') {
-                    ctx.font = 'normal 1rem sans-serif';
-                    ctx.fillStyle = '#6c757d'; // var(--jtw-text-light)
-                    ctx.fillText(`by ${Math.abs(config.percentageDiff).toFixed(1)}%`, x, y + 15);
+                    ctx.font = 'normal 1.2rem sans-serif';
+                    ctx.fillStyle = '#6c757d';
+                    ctx.fillText(`by ${Math.abs(config.percentageDiff).toFixed(1)}%`, x, y + 20);
                 }
                 ctx.restore();
             }
@@ -249,24 +248,30 @@
 
         const maxVal = Math.max(fairValue, currentPrice) * 1.05;
 
+        // Register the plugins
+        Chart.register(ChartDataLabels, centerTextPlugin);
+
         window.jtwFairValueChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: ['Value', 'Remainder'],
-                datasets: [{
+                datasets: [
+                {
                     label: 'Fair Value',
                     data: [fairValue, Math.max(0, maxVal - fairValue)],
-                    backgroundColor: [color, '#f0f2f5'],
-                    borderColor: ['#fff'],
+                    backgroundColor: [verdictColor, '#f0f2f5'],
+                    borderColor: '#fff',
                     borderWidth: 2,
-                    cutout: '80%',
+                    // This creates the outer ring
+                    cutout: '80%', 
                 }, {
                     label: 'Current Price',
                     data: [currentPrice, Math.max(0, maxVal - currentPrice)],
                     backgroundColor: ['var(--jtw-primary-blue)', '#f0f2f5'],
-                    borderColor: ['#fff'],
+                    borderColor: '#fff',
                     borderWidth: 2,
-                    cutout: '60%',
+                    // This creates the inner ring, making it the same width as the outer one and adjacent
+                    cutout: '60%', 
                 }]
             },
             options: {
@@ -282,11 +287,31 @@
                     centerText: {
                         verdict: verdict,
                         percentageDiff: percentageDiff,
-                        color: color
+                        color: verdictColor
+                    },
+                    datalabels: {
+                        display: function(context) {
+                            return context.dataIndex === 0; // Display label only for the colored segment
+                        },
+                        formatter: (value, context) => {
+                            return context.chart.data.datasets[context.datasetIndex].label;
+                        },
+                        color: '#fff',
+                        backgroundColor: (context) => {
+                            return context.dataset.backgroundColor[0];
+                        },
+                        borderRadius: 4,
+                        padding: 6,
+                        font: {
+                            weight: 'bold',
+                            size: 14,
+                        },
+                        align: 'start',
+                        anchor: 'end',
+                        offset: 10,
                     }
                 }
             },
-            plugins: [centerTextPlugin]
         });
     }
 
