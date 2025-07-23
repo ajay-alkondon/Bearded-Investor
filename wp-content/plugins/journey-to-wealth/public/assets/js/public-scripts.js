@@ -184,15 +184,17 @@
                 $epsInput.val(isFinite(epsValue) ? parseFloat(epsValue).toFixed(2) : 0);
             }
 
-            // Update Growth Rate in calculator
+            // **FIX START**: Update Growth Rate in calculator
             const $growthInput = $('#jtw-sim-growth-rate');
             if ($growthInput.length) {
                 let newGrowthRate = 5.0; // Default fallback growth rate
+                // Recalculate growth rate from the current P/E and PEG values
                 if (isFinite(peValue) && isFinite(pegValue) && pegValue > 0) {
                     newGrowthRate = (peValue / pegValue);
                 }
                 $growthInput.val(parseFloat(newGrowthRate).toFixed(2));
             }
+            // **FIX END**
 
             // Re-run calculator with all updated values
             if ($calculator.length) {
@@ -461,7 +463,10 @@
                 scales: {
                     x: {
                         stacked: false,
-                        ticks: { autoSkip: true, maxRotation: 0, font: { size: 10 } }
+                        ticks: { autoSkip: true, maxRotation: 0, font: { size: 10 } },
+                        grid: {
+                            display: false
+                        }
                     },
                     y: {
                         stacked: false,
