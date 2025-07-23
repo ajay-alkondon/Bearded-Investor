@@ -361,40 +361,67 @@ class Journey_To_Wealth_Public {
             case 'key-metrics-ratios':
                 $overview = $company_data['overview'];
                 $quote = $company_data['quote'];
-                
+                $stock_price = !is_wp_error($quote) ? (float)($quote['05. price'] ?? 0) : 0;
+            
+                // Trailing P/E and related data
+                $trailing_pe_ratio = isset($overview['PERatio']) && $overview['PERatio'] !== 'None' ? (float)$overview['PERatio'] : 'N/A';
+                $trailing_eps = isset($overview['EPS']) && $overview['EPS'] !== 'None' ? (float)$overview['EPS'] : 'N/A';
+            
+                // Forward P/E and related data
+                $forward_pe_ratio = isset($overview['ForwardPE']) && $overview['ForwardPE'] !== 'None' ? (float)$overview['ForwardPE'] : 'N/A';
+                $forward_eps = 'N/A';
+                if (is_numeric($forward_pe_ratio) && $forward_pe_ratio > 0 && $stock_price > 0) {
+                    $forward_eps = $stock_price / $forward_pe_ratio;
+                }
+            
                 $key_metrics_data = [
-                    'peRatio'    => isset($overview['PERatio']) && $overview['PERatio'] !== 'None' ? (float)$overview['PERatio'] : 'N/A',
-                    'pbRatio'    => isset($overview['PriceToBookRatio']) && $overview['PriceToBookRatio'] !== 'None' ? (float)$overview['PriceToBookRatio'] : 'N/A',
-                    'psRatio'    => isset($overview['PriceToSalesRatioTTM']) && $overview['PriceToSalesRatioTTM'] !== 'None' ? (float)$overview['PriceToSalesRatioTTM'] : 'N/A',
-                    'evToRevenue' => isset($overview['EVToSales']) && $overview['EVToSales'] !== 'None' ? (float)$overview['EVToSales'] : 'N/A',
-                    'evToEbitda' => isset($overview['EVToEBITDA']) && $overview['EVToEBITDA'] !== 'None' ? (float)$overview['EVToEBITDA'] : 'N/A',
+                    'trailingPeRatio' => $trailing_pe_ratio,
+                    'forwardPeRatio'  => $forward_pe_ratio,
+                    'pbRatio'         => isset($overview['PriceToBookRatio']) && $overview['PriceToBookRatio'] !== 'None' ? (float)$overview['PriceToBookRatio'] : 'N/A',
+                    'psRatio'         => isset($overview['PriceToSalesRatioTTM']) && $overview['PriceToSalesRatioTTM'] !== 'None' ? (float)$overview['PriceToSalesRatioTTM'] : 'N/A',
+                    'evToRevenue'     => isset($overview['EVToRevenue']) && $overview['EVToRevenue'] !== 'None' ? (float)$overview['EVToRevenue'] : 'N/A',
+                    'evToEbitda'      => isset($overview['EVToEBITDA']) && $overview['EVToEBITDA'] !== 'None' ? (float)$overview['EVToEBITDA'] : 'N/A',
                 ];
-
-                $pe_ratio = isset($overview['PERatio']) && $overview['PERatio'] !== 'None' ? (float)$overview['PERatio'] : 0;
-                $peg_value = isset($overview['PEGRatio']) && $overview['PEGRatio'] !== 'None' ? (float)$overview['PEGRatio'] : 'N/A';
-                
+            
+                // PEG/PEGY Calculations
+                $peg_value_from_api = isset($overview['PEGRatio']) && $overview['PEGRatio'] !== 'None' ? (float)$overview['PEGRatio'] : 'N/A';
                 $growth_rate = 'N/A';
-                if (is_numeric($pe_ratio) && is_numeric($peg_value) && $peg_value > 0) {
-                    $growth_rate = ($pe_ratio / $peg_value);
+                if (is_numeric($trailing_pe_ratio) && is_numeric($peg_value_from_api) && $peg_value_from_api > 0) {
+                    $growth_rate = ($trailing_pe_ratio / $peg_value_from_api);
                 }
-
+                $final_growth_rate = is_numeric($growth_rate) ? $growth_rate : 5.0;
                 $dividend_yield_percent = isset($overview['DividendYield']) && is_numeric($overview['DividendYield']) ? (float)$overview['DividendYield'] * 100 : 0;
-
-                $pegy_value = 'N/A';
-                if (is_numeric($pe_ratio) && is_numeric($growth_rate) && ($growth_rate + $dividend_yield_percent) > 0) {
-                    $pegy_value = $pe_ratio / ($growth_rate + $dividend_yield_percent);
+            
+                // Trailing PEG/PEGY
+                $trailing_peg = 'N/A';
+                if (is_numeric($trailing_pe_ratio) && $trailing_pe_ratio > 0 && $final_growth_rate > 0) {
+                    $trailing_peg = $trailing_pe_ratio / $final_growth_rate;
                 }
-
+                $trailing_pegy = 'N/A';
+                if (is_numeric($trailing_pe_ratio) && ($final_growth_rate + $dividend_yield_percent) > 0) {
+                    $trailing_pegy = $trailing_pe_ratio / ($final_growth_rate + $dividend_yield_percent);
+                }
+            
+                // Forward PEG/PEGY
+                $forward_peg = 'N/A';
+                if (is_numeric($forward_pe_ratio) && $forward_pe_ratio > 0 && $final_growth_rate > 0) {
+                    $forward_peg = $forward_pe_ratio / $final_growth_rate;
+                }
+                $forward_pegy = 'N/A';
+                if (is_numeric($forward_pe_ratio) && ($final_growth_rate + $dividend_yield_percent) > 0) {
+                    $forward_pegy = $forward_pe_ratio / ($final_growth_rate + $dividend_yield_percent);
+                }
+            
                 $peg_pegy_data = [
-                    'peg' => $peg_value,
-                    'pegy' => $pegy_value,
-                    'defaultGrowth' => is_numeric($growth_rate) ? $growth_rate : 5,
+                    'trailing_peg' => $trailing_peg,
+                    'trailing_pegy' => $trailing_pegy,
+                    'forward_peg' => $forward_peg,
+                    'forward_pegy' => $forward_pegy,
+                    'defaultGrowth' => $final_growth_rate,
                     'dividendYield' => $dividend_yield_percent
                 ];
-                $stock_price = !is_wp_error($quote) ? (float)($quote['05. price'] ?? 0) : 0;
-                $eps = (float)($overview['EPS'] ?? 0);
-
-                $html = $this->build_key_metrics_ratios_section_html($key_metrics_data, $peg_pegy_data, $stock_price, $eps, $overview);
+            
+                $html = $this->build_key_metrics_ratios_section_html($key_metrics_data, $peg_pegy_data, $stock_price, $trailing_eps, $forward_eps, $overview);
                 break;
 
             case 'intrinsic-valuation':
@@ -910,7 +937,7 @@ class Journey_To_Wealth_Public {
         return $output;
     }
     
-    private function build_key_metrics_ratios_section_html($key_metrics_data, $peg_pegy_data, $stock_price, $eps, $overview) {
+    private function build_key_metrics_ratios_section_html($key_metrics_data, $peg_pegy_data, $stock_price, $trailing_eps, $forward_eps, $overview) {
         $output = '<div id="section-key-metrics-ratios-content" class="jtw-content-section">';
         $output .= '<h4>' . esc_html__('Key Metrics & Ratios', 'journey-to-wealth') . '</h4>';
         
@@ -919,48 +946,50 @@ class Journey_To_Wealth_Public {
         // Left side: Grid of metric boxes
         $output .= '<div class="jtw-metrics-grid">';
         
-        // Data for interactive chart
         $market_cap = (float)($overview['MarketCapitalization'] ?? 0);
-        $total_revenue = (float)($overview['RevenueTTM'] ?? 0);
-        $pe_ratio_val = (float)($overview['PERatio'] ?? 1);
-        $pb_ratio_val = (float)($overview['PriceToBookRatio'] ?? 1);
-        $net_income = $pe_ratio_val > 0 ? $market_cap / $pe_ratio_val : 0;
-        $book_value = $pb_ratio_val > 0 ? $market_cap / $pb_ratio_val : 0;
+        $trailing_earnings = (is_numeric($key_metrics_data['trailingPeRatio']) && $key_metrics_data['trailingPeRatio'] > 0) ? $market_cap / $key_metrics_data['trailingPeRatio'] : 0;
+        $forward_earnings = (is_numeric($key_metrics_data['forwardPeRatio']) && $key_metrics_data['forwardPeRatio'] > 0) ? $market_cap / $key_metrics_data['forwardPeRatio'] : 0;
         
         // P/E Ratio Box
-        $output .= $this->create_interactive_metric_card('P/E Ratio', $key_metrics_data['peRatio'], [
+        $output .= $this->create_interactive_metric_card('P/E Ratio', $key_metrics_data['trailingPeRatio'], [
+            'metric' => 'pe',
             'interactive-type' => 'donut',
             'numerator-label' => 'Earnings',
-            'numerator-value' => $net_income,
             'denominator-label' => 'Market Cap',
             'denominator-value' => $market_cap,
-            'ratio' => $key_metrics_data['peRatio']
+            'trailing-value' => $key_metrics_data['trailingPeRatio'],
+            'forward-value' => $key_metrics_data['forwardPeRatio'],
+            'trailing-numerator-value' => $trailing_earnings,
+            'forward-numerator-value' => $forward_earnings,
         ]);
         
         // P/S Ratio Box
         $output .= $this->create_interactive_metric_card('P/S Ratio', $key_metrics_data['psRatio'], [
             'interactive-type' => 'donut',
             'numerator-label' => 'Sales',
-            'numerator-value' => $total_revenue,
+            'numerator-value' => (float)($overview['RevenueTTM'] ?? 0),
             'denominator-label' => 'Market Cap',
             'denominator-value' => $market_cap,
-            'ratio' => $key_metrics_data['psRatio']
         ]);
 
         // P/B Ratio Box
         $output .= $this->create_interactive_metric_card('P/B Ratio', $key_metrics_data['pbRatio'], [
             'interactive-type' => 'donut',
             'numerator-label' => 'Book',
-            'numerator-value' => $book_value,
+            'numerator-value' => (is_numeric($key_metrics_data['pbRatio']) && $key_metrics_data['pbRatio'] > 0) ? $market_cap / $key_metrics_data['pbRatio'] : 0,
             'denominator-label' => 'Market Cap',
             'denominator-value' => $market_cap,
-            'ratio' => $key_metrics_data['pbRatio']
         ]);
         
         // PEG/PEGY Box
-        $peg_display_val = is_numeric($peg_pegy_data['peg']) ? number_format($peg_pegy_data['peg'], 1) . 'x' : 'N/A';
-        $pegy_display_val = is_numeric($peg_pegy_data['pegy']) ? number_format($peg_pegy_data['pegy'], 1) . 'x' : 'N/A';
-        $output .= '<div class="jtw-metric-card is-interactive" data-interactive-type="calculator"><h3 class="jtw-metric-title">PEG / PEGY Ratios</h3><p class="jtw-metric-value">' . $peg_display_val . ' / ' . $pegy_display_val . '</p></div>';
+        $peg_display = is_numeric($peg_pegy_data['trailing_peg']) ? number_format($peg_pegy_data['trailing_peg'], 1) . 'x' : 'N/A';
+        $pegy_display = is_numeric($peg_pegy_data['trailing_pegy']) ? number_format($peg_pegy_data['trailing_pegy'], 1) . 'x' : 'N/A';
+        $output .= '<div class="jtw-metric-card is-interactive" data-metric="peg-pegy" data-interactive-type="calculator" 
+            data-trailing-peg="' . esc_attr($peg_pegy_data['trailing_peg']) . '" data-trailing-pegy="' . esc_attr($peg_pegy_data['trailing_pegy']) . '" 
+            data-forward-peg="' . esc_attr($peg_pegy_data['forward_peg']) . '" data-forward-pegy="' . esc_attr($peg_pegy_data['forward_pegy']) . '">
+            <h3 class="jtw-metric-title">PEG / PEGY Ratios</h3>
+            <p class="jtw-metric-value">' . $peg_display . ' / ' . $pegy_display . '</p>
+        </div>';
 
         // Static Boxes
         $output .= $this->create_metric_card('EV/Revenue', $key_metrics_data['evToRevenue']);
@@ -970,16 +999,14 @@ class Journey_To_Wealth_Public {
         
         // Right side: Interactive Elements
         $output .= '<div class="jtw-interactive-element-container">';
-        // Donut Chart Container
         $output .= '<div class="jtw-interactive-donut-container">';
         $output .= '<canvas id="jtw-key-metrics-donut-chart"></canvas>';
         $output .= '<div class="jtw-donut-top-text"></div>';
         $output .= '<div class="jtw-donut-center-text"></div>';
         $output .= '</div>';
 
-        // PEG/PEGY Calculator Container (hidden by default)
         $output .= '<div class="jtw-peg-pegy-calculator-container" style="display: none;">';
-        if ($eps <= 0) {
+        if (!is_numeric($trailing_eps) || $trailing_eps <= 0) {
             $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('The company is not profitable yet.', 'journey-to-wealth') . '</strong></p></div>';
         } else {
             $growth_default = number_format((float)($peg_pegy_data['defaultGrowth'] ?? 5), 2, '.', '');
@@ -987,7 +1014,7 @@ class Journey_To_Wealth_Public {
             
             $output .= '<div class="jtw-metric-card jtw-interactive-card"><div class="jtw-peg-pegy-calculator"><div class="jtw-peg-pegy-inputs-grid">';
             $output .= '<div class="jtw-form-group"><label for="jtw-sim-stock-price">Stock Price ($):</label><input type="number" step="0.01" id="jtw-sim-stock-price" class="jtw-sim-input" value="' . esc_attr($stock_price) . '"></div>';
-            $output .= '<div class="jtw-form-group"><label for="jtw-sim-eps">Earnings per Share ($):</label><input type="number" step="0.01" id="jtw-sim-eps" class="jtw-sim-input" value="' . esc_attr($eps) . '"></div>';
+            $output .= '<div class="jtw-form-group"><label for="jtw-sim-eps">Earnings per Share ($):</label><input type="number" step="0.01" id="jtw-sim-eps" class="jtw-sim-input" value="' . esc_attr($trailing_eps) . '" data-trailing-eps="' . esc_attr($trailing_eps) . '" data-forward-eps="' . esc_attr($forward_eps) . '"></div>';
             $output .= '<div class="jtw-form-group"><label for="jtw-sim-growth-rate">Estimated Annual Earnings Growth (%):</label><input type="number" step="0.1" id="jtw-sim-growth-rate" class="jtw-sim-input" value="' . esc_attr($growth_default) . '"></div>';
             $output .= '<div class="jtw-form-group"><label for="jtw-sim-dividend-yield">Estimated Annual Dividend Yield (%):</label><input type="number" step="0.01" id="jtw-sim-dividend-yield" class="jtw-sim-input" value="' . esc_attr($dividend_yield_default) . '"></div>';
             $output .= '</div><div class="jtw-peg-pegy-results">';
@@ -996,6 +1023,15 @@ class Journey_To_Wealth_Public {
             $output .= '</div></div></div>';
         }
         $output .= '</div>'; // End jtw-peg-pegy-calculator-container
+        
+        // P/E Toggle Switch
+        if (is_numeric($key_metrics_data['forwardPeRatio'])) {
+            $output .= '<div class="jtw-pe-toggle-switch">';
+            $output .= '<span class="jtw-toggle-label">Trailing P/E</span>';
+            $output .= '<label class="jtw-switch"><input type="checkbox" id="jtw-pe-toggle"><span class="slider round"></span></label>';
+            $output .= '<span class="jtw-toggle-label">Forward P/E</span>';
+            $output .= '</div>';
+        }
         
         $output .= '</div>'; // End jtw-interactive-element-container
         $output .= '</div>'; // End jtw-key-metrics-wrapper
@@ -1039,38 +1075,60 @@ class Journey_To_Wealth_Public {
 
     private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details) {
         $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section">';
+    
+        // Create a header with the title and the "View Assumptions" button
+        $output .= '<div class="jtw-section-header">';
         $output .= '<h4>' . esc_html__('Fair Value Analysis', 'journey-to-wealth') . '</h4>';
     
+        // Check if there are any valid models to determine if the button should be shown
+        $has_valid_models = false;
+        foreach ($valuation_data as $result) {
+            if (!is_wp_error($result)) {
+                $has_valid_models = true;
+                break;
+            }
+        }
+    
+        if ($has_valid_models) {
+            $output .= '<button class="jtw-modal-trigger" data-modal-target="#jtw-assumptions-modal">' . esc_html__('View Assumptions', 'journey-to-wealth') . '</button>';
+        }
+        $output .= '</div>'; // End jtw-section-header
+    
+        // Display the valuation chart
         if ($valuation_summary['fair_value'] > 0) {
             $output .= '<div class="jtw-fair-value-container">';
-            // REMOVED the summary text block
-            
-            // This container now has the class and ID the JS is looking for.
             $output .= '<div id="jtw-valuation-chart-container" class="jtw-valuation-chart-container" ';
             $output .= 'data-current-price="' . esc_attr($valuation_summary['current_price']) . '" ';
             $output .= 'data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '" ';
             $output .= 'data-percentage-diff="' . esc_attr($valuation_summary['percentage_diff']) . '">';
             $output .= '<canvas id="jtw-valuation-chart"></canvas>';
             $output .= '</div>';
-
             $output .= '</div>'; // End jtw-fair-value-container
         } else {
             $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('Not enough data to calculate an average fair value.', 'journey-to-wealth') . '</strong></p></div>';
         }
     
-        $output .= '<div class="jtw-valuation-summary-box-container">';
-        foreach ($valuation_data as $model_name => $result) {
-            if (is_wp_error($result)) {
-                $output .= '<div class="jtw-valuation-summary-box"><span class="jtw-summary-model-name">' . esc_html($model_name) . '</span><span class="jtw-summary-fair-value">Error</span><span class="jtw-summary-error-message">' . esc_html($result->get_error_message()) . '</span></div>';
-                continue;
-            }
-            $modal_id = 'modal-' . sanitize_key($model_name);
-            $output .= '<div class="jtw-valuation-summary-box"><span class="jtw-summary-model-name">' . esc_html($model_name) . '</span><span class="jtw-summary-fair-value">$' . esc_html($result['intrinsic_value_per_share']) . '</span><button class="jtw-modal-trigger" data-modal-target="#' . $modal_id . '">' . esc_html__('View Assumptions', 'journey-to-wealth') . '</button></div>';
+        // Create a single modal for all model assumptions
+        if ($has_valid_models) {
+            $modal_id = 'jtw-assumptions-modal';
             $output .= '<div id="' . $modal_id . '" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>';
-            $output .= $this->build_valuation_assumptions_modal_html($result, $details);
+            
+            // Loop through and build content for the single modal
+            foreach ($valuation_data as $model_name => $result) {
+                if (is_wp_error($result)) {
+                    $output .= '<h4>' . esc_html($model_name) . '</h4>';
+                    $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('Error:', 'journey-to-wealth') . '</strong> ' . esc_html($result->get_error_message()) . '</p></div>';
+                } else {
+                    $output .= $this->build_valuation_assumptions_modal_html($result, $details);
+                }
+            }
+    
             $output .= '</div></div>';
         }
-        $output .= '</div><div class="jtw-modal-overlay"></div></div>';
+    
+        // Add the overlay for the modal functionality
+        $output .= '<div class="jtw-modal-overlay"></div>';
+        $output .= '</div>'; // End #section-intrinsic-valuation-content
         return $output;
     }
 

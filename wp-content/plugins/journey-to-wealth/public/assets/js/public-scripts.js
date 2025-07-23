@@ -17,18 +17,13 @@
     'use strict';
 
     // Register Chart.js plugins globally and only once.
-    // This resolves the '_labels' error by ensuring plugins are ready.
     if (window.ChartDataLabels) {
         Chart.register(ChartDataLabels);
-        // Disable the plugin globally, we will enable it per-chart as needed.
         Chart.defaults.plugins.datalabels.display = false;
     }
 
     function getLocalizedText(key, fallbackText) {
-        if (typeof jtw_public_params !== 'undefined' && jtw_public_params[key]) {
-            return jtw_public_params[key];
-        }
-        return fallbackText;
+        return (typeof jtw_public_params !== 'undefined' && jtw_public_params[key]) ? jtw_public_params[key] : fallbackText;
     }
     
     function debounce(func, delay) {
@@ -57,22 +52,24 @@
         const $calculatorWrapper = $container.find('.jtw-peg-pegy-calculator-container');
         const $donutWrapper = $container.find('.jtw-interactive-donut-container');
         const $interactiveCards = $container.find('.is-interactive');
+        const $peToggle = $container.find('#jtw-pe-toggle');
 
         // --- PEG/PEGY Calculator Logic ---
         const $calculator = $container.find('.jtw-peg-pegy-calculator');
+        let updateRatios = () => {}; // Define in outer scope to be accessible by toggle handler
+
         if ($calculator.length) {
             const $stockPriceInput = $('#jtw-sim-stock-price');
             const $epsInput = $('#jtw-sim-eps');
             const $growthInput = $('#jtw-sim-growth-rate');
             const $dividendInput = $('#jtw-sim-dividend-yield');
-            
             const $pegValueEl = $('#jtw-peg-value');
             const $pegyValueEl = $('#jtw-pegy-value');
-            
             const $pegBar = $('#jtw-peg-bar');
             const $pegyBar = $('#jtw-pegy-bar');
         
-            function updateRatios() {
+            // Assign the actual function logic now that elements are found
+            updateRatios = function() {
                 const stockPrice = parseFloat($stockPriceInput.val());
                 const eps = parseFloat($epsInput.val());
                 const growthRate = parseFloat($growthInput.val());
@@ -89,33 +86,21 @@
                         $bar.css('width', '0%').removeClass('good fair poor');
                         return;
                     }
-
                     $valueEl.text(value.toFixed(2) + 'x');
-                    
                     const max_val = 2.0;
                     const width_percent = Math.min((Math.abs(value) / max_val) * 100, 100);
-                    $bar.css('width', width_percent + '%');
-
-                    $bar.removeClass('good fair poor');
-                    if (value < 1.0 && value >= 0) {
-                        $bar.addClass('good');
-                    } else if (value >= 1.0 && value <= 1.2) {
-                        $bar.addClass('fair');
-                    } else {
-                        $bar.addClass('poor');
-                    }
+                    $bar.css('width', width_percent + '%').removeClass('good fair poor');
+                    if (value < 1.0 && value >= 0) $bar.addClass('good');
+                    else if (value >= 1.0 && value <= 1.2) $bar.addClass('fair');
+                    else $bar.addClass('poor');
                 }
 
                 let peg = NaN;
-                if (!isNaN(pe) && growthRate > 0) {
-                    peg = pe / growthRate;
-                }
+                if (!isNaN(pe) && growthRate > 0) peg = pe / growthRate;
                 updateBar($pegBar, $pegValueEl, peg);
         
                 let pegy = NaN;
-                if (!isNaN(pe) && (growthRate + dividendYield) > 0) {
-                    pegy = pe / (growthRate + dividendYield);
-                }
+                if (!isNaN(pe) && (growthRate + dividendYield) > 0) pegy = pe / (growthRate + dividendYield);
                 updateBar($pegyBar, $pegyValueEl, pegy);
             }
         
@@ -125,8 +110,6 @@
         
         // --- Donut Chart Logic ---
         const $donutCards = $interactiveCards.filter('[data-interactive-type="donut"]');
-        if (!$donutCards.length) return;
-
         const ctx = document.getElementById('jtw-key-metrics-donut-chart');
         if (!ctx) return;
         
@@ -135,50 +118,85 @@
 
         const donutChart = new Chart(ctx, {
             type: 'doughnut',
-            data: {
-                labels: [],
-                datasets: [{
-                    data: [],
-                    backgroundColor: ['#007aff', '#dee2e6'],
-                    borderWidth: 0,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false }
-                }
-            }
+            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#007aff', '#dee2e6'], borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
         });
 
         function updateDonutChart($card) {
+            const isForward = $peToggle.is(':checked');
             const data = $card.data();
+            let numeratorValue = data.numeratorValue;
+
+            if (data.metric === 'pe') {
+                numeratorValue = isForward ? data.forwardNumeratorValue : data.trailingNumeratorValue;
+            }
             
             donutChart.data.labels = [data.numeratorLabel, data.denominatorLabel];
-            donutChart.data.datasets[0].data = [data.numeratorValue, data.denominatorValue];
+            donutChart.data.datasets[0].data = [numeratorValue, data.denominatorValue];
             donutChart.update();
 
-            $topText.html(`<div class="numerator-label">${data.numeratorLabel}</div><div class="numerator-value">US$${formatLargeNumber(data.numeratorValue)}</div>`);
+            $topText.html(`<div class="numerator-label">${data.numeratorLabel}</div><div class="numerator-value">US$${formatLargeNumber(numeratorValue)}</div>`);
             $centerText.html(`<div class="denominator-label">${data.denominatorLabel}</div><div class="denominator-value">US$${formatLargeNumber(data.denominatorValue)}</div>`);
         }
 
         $interactiveCards.on('click', function() {
             const $card = $(this);
-            const type = $card.data('interactive-type');
-
             $interactiveCards.removeClass('active');
             $card.addClass('active');
 
-            if (type === 'donut') {
+            if ($card.data('interactive-type') === 'donut') {
                 $calculatorWrapper.hide();
                 $donutWrapper.show();
                 updateDonutChart($card);
-            } else if (type === 'calculator') {
+            } else if ($card.data('interactive-type') === 'calculator') {
                 $donutWrapper.hide();
                 $calculatorWrapper.show();
+            }
+        });
+
+        // --- P/E Toggle Logic ---
+        $peToggle.on('change', function() {
+            const isForward = $(this).is(':checked');
+            const type = isForward ? 'forward' : 'trailing';
+
+            // Update P/E card
+            const $peCard = $container.find('[data-metric="pe"]');
+            const peValue = $peCard.data(`${type}-value`);
+            $peCard.find('.jtw-metric-value').text(isFinite(peValue) ? `${parseFloat(peValue).toFixed(1)}x` : 'N/A');
+
+            // Update PEG/PEGY card
+            const $pegCard = $container.find('[data-metric="peg-pegy"]');
+            const pegValue = $pegCard.data(`${type}-peg`);
+            const pegyValue = $pegCard.data(`${type}-pegy`);
+            const pegDisplay = isFinite(pegValue) ? `${parseFloat(pegValue).toFixed(1)}x` : 'N/A';
+            const pegyDisplay = isFinite(pegyValue) ? `${parseFloat(pegyValue).toFixed(1)}x` : 'N/A';
+            $pegCard.find('.jtw-metric-value').text(`${pegDisplay} / ${pegyDisplay}`);
+            
+            // Update active donut chart if it's the P/E one
+            if ($peCard.hasClass('active')) {
+                updateDonutChart($peCard);
+            }
+
+            // Update EPS in calculator
+            const $epsInput = $('#jtw-sim-eps');
+            if ($epsInput.length) {
+                const epsValue = $epsInput.data(`${type}-eps`);
+                $epsInput.val(isFinite(epsValue) ? parseFloat(epsValue).toFixed(2) : 0);
+            }
+
+            // Update Growth Rate in calculator
+            const $growthInput = $('#jtw-sim-growth-rate');
+            if ($growthInput.length) {
+                let newGrowthRate = 5.0; // Default fallback growth rate
+                if (isFinite(peValue) && isFinite(pegValue) && pegValue > 0) {
+                    newGrowthRate = (peValue / pegValue);
+                }
+                $growthInput.val(parseFloat(newGrowthRate).toFixed(2));
+            }
+
+            // Re-run calculator with all updated values
+            if ($calculator.length) {
+                updateRatios();
             }
         });
 
@@ -188,34 +206,22 @@
         }
     }
 
-    /**
-     * Initializes the Fair Value Analysis chart.
-     * This version uses two datasets with spacing to create an inner and outer ring.
-     * @param {jQuery} $container The container element for the valuation section.
-     */
     function initializeValuationChart($container) {
         if (window.jtwFairValueChart instanceof Chart) {
             window.jtwFairValueChart.destroy();
         }
     
         const $chartContainer = $container.find('#jtw-valuation-chart-container');
-        if (!$chartContainer.length) {
-            console.error("Valuation chart container not found.");
-            return;
-        }
+        if (!$chartContainer.length) return;
     
         const canvas = $container.find('#jtw-valuation-chart')[0];
-        if (!canvas) {
-            console.error("Valuation chart canvas element not found.");
-            return;
-        }
+        if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
         const currentPrice = parseFloat($chartContainer.data('current-price'));
         const fairValue = parseFloat($chartContainer.data('fair-value'));
         
         if (isNaN(currentPrice) || isNaN(fairValue) || fairValue <= 0) {
-            console.error("Invalid current price or fair value data for chart.");
             $chartContainer.html('<p>Valuation data not available.</p>');
             return;
         }
@@ -223,14 +229,14 @@
         const discountPercent = ((fairValue - currentPrice) / currentPrice) * 100;
 
         let verdict = 'Fairly Valued';
-        let verdictColor = '#d97706'; // Neutral Yellow
+        let verdictColor = '#d97706';
         
         if (discountPercent > 15) {
             verdict = 'Undervalued';
-            verdictColor = '#16a34a'; // Positive Green
+            verdictColor = '#16a34a';
         } else if (discountPercent < -15) {
             verdict = 'Overvalued';
-            verdictColor = '#dc2626'; // Negative Red
+            verdictColor = '#dc2626';
         }
     
         const centerTextPlugin = {
@@ -238,26 +244,21 @@
             afterDraw: (chart) => {
                 const config = chart.options.plugins.centerText;
                 if (!config) return;
-                const ctx = chart.ctx;
                 const { top, left, width, height } = chart.chartArea;
                 const x = left + width / 2;
                 const y = top + height / 2;
-    
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                
                 ctx.font = 'bold 1.75rem sans-serif';
                 ctx.fillStyle = config.color;
                 ctx.fillText(config.verdict, x, y - 30);
-    
                 ctx.font = 'bold 1.25rem sans-serif';
                 ctx.fillStyle = "#333";
                 ctx.fillText('Fair Value:', x, y + 10);
                 ctx.font = 'bold 1.75rem sans-serif';
                 ctx.fillStyle = config.color;
                 ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + 40);
-
                 ctx.restore();
             }
         };
@@ -269,17 +270,16 @@
             id: 'differenceArcPlugin',
             afterDraw: (chart) => {
                 const { ctx, chartArea } = chart;
-                const { top, left, width, height } = chartArea;
+                const { top, left, width, height } = chart.chartArea;
                 if (width <= 0) return;
     
-                const innerMeta = chart.getDatasetMeta(0);
-                const outerMeta = chart.getDatasetMeta(1);
+                const innerMeta = chart.getDatasetMeta(1);
+                const outerMeta = chart.getDatasetMeta(0);
                 if (!innerMeta.data.length || !outerMeta.data.length) return;
     
-                const arcRadius = outerMeta.data[0].outerRadius + 70;
-    
-                const startAngle = innerMeta.data[0].endAngle;
-                const endAngle = outerMeta.data[0].endAngle;
+                const arcRadius = outerMeta.data[0].outerRadius + 15;
+                const startAngle = outerMeta.data[0].endAngle;
+                const endAngle = innerMeta.data[0].endAngle;
                 
                 ctx.save();
                 ctx.strokeStyle = '#333';
@@ -305,51 +305,30 @@
                 drawCap(endAngle);
                 ctx.stroke();
 
-                // --- NEW: Draw curved text ---
-                const text = Math.abs(discountPercent).toFixed(1) + '% ' + verdict;
-                const textRadius = arcRadius + 15; // Position text just inside the arc
+                const text = Math.abs(discountPercent).toFixed(1) + '% ' + (discountPercent > 0 ? 'Discount' : 'Premium');
+                const textRadius = arcRadius + 15;
                 const midAngle = (startAngle - endAngle) / 2;
                 drawArcText(ctx, text, left + width / 2, top + height / 2, textRadius, midAngle);
-
                 ctx.restore();
             }
         };
 
-        /**
-         * Helper function to draw text along a curve.
-         * @param {CanvasRenderingContext2D} ctx The canvas context.
-         * @param {string} str The string to draw.
-         * @param {number} centerX The center X coordinate of the arc.
-         * @param {number} centerY The center Y coordinate of the arc.
-         * @param {number} radius The radius of the arc for the text.
-         * @param {number} angle The middle angle to center the text on.
-         */
         function drawArcText(ctx, str, centerX, centerY, radius, angle) {
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.font = '16px sans-serif';
             ctx.fillStyle = '#333';
             ctx.textAlign = 'center';
-
-            // Calculate the total angular width of the text
             const textWidth = ctx.measureText(str).width;
             const angularWidth = textWidth / radius;
-            
-            // Start drawing from an angle that centers the text on the provided mid-angle
             let currentAngle = angle - angularWidth / 2;
-
             for (let i = 0; i < str.length; i++) {
                 const char = str[i];
                 const charWidth = ctx.measureText(char).width;
-                
-                // Angle for this character is its start angle plus half its angular width
                 const charAngle = currentAngle + (charWidth / 2) / radius;
-
                 ctx.rotate(charAngle);
                 ctx.fillText(char, 0, -radius);
                 ctx.rotate(-charAngle);
-
-                // Move to the next character's start angle
                 currentAngle += (charWidth / radius);
             }
             ctx.restore();
@@ -358,15 +337,13 @@
         window.jtwFairValueChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                datasets: [
-                {
+                datasets: [{
                     label: currentPrice < fairValue ? 'Current Price' : 'Fair Value',
                     data: [smallerValue, largerValue - smallerValue],
                     backgroundColor: ['#212529', 'transparent'],
                     borderColor: '#fff',
                     borderWidth: 0,
-                },
-                {
+                }, {
                     label: currentPrice > fairValue ? 'Current Price' : 'Fair Value',
                     data: [largerValue, 0],
                     backgroundColor: [verdictColor, 'transparent'],                    
@@ -377,27 +354,17 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '60%', // Thicker rings
-                spacing: 0.5,    // Creates the space between the inner and outer rings
-                layout: {
-                    padding: 45 // Adds space around the chart for the outer arc
-                },
-                animation: {
-                    animateScale: true,
-                    animateRotate: true
-                },
+                cutout: '60%',
+                spacing: 0.5,
+                layout: { padding: 45 },
+                animation: { animateScale: true, animateRotate: true },
                 plugins: {
                     legend: { display: false },
                     tooltip: { enabled: false },
-                    centerText: {
-                        verdict: verdict,
-                        discountPercent: discountPercent,
-                        color: verdictColor
-                    },
+                    centerText: { verdict: verdict, discountPercent: discountPercent, color: verdictColor },
                     datalabels: {
                         display: true,
                         formatter: (value, context) => {
-                           // Hide labels for transparent parts of the rings
                            if (context.dataIndex === 1) return null;
                            return `${context.dataset.label}: $${value.toFixed(2)}`;
                         },
@@ -596,10 +563,6 @@
         });
     }
 
-    function initializeOverviewChart($container) {
-        // This function is now empty as the chart was removed from the overview section.
-    }
-
     function initializeHistoricalDataSection($container) {
         const $dataScript = $container.find('#jtw-historical-data-json');
         if (!$dataScript.length) return;
@@ -631,17 +594,10 @@
         const yAxisAlignPlugin = {
             id: 'yAxisAlignPlugin',
             afterLayout: (chart) => {
-                if (chart.myAlignPluginHasRun) {
-                    return;
-                }
-                console.log("Running yAxisAlignPlugin...");
-
+                if (chart.myAlignPluginHasRun) return;
                 const firstColumnWidth = $table.find('thead th:first-child').outerWidth();
                 const yAxisWidth = chart.scales.yPrice.width;
                 const requiredPadding = firstColumnWidth - yAxisWidth;
-
-                console.log(`Table First Column Width: ${firstColumnWidth}, Y-Axis Width: ${yAxisWidth}, Required Padding: ${requiredPadding}`);
-
                 if (requiredPadding > 0) {
                     chart.options.layout.padding.left = requiredPadding;
                     chart.myAlignPluginHasRun = true;
@@ -654,15 +610,11 @@
             id: 'verticalStripes',
             beforeDraw(chart, args, options) {
                 const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
-                
                 if (x.ticks.length < 2) return;
-
                 const bandWidth = x.getPixelForTick(1) - x.getPixelForTick(0);
-
                 for (let i = 0; i < x.ticks.length; i++) {
-                    if (i % 2 !== 0) { // Stripe the 2nd, 4th, 6th... columns (index 1, 3, 5...)
+                    if (i % 2 !== 0) {
                         const xStart = x.getPixelForTick(i) - (bandWidth / 2);
-                        
                         ctx.save();
                         ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
                         ctx.fillRect(xStart, top, bandWidth, bottom - top);
@@ -676,86 +628,53 @@
             type: 'bar',
             data: {
                 labels: labels,
-                datasets: [
-                    {
-                        type: 'bar',
-                        label: 'Price Range (High-Low)',
-                        data: historicalData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]),
-                        backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                        borderColor: 'rgba(0, 122, 255, 0.5)',
-                        borderWidth: 1,
-                        barPercentage: 0.5,
-                        categoryPercentage: 0.7,
-                        borderSkipped: false
-                    },
-                    {
-                        type: 'line',
-                        label: 'Average Price',
-                        data: historicalData.map(d => d.avg_price),
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        backgroundColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        tension: 0.1
-                    }
-                ]
+                datasets: [{
+                    type: 'bar',
+                    label: 'Price Range (High-Low)',
+                    data: historicalData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]),
+                    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+                    borderColor: 'rgba(0, 122, 255, 0.5)',
+                    borderWidth: 1,
+                    barPercentage: 0.5,
+                    categoryPercentage: 0.7,
+                    borderSkipped: false
+                }, {
+                    type: 'line',
+                    label: 'Average Price',
+                    data: historicalData.map(d => d.avg_price),
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.1
+                }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                layout: {
-                    padding: {
-                        left: 120, // Initial estimate, will be updated by plugin
-                        right: 0 // Set right padding to 0 to align with table
-                    }
-                },
+                interaction: { mode: 'index', intersect: false },
+                layout: { padding: { left: 120, right: 0 } },
                 scales: {
                     x: {
-                        ticks: {
-                            display: false 
-                        },
-                        grid: {
-                            display: true,
-                            drawOnChartArea: true,
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            offset: true // This will center the grid lines in the middle of the bars
-                        },
+                        ticks: { display: false },
+                        grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)', offset: true },
                         offset: true
                     },
                     yPrice: {
                         type: 'logarithmic',
                         position: 'left',
-                        grid: {
-                            display: true,
-                            drawOnChartArea: true,
-                            color: 'rgba(0, 0, 0, 0.05)',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Price (Log Scale)'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + formatLargeNumber(value, 0);
-                            }
-                        }
+                        grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)' },
+                        title: { display: true, text: 'Price (Log Scale)' },
+                        ticks: { callback: function(value) { return '$' + formatLargeNumber(value, 0); } }
                     }
                 },
                 plugins: {
-                    legend: {
-                        position: 'top'
-                    },
+                    legend: { position: 'top' },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
+                                if (label) label += ': ';
                                 if (context.dataset.type === 'bar' && Array.isArray(context.raw)) {
                                      label += '$' .concat(formatLargeNumber(context.raw[0]), ' - $', formatLargeNumber(context.raw[1]));
                                 } else if (context.parsed.y !== null) {
@@ -767,7 +686,7 @@
                     }
                 }
             },
-            plugins: [yAxisAlignPlugin, verticalStripesPlugin] // Correctly register the custom plugins
+            plugins: [yAxisAlignPlugin, verticalStripesPlugin]
         });
     }
 
@@ -785,9 +704,7 @@
             const targetId = $(this).attr('href');
             const $targetSection = $(targetId);
             if ($targetSection.length) {
-                $('html, body').animate({
-                    scrollTop: $targetSection.offset().top - offsetTop
-                }, 500);
+                $('html, body').animate({ scrollTop: $targetSection.offset().top - offsetTop }, 500);
             }
         });
 
@@ -826,15 +743,12 @@
             let searchRequest;
 
             function redirectToAnalysisPage(ticker) {
-                const analysisPageUrl = jtw_public_params.analysis_page_url || '/';
-                window.location.href = analysisPageUrl + '?jtw_selected_symbol=' + ticker;
+                window.location.href = jtw_public_params.analysis_page_url + '?jtw_selected_symbol=' + ticker;
             }
             
             $button.on('click', function() {
                 const ticker = $input.val().toUpperCase().trim();
-                if (ticker) {
-                    redirectToAnalysisPage(ticker);
-                }
+                if (ticker) redirectToAnalysisPage(ticker);
             });
 
             $input.on('keypress', function(e) {
@@ -846,52 +760,26 @@
 
             $input.on('keyup', debounce(function(event) {
                 if (event.key === "Enter") return;
-
                 const keywords = $input.val().trim();
                 if (keywords.length < 1) {
                     $resultsContainer.empty().hide();
                     return;
                 }
-
                 $resultsContainer.html('<div class="jtw-search-loading">' + getLocalizedText('text_searching', 'Searching...') + '</div>').show();
-
-                if (searchRequest) {
-                    searchRequest.abort();
-                }
-
+                if (searchRequest) searchRequest.abort();
                 searchRequest = $.ajax({
                     url: jtw_public_params.ajax_url,
                     type: 'POST',
-                    data: {
-                        action: 'jtw_symbol_search',
-                        jtw_symbol_search_nonce: jtw_public_params.symbol_search_nonce,
-                        keywords: keywords
-                    },
+                    data: { action: 'jtw_symbol_search', jtw_symbol_search_nonce: jtw_public_params.symbol_search_nonce, keywords: keywords },
                     dataType: 'json',
                     success: function(response) {
                         $resultsContainer.empty(); 
                         if (response.success && response.data.matches && response.data.matches.length > 0) {
                             const $ul = $('<ul>').addClass('jtw-symbol-results-list');
                             response.data.matches.forEach(function(match) {
-                                
-                                let flagHtml = '';
-                                if (match.locale && match.locale.toLowerCase() !== 'us') {
-                                    flagHtml = `<img class="jtw-result-flag" src="https://flagcdn.com/w20/${match.locale.toLowerCase()}.png" alt="${match.locale.toUpperCase()} flag">`;
-                                }
-
+                                let flagHtml = (match.locale && match.locale.toLowerCase() !== 'us') ? `<img class="jtw-result-flag" src="https://flagcdn.com/w20/${match.locale.toLowerCase()}.png" alt="${match.locale.toUpperCase()} flag">` : '';
                                 const $li = $('<li>').addClass('jtw-header-result-item').attr('data-symbol', match.ticker);
-
-                                const itemHtml = `
-                                    <div class="jtw-result-details">
-                                        <div class="jtw-result-name">${match.name}</div>
-                                        <div class="jtw-result-meta">
-                                            ${flagHtml}
-                                            <span class="jtw-result-exchange">${match.exchange}:${match.ticker}</span>
-                                        </div>
-                                    </div>
-                                `;
-
-                                $li.html(itemHtml);
+                                $li.html(`<div class="jtw-result-details"><div class="jtw-result-name">${match.name}</div><div class="jtw-result-meta">${flagHtml}<span class="jtw-result-exchange">${match.exchange}:${match.ticker}</span></div></div>`);
                                 $ul.append($li);
                             });
                             $resultsContainer.append($ul).show();
@@ -923,79 +811,48 @@
         const $container = $('.jtw-analyzer-wrapper').first();
         if (!$container.length) return;
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const ticker = urlParams.get('jtw_selected_symbol');
-
+        const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
         if (!ticker) return;
 
         setupSWSLayoutInteractivity($container);
-
-        const placeholders = document.querySelectorAll('.jtw-content-section-placeholder');
 
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const $placeholder = $(entry.target);
                     const section = $placeholder.data('section');
-                    
                     if ($placeholder.data('loaded')) {
                         observer.unobserve(entry.target);
                         return;
                     }
-
-                    $placeholder.data('loaded', true);
-                    $placeholder.html('<div class="jtw-loading-spinner"></div>');
-
+                    $placeholder.data('loaded', true).html('<div class="jtw-loading-spinner"></div>');
                     $.ajax({
                         url: jtw_public_params.ajax_url,
                         type: 'POST',
-                        data: {
-                            action: 'jtw_fetch_section_data',
-                            nonce: jtw_public_params.section_nonce,
-                            ticker: ticker.toUpperCase(),
-                            section: section
-                        },
+                        data: { action: 'jtw_fetch_section_data', nonce: jtw_public_params.section_nonce, ticker: ticker.toUpperCase(), section: section },
                         dataType: 'json',
                         success: function(response) {
                             if (response.success && response.data) {
-                                if (response.data.currency_notice) {
-                                    $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
-                                }
-
-                                if (response.data.html) {
-                                    $placeholder.html(response.data.html);
-                                }
-                                
-                                if (section === 'overview') {
-                                    // No chart to initialize here
-                                } else if (section === 'historical-data') {
-                                    initializeHistoricalDataSection($placeholder);
-                                } else if (section === 'past-performance') {
-                                    initializeHistoricalCharts($placeholder);
-                                } else if (section === 'intrinsic-valuation') {
-                                    initializeValuationChart($placeholder);
-                                } else if (section === 'key-metrics-ratios') {
-                                    initializeKeyMetricsRatiosSection($placeholder);
-                                }
+                                if (response.data.currency_notice) $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
+                                if (response.data.html) $placeholder.html(response.data.html);
+                                if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
+                                else if (section === 'past-performance') initializeHistoricalCharts($placeholder);
+                                else if (section === 'intrinsic-valuation') initializeValuationChart($placeholder);
+                                else if (section === 'key-metrics-ratios') initializeKeyMetricsRatiosSection($placeholder);
                             } else {
-                                const errorMessage = response.data.message || getLocalizedText('text_error');
-                                $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + errorMessage + '</p></div>');
+                                $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data.message || getLocalizedText('text_error')) + '</p></div>');
                             }
                         },
                         error: function(jqXHR) {
-                            let serverError = jqXHR.responseText || getLocalizedText('text_error');
-                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>AJAX request failed. Server responded: <br><small><code>' + serverError + '</code></small></p></div>');
+                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>AJAX request failed. Server responded: <br><small><code>' + (jqXHR.responseText || getLocalizedText('text_error')) + '</code></small></p></div>');
                         }
                     });
-
                     observer.unobserve(entry.target);
                 }
             });
         }, { rootMargin: "200px" });
 
-        placeholders.forEach(placeholder => {
-            observer.observe(placeholder);
-        });
+        document.querySelectorAll('.jtw-content-section-placeholder').forEach(p => observer.observe(p));
     }
 
     $(document).ready(function() {
@@ -1016,21 +873,16 @@
 
         $('body').on('click', '.jtw-modal-close, .jtw-modal-overlay', closeModal);
 
-        // **MODIFIED**: Updated "read more" logic for new inline structure
         $('body').on('click', '.jtw-read-more', function(e) {
             e.preventDefault();
             const $this = $(this);
             const $moreText = $this.siblings('.jtw-description-more');
             const $shortText = $this.siblings('.jtw-description-content');
-            
             $moreText.toggle();
-            
             if ($moreText.is(':visible')) {
-                // When showing more, hide the ellipsis from the short text
                 $shortText.html($shortText.html().replace('...', ''));
                 $this.text($this.data('less-text'));
             } else {
-                // When showing less, add the ellipsis back
                 $shortText.html($shortText.html() + '...');
                 $this.text($this.data('more-text'));
             }
