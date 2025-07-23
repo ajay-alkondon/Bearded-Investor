@@ -1043,12 +1043,9 @@ class Journey_To_Wealth_Public {
     
         if ($valuation_summary['fair_value'] > 0) {
             $output .= '<div class="jtw-fair-value-container">';
-            $output .= '<div class="jtw-fair-value-summary">';
-            $output .= '<p>Current Price: <strong>$' . esc_html(number_format($valuation_summary['current_price'], 2)) . '</strong></p>';
-            $output .= '<p>Estimated Fair Value: <strong>$' . esc_html(number_format($valuation_summary['fair_value'], 2)) . '</strong></p>';
-            $output .= '</div>';
+            // REMOVED the summary text block
             
-            // CORRECTED: This container now has the class and ID the JS is looking for.
+            // This container now has the class and ID the JS is looking for.
             $output .= '<div id="jtw-valuation-chart-container" class="jtw-valuation-chart-container" ';
             $output .= 'data-current-price="' . esc_attr($valuation_summary['current_price']) . '" ';
             $output .= 'data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '" ';

@@ -17,9 +17,11 @@
     'use strict';
 
     // Register Chart.js plugins globally and only once.
-    // This resolves the '_labels' error.
+    // This resolves the '_labels' error by ensuring plugins are ready.
     if (window.ChartDataLabels) {
         Chart.register(ChartDataLabels);
+        // Disable the plugin globally, we will enable it per-chart as needed.
+        Chart.defaults.plugins.datalabels.display = false;
     }
 
     function getLocalizedText(key, fallbackText) {
@@ -187,20 +189,21 @@
     }
 
     /**
-     * Initializes the Fair Value Analysis nested donut chart.
+     * Initializes the Fair Value Analysis chart.
+     * This version uses two datasets with spacing to create an inner and outer ring.
      * @param {jQuery} $container The container element for the valuation section.
      */
     function initializeValuationChart($container) {
         if (window.jtwFairValueChart instanceof Chart) {
             window.jtwFairValueChart.destroy();
         }
-
+    
         const $chartContainer = $container.find('#jtw-valuation-chart-container');
         if (!$chartContainer.length) {
             console.error("Valuation chart container not found.");
             return;
         }
-
+    
         const canvas = $container.find('#jtw-valuation-chart')[0];
         if (!canvas) {
             console.error("Valuation chart canvas element not found.");
@@ -210,74 +213,172 @@
         const ctx = canvas.getContext('2d');
         const currentPrice = parseFloat($chartContainer.data('current-price'));
         const fairValue = parseFloat($chartContainer.data('fair-value'));
-        const percentageDiff = parseFloat($chartContainer.data('percentage-diff'));
         
-        if (isNaN(currentPrice) || isNaN(fairValue)) {
+        if (isNaN(currentPrice) || isNaN(fairValue) || fairValue <= 0) {
             console.error("Invalid current price or fair value data for chart.");
+            $chartContainer.html('<p>Valuation data not available.</p>');
             return;
         }
         
-        let verdict = 'Fairly Valued';
-        let verdictColor = 'var(--jtw-yellow-neutral)';
-        if (percentageDiff > 20) {
-            verdict = 'Undervalued';
-            verdictColor = 'var(--jtw-green-positive)';
-        } else if (percentageDiff < -20) {
-            verdict = 'Overvalued';
-            verdictColor = 'var(--jtw-red-negative)';
-        }
+        const discountPercent = ((fairValue - currentPrice) / currentPrice) * 100;
 
+        let verdict = 'Fairly Valued';
+        let verdictColor = '#d97706'; // Neutral Yellow
+        
+        if (discountPercent < -15) {
+            verdict = 'Undervalued';
+            verdictColor = '#16a34a'; // Positive Green
+        } else if (discountPercent > 15) {
+            verdict = 'Overvalued';
+            verdictColor = '#dc2626'; // Negative Red
+        }
+    
         const centerTextPlugin = {
             id: 'centerText',
             afterDraw: (chart) => {
                 const config = chart.options.plugins.centerText;
+                if (!config) return;
                 const ctx = chart.ctx;
                 const { top, left, width, height } = chart.chartArea;
                 const x = left + width / 2;
                 const y = top + height / 2;
-
+    
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.font = 'bold 1.8rem sans-serif';
+                
+                ctx.font = 'bold 1.5rem sans-serif';
                 ctx.fillStyle = config.color;
-                ctx.fillText(config.verdict, x, y - 15);
+                ctx.fillText(config.verdict, x, y - 10);
+    
+                ctx.font = 'bold 1.5rem sans-serif';
+                ctx.fillStyle = config.color;
+                ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + 20);
 
-                if (config.verdict !== 'Fairly Valued') {
-                    ctx.font = 'normal 1.2rem sans-serif';
-                    ctx.fillStyle = '#6c757d';
-                    ctx.fillText(`by ${Math.abs(config.percentageDiff).toFixed(1)}%`, x, y + 20);
-                }
+                ctx.restore();
+            }
+        };
+        
+        const smallerValue = Math.min(currentPrice, fairValue);
+        const largerValue = Math.max(currentPrice, fairValue);
+    
+        const differenceArcPlugin = {
+            id: 'differenceArcPlugin',
+            afterDraw: (chart) => {
+                const { ctx, chartArea } = chart;
+                const { top, left, width, height } = chartArea;
+                if (width <= 0) return;
+    
+                const innerMeta = chart.getDatasetMeta(0);
+                const outerMeta = chart.getDatasetMeta(1);
+                if (!innerMeta.data.length || !outerMeta.data.length) return;
+    
+                const arcRadius = outerMeta.data[0].outerRadius + 60;
+    
+                const startAngle = innerMeta.data[0].endAngle;
+                const endAngle = outerMeta.data[0].endAngle;
+                
+                ctx.save();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(left + width / 2, top + height / 2, arcRadius, startAngle, endAngle);
+                ctx.stroke();
+                
+                const drawCap = (angle) => {
+                    const capLength = 8;
+                    const capRadius = arcRadius - (capLength / 2);
+                    const x1 = (left + width / 2) + capRadius * Math.cos(angle);
+                    const y1 = (top + height / 2) + capRadius * Math.sin(angle);
+                    const x2 = x1 + capLength * Math.cos(angle);
+                    const y2 = y1 + capLength * Math.sin(angle);
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                };
+                
+                ctx.beginPath();
+                ctx.lineWidth = 1.5;
+                drawCap(startAngle);
+                drawCap(endAngle);
+                ctx.stroke();
+
+                // --- NEW: Draw curved text ---
+                const text = Math.abs(discountPercent).toFixed(1) + '% ' + verdict;
+                const textRadius = arcRadius - 15; // Position text just inside the arc
+                const midAngle = (startAngle - endAngle) / 2;
+                drawArcText(ctx, text, left + width / 2, top + height / 2, textRadius, midAngle);
+
                 ctx.restore();
             }
         };
 
-        const maxVal = Math.max(fairValue, currentPrice) * 1.05;
+        /**
+         * Helper function to draw text along a curve.
+         * @param {CanvasRenderingContext2D} ctx The canvas context.
+         * @param {string} str The string to draw.
+         * @param {number} centerX The center X coordinate of the arc.
+         * @param {number} centerY The center Y coordinate of the arc.
+         * @param {number} radius The radius of the arc for the text.
+         * @param {number} angle The middle angle to center the text on.
+         */
+        function drawArcText(ctx, str, centerX, centerY, radius, angle) {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.font = '16px sans-serif';
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
 
+            // Calculate the total angular width of the text
+            const textWidth = ctx.measureText(str).width;
+            const angularWidth = textWidth / radius;
+            
+            // Start drawing from an angle that centers the text on the provided mid-angle
+            let currentAngle = angle - angularWidth / 2;
+
+            for (let i = 0; i < str.length; i++) {
+                const char = str[i];
+                const charWidth = ctx.measureText(char).width;
+                
+                // Angle for this character is its start angle plus half its angular width
+                const charAngle = currentAngle + (charWidth / 2) / radius;
+
+                ctx.rotate(charAngle);
+                ctx.fillText(char, 0, -radius);
+                ctx.rotate(-charAngle);
+
+                // Move to the next character's start angle
+                currentAngle += (charWidth / radius);
+            }
+            ctx.restore();
+        }
+    
         window.jtwFairValueChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Value', 'Remainder'],
                 datasets: [
                 {
-                    label: 'Fair Value',
-                    data: [fairValue, Math.max(0, maxVal - fairValue)],
-                    backgroundColor: [verdictColor, '#f0f2f5'],
+                    label: currentPrice < fairValue ? 'Current Price' : 'Fair Value',
+                    data: [smallerValue, largerValue - smallerValue],
+                    backgroundColor: ['#212529', 'transparent'],
                     borderColor: '#fff',
                     borderWidth: 0,
-                    cutout: '80%', 
-                }, {
-                    label: 'Current Price',
-                    data: [currentPrice, Math.max(0, maxVal - currentPrice)],
-                    backgroundColor: ['var(--jtw-primary-blue)', '#f0f2f5'],
+                },
+                {
+                    label: currentPrice > fairValue ? 'Current Price' : 'Fair Value',
+                    data: [largerValue, 0],
+                    backgroundColor: [verdictColor, 'transparent'],                    
                     borderColor: '#fff',
                     borderWidth: 0,
-                    cutout: '60%', 
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '60%', // Thicker rings
+                spacing: 1,    // Creates the space between the inner and outer rings
+                layout: {
+                    padding: 25 // Adds space around the chart for the outer arc
+                },
                 animation: {
                     animateScale: true,
                     animateRotate: true
@@ -287,33 +388,27 @@
                     tooltip: { enabled: false },
                     centerText: {
                         verdict: verdict,
-                        percentageDiff: percentageDiff,
+                        discountPercent: discountPercent,
                         color: verdictColor
                     },
                     datalabels: {
-                        display: function(context) {
-                            return context.dataIndex === 0; // Display label only for the colored segment
-                        },
+                        display: true,
                         formatter: (value, context) => {
-                            return context.chart.data.datasets[context.datasetIndex].label;
+                           // Hide labels for transparent parts of the rings
+                           if (context.dataIndex === 1) return null;
+                           return `${context.dataset.label}: $${value.toFixed(2)}`;
                         },
                         color: '#fff',
-                        backgroundColor: (context) => {
-                            return context.dataset.backgroundColor[0];
-                        },
+                        backgroundColor: (context) => context.dataset.backgroundColor[context.dataIndex],
                         borderRadius: 4,
-                        padding: 6,
-                        font: {
-                            weight: 'bold',
-                            size: 14,
-                        },
-                        align: 'start',
-                        anchor: 'end',
-                        offset: 10,
+                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
+                        font: { weight: '600', size: 11 },
+                        align: 'center',
+                        anchor: 'center',
                     }
                 }
             },
-            plugins: [centerTextPlugin] // Pass the custom plugin here
+            plugins: [centerTextPlugin, differenceArcPlugin, ChartDataLabels]
         });
     }
 
@@ -372,6 +467,9 @@
                 responsive: true,
                 maintainAspectRatio: false, 
                 plugins: {
+                    datalabels: {
+                        display: false
+                    },
                     legend: { 
                         display: !!annualData.datasets,
                         position: 'top',
