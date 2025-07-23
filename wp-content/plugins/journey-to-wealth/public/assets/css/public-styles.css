@@ -357,8 +357,8 @@
 .jtw-valuation-chart-container { 
     position: relative; 
     width: 100%; 
-    max-width: 450px; /* Increased size */
-    height: 450px; /* Increased size */
+    max-width: 600px; /* Increased size */
+    height: 600px; /* Increased size */
     margin: 20px auto 0; 
 }
 

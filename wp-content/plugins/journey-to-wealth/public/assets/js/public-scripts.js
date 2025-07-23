@@ -225,10 +225,10 @@
         let verdict = 'Fairly Valued';
         let verdictColor = '#d97706'; // Neutral Yellow
         
-        if (discountPercent < -15) {
+        if (discountPercent > 15) {
             verdict = 'Undervalued';
             verdictColor = '#16a34a'; // Positive Green
-        } else if (discountPercent > 15) {
+        } else if (discountPercent < -15) {
             verdict = 'Overvalued';
             verdictColor = '#dc2626'; // Negative Red
         }
@@ -247,13 +247,16 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                ctx.font = 'bold 1.5rem sans-serif';
+                ctx.font = 'bold 1.75rem sans-serif';
                 ctx.fillStyle = config.color;
-                ctx.fillText(config.verdict, x, y - 10);
+                ctx.fillText(config.verdict, x, y - 30);
     
-                ctx.font = 'bold 1.5rem sans-serif';
+                ctx.font = 'bold 1.25rem sans-serif';
+                ctx.fillStyle = "#333";
+                ctx.fillText('Fair Value:', x, y + 10);
+                ctx.font = 'bold 1.75rem sans-serif';
                 ctx.fillStyle = config.color;
-                ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + 20);
+                ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + 40);
 
                 ctx.restore();
             }
@@ -273,7 +276,7 @@
                 const outerMeta = chart.getDatasetMeta(1);
                 if (!innerMeta.data.length || !outerMeta.data.length) return;
     
-                const arcRadius = outerMeta.data[0].outerRadius + 60;
+                const arcRadius = outerMeta.data[0].outerRadius + 70;
     
                 const startAngle = innerMeta.data[0].endAngle;
                 const endAngle = outerMeta.data[0].endAngle;
@@ -304,7 +307,7 @@
 
                 // --- NEW: Draw curved text ---
                 const text = Math.abs(discountPercent).toFixed(1) + '% ' + verdict;
-                const textRadius = arcRadius - 15; // Position text just inside the arc
+                const textRadius = arcRadius + 15; // Position text just inside the arc
                 const midAngle = (startAngle - endAngle) / 2;
                 drawArcText(ctx, text, left + width / 2, top + height / 2, textRadius, midAngle);
 
@@ -375,9 +378,9 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '60%', // Thicker rings
-                spacing: 1,    // Creates the space between the inner and outer rings
+                spacing: 0.5,    // Creates the space between the inner and outer rings
                 layout: {
-                    padding: 25 // Adds space around the chart for the outer arc
+                    padding: 45 // Adds space around the chart for the outer arc
                 },
                 animation: {
                     animateScale: true,
