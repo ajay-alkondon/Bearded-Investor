@@ -244,13 +244,6 @@
 
 
 /* --- Styles for content within sections --- */
-.jtw-company-overview-grid { 
-    display: grid; 
-    grid-template-columns: 1fr; 
-    gap: 25px; 
-    align-items: start; 
-}
-
 .jtw-overview-main-col {
     display: flex;
     flex-direction: column;
@@ -262,7 +255,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
-    padding-top: 15px;
+    margin-top: 15px;
 }
 @media (max-width: 768px) {
     .jtw-stats-container {
@@ -275,21 +268,21 @@
     }
 }
 
-.jtw-stats-container .jtw-metric-card {
+.jtw-metric-card {
     text-align: center;
     padding: 15px;
     background-color: #f8f9fa;
     border: 1px solid var(--jtw-border-color-light);
     border-radius: 6px;
 }
-.jtw-stats-container .jtw-metric-title {
+.jtw-metric-title {
     font-size: 0.85em;
     text-transform: none;
     letter-spacing: 0;
     color: var(--jtw-text-light);
     margin-bottom: 5px;
 }
-.jtw-stats-container .jtw-metric-value {
+.jtw-metric-value {
     font-size: 1.4em;
     font-weight: 600;
     margin: 0;
@@ -299,7 +292,6 @@
 .jtw-company-details {
     margin-top: 15px;
     padding-top: 25px;
-    border-top: none;
 }
 .jtw-company-details h4 {
     margin-top: 0;
@@ -309,7 +301,7 @@
 }
 .jtw-details-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px 25px;
     font-size: 0.9em;
 }
@@ -329,12 +321,16 @@
     text-decoration: none;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    line-height: 1.3;
 }
 .jtw-details-grid a:hover {
     text-decoration: underline;
 }
-.jtw-details-grid .full-width {
-    grid-column: 1 / -1;
+
+@media (max-width: 900px) {
+    .jtw-details-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 @media (max-width: 600px) {
     .jtw-details-grid {
@@ -344,9 +340,9 @@
 
 
 .jtw-results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-.jtw-metric-card { background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid var(--jtw-border-color-light); text-align: center; }
-.jtw-metric-title { font-size: 0.9em; font-weight: 500; color: var(--jtw-text-light); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-.jtw-metric-value { font-size: 1.75em; font-weight: 600; color: var(--jtw-text-dark); line-height: 1.2; }
+/* .jtw-metric-card { background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid var(--jtw-border-color-light); text-align: center; } */
+/* .jtw-metric-title { font-size: 0.9em; font-weight: 500; color: var(--jtw-text-light); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; } */
+/* .jtw-metric-value { font-size: 1.75em; font-weight: 600; color: var(--jtw-text-dark); line-height: 1.2; } */
 
 /* --- Key Metrics & Ratios Section --- */
 .jtw-key-metrics-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; }

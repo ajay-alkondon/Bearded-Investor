@@ -725,7 +725,7 @@ class Journey_To_Wealth_Public {
 
     private function process_av_historical_data($daily_data, $income_statement, $balance_sheet, $cash_flow, $earnings) {
         $master_labels_annual = $this->get_master_labels([$income_statement, $balance_sheet, $cash_flow, $earnings], 'annual', 20);
-        $master_labels_quarterly = $this->get_master_labels([$income_statement, $balance_sheet, $cash_flow, $earnings], 'quarterly', 80);
+        $master_labels_quarterly = $this->get_master_labels([$income_statement, $balance_sheet, $cash_flow, $earnings], 'quarterly', 16);
         $annual = [
             'price' => $this->process_av_price_data($daily_data),
             'revenue' => $this->extract_av_financial_data($income_statement, 'totalRevenue', 'annual', $master_labels_annual),
@@ -763,7 +763,9 @@ class Journey_To_Wealth_Public {
             elseif (isset($dataset[$earnings_key])) { foreach ($dataset[$earnings_key] as $report) { $all_dates[] = $report['fiscalDateEnding']; } }
         }
         $unique_dates = array_unique($all_dates); sort($unique_dates);
-        $limit = ($type === 'annual') ? -$limit_count : -($limit_count * 4);
+        
+        // **FIX**: Simplified the limit calculation to correctly use the number of periods (years or quarters).
+        $limit = -$limit_count;
         $limited_dates = array_slice($unique_dates, $limit); 
         
         $final_labels = [];
@@ -904,64 +906,45 @@ class Journey_To_Wealth_Public {
         $stock_price = !is_wp_error($quote) ? (float)($quote['05. price'] ?? 0) : 0;
         $market_cap = (float)($overview['MarketCapitalization'] ?? 0);
         $shares_outstanding = (float)($overview['SharesOutstanding'] ?? 0);
-
+        $insider_percent = (isset($overview['PercentInsiders']) && is_numeric($overview['PercentInsiders'])) ? (float)$overview['PercentInsiders'] : 'N/A';
+        $institution_percent = (isset($overview['PercentInstitutions']) && is_numeric($overview['PercentInstitutions'])) ? (float)$overview['PercentInstitutions'] : 'N/A';
+        $ex_dividend_date = $overview['ExDividendDate'] ?? 'N/A';
+    
         $output = '<div class="jtw-content-section" id="section-overview-content">';
         $output .= '<h4>' . esc_html($ticker) . ' ' . esc_html__('Company Overview', 'journey-to-wealth') . '</h4>';
-        
         $output .= '<div class="jtw-overview-main-col">';
-        $output .= '<div class="jtw-company-description">';
-        $output .= '<p>' . esc_html($description) . '</p>';
-        $output .= '</div>'; // End jtw-company-description
-
-        // NEW: Company Stats Section
+        $output .= '<div class="jtw-company-description"><p>' . esc_html($description) . '</p></div>';
+    
+        // Stats container
         $output .= '<div class="jtw-stats-container">';
         $output .= $this->create_metric_card('Current Price', $stock_price, '$');
         $output .= $this->create_metric_card('Market Capitalization', $market_cap, '$', '', true);
         $output .= $this->create_metric_card('Shares Outstanding', $shares_outstanding, '', '', true);
+        $output .= $this->create_metric_card('Insider Ownership', $insider_percent, '%');
+        $output .= $this->create_metric_card('Institution Ownership', $institution_percent, '%');
+        $output .= $this->create_metric_card('Ex-Dividend Date', $ex_dividend_date);
+        $output .= '</div>';
+    
+        // Details Grid
+        $output .= '<div class="jtw-company-details"><div class="jtw-details-grid">';
+        $details_map = [
+            'Exchange' => $overview['Exchange'] ?? 'N/A',
+            'Sector' => $overview['Sector'] ?? 'N/A',
+            'SEC Filings' => isset($overview['CIK']) && !empty($overview['CIK']) ? '<a href="https://www.sec.gov/edgar/browse/?CIK=' . esc_attr($overview['CIK']) . '" target="_blank" rel="noopener noreferrer">View Filings</a>' : 'N/A',
+            'Official Site' => isset($overview['OfficialSite']) && !empty($overview['OfficialSite']) ? '<a href="' . esc_url($overview['OfficialSite']) . '" target="_blank" rel="noopener noreferrer">' . esc_html($overview['OfficialSite']) . '</a>' : 'N/A',
+            'Industry' => $overview['Industry'] ?? 'N/A',
+            'Fiscal Year End' => $overview['FiscalYearEnd'] ?? 'N/A',
+            '52 Week High' => isset($overview['52WeekHigh']) ? '$' . number_format((float)$overview['52WeekHigh'], 2) : 'N/A',
+            '52 Week Low' => isset($overview['52WeekLow']) ? '$' . number_format((float)$overview['52WeekLow'], 2) : 'N/A',
+            'Address' => $overview['Address'] ?? 'N/A',
+        ];
 
-        $insider_val = isset($overview['PercentInsiders']) && is_numeric($overview['PercentInsiders']) ? (float)$overview['PercentInsiders'] : 'N/A';
-        $output .= $this->create_metric_card('Insider Ownership', $insider_val, '%');
-
-        $institution_val = isset($overview['PercentInstitutions']) && is_numeric($overview['PercentInstitutions']) ? (float)$overview['PercentInstitutions'] : 'N/A';
-        $output .= $this->create_metric_card('Institution Ownership', $institution_val, '%');
-
-        $dividend_date = $overview['DividendDate'] ?? 'N/A';
-        if ($dividend_date === 'None' || $dividend_date === '0000-00-00') $dividend_date = 'N/A';
-        $output .= $this->create_metric_card('Ex-Dividend Date', $dividend_date);
-
-        $output .= '</div>'; // End jtw-stats-container
-
-        // NEW: Company Details Section
-        $exchange = $overview['Exchange'] ?? 'N/A';
-        $country = $overview['Country'] ?? 'N/A';
-        $sector = $overview['Sector'] ?? 'N/A';
-        $industry = $overview['Industry'] ?? 'N/A';
-        $address = $overview['Address'] ?? 'N/A';
-        $website = $overview['Website'] ?? '';
-        $cik = $overview['CIK'] ?? '';
-
-        $output .= '<div class="jtw-company-details">';
-        $output .= '<h4>' . esc_html__('Company Details', 'journey-to-wealth') . '</h4>';
-        $output .= '<div class="jtw-details-grid">';
-        $output .= '<div><strong>' . esc_html__('Exchange', 'journey-to-wealth') . '</strong><span>' . esc_html($exchange) . '</span></div>';
-        $output .= '<div><strong>' . esc_html__('Country', 'journey-to-wealth') . '</strong><span>' . esc_html($country) . '</span></div>';
-        $output .= '<div><strong>' . esc_html__('Sector', 'journey-to-wealth') . '</strong><span>' . esc_html($sector) . '</span></div>';
-        $output .= '<div><strong>' . esc_html__('Industry', 'journey-to-wealth') . '</strong><span>' . esc_html($industry) . '</span></div>';
-        $output .= '<div class="full-width"><strong>' . esc_html__('Address', 'journey-to-wealth') . '</strong><span>' . esc_html($address) . '</span></div>';
-        if (!empty($website) && $website !== 'None') {
-            $output .= '<div class="full-width"><strong>' . esc_html__('Website', 'journey-to-wealth') . '</strong><a href="' . esc_url($website) . '" target="_blank" rel="noopener noreferrer">' . esc_html($website) . '</a></div>';
+        foreach ($details_map as $label => $value) {
+            $output .= '<div><strong>' . esc_html($label) . '</strong><span>' . $value . '</span></div>';
         }
-        if (!empty($cik) && $cik !== 'None') {
-            $sec_link = 'https://www.sec.gov/edgar/browse/?CIK=' . esc_attr($cik);
-            $output .= '<div class="full-width"><strong>' . esc_html__('SEC Filings', 'journey-to-wealth') . '</strong><a href="' . esc_url($sec_link) . '" target="_blank" rel="noopener noreferrer">View Filings for CIK #' . esc_html($cik) . '</a></div>';
-        }
-        $output .= '</div>'; // close jtw-details-grid
-        $output .= '</div>'; // close jtw-company-details
-
-        $output .= '</div>'; // End jtw-overview-main-col
-
-        $output .= '</div>'; // End jtw-content-section
-
+        $output .= '</div></div>'; // End details grid and container
+    
+        $output .= '</div></div>'; // End main col and content section
         return $output;
     }
     
@@ -978,7 +961,6 @@ class Journey_To_Wealth_Public {
         $trailing_earnings = (is_numeric($key_metrics_data['trailingPeRatio']) && $key_metrics_data['trailingPeRatio'] > 0) ? $market_cap / $key_metrics_data['trailingPeRatio'] : 0;
         $forward_earnings = (is_numeric($key_metrics_data['forwardPeRatio']) && $key_metrics_data['forwardPeRatio'] > 0) ? $market_cap / $key_metrics_data['forwardPeRatio'] : 0;
         
-        // Calculate Enterprise Value from ratios
         $enterprise_value = 0;
         $ev_to_revenue = $key_metrics_data['evToRevenue'];
         $revenue_ttm = (isset($overview['RevenueTTM']) && is_numeric($overview['RevenueTTM'])) ? (float)$overview['RevenueTTM'] : 0;
@@ -1446,7 +1428,9 @@ class Journey_To_Wealth_Public {
                 elseif ($prefix === '%') { $formatted_value = $temp_val . $prefix; } 
                 else { $formatted_value = $temp_val; }
             }
-        } elseif (!empty($value)) { $formatted_value = $value; }
+        } elseif (!empty($value) && strcasecmp(trim($value), 'none') !== 0) {
+            $formatted_value = $value;
+        }
         return '<div class="jtw-metric-card ' . esc_attr($custom_class) . '"><h3 class="jtw-metric-title">' . esc_html($title) . '</h3><p class="jtw-metric-value">' . esc_html($formatted_value) . '</p></div>';
     }
 

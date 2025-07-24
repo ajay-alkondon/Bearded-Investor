@@ -126,17 +126,18 @@
             const isForward = $peToggle.is(':checked');
             const data = $card.data();
             let numeratorValue = data.numeratorValue;
+            let denominatorValue = data.denominatorValue;
 
             if (data.metric === 'pe') {
                 numeratorValue = isForward ? data.forwardNumeratorValue : data.trailingNumeratorValue;
             }
             
             donutChart.data.labels = [data.numeratorLabel, data.denominatorLabel];
-            donutChart.data.datasets[0].data = [numeratorValue, data.denominatorValue];
+            donutChart.data.datasets[0].data = [numeratorValue, denominatorValue];
             donutChart.update();
 
             $topText.html(`<div class="numerator-label">${data.numeratorLabel}</div><div class="numerator-value">US$${formatLargeNumber(numeratorValue)}</div>`);
-            $centerText.html(`<div class="denominator-label">${data.denominatorLabel}</div><div class="denominator-value">US$${formatLargeNumber(data.denominatorValue)}</div>`);
+            $centerText.html(`<div class="denominator-label">${data.denominatorLabel}</div><div class="denominator-value">US$${formatLargeNumber(denominatorValue)}</div>`);
         }
 
         $interactiveCards.on('click', function() {
@@ -184,25 +185,20 @@
                 $epsInput.val(isFinite(epsValue) ? parseFloat(epsValue).toFixed(2) : 0);
             }
 
-            // **FIX START**: Update Growth Rate in calculator
             const $growthInput = $('#jtw-sim-growth-rate');
             if ($growthInput.length) {
-                let newGrowthRate = 5.0; // Default fallback growth rate
-                // Recalculate growth rate from the current P/E and PEG values
+                let newGrowthRate = 5.0; 
                 if (isFinite(peValue) && isFinite(pegValue) && pegValue > 0) {
                     newGrowthRate = (peValue / pegValue);
                 }
                 $growthInput.val(parseFloat(newGrowthRate).toFixed(2));
             }
-            // **FIX END**
 
-            // Re-run calculator with all updated values
             if ($calculator.length) {
                 updateRatios();
             }
         });
 
-        // Initialize with the first interactive card
         if ($donutCards.length > 0) {
             $donutCards.first().trigger('click');
         }
@@ -247,20 +243,29 @@
                 const config = chart.options.plugins.centerText;
                 if (!config) return;
                 const { top, left, width, height } = chart.chartArea;
+                if (width <= 0) return;
+                
                 const x = left + width / 2;
                 const y = top + height / 2;
+
+                const baseSize = width / 20;
+
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.font = 'bold 1.75rem sans-serif';
+                
+                ctx.font = `bold ${baseSize * 1.2}px sans-serif`;
                 ctx.fillStyle = config.color;
-                ctx.fillText(config.verdict, x, y - 30);
-                ctx.font = 'bold 1.25rem sans-serif';
+                ctx.fillText(config.verdict, x, y - (baseSize * 2));
+                
+                ctx.font = `bold ${baseSize * 0.8}px sans-serif`;
                 ctx.fillStyle = "#333";
-                ctx.fillText('Fair Value:', x, y + 10);
-                ctx.font = 'bold 1.75rem sans-serif';
+                ctx.fillText('Fair Value:', x, y + (baseSize * 0.5));
+                
+                ctx.font = `bold ${baseSize * 1.2}px sans-serif`;
                 ctx.fillStyle = config.color;
-                ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + 40);
+                ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + (baseSize * 2.5));
+
                 ctx.restore();
             }
         };
@@ -279,7 +284,7 @@
                 const outerMeta = chart.getDatasetMeta(0);
                 if (!innerMeta.data.length || !outerMeta.data.length) return;
     
-                const arcRadius = outerMeta.data[0].outerRadius + 15;
+                const arcRadius = outerMeta.data[0].outerRadius + (width / 40);
                 const startAngle = outerMeta.data[0].endAngle;
                 const endAngle = innerMeta.data[0].endAngle;
                 
@@ -291,7 +296,7 @@
                 ctx.stroke();
                 
                 const drawCap = (angle) => {
-                    const capLength = 8;
+                    const capLength = width / 70;
                     const capRadius = arcRadius - (capLength / 2);
                     const x1 = (left + width / 2) + capRadius * Math.cos(angle);
                     const y1 = (top + height / 2) + capRadius * Math.sin(angle);
@@ -308,30 +313,31 @@
                 ctx.stroke();
 
                 const text = Math.abs(discountPercent).toFixed(1) + '% ' + (discountPercent > 0 ? 'Discount' : 'Premium');
-                const textRadius = arcRadius + 15;
+                const textRadius = arcRadius + (width / 30);
                 const midAngle = (startAngle - endAngle) / 2;
-                drawArcText(ctx, text, left + width / 2, top + height / 2, textRadius, midAngle);
+                
+                drawArcText(ctx, text, left + width / 2, top + height / 2, textRadius, midAngle, width / 40);
                 ctx.restore();
             }
         };
 
-        function drawArcText(ctx, str, centerX, centerY, radius, angle) {
+        function drawArcText(ctx, str, centerX, centerY, radius, angle, fontSize) {
             ctx.save();
             ctx.translate(centerX, centerY);
-            ctx.font = '16px sans-serif';
+            ctx.font = `${fontSize}px sans-serif`;
             ctx.fillStyle = '#333';
             ctx.textAlign = 'center';
-            const textWidth = ctx.measureText(str).width;
-            const angularWidth = textWidth / radius;
-            let currentAngle = angle - angularWidth / 2;
-            for (let i = 0; i < str.length; i++) {
+            const totalAngle = ctx.measureText(str).width / radius;
+            
+            ctx.rotate(angle - totalAngle / 2);
+
+            for (var i = 0; i < str.length; i++) {
                 const char = str[i];
                 const charWidth = ctx.measureText(char).width;
-                const charAngle = currentAngle + (charWidth / 2) / radius;
-                ctx.rotate(charAngle);
+                const charAngle = charWidth / radius;
+                ctx.rotate(charAngle / 2);
                 ctx.fillText(char, 0, -radius);
-                ctx.rotate(-charAngle);
-                currentAngle += (charWidth / radius);
+                ctx.rotate(charAngle / 2);
             }
             ctx.restore();
         }
@@ -355,7 +361,7 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 cutout: '60%',
                 spacing: 0.5,
                 layout: { padding: 45 },
@@ -365,7 +371,9 @@
                     tooltip: { enabled: false },
                     centerText: { verdict: verdict, discountPercent: discountPercent, color: verdictColor },
                     datalabels: {
-                        display: true,
+                        display: (context) => {
+                           return context.chart.width > 250;
+                        },
                         formatter: (value, context) => {
                            if (context.dataIndex === 1) return null;
                            return `${context.dataset.label}: $${value.toFixed(2)}`;
@@ -374,7 +382,10 @@
                         backgroundColor: (context) => context.dataset.backgroundColor[context.dataIndex],
                         borderRadius: 4,
                         padding: { top: 4, bottom: 4, left: 6, right: 6 },
-                        font: { weight: '600', size: 11 },
+                        font: (context) => {
+                            const size = Math.max(10, Math.round(context.chart.width / 45));
+                            return { weight: '600', size: size };
+                        },
                         align: 'center',
                         anchor: 'center',
                     }
@@ -382,6 +393,13 @@
             },
             plugins: [centerTextPlugin, differenceArcPlugin, ChartDataLabels]
         });
+
+        const resizeObserver = new ResizeObserver(debounce(() => {
+            if (window.jtwFairValueChart) {
+                window.jtwFairValueChart.resize();
+            }
+        }, 100));
+        resizeObserver.observe($chartContainer[0]);
     }
 
     function initializeHistoricalCharts($container) {
@@ -574,46 +592,45 @@
     
         const chartId = $dataScript.data('chart-id');
         const ctx = document.getElementById(chartId);
-        const $table = $container.find('.jtw-historical-table');
-
-        if (!ctx || !$table.length) {
-             console.error("Historical data chart/table elements not found.");
-             return;
+        const $tableWrapper = $container.find('.jtw-historical-table-wrapper');
+    
+        if (!ctx || !$tableWrapper.length) {
+            console.error("Historical data chart/table elements not found.");
+            return;
         }
     
-        let historicalData;
+        let fullHistoricalData;
         try {
-            historicalData = JSON.parse($dataScript.html());
+            fullHistoricalData = JSON.parse($dataScript.html());
         } catch (e) {
             console.error("Failed to parse historical data JSON:", e);
             return;
         }
     
-        if (!historicalData || historicalData.length === 0) {
+        if (!fullHistoricalData || fullHistoricalData.length === 0) {
             $container.find('.jtw-historical-combined-wrapper').html('<p>No historical data available to display.</p>');
             return;
         }
     
-        const labels = historicalData.map(d => d.year);
-        
         const yAxisAlignPlugin = {
             id: 'yAxisAlignPlugin',
             afterLayout: (chart) => {
                 if (chart.myAlignPluginHasRun) return;
-                const firstColumnWidth = $table.find('thead th:first-child').outerWidth();
+                const firstColumnWidth = $tableWrapper.find('thead th:first-child').outerWidth();
+                if (!firstColumnWidth) return;
                 const yAxisWidth = chart.scales.yPrice.width;
                 const requiredPadding = firstColumnWidth - yAxisWidth;
                 if (requiredPadding > 0) {
                     chart.options.layout.padding.left = requiredPadding;
-                    chart.myAlignPluginHasRun = true;
-                    chart.update();
+                    chart.myAlignPluginHasRun = true; 
+                    chart.update('none');
                 }
             }
         };
-
+    
         const verticalStripesPlugin = {
             id: 'verticalStripes',
-            beforeDraw(chart, args, options) {
+            beforeDraw(chart) {
                 const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
                 if (x.ticks.length < 2) return;
                 const bandWidth = x.getPixelForTick(1) - x.getPixelForTick(0);
@@ -628,32 +645,10 @@
                 }
             }
         };
-
+    
         const chart = new Chart(ctx, {
             type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    type: 'bar',
-                    label: 'Price Range (High-Low)',
-                    data: historicalData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]),
-                    backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                    borderColor: 'rgba(0, 122, 255, 0.5)',
-                    borderWidth: 1,
-                    barPercentage: 0.5,
-                    categoryPercentage: 0.7,
-                    borderSkipped: false
-                }, {
-                    type: 'line',
-                    label: 'Average Price',
-                    data: historicalData.map(d => d.avg_price),
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.1
-                }]
-            },
+            data: { labels: [], datasets: [] }, // Initially empty
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -670,7 +665,7 @@
                         position: 'left',
                         grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)' },
                         title: { display: true, text: 'Price (Log Scale)' },
-                        ticks: { callback: function(value) { return '$' + formatLargeNumber(value, 0); } }
+                        ticks: { callback: (value) => '$' + formatLargeNumber(value, 0) }
                     }
                 },
                 plugins: {
@@ -681,7 +676,7 @@
                                 let label = context.dataset.label || '';
                                 if (label) label += ': ';
                                 if (context.dataset.type === 'bar' && Array.isArray(context.raw)) {
-                                     label += '$' .concat(formatLargeNumber(context.raw[0]), ' - $', formatLargeNumber(context.raw[1]));
+                                    label += '$' .concat(formatLargeNumber(context.raw[0]), ' - $', formatLargeNumber(context.raw[1]));
                                 } else if (context.parsed.y !== null) {
                                     label += '$' .concat(formatLargeNumber(context.parsed.y));
                                 }
@@ -693,6 +688,81 @@
             },
             plugins: [yAxisAlignPlugin, verticalStripesPlugin]
         });
+    
+        const updateHistoricalDataView = () => {
+            const containerWidth = $container.width();
+            const yearColumnWidth = 80;
+            const firstColumnWidth = 120;
+            const maxYears = Math.floor((containerWidth - firstColumnWidth) / yearColumnWidth);
+            const yearsToShow = Math.max(1, Math.min(fullHistoricalData.length, maxYears));
+    
+            const slicedData = fullHistoricalData.slice(-yearsToShow);
+    
+            // Update Chart
+            chart.data.labels = slicedData.map(d => d.year);
+            chart.data.datasets = [
+                {
+                    type: 'bar',
+                    label: 'Price Range (High-Low)',
+                    data: slicedData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]),
+                    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+                    borderColor: 'rgba(0, 122, 255, 0.5)',
+                    borderWidth: 1,
+                    barPercentage: 0.5,
+                    categoryPercentage: 0.7,
+                    borderSkipped: false
+                }, {
+                    type: 'line',
+                    label: 'Average Price',
+                    data: slicedData.map(d => d.avg_price),
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.1
+                }
+            ];
+            chart.myAlignPluginHasRun = false; // Rerun alignment plugin
+            chart.update();
+    
+            // Update Table
+            const metrics = {
+                'revenue_ps': 'Revenue / Share', 'eps': 'EPS', 'cash_flow_ps': 'FCF / Share',
+                'book_value_ps': 'Book Value / Share', 'shares_outstanding': 'Shares (M)',
+                'net_profit_margin': 'Net Profit Margin', 'return_on_equity': 'Return on Equity',
+                'return_on_capital': 'Return on Capital', 'shareholder_equity': 'Shareholder Equity',
+            };
+    
+            let tableHtml = '<table class="jtw-historical-table"><thead><tr><th>Metric</th>';
+            slicedData.forEach(dp => tableHtml += `<th>${dp.year}</th>`);
+            tableHtml += '</tr></thead><tbody>';
+    
+            for (const key in metrics) {
+                tableHtml += `<tr><td>${metrics[key]}</td>`;
+                slicedData.forEach(dp => {
+                    const value = dp[key];
+                    let formatted_value = 'N/A';
+                    if (isFinite(value)) {
+                        switch (key) {
+                            case 'shares_outstanding': formatted_value = formatLargeNumber(value, 2); break;
+                            case 'shareholder_equity': formatted_value = (value != 0) ? `$${formatLargeNumber(value)}` : 'N/A'; break;
+                            case 'net_profit_margin':
+                            case 'return_on_equity':
+                            case 'return_on_capital': formatted_value = `${Number(value).toFixed(1)}%`; break;
+                            default: formatted_value = `$${Number(value).toFixed(1)}`;
+                        }
+                    }
+                    tableHtml += `<td>${formatted_value}</td>`;
+                });
+                tableHtml += '</tr>';
+            }
+            tableHtml += '</tbody></table>';
+            $tableWrapper.html(tableHtml);
+        };
+    
+        // Initial setup and add resize listener
+        updateHistoricalDataView();
+        $(window).on('resize.historicaldata', debounce(updateHistoricalDataView, 250));
     }
 
     function setupSWSLayoutInteractivity($contentArea) {
