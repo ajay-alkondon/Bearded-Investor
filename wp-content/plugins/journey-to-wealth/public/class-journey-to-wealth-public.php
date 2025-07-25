@@ -757,19 +757,37 @@ class Journey_To_Wealth_Public {
         $all_dates = [];
         $report_key = ($type === 'annual') ? 'annualReports' : 'quarterlyReports';
         $earnings_key = ($type === 'annual') ? 'annualEarnings' : 'quarterlyEarnings';
+    
         foreach ($datasets as $dataset) {
             if (is_wp_error($dataset)) continue;
-            if (isset($dataset[$report_key])) { foreach ($dataset[$report_key] as $report) { $all_dates[] = $report['fiscalDateEnding']; } } 
-            elseif (isset($dataset[$earnings_key])) { foreach ($dataset[$earnings_key] as $report) { $all_dates[] = $report['fiscalDateEnding']; } }
+    
+            if ($type === 'annual' && isset($dataset[$report_key])) {
+                foreach ($dataset[$report_key] as $report) {
+                    $all_dates[] = $report['fiscalDateEnding'];
+                }
+            } elseif ($type === 'quarterly' && isset($dataset[$report_key])) {
+                foreach ($dataset[$report_key] as $report) {
+                    $all_dates[] = $report['fiscalDateEnding'];
+                }
+            } elseif ($type === 'annual' && isset($dataset[$earnings_key])) {
+                foreach ($dataset[$earnings_key] as $report) {
+                    $all_dates[] = $report['fiscalDateEnding'];
+                }
+            } elseif ($type === 'quarterly' && isset($dataset['quarterlyEarnings'])) {
+                foreach ($dataset['quarterlyEarnings'] as $report) {
+                    $all_dates[] = $report['fiscalDateEnding'];
+                }
+            }
         }
-        $unique_dates = array_unique($all_dates); sort($unique_dates);
-        
-        // **FIX**: Simplified the limit calculation to correctly use the number of periods (years or quarters).
+    
+        $unique_dates = array_unique($all_dates);
+        sort($unique_dates);
+    
         $limit = -$limit_count;
-        $limited_dates = array_slice($unique_dates, $limit); 
+        $limited_dates = array_slice($unique_dates, $limit);
         
-        $final_labels = [];
         if ($type === 'annual') {
+            $final_labels = [];
             foreach ($limited_dates as $date) {
                 $final_labels[] = substr($date, 0, 4);
             }
@@ -780,21 +798,21 @@ class Journey_To_Wealth_Public {
     }
 
     private function extract_av_financial_data($reports, $key, $type, $master_labels) {
-        $data = ['labels' => $master_labels, 'data' => array_fill(0, count($master_labels), 0)];
+        $data = ['labels' => $master_labels, 'data' => array_fill(0, count($master_labels), null)];
         if (is_wp_error($reports)) return $data;
         $report_key = ($type === 'annual') ? 'annualReports' : 'quarterlyReports';
         if (!isset($reports[$report_key])) return $data;
         $data_map = [];
         foreach ($reports[$report_key] as $report) {
             $label = ($type === 'annual') ? substr($report['fiscalDateEnding'], 0, 4) : $report['fiscalDateEnding'];
-            $data_map[$label] = isset($report[$key]) && is_numeric($report[$key]) ? (float)$report[$key] : 0;
+            $data_map[$label] = isset($report[$key]) && is_numeric($report[$key]) ? (float)$report[$key] : null;
         }
         foreach($master_labels as $i => $label) { if(isset($data_map[$label])) { $data['data'][$i] = $data_map[$label]; } }
         return $data;
     }
 
     private function extract_av_fcf_data($cash_flow_data, $type, $master_labels) {
-        $data = ['labels' => $master_labels, 'data' => array_fill(0, count($master_labels), 0)];
+        $data = ['labels' => $master_labels, 'data' => array_fill(0, count($master_labels), null)];
         if (is_wp_error($cash_flow_data)) return $data;
         $report_key = ($type === 'annual') ? 'annualReports' : 'quarterlyReports';
         if (!isset($cash_flow_data[$report_key])) return $data;
@@ -810,7 +828,7 @@ class Journey_To_Wealth_Public {
     }
 
     private function extract_av_cash_and_debt_data($balance_sheet_data, $type, $master_labels) {
-        $data = ['labels' => $master_labels, 'datasets' => [ ['label' => 'Total Debt', 'data' => array_fill(0, count($master_labels), 0)], ['label' => 'Cash & Equivalents', 'data' => array_fill(0, count($master_labels), 0)] ]];
+        $data = ['labels' => $master_labels, 'datasets' => [ ['label' => 'Total Debt', 'data' => array_fill(0, count($master_labels), null)], ['label' => 'Cash & Equivalents', 'data' => array_fill(0, count($master_labels), null)] ]];
         if (is_wp_error($balance_sheet_data)) return $data;
         $report_key = ($type === 'annual') ? 'annualReports' : 'quarterlyReports';
         if (!isset($balance_sheet_data[$report_key])) return $data;
@@ -819,7 +837,7 @@ class Journey_To_Wealth_Public {
             $label = ($type === 'annual') ? substr($report['fiscalDateEnding'], 0, 4) : $report['fiscalDateEnding'];
             $short_term_debt = (float)($report['shortTermDebt'] ?? 0); $long_term_debt = (float)($report['longTermDebt'] ?? 0);
             $debt_map[$label] = $short_term_debt + $long_term_debt;
-            $cash_map[$label] = isset($report['cashAndCashEquivalentsAtCarryingValue']) && is_numeric($report['cashAndCashEquivalentsAtCarryingValue']) ? (float)$report['cashAndCashEquivalentsAtCarryingValue'] : 0;
+            $cash_map[$label] = isset($report['cashAndCashEquivalentsAtCarryingValue']) && is_numeric($report['cashAndCashEquivalentsAtCarryingValue']) ? (float)$report['cashAndCashEquivalentsAtCarryingValue'] : null;
         }
         foreach($master_labels as $i => $label) {
             if(isset($debt_map[$label])) $data['datasets'][0]['data'][$i] = $debt_map[$label];
@@ -829,16 +847,16 @@ class Journey_To_Wealth_Public {
     }
 
     private function extract_av_expenses_data($income_statement_data, $type, $master_labels) {
-        $data = ['labels' => $master_labels, 'datasets' => [ ['label' => 'SG&A', 'data' => array_fill(0, count($master_labels), 0)], ['label' => 'R&D', 'data' => array_fill(0, count($master_labels), 0)], ['label' => 'Interest Expense', 'data' => array_fill(0, count($master_labels), 0)] ]];
+        $data = ['labels' => $master_labels, 'datasets' => [ ['label' => 'SG&A', 'data' => array_fill(0, count($master_labels), null)], ['label' => 'R&D', 'data' => array_fill(0, count($master_labels), null)], ['label' => 'Interest Expense', 'data' => array_fill(0, count($master_labels), null)] ]];
         if (is_wp_error($income_statement_data)) return $data;
         $report_key = ($type === 'annual') ? 'annualReports' : 'quarterlyReports';
         if (!isset($income_statement_data[$report_key])) return $data;
         $sga_map = []; $rnd_map = []; $interest_map = [];
         foreach ($income_statement_data[$report_key] as $report) {
             $label = ($type === 'annual') ? substr($report['fiscalDateEnding'], 0, 4) : $report['fiscalDateEnding'];
-            $sga_map[$label] = isset($report['sellingGeneralAndAdministrative']) && is_numeric($report['sellingGeneralAndAdministrative']) ? (float)$report['sellingGeneralAndAdministrative'] : 0;
-            $rnd_map[$label] = isset($report['researchAndDevelopment']) && is_numeric($report['researchAndDevelopment']) ? (float)$report['researchAndDevelopment'] : 0;
-            $interest_map[$label] = isset($report['interestExpense']) && is_numeric($report['interestExpense']) ? (float)$report['interestExpense'] : 0;
+            $sga_map[$label] = isset($report['sellingGeneralAndAdministrative']) && is_numeric($report['sellingGeneralAndAdministrative']) ? (float)$report['sellingGeneralAndAdministrative'] : null;
+            $rnd_map[$label] = isset($report['researchAndDevelopment']) && is_numeric($report['researchAndDevelopment']) ? (float)$report['researchAndDevelopment'] : null;
+            $interest_map[$label] = isset($report['interestExpense']) && is_numeric($report['interestExpense']) ? (float)$report['interestExpense'] : null;
         }
         foreach($master_labels as $i => $label) {
             if(isset($sga_map[$label])) $data['datasets'][0]['data'][$i] = $sga_map[$label];
@@ -867,14 +885,14 @@ class Journey_To_Wealth_Public {
     }
     
     private function extract_av_earnings_data($earnings, $type, $master_labels) {
-        $data = ['labels' => $master_labels, 'data' => array_fill(0, count($master_labels), 0)];
+        $data = ['labels' => $master_labels, 'data' => array_fill(0, count($master_labels), null)];
         if (is_wp_error($earnings)) return $data;
-        $report_key = ($type === 'annual') ? 'annualEarnings' : 'quarterlyReports';
+        $report_key = ($type === 'annual') ? 'annualEarnings' : 'quarterlyEarnings';
         if (!isset($earnings[$report_key])) return $data;
         $data_map = [];
         foreach ($earnings[$report_key] as $report) {
             $label = ($type === 'annual') ? substr($report['fiscalDateEnding'], 0, 4) : $report['fiscalDateEnding'];
-            $data_map[$label] = isset($report['reportedEPS']) && is_numeric($report['reportedEPS']) ? (float)$report['reportedEPS'] : 0;
+            $data_map[$label] = isset($report['reportedEPS']) && is_numeric($report['reportedEPS']) ? (float)$report['reportedEPS'] : null;
         }
         foreach($master_labels as $i => $label) { if(isset($data_map[$label])) { $data['data'][$i] = $data_map[$label]; } }
         return $data;
@@ -906,45 +924,44 @@ class Journey_To_Wealth_Public {
         $stock_price = !is_wp_error($quote) ? (float)($quote['05. price'] ?? 0) : 0;
         $market_cap = (float)($overview['MarketCapitalization'] ?? 0);
         $shares_outstanding = (float)($overview['SharesOutstanding'] ?? 0);
-        $insider_percent = (isset($overview['PercentInsiders']) && is_numeric($overview['PercentInsiders'])) ? (float)$overview['PercentInsiders'] : 'N/A';
-        $institution_percent = (isset($overview['PercentInstitutions']) && is_numeric($overview['PercentInstitutions'])) ? (float)$overview['PercentInstitutions'] : 'N/A';
-        $ex_dividend_date = $overview['ExDividendDate'] ?? 'N/A';
+        $insider_percent = (float)($overview['PercentInsiders'] ?? 0);
+        $institution_percent = (float)($overview['PercentInstitutions'] ?? 0);
+        $dividend_date = $overview['DividendDate'] ?? 'N/A';
     
         $output = '<div class="jtw-content-section" id="section-overview-content">';
         $output .= '<h4>' . esc_html($ticker) . ' ' . esc_html__('Company Overview', 'journey-to-wealth') . '</h4>';
+        
         $output .= '<div class="jtw-overview-main-col">';
         $output .= '<div class="jtw-company-description"><p>' . esc_html($description) . '</p></div>';
-    
-        // Stats container
+        
         $output .= '<div class="jtw-stats-container">';
         $output .= $this->create_metric_card('Current Price', $stock_price, '$');
         $output .= $this->create_metric_card('Market Capitalization', $market_cap, '$', '', true);
         $output .= $this->create_metric_card('Shares Outstanding', $shares_outstanding, '', '', true);
         $output .= $this->create_metric_card('Insider Ownership', $insider_percent, '%');
         $output .= $this->create_metric_card('Institution Ownership', $institution_percent, '%');
-        $output .= $this->create_metric_card('Ex-Dividend Date', $ex_dividend_date);
+        $output .= $this->create_metric_card('Ex-Dividend Date', $dividend_date);
+        $output .= '</div>';
+
+        $output .= '<div class="jtw-company-details">';
+        $output .= '<h4>' . esc_html__('Company Details', 'journey-to-wealth') . '</h4>';
+        $output .= '<div class="jtw-details-grid">';
+        $output .= '<div><strong>Exchange</strong><span>' . esc_html($overview['Exchange'] ?? 'N/A') . '</span></div>';
+        $output .= '<div><strong>Sector</strong><span>' . esc_html($overview['Sector'] ?? 'N/A') . '</span></div>';
+        if (!empty($overview['CIK'])) {
+            $output .= '<div><strong>SEC Filings</strong><span><a href="https://www.sec.gov/edgar/browse/?CIK=' . esc_attr($overview['CIK']) . '" target="_blank" rel="noopener noreferrer">View Filings</a></span></div>';
+        }
+        $output .= '<div><strong>Official Site</strong><span><a href="' . esc_url($overview['OfficialSite'] ?? '#') . '" target="_blank" rel="noopener noreferrer">' . esc_html($overview['OfficialSite'] ?? 'N/A') . '</a></span></div>';
+        $output .= '<div><strong>Industry</strong><span>' . esc_html($overview['Industry'] ?? 'N/A') . '</span></div>';
+        $output .= '<div><strong>Fiscal Year End</strong><span>' . esc_html($overview['FiscalYearEnd'] ?? 'N/A') . '</span></div>';
+        $output .= '<div><strong>52 Week High</strong><span>$' . esc_html($overview['52WeekHigh'] ?? 'N/A') . '</span></div>';
+        $output .= '<div><strong>52 Week Low</strong><span>$' . esc_html($overview['52WeekLow'] ?? 'N/A') . '</span></div>';
+        $output .= '<div><strong>Address</strong><span>' . esc_html($overview['Address'] ?? 'N/A') . '</span></div>';
+
+        $output .= '</div></div>';
         $output .= '</div>';
     
-        // Details Grid
-        $output .= '<div class="jtw-company-details"><div class="jtw-details-grid">';
-        $details_map = [
-            'Exchange' => $overview['Exchange'] ?? 'N/A',
-            'Sector' => $overview['Sector'] ?? 'N/A',
-            'SEC Filings' => isset($overview['CIK']) && !empty($overview['CIK']) ? '<a href="https://www.sec.gov/edgar/browse/?CIK=' . esc_attr($overview['CIK']) . '" target="_blank" rel="noopener noreferrer">View Filings</a>' : 'N/A',
-            'Official Site' => isset($overview['OfficialSite']) && !empty($overview['OfficialSite']) ? '<a href="' . esc_url($overview['OfficialSite']) . '" target="_blank" rel="noopener noreferrer">' . esc_html($overview['OfficialSite']) . '</a>' : 'N/A',
-            'Industry' => $overview['Industry'] ?? 'N/A',
-            'Fiscal Year End' => $overview['FiscalYearEnd'] ?? 'N/A',
-            '52 Week High' => isset($overview['52WeekHigh']) ? '$' . number_format((float)$overview['52WeekHigh'], 2) : 'N/A',
-            '52 Week Low' => isset($overview['52WeekLow']) ? '$' . number_format((float)$overview['52WeekLow'], 2) : 'N/A',
-            'Address' => $overview['Address'] ?? 'N/A',
-        ];
-
-        foreach ($details_map as $label => $value) {
-            $output .= '<div><strong>' . esc_html($label) . '</strong><span>' . $value . '</span></div>';
-        }
-        $output .= '</div></div>'; // End details grid and container
-    
-        $output .= '</div></div>'; // End main col and content section
+        $output .= '</div>';
         return $output;
     }
     
@@ -1203,16 +1220,14 @@ class Journey_To_Wealth_Public {
         $current_price = $data['current_price'];
         $discount_pct = ($value_per_share > 0 && $current_price > 0) ? (($value_per_share - $current_price) / $current_price) * 100 : 0;
         
-        $cash_flow_type = 'FCFE';
-        $discount_rate_label = 'Discount Rate (Cost of Equity)';
-        $total_value_label = 'Total Equity Value';
-    
-        // Table 1: Main Valuation Inputs
         $output = '<h4>Valuation</h4>';
         $output .= '<table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Source</th><th>Value</th></tr></thead><tbody>';
-        $output .= '<tr><td>Valuation Model</td><td></td><td>2 Stage ' . esc_html($cash_flow_type) . '</td></tr>';
-        $output .= '<tr><td>Levered Free Cash Flow</td><td>Historical Growth</td><td>See below</td></tr>';
-        $output .= '<tr><td>' . esc_html($discount_rate_label) . '</td><td>See below</td><td>' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%</td></tr>';
+        $output .= '<tr><td>Valuation Model</td><td></td><td>2 Stage FCFE</td></tr>';
+        $output .= '<tr><td>Initial Growth Rate</td><td>' . esc_html($data['inputs']['growth_rate_source']) . '</td><td>' . number_format($data['inputs']['initial_growth_rate'] * 100, 2) . '%</td></tr>';
+        if (strpos($data['inputs']['base_cash_flow_source'], 'Operating Cash Flow') !== false) {
+            $output .= '<tr><td>Base Cash Flow</td><td colspan="2">' . esc_html($data['inputs']['base_cash_flow_source']) . '</td></tr>';
+        }
+        $output .= '<tr><td>Discount Rate</td><td>See below</td><td>' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%</td></tr>';
         $output .= '<tr><td>Perpetual Growth Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%</td></tr>';
         $output .= '</tbody></table>';
 
@@ -1237,25 +1252,24 @@ class Journey_To_Wealth_Public {
         }
         
         // Table 3: FCFE Projections
-        $output .= '<h4>' . esc_html($cash_flow_type) . ' Forecast</h4>';
-        $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>' . esc_html($cash_flow_type) . ' (USD)</th><th>Source</th><th>Present Value Discounted (@' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%)</th></tr></thead><tbody>';
+        $output .= '<h4>FCFE Forecast</h4>';
+        $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>FCFE (USD)</th><th>Present Value Discounted (@' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%)</th></tr></thead><tbody>';
         foreach ($data['projection_table'] as $row) {
             $output .= '<tr>';
             $output .= '<td>' . esc_html($row['year']) . '</td>';
             $output .= '<td>' . $this->format_large_number($row['cf'], '$') . '</td>';
-            $output .= '<td>Est @ ' . number_format(($row['cf'] / ($data['projection_table'][0]['cf'] / (1 + $data['inputs']['initial_growth_rate'])) - 1) * 100, 2) . '%</td>';
             $output .= '<td>' . $this->format_large_number($row['pv_cf'], '$') . '</td>';
             $output .= '</tr>';
         }
-        $output .= '<tr><td colspan="3"><strong>Present value of next 10 years cash flows</strong></td><td><strong>' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . '</strong></td></tr>';
+        $output .= '<tr><td colspan="2"><strong>Present value of next 10 years cash flows</strong></td><td><strong>' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . '</strong></td></tr>';
         $output .= '</tbody></table>';
 
         // Table 4 & 5: Final Valuation
         $output .= '<h4>Final Valuation</h4>';
         $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Terminal Value</td><td>' . esc_html($cash_flow_type) . '<sub>' . end($data['projection_table'])['year'] . '</sub> &times; (1 + g) &divide; (Discount Rate - g)<br>= ' . $this->format_large_number(end($data['projection_table'])['cf'], '$') . ' &times; (1 + ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%) &divide; (' . number_format($data['inputs']['discount_rate'] * 100, 2) . '% - ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%)</td><td>' . $this->format_large_number($data['terminal_value'], '$') . '</td></tr>';
+        $output .= '<tr><td>Terminal Value</td><td>FCFE<sub>' . end($data['projection_table'])['year'] . '</sub> &times; (1 + g) &divide; (Discount Rate - g)<br>= ' . $this->format_large_number(end($data['projection_table'])['cf'], '$') . ' &times; (1 + ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%) &divide; (' . number_format($data['inputs']['discount_rate'] * 100, 2) . '% - ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%)</td><td>' . $this->format_large_number($data['terminal_value'], '$') . '</td></tr>';
         $output .= '<tr><td>Present Value of Terminal Value</td><td>Terminal Value &divide; (1 + r)<sup>10</sup><br>' . $this->format_large_number($data['terminal_value'], '$') . ' &divide; (1 + ' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%)<sup>10</sup></td><td>' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td></tr>';
-        $output .= '<tr><td><strong>' . esc_html($total_value_label) . '</strong></td><td><strong>Present value of next 10 years cash flows + PV of Terminal Value</strong><br>= ' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . ' + ' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td><td><strong>' . $this->format_large_number($data['total_equity_value'], '$') . '</strong></td></tr>';
+        $output .= '<tr><td><strong>Total Equity Value</strong></td><td><strong>Present value of next 10 years cash flows + PV of Terminal Value</strong><br>= ' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . ' + ' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td><td><strong>' . $this->format_large_number($data['total_equity_value'], '$') . '</strong></td></tr>';
         $output .= '<tr><td><strong>Equity Value per Share (USD)</strong></td><td><strong>Total Equity Value / Shares Outstanding</strong><br>= ' . $this->format_large_number($data['total_equity_value'], '$') . ' / ' . number_format($data['shares_outstanding']) . '</td><td><strong>$' . number_format($value_per_share, 2) . '</strong></td></tr>';
         $output .= '</tbody></table>';
 
@@ -1428,9 +1442,7 @@ class Journey_To_Wealth_Public {
                 elseif ($prefix === '%') { $formatted_value = $temp_val . $prefix; } 
                 else { $formatted_value = $temp_val; }
             }
-        } elseif (!empty($value) && strcasecmp(trim($value), 'none') !== 0) {
-            $formatted_value = $value;
-        }
+        } elseif (!empty($value)) { $formatted_value = $value; }
         return '<div class="jtw-metric-card ' . esc_attr($custom_class) . '"><h3 class="jtw-metric-title">' . esc_html($title) . '</h3><p class="jtw-metric-value">' . esc_html($formatted_value) . '</p></div>';
     }
 
