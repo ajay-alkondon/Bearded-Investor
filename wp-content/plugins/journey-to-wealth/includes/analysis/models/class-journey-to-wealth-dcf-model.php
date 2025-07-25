@@ -99,12 +99,12 @@ class Journey_To_Wealth_DCF_Model {
         if (empty($reports) || count($reports) < 2) {
             return null;
         }
+        
         $series = array_map(function($r) use ($key) {
             return $this->get_av_value($r, $key);
         }, $reports);
         
-        // **FIX**: Removed the check for any negative value in the series.
-        // The check for a positive beginning_value is sufficient, especially for revenue.
+        $series = array_reverse($series);
 
         $beginning_value = $series[0];
         $ending_value = end($series);
@@ -117,7 +117,7 @@ class Journey_To_Wealth_DCF_Model {
         return pow(($ending_value / $beginning_value), (1 / $num_periods)) - 1;
     }
 
-    private function get_analyst_growth_rate($overview_data, $default_growth_rate) {
+    private function get_analyst_growth_rate($overview_data) {
         $peg_ratio = $this->get_av_value($overview_data, 'PEGRatio');
         $pe_ratio = $this->get_av_value($overview_data, 'PERatio');
         if ($peg_ratio > 0 && $pe_ratio > 0) {
@@ -126,7 +126,17 @@ class Journey_To_Wealth_DCF_Model {
                 return $analyst_growth;
             }
         }
-        return $default_growth_rate;
+        return null;
+    }
+
+    private function get_dynamic_growth_cap($beta) {
+        if ($beta < 0.8) {
+            return 0.15; // Low volatility, conservative cap
+        } elseif ($beta >= 0.8 && $beta <= 1.2) {
+            return 0.25; // Market volatility, standard cap
+        } else {
+            return 0.35; // High volatility, higher cap
+        }
     }
 
     public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $earnings_data, $treasury_yield_data, $current_price, $beta_details = []) {
@@ -153,12 +163,32 @@ class Journey_To_Wealth_DCF_Model {
         $growth_rate_source = '';
 
         $revenue_cagr = $this->calculate_historical_cagr($income_reports, 'totalRevenue');
-        if ($revenue_cagr !== null && $revenue_cagr > 0) {
-            $initial_growth_rate = $revenue_cagr;
-            $growth_rate_source = 'Historical Revenue CAGR';
+        $analyst_growth_rate = $this->get_analyst_growth_rate($overview_data);
+        $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? null;
+        $dynamic_cap = $this->get_dynamic_growth_cap($beta);
+        $chosen_rate = null;
+
+        if ($unlevered_beta > 1.1 && $revenue_cagr > 0 && $analyst_growth_rate !== null) {
+            $chosen_rate = max($revenue_cagr, $analyst_growth_rate);
+            $growth_rate_source = 'Max of Historical or Analyst (High Beta)';
         } else {
-            $initial_growth_rate = $this->get_analyst_growth_rate($overview_data, $this->terminal_growth_rate);
-            $growth_rate_source = ($initial_growth_rate == $this->terminal_growth_rate) ? 'Perpetual Growth Rate (Default)' : 'Analyst Estimate (from PEG)';
+            if ($revenue_cagr > 0) {
+                $chosen_rate = $revenue_cagr;
+                $growth_rate_source = 'Historical Revenue CAGR (5-Year)';
+            } elseif ($analyst_growth_rate !== null) {
+                $chosen_rate = $analyst_growth_rate;
+                $growth_rate_source = 'Analyst Estimate (from PEG)';
+            }
+        }
+
+        if ($chosen_rate !== null) {
+            $initial_growth_rate = min($chosen_rate, $dynamic_cap);
+            if ($chosen_rate > $dynamic_cap) {
+                $growth_rate_source .= ' (Capped)';
+            }
+        } else {
+            $initial_growth_rate = $this->terminal_growth_rate;
+            $growth_rate_source = 'Perpetual Growth Rate (Default)';
         }
         
         $base_fcfe_data = end($cagr_calculation_table);
