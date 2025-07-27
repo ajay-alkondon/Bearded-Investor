@@ -100,11 +100,11 @@ class Journey_To_Wealth_DCF_Model {
             return null;
         }
         
+        $reports = array_reverse($reports);
+
         $series = array_map(function($r) use ($key) {
             return $this->get_av_value($r, $key);
         }, $reports);
-        
-        $series = array_reverse($series);
 
         $beginning_value = $series[0];
         $ending_value = end($series);
@@ -139,41 +139,24 @@ class Journey_To_Wealth_DCF_Model {
         }
     }
 
-    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $earnings_data, $treasury_yield_data, $current_price, $beta_details = []) {
-        $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data];
-        foreach($datasets as $dataset) {
-            if (is_wp_error($dataset) || empty($dataset['annualReports']) || count($dataset['annualReports']) < self::MIN_YEARS_FOR_GROWTH_CALC) {
-                return new WP_Error('dcf_missing_financials', __('DCF Error: At least 3 years of financial statements are required.', 'journey-to-wealth'));
-            }
-        }
-
-        $income_reports = array_slice($income_statement_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
-        $balance_reports = array_slice($balance_sheet_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
-        $cash_flow_reports = array_slice($cash_flow_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
-        
-        $cagr_calculation_table = $this->get_historical_fcfe_and_breakdown($income_reports, $balance_reports, $cash_flow_reports);
-        if(empty($cagr_calculation_table)) return new WP_Error('dcf_calc_error', __('Could not calculate historical FCFE.', 'journey-to-wealth'));
-        
-        $risk_free_rate = $this->calculate_average_risk_free_rate($treasury_yield_data);
-        $beta = $this->levered_beta ?? $beta_details['levered_beta'] ?? $this->get_av_value($overview_data, 'Beta');
-        $this->cost_of_equity = $this->calculate_cost_of_equity($beta, $risk_free_rate);
-        $this->terminal_growth_rate = $risk_free_rate;
-
-        $initial_growth_rate = null;
-        $growth_rate_source = '';
-
-        $revenue_cagr = $this->calculate_historical_cagr($income_reports, 'totalRevenue');
+    /**
+     * **NEW**: Public method to get the initial growth rate based on the model's hierarchy.
+     * This can be called by other parts of the plugin to ensure consistency.
+     */
+    public function get_initial_growth_rate($overview_data, $income_reports, $earnings_reports, $beta_details, $terminal_growth_rate) {
+        $historical_cagr = $this->calculate_historical_cagr($income_reports, 'totalRevenue');
         $analyst_growth_rate = $this->get_analyst_growth_rate($overview_data);
         $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? null;
-        $dynamic_cap = $this->get_dynamic_growth_cap($beta);
+        $dynamic_cap = $this->get_dynamic_growth_cap($beta_details['levered_beta']);
         $chosen_rate = null;
+        $growth_rate_source = '';
 
-        if ($unlevered_beta > 1.1 && $revenue_cagr > 0 && $analyst_growth_rate !== null) {
-            $chosen_rate = max($revenue_cagr, $analyst_growth_rate);
+        if ($unlevered_beta > 1.1 && $historical_cagr > 0 && $analyst_growth_rate !== null) {
+            $chosen_rate = max($historical_cagr, $analyst_growth_rate);
             $growth_rate_source = 'Max of Historical or Analyst (High Beta)';
         } else {
-            if ($revenue_cagr > 0) {
-                $chosen_rate = $revenue_cagr;
+            if ($historical_cagr > 0) {
+                $chosen_rate = $historical_cagr;
                 $growth_rate_source = 'Historical Revenue CAGR (5-Year)';
             } elseif ($analyst_growth_rate !== null) {
                 $chosen_rate = $analyst_growth_rate;
@@ -187,19 +170,64 @@ class Journey_To_Wealth_DCF_Model {
                 $growth_rate_source .= ' (Capped)';
             }
         } else {
-            $initial_growth_rate = $this->terminal_growth_rate;
+            $initial_growth_rate = $terminal_growth_rate;
             $growth_rate_source = 'Perpetual Growth Rate (Default)';
         }
+        
+        return ['rate' => $initial_growth_rate, 'source' => $growth_rate_source];
+    }
+
+
+    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $earnings_data, $treasury_yield_data, $current_price, $beta_details = []) {
+        $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data, $earnings_data];
+        foreach($datasets as $dataset) {
+            if (is_wp_error($dataset) || (empty($dataset['annualReports']) && empty($dataset['annualEarnings'])) || count($dataset['annualReports'] ?? $dataset['annualEarnings']) < self::MIN_YEARS_FOR_GROWTH_CALC) {
+                return new WP_Error('dcf_missing_financials', __('DCF Error: At least 3 years of financial statements are required.', 'journey-to-wealth'));
+            }
+        }
+
+        $income_reports = array_slice($income_statement_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
+        $balance_reports = array_slice($balance_sheet_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
+        $cash_flow_reports = array_slice($cash_flow_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
+        
+        $current_year = date('Y');
+        $full_year_earnings = array_filter($earnings_data['annualEarnings'], function($e) use ($current_year) {
+            $fiscal_year = substr($e['fiscalDateEnding'], 0, 4);
+            return $fiscal_year < $current_year;
+        });
+        $earnings_reports = array_slice($full_year_earnings, 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
+        
+        $cagr_calculation_table = $this->get_historical_fcfe_and_breakdown($income_reports, $balance_reports, $cash_flow_reports);
+        if(empty($cagr_calculation_table)) return new WP_Error('dcf_calc_error', __('Could not calculate historical FCFE.', 'journey-to-wealth'));
+        
+        $risk_free_rate = $this->calculate_average_risk_free_rate($treasury_yield_data);
+        $beta = $this->levered_beta ?? $beta_details['levered_beta'] ?? $this->get_av_value($overview_data, 'Beta');
+        $this->cost_of_equity = $this->calculate_cost_of_equity($beta, $risk_free_rate);
+        $this->terminal_growth_rate = $risk_free_rate;
+
+        // **MODIFIED**: Call the new reusable growth rate function
+        $growth_info = $this->get_initial_growth_rate($overview_data, $income_reports, $earnings_reports, $beta_details, $this->terminal_growth_rate);
+        $initial_growth_rate = $growth_info['rate'];
+        $growth_rate_source = $growth_info['source'];
         
         $base_fcfe_data = end($cagr_calculation_table);
         $base_cash_flow = $base_fcfe_data['fcfe'];
         $base_cash_flow_source = 'FCFE';
 
-        $latest_operating_cash_flow = $base_fcfe_data['operating_cash_flow'];
-        $latest_capex = abs($base_fcfe_data['capex']);
-        if ($latest_operating_cash_flow > 0 && ($latest_capex / $latest_operating_cash_flow) >= self::HIGH_CAPEX_THRESHOLD) {
-            $base_cash_flow = $latest_operating_cash_flow;
-            $base_cash_flow_source = 'Operating Cash Flow (due to high CapEx)';
+        $high_capex_year_count = 0;
+        $historical_years_for_capex = array_slice($cagr_calculation_table, -3);
+
+        foreach ($historical_years_for_capex as $year_data) {
+            $op_cash_flow = $year_data['operating_cash_flow'];
+            $capex = abs($year_data['capex']);
+            if ($op_cash_flow > 0 && ($capex / $op_cash_flow) >= self::HIGH_CAPEX_THRESHOLD) {
+                $high_capex_year_count++;
+            }
+        }
+
+        if ($high_capex_year_count >= 2) {
+            $base_cash_flow = $base_fcfe_data['operating_cash_flow'];
+            $base_cash_flow_source = 'Operating Cash Flow (Majority High CapEx - 3Y)';
         }
 
         if ($base_cash_flow <= 0) {
