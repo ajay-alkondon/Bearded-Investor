@@ -58,6 +58,16 @@ class Journey_To_Wealth_DCF_Model {
     private function calculate_cost_of_equity($beta, $risk_free_rate) {
         return ($beta > 0) ? $risk_free_rate + ($beta * $this->equity_risk_premium) : self::DEFAULT_COST_OF_EQUITY;
     }
+    
+    // **NEW**: Public function to get revenue-based growth rate
+    public function get_revenue_growth_rate($overview_data, $income_reports, $beta_details, $terminal_growth_rate) {
+        return $this->get_initial_growth_rate($overview_data, $income_reports, null, $beta_details, $terminal_growth_rate, 'revenue');
+    }
+
+    // **NEW**: Public function to get EPS-based growth rate
+    public function get_eps_growth_rate($overview_data, $earnings_reports, $beta_details, $terminal_growth_rate) {
+        return $this->get_initial_growth_rate($overview_data, null, $earnings_reports, $beta_details, $terminal_growth_rate, 'eps');
+    }
 
     private function get_historical_fcfe_and_breakdown($income_reports, $balance_reports, $cash_flow_reports) {
         $fcfe_breakdown = [];
@@ -139,25 +149,27 @@ class Journey_To_Wealth_DCF_Model {
         }
     }
 
-    /**
-     * **NEW**: Public method to get the initial growth rate based on the model's hierarchy.
-     * This can be called by other parts of the plugin to ensure consistency.
-     */
-    public function get_initial_growth_rate($overview_data, $income_reports, $earnings_reports, $beta_details, $terminal_growth_rate) {
-        $historical_cagr = $this->calculate_historical_cagr($income_reports, 'totalRevenue');
+    private function get_initial_growth_rate($overview_data, $income_reports, $earnings_reports, $beta_details, $terminal_growth_rate, $method = 'revenue') {
+        $historical_cagr = null;
+        if ($method === 'revenue' && $income_reports) {
+            $historical_cagr = $this->calculate_historical_cagr(array_slice($income_reports, 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS), 'totalRevenue');
+        } elseif ($method === 'eps' && $earnings_reports) {
+            $historical_cagr = $this->calculate_historical_cagr(array_slice($earnings_reports, 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS), 'reportedEPS');
+        }
+
         $analyst_growth_rate = $this->get_analyst_growth_rate($overview_data);
         $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? null;
         $dynamic_cap = $this->get_dynamic_growth_cap($beta_details['levered_beta']);
         $chosen_rate = null;
         $growth_rate_source = '';
 
-        if ($unlevered_beta > 1.1 && $historical_cagr > 0 && $analyst_growth_rate !== null) {
+        if ($unlevered_beta > 1.1 && $analyst_growth_rate !== null) {
             $chosen_rate = max($historical_cagr, $analyst_growth_rate);
             $growth_rate_source = 'Max of Historical or Analyst (High Beta)';
         } else {
             if ($historical_cagr > 0) {
                 $chosen_rate = $historical_cagr;
-                $growth_rate_source = 'Historical Revenue CAGR (5-Year)';
+                $growth_rate_source = ($method === 'revenue') ? 'Historical Revenue CAGR (5-Year)' : 'Historical EPS CAGR (5-Year)';
             } elseif ($analyst_growth_rate !== null) {
                 $chosen_rate = $analyst_growth_rate;
                 $growth_rate_source = 'Analyst Estimate (from PEG)';
@@ -177,9 +189,8 @@ class Journey_To_Wealth_DCF_Model {
         return ['rate' => $initial_growth_rate, 'source' => $growth_rate_source];
     }
 
-
-    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $earnings_data, $treasury_yield_data, $current_price, $beta_details = []) {
-        $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data, $earnings_data];
+    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $current_price, $beta_details = [], $initial_growth_rate, $growth_rate_source) {
+        $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data];
         foreach($datasets as $dataset) {
             if (is_wp_error($dataset) || (empty($dataset['annualReports']) && empty($dataset['annualEarnings'])) || count($dataset['annualReports'] ?? $dataset['annualEarnings']) < self::MIN_YEARS_FOR_GROWTH_CALC) {
                 return new WP_Error('dcf_missing_financials', __('DCF Error: At least 3 years of financial statements are required.', 'journey-to-wealth'));
@@ -190,13 +201,6 @@ class Journey_To_Wealth_DCF_Model {
         $balance_reports = array_slice($balance_sheet_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
         $cash_flow_reports = array_slice($cash_flow_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
         
-        $current_year = date('Y');
-        $full_year_earnings = array_filter($earnings_data['annualEarnings'], function($e) use ($current_year) {
-            $fiscal_year = substr($e['fiscalDateEnding'], 0, 4);
-            return $fiscal_year < $current_year;
-        });
-        $earnings_reports = array_slice($full_year_earnings, 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
-        
         $cagr_calculation_table = $this->get_historical_fcfe_and_breakdown($income_reports, $balance_reports, $cash_flow_reports);
         if(empty($cagr_calculation_table)) return new WP_Error('dcf_calc_error', __('Could not calculate historical FCFE.', 'journey-to-wealth'));
         
@@ -205,11 +209,6 @@ class Journey_To_Wealth_DCF_Model {
         $this->cost_of_equity = $this->calculate_cost_of_equity($beta, $risk_free_rate);
         $this->terminal_growth_rate = $risk_free_rate;
 
-        // **MODIFIED**: Call the new reusable growth rate function
-        $growth_info = $this->get_initial_growth_rate($overview_data, $income_reports, $earnings_reports, $beta_details, $this->terminal_growth_rate);
-        $initial_growth_rate = $growth_info['rate'];
-        $growth_rate_source = $growth_info['source'];
-        
         $base_fcfe_data = end($cagr_calculation_table);
         $base_cash_flow = $base_fcfe_data['fcfe'];
         $base_cash_flow_source = 'FCFE';
@@ -249,7 +248,7 @@ class Journey_To_Wealth_DCF_Model {
             $discount_factor = pow((1 + $this->cost_of_equity), $year);
             $pv_of_cf = $future_cf / $discount_factor;
             $sum_of_pv_cfs += $pv_of_cf;
-            $projection_table[] = ['year' => date('Y') + $year, 'cf' => $future_cf, 'pv_cf' => $pv_of_cf];
+            $projection_table[] = ['year' => date('Y') + $year, 'cf' => $future_cf, 'pv_cf' => $pv_of_cf, 'growth_rate' => $current_growth_rate];
         }
 
         $terminal_value = ($future_cf * (1 + $this->terminal_growth_rate)) / ($this->cost_of_equity - $this->terminal_growth_rate);
