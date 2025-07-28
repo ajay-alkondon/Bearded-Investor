@@ -8,8 +8,8 @@
     // define('WPLANG', 'OTHER_LANGUAGE');
 
 /* For developers: WordPress debugging mode.  */
-define('WP_DEBUG', true);
-define('WP_DEBUG_LOG', true);
+//define('WP_DEBUG', true);
+//define('WP_DEBUG_LOG', true);
 //define('WP_DEBUG_DISPLAY', true);
 
 
