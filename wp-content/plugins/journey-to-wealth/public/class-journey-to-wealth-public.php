@@ -374,11 +374,18 @@ class Journey_To_Wealth_Public {
                     'evToEbitda'      => isset($overview['EVToEBITDA']) && $overview['EVToEBITDA'] !== 'None' ? (float)$overview['EVToEBITDA'] : 'N/A',
                 ];
 
-                // **NEW**: Use DCF model to get the consistent growth rate
+                // **FIX START**: Pass the correct number of arguments
                 $dcf_model_for_growth = new Journey_To_Wealth_DCF_Model();
-                $beta_details = $this->calculate_levered_beta($ticker, $company_data['balance_sheet'], $overview['MarketCapitalization'], 0.21); // Use default tax rate for beta
-                $initial_growth_rate_details = $dcf_model_for_growth->get_initial_growth_rate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $beta_details);
-                $final_growth_rate = $initial_growth_rate_details['rate'] * 100; // Convert to percentage
+                $beta_details = $this->calculate_levered_beta($ticker, $company_data['balance_sheet'], $overview['MarketCapitalization'], 0.21);
+                $initial_growth_rate_details = $dcf_model_for_growth->get_initial_growth_rate(
+                    $overview, 
+                    $company_data['income_statement'], 
+                    $company_data['balance_sheet'], 
+                    $company_data['earnings'], // Added missing argument
+                    $beta_details
+                );
+                $final_growth_rate = $initial_growth_rate_details['rate'] * 100;
+                // **FIX END**
 
                 $dividend_yield_percent = isset($overview['DividendYield']) && is_numeric($overview['DividendYield']) ? (float)$overview['DividendYield'] * 100 : 0;
             
