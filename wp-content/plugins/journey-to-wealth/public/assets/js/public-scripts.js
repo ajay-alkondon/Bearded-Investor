@@ -54,9 +54,8 @@
         const $interactiveCards = $container.find('.is-interactive');
         const $peToggle = $container.find('#jtw-pe-toggle');
 
-        // --- PEG/PEGY Calculator Logic ---
         const $calculator = $container.find('.jtw-peg-pegy-calculator');
-        let updateRatios = () => {}; // Define in outer scope to be accessible by toggle handler
+        let updateRatios = () => {}; 
 
         if ($calculator.length) {
             const $stockPriceInput = $('#jtw-sim-stock-price');
@@ -68,7 +67,6 @@
             const $pegBar = $('#jtw-peg-bar');
             const $pegyBar = $('#jtw-pegy-bar');
         
-            // Assign the actual function logic now that elements are found
             updateRatios = function() {
                 const stockPrice = parseFloat($stockPriceInput.val());
                 const eps = parseFloat($epsInput.val());
@@ -108,7 +106,6 @@
             updateRatios();
         }
         
-        // --- Donut Chart Logic ---
         const $donutCards = $interactiveCards.filter('[data-interactive-type="donut"]');
         const ctx = document.getElementById('jtw-key-metrics-donut-chart');
         if (!ctx) return;
@@ -126,18 +123,17 @@
             const isForward = $peToggle.is(':checked');
             const data = $card.data();
             let numeratorValue = data.numeratorValue;
-            let denominatorValue = data.denominatorValue;
 
             if (data.metric === 'pe') {
                 numeratorValue = isForward ? data.forwardNumeratorValue : data.trailingNumeratorValue;
             }
             
             donutChart.data.labels = [data.numeratorLabel, data.denominatorLabel];
-            donutChart.data.datasets[0].data = [numeratorValue, denominatorValue];
+            donutChart.data.datasets[0].data = [numeratorValue, data.denominatorValue];
             donutChart.update();
 
             $topText.html(`<div class="numerator-label">${data.numeratorLabel}</div><div class="numerator-value">US$${formatLargeNumber(numeratorValue)}</div>`);
-            $centerText.html(`<div class="denominator-label">${data.denominatorLabel}</div><div class="denominator-value">US$${formatLargeNumber(denominatorValue)}</div>`);
+            $centerText.html(`<div class="denominator-label">${data.denominatorLabel}</div><div class="denominator-value">US$${formatLargeNumber(data.denominatorValue)}</div>`);
         }
 
         $interactiveCards.on('click', function() {
@@ -155,17 +151,14 @@
             }
         });
 
-        // --- P/E Toggle Logic ---
         $peToggle.on('change', function() {
             const isForward = $(this).is(':checked');
             const type = isForward ? 'forward' : 'trailing';
 
-            // Update P/E card
             const $peCard = $container.find('[data-metric="pe"]');
             const peValue = $peCard.data(`${type}-value`);
             $peCard.find('.jtw-metric-value').text(isFinite(peValue) ? `${parseFloat(peValue).toFixed(1)}x` : 'N/A');
 
-            // Update PEG/PEGY card
             const $pegCard = $container.find('[data-metric="peg-pegy"]');
             const pegValue = $pegCard.data(`${type}-peg`);
             const pegyValue = $pegCard.data(`${type}-pegy`);
@@ -173,12 +166,10 @@
             const pegyDisplay = isFinite(pegyValue) ? `${parseFloat(pegyValue).toFixed(1)}x` : 'N/A';
             $pegCard.find('.jtw-metric-value').text(`${pegDisplay} / ${pegyDisplay}`);
             
-            // Update active donut chart if it's the P/E one
             if ($peCard.hasClass('active')) {
                 updateDonutChart($peCard);
             }
 
-            // Update EPS in calculator
             const $epsInput = $('#jtw-sim-eps');
             if ($epsInput.length) {
                 const epsValue = $epsInput.data(`${type}-eps`);
@@ -236,6 +227,27 @@
             verdict = 'Overvalued';
             verdictColor = '#dc2626';
         }
+
+        function lightenColor(hex, percent) {
+            hex = hex.replace(/^#/, '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            const p = percent / 100;
+            const newR = Math.min(255, r + (255 - r) * p);
+            const newG = Math.min(255, g + (255 - g) * p);
+            const newB = Math.min(255, b + (255 - b) * p);
+            return `rgb(${parseInt(newR)}, ${parseInt(newG)}, ${parseInt(newB)})`;
+        }
+        
+        const gradientBlack = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradientBlack.addColorStop(0, '#888'); // Lighter grey start
+        gradientBlack.addColorStop(1, '#212529'); // Darker end
+        
+        const gradientVerdict = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradientVerdict.addColorStop(0, lightenColor(verdictColor, 75)); // Lighter start for a steeper gradient
+        gradientVerdict.addColorStop(1, verdictColor); // Darker end
+
     
         const centerTextPlugin = {
             id: 'centerText',
@@ -243,29 +255,28 @@
                 const config = chart.options.plugins.centerText;
                 if (!config) return;
                 const { top, left, width, height } = chart.chartArea;
-                if (width <= 0) return;
-                
+                if (width <= 0 || height <= 0) return;
                 const x = left + width / 2;
                 const y = top + height / 2;
 
-                const baseSize = width / 20;
+                const baseFontSize = Math.min(width, height) / 14;
 
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                ctx.font = `bold ${baseSize * 1.2}px sans-serif`;
+                ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
                 ctx.fillStyle = config.color;
-                ctx.fillText(config.verdict, x, y - (baseSize * 2));
+                ctx.fillText(config.verdict, x, y - (baseFontSize * 1.5));
                 
-                ctx.font = `bold ${baseSize * 0.8}px sans-serif`;
+                ctx.font = `bold ${baseFontSize * 0.9}px sans-serif`;
                 ctx.fillStyle = "#333";
-                ctx.fillText('Fair Value:', x, y + (baseSize * 0.5));
+                ctx.fillText('Fair Value:', x, y + (baseFontSize * 0.5));
                 
-                ctx.font = `bold ${baseSize * 1.2}px sans-serif`;
+                ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
                 ctx.fillStyle = config.color;
-                ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + (baseSize * 2.5));
-
+                ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + (baseFontSize * 2));
+                
                 ctx.restore();
             }
         };
@@ -284,60 +295,66 @@
                 const outerMeta = chart.getDatasetMeta(0);
                 if (!innerMeta.data.length || !outerMeta.data.length) return;
     
-                const arcRadius = outerMeta.data[0].outerRadius + (width / 40);
+                const arcRadius = outerMeta.data[0].outerRadius + 15;
                 const startAngle = outerMeta.data[0].endAngle;
                 const endAngle = innerMeta.data[0].endAngle;
                 
                 ctx.save();
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = verdictColor;
+                ctx.lineWidth = 15;
                 ctx.beginPath();
                 ctx.arc(left + width / 2, top + height / 2, arcRadius, startAngle, endAngle);
                 ctx.stroke();
                 
                 const drawCap = (angle) => {
-                    const capLength = width / 70;
-                    const capRadius = arcRadius - (capLength / 2);
-                    const x1 = (left + width / 2) + capRadius * Math.cos(angle);
-                    const y1 = (top + height / 2) + capRadius * Math.sin(angle);
-                    const x2 = x1 + capLength * Math.cos(angle);
-                    const y2 = y1 + capLength * Math.sin(angle);
-                    ctx.moveTo(x1, y1);
-                    ctx.lineTo(x2, y2);
+                    const capLength = 1;
+                    const x = (left + width / 2) + arcRadius * Math.cos(angle);
+                    const y = (top + height / 2) + arcRadius * Math.sin(angle);
+                    ctx.beginPath();
+                    ctx.moveTo(x - capLength / 2 * Math.sin(angle), y + capLength / 2 * Math.cos(angle));
+                    ctx.lineTo(x + capLength / 2 * Math.sin(angle), y - capLength / 2 * Math.cos(angle));
+                    ctx.stroke();
                 };
                 
-                ctx.beginPath();
-                ctx.lineWidth = 1.5;
                 drawCap(startAngle);
                 drawCap(endAngle);
-                ctx.stroke();
 
                 const text = Math.abs(discountPercent).toFixed(1) + '% ' + (discountPercent > 0 ? 'Discount' : 'Premium');
-                const textRadius = arcRadius + (width / 30);
+                const textRadius = arcRadius + 18;
                 const midAngle = (startAngle - endAngle) / 2;
-                
-                drawArcText(ctx, text, left + width / 2, top + height / 2, textRadius, midAngle, width / 40);
+                drawArcText(chart, ctx, text, left + width / 2, top + height / 2, textRadius, midAngle);
                 ctx.restore();
             }
         };
 
-        function drawArcText(ctx, str, centerX, centerY, radius, angle, fontSize) {
+        function drawArcText(chart, ctx, str, centerX, centerY, radius, angle) {
             ctx.save();
             ctx.translate(centerX, centerY);
-            ctx.font = `${fontSize}px sans-serif`;
+            
+            const baseFontSize = Math.min(chart.chartArea.width, chart.chartArea.height) / 25;
+            ctx.font = `${baseFontSize}px sans-serif`;
             ctx.fillStyle = '#333';
             ctx.textAlign = 'center';
-            const totalAngle = ctx.measureText(str).width / radius;
+            ctx.textBaseline = 'middle';
             
-            ctx.rotate(angle - totalAngle / 2);
+            const totalWidth = ctx.measureText(str).width;
+            const totalAngle = totalWidth / radius;
 
-            for (var i = 0; i < str.length; i++) {
+            let currentAngle = angle - totalAngle / 2;
+
+            for (let i = 0; i < str.length; i++) {
                 const char = str[i];
                 const charWidth = ctx.measureText(char).width;
                 const charAngle = charWidth / radius;
-                ctx.rotate(charAngle / 2);
+                
+                const rotation = currentAngle + charAngle / 2;
+
+                ctx.save();
+                ctx.rotate(rotation);
                 ctx.fillText(char, 0, -radius);
-                ctx.rotate(charAngle / 2);
+                ctx.restore();
+                
+                currentAngle += charAngle;
             }
             ctx.restore();
         }
@@ -346,46 +363,40 @@
             type: 'doughnut',
             data: {
                 datasets: [{
-                    label: currentPrice < fairValue ? 'Current Price' : 'Fair Value',
-                    data: [smallerValue, largerValue - smallerValue],
-                    backgroundColor: ['#212529', 'transparent'],
-                    borderColor: '#fff',
+                    label: 'Current Price',
+                    data: [currentPrice, fairValue - currentPrice],
+                    backgroundColor: [gradientBlack, 'transparent'],
                     borderWidth: 0,
                 }, {
-                    label: currentPrice > fairValue ? 'Current Price' : 'Fair Value',
-                    data: [largerValue, 0],
-                    backgroundColor: [verdictColor, 'transparent'],                    
-                    borderColor: '#fff',
+                    label: 'Fair Value',
+                    data: [fairValue, 0],
+                    backgroundColor: [gradientVerdict, 'transparent'],                    
                     borderWidth: 0,
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
-                cutout: '60%',
+                maintainAspectRatio: false,
+                cutout: '65%',
                 spacing: 0.5,
-                layout: { padding: 45 },
+                layout: { padding: 40 },
                 animation: { animateScale: true, animateRotate: true },
+                animationDelay: 500,
                 plugins: {
                     legend: { display: false },
                     tooltip: { enabled: false },
                     centerText: { verdict: verdict, discountPercent: discountPercent, color: verdictColor },
                     datalabels: {
-                        display: (context) => {
-                           return context.chart.width > 250;
-                        },
+                        display: true,
                         formatter: (value, context) => {
                            if (context.dataIndex === 1) return null;
                            return `${context.dataset.label}: $${value.toFixed(2)}`;
                         },
                         color: '#fff',
-                        backgroundColor: (context) => context.dataset.backgroundColor[context.dataIndex],
+                        backgroundColor: '#333',
                         borderRadius: 4,
                         padding: { top: 4, bottom: 4, left: 6, right: 6 },
-                        font: (context) => {
-                            const size = Math.max(10, Math.round(context.chart.width / 45));
-                            return { weight: '600', size: size };
-                        },
+                        font: { weight: '600', size: 11 },
                         align: 'center',
                         anchor: 'center',
                     }
@@ -394,12 +405,15 @@
             plugins: [centerTextPlugin, differenceArcPlugin, ChartDataLabels]
         });
 
-        const resizeObserver = new ResizeObserver(debounce(() => {
-            if (window.jtwFairValueChart) {
-                window.jtwFairValueChart.resize();
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (window.jtwFairValueChart) {
+                    window.jtwFairValueChart.resize();
+                }
             }
-        }, 100));
-        resizeObserver.observe($chartContainer[0]);
+        });
+
+        resizeObserver.observe(canvas.parentElement);
     }
 
     function initializeHistoricalCharts($container) {
@@ -593,10 +607,10 @@
         const chartId = $dataScript.data('chart-id');
         const ctx = document.getElementById(chartId);
         const $tableWrapper = $container.find('.jtw-historical-table-wrapper');
-    
+
         if (!ctx || !$tableWrapper.length) {
-            console.error("Historical data chart/table elements not found.");
-            return;
+             console.error("Historical data chart/table elements not found.");
+             return;
         }
     
         let fullHistoricalData;
@@ -611,26 +625,24 @@
             $container.find('.jtw-historical-combined-wrapper').html('<p>No historical data available to display.</p>');
             return;
         }
-    
+
         const yAxisAlignPlugin = {
             id: 'yAxisAlignPlugin',
             afterLayout: (chart) => {
-                if (chart.myAlignPluginHasRun) return;
-                const firstColumnWidth = $tableWrapper.find('thead th:first-child').outerWidth();
-                if (!firstColumnWidth) return;
+                if (!chart.options.plugins.yAxisAlignPlugin.enabled) return;
+                const firstColumnWidth = $container.find('.jtw-historical-table thead th:first-child').outerWidth();
                 const yAxisWidth = chart.scales.yPrice.width;
                 const requiredPadding = firstColumnWidth - yAxisWidth;
-                if (requiredPadding > 0) {
+                if (requiredPadding > 0 && chart.options.layout.padding.left !== requiredPadding) {
                     chart.options.layout.padding.left = requiredPadding;
-                    chart.myAlignPluginHasRun = true; 
-                    chart.update('none');
+                    chart.update();
                 }
             }
         };
-    
+
         const verticalStripesPlugin = {
             id: 'verticalStripes',
-            beforeDraw(chart) {
+            beforeDraw(chart, args, options) {
                 const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
                 if (x.ticks.length < 2) return;
                 const bandWidth = x.getPixelForTick(1) - x.getPixelForTick(0);
@@ -645,133 +657,102 @@
                 }
             }
         };
-    
+
         const chart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: [], datasets: [] }, // Initially empty
+            data: { labels: [], datasets: [] },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
-                layout: { padding: { left: 120, right: 0 } },
+                layout: { padding: { left: 0, right: 0 } },
                 scales: {
-                    x: {
-                        ticks: { display: false },
-                        grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)', offset: true },
-                        offset: true
-                    },
-                    yPrice: {
-                        type: 'logarithmic',
-                        position: 'left',
-                        grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)' },
-                        title: { display: true, text: 'Price (Log Scale)' },
-                        ticks: { callback: (value) => '$' + formatLargeNumber(value, 0) }
-                    }
+                    x: { ticks: { display: false }, grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)', offset: true }, offset: true },
+                    yPrice: { type: 'logarithmic', position: 'left', grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)' }, title: { display: true, text: 'Price (Log Scale)' }, ticks: { callback: function(value) { return '$' + formatLargeNumber(value, 0); } } }
                 },
                 plugins: {
                     legend: { position: 'top' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
-                                if (context.dataset.type === 'bar' && Array.isArray(context.raw)) {
-                                    label += '$' .concat(formatLargeNumber(context.raw[0]), ' - $', formatLargeNumber(context.raw[1]));
-                                } else if (context.parsed.y !== null) {
-                                    label += '$' .concat(formatLargeNumber(context.parsed.y));
-                                }
-                                return label;
-                            }
-                        }
-                    }
+                    tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.dataset.type === 'bar' && Array.isArray(context.raw)) { label += '$' .concat(formatLargeNumber(context.raw[0]), ' - $', formatLargeNumber(context.raw[1])); } else if (context.parsed.y !== null) { label += '$' .concat(formatLargeNumber(context.parsed.y)); } return label; } } },
+                    yAxisAlignPlugin: { enabled: true }
                 }
             },
             plugins: [yAxisAlignPlugin, verticalStripesPlugin]
         });
-    
-        const updateHistoricalDataView = () => {
-            const containerWidth = $container.width();
-            const yearColumnWidth = 80;
-            const firstColumnWidth = 120;
-            const maxYears = Math.floor((containerWidth - firstColumnWidth) / yearColumnWidth);
-            const yearsToShow = Math.max(1, Math.min(fullHistoricalData.length, maxYears));
-    
-            const slicedData = fullHistoricalData.slice(-yearsToShow);
-    
-            // Update Chart
-            chart.data.labels = slicedData.map(d => d.year);
-            chart.data.datasets = [
-                {
-                    type: 'bar',
-                    label: 'Price Range (High-Low)',
-                    data: slicedData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]),
-                    backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                    borderColor: 'rgba(0, 122, 255, 0.5)',
-                    borderWidth: 1,
-                    barPercentage: 0.5,
-                    categoryPercentage: 0.7,
-                    borderSkipped: false
-                }, {
-                    type: 'line',
-                    label: 'Average Price',
-                    data: slicedData.map(d => d.avg_price),
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.1
-                }
-            ];
-            chart.myAlignPluginHasRun = false; // Rerun alignment plugin
-            chart.update();
-    
-            // Update Table
-            const metrics = {
-                'revenue_ps': 'Revenue / Share', 'eps': 'EPS', 'cash_flow_ps': 'FCF / Share',
-                'book_value_ps': 'Book Value / Share', 'shares_outstanding': 'Shares (M)',
-                'net_profit_margin': 'Net Profit Margin', 'return_on_equity': 'Return on Equity',
-                'return_on_capital': 'Return on Capital', 'shareholder_equity': 'Shareholder Equity',
-            };
-    
+
+        function buildTable(data) {
+            const metrics = { 'revenue_ps': 'Revenue / Share', 'eps': 'EPS', 'cash_flow_ps': 'FCF / Share', 'book_value_ps': 'Book Value / Share', 'shares_outstanding': 'Shares (M)', 'net_profit_margin': 'Net Profit Margin', 'return_on_equity': 'Return on Equity', 'return_on_capital': 'Return on Capital', 'shareholder_equity': 'Shareholder Equity' };
             let tableHtml = '<table class="jtw-historical-table"><thead><tr><th>Metric</th>';
-            slicedData.forEach(dp => tableHtml += `<th>${dp.year}</th>`);
+            data.forEach(dp => tableHtml += `<th>${dp.year}</th>`);
             tableHtml += '</tr></thead><tbody>';
-    
-            for (const key in metrics) {
-                tableHtml += `<tr><td>${metrics[key]}</td>`;
-                slicedData.forEach(dp => {
+            Object.entries(metrics).forEach(([key, label]) => {
+                tableHtml += `<tr><td>${label}</td>`;
+                data.forEach(dp => {
                     const value = dp[key];
-                    let formatted_value = 'N/A';
+                    let formattedValue = 'N/A';
                     if (isFinite(value)) {
                         switch (key) {
-                            case 'shares_outstanding': formatted_value = formatLargeNumber(value, 2); break;
-                            case 'shareholder_equity': formatted_value = (value != 0) ? `$${formatLargeNumber(value)}` : 'N/A'; break;
-                            case 'net_profit_margin':
-                            case 'return_on_equity':
-                            case 'return_on_capital': formatted_value = `${Number(value).toFixed(1)}%`; break;
-                            default: formatted_value = `$${Number(value).toFixed(1)}`;
+                            case 'shares_outstanding': formattedValue = formatLargeNumber(value, 0); break;
+                            case 'shareholder_equity': formattedValue = (value != 0) ? formatLargeNumber(value) : 'N/A'; break;
+                            case 'net_profit_margin': case 'return_on_equity': case 'return_on_capital': formattedValue = `${Number(value).toFixed(1)}%`; break;
+                            default: formattedValue = `$${Number(value).toFixed(1)}`;
                         }
                     }
-                    tableHtml += `<td>${formatted_value}</td>`;
+                    tableHtml += `<td>${formattedValue}</td>`;
                 });
                 tableHtml += '</tr>';
-            }
+            });
             tableHtml += '</tbody></table>';
             $tableWrapper.html(tableHtml);
-        };
-    
-        // Initial setup and add resize listener
-        updateHistoricalDataView();
-        $(window).on('resize.historicaldata', debounce(updateHistoricalDataView, 250));
+        }
+
+        function updateChartAndTable() {
+            const containerWidth = $container.width();
+            const yearsToShow = Math.max(3, Math.min(10, Math.floor((containerWidth - 120) / 70))); 
+            const slicedData = fullHistoricalData.slice(-yearsToShow);
+
+            buildTable(slicedData);
+
+            chart.data.labels = slicedData.map(d => d.year);
+            chart.data.datasets = [
+                { type: 'bar', label: 'Price Range (High-Low)', data: slicedData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]), backgroundColor: 'rgba(0, 122, 255, 0.2)', borderColor: 'rgba(0, 122, 255, 0.5)', borderWidth: 1, barPercentage: 0.5, categoryPercentage: 0.7, borderSkipped: false },
+                { type: 'line', label: 'Average Price', data: slicedData.map(d => d.avg_price), borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 1)', borderWidth: 2, pointRadius: 0, tension: 0.1 }
+            ];
+            chart.options.plugins.yAxisAlignPlugin.enabled = true; 
+            chart.update();
+        }
+
+        const resizeObserver = new ResizeObserver(debounce(updateChartAndTable, 150));
+        resizeObserver.observe($container[0]);
+        updateChartAndTable(); 
     }
 
     function setupSWSLayoutInteractivity($contentArea) {
-        const $anchorNav = $contentArea.find('.jtw-anchor-nav');
-        if (!$anchorNav.length) return;
+        const $dotNavContainer = $contentArea.find('.jtw-mobile-dot-nav');
+        const $majorSections = $contentArea.find('.jtw-major-content-group');
 
+        if ($dotNavContainer.length && $majorSections.length) {
+            $majorSections.each(function() {
+                const $section = $(this);
+                const sectionId = $section.find('.jtw-content-section-placeholder').attr('id');
+                const sectionTitle = $section.find('h2').text();
+                if (sectionId && sectionTitle) {
+                    $dotNavContainer.append(`<a class="jtw-dot-link" href="#${sectionId}" data-tooltip="${sectionTitle}"></a>`);
+                }
+            });
+
+            $dotNavContainer.on('click', '.jtw-dot-link', function(e) {
+                e.preventDefault();
+                const targetId = $(this).attr('href');
+                const $targetSection = $(targetId);
+                if ($targetSection.length) {
+                    $('html, body').animate({ scrollTop: $targetSection.offset().top - 80 }, 500);
+                }
+            });
+        }
+        
+        const $anchorNav = $contentArea.find('.jtw-anchor-nav');
         const $navLinks = $anchorNav.find('a.jtw-anchor-link');
-        const $contentMain = $contentArea.find('.jtw-content-main');
-        const $sections = $contentMain.find('.jtw-content-section-placeholder');
+        const $contentSections = $contentArea.find('.jtw-content-section-placeholder');
         const offsetTop = 150; 
 
         $navLinks.off('click').on('click', function(e) {
@@ -784,26 +765,45 @@
         });
 
         function onScroll() {
-            const scrollPos = $(document).scrollTop() + offsetTop + 1;
-            let activeLink = null;
-            $sections.each(function() {
-                const top = $(this).offset().top;
-                const height = $(this).height();
-                const sectionContentHeight = $(this).children().first().height() || height;
-                if (top <= scrollPos && (top + sectionContentHeight) > scrollPos) {
-                    activeLink = $navLinks.filter('[href="#' + $(this).attr('id') + '"]');
+            const scrollPos = $(document).scrollTop();
+            const windowHeight = $(window).height();
+            const docHeight = $(document).height();
+            
+            if ($(window).width() <= 1024) {
+                let activeDot = null;
+                $majorSections.each(function() {
+                    const $section = $(this);
+                    const top = $section.offset().top - 100;
+                    if (top < scrollPos + windowHeight / 2) {
+                        activeDot = $dotNavContainer.find('a[href="#' + $section.find('.jtw-content-section-placeholder').attr('id') + '"]');
+                    }
+                });
+                $dotNavContainer.find('.jtw-dot-link').removeClass('active');
+                if(activeDot) activeDot.addClass('active');
+
+            } else {
+                let activeLink = null;
+                $contentSections.each(function() {
+                    const top = $(this).offset().top;
+                    const sectionContentHeight = $(this).children().first().height() || $(this).height();
+                    if (top <= scrollPos + offsetTop + 1 && (top + sectionContentHeight) > scrollPos + offsetTop + 1) {
+                        activeLink = $navLinks.filter('[href="#' + $(this).attr('id') + '"]');
+                    }
+                });
+                
+                $navLinks.removeClass('active');
+                if (activeLink && activeLink.length > 0) {
+                    activeLink.parent().addClass('active');
+                    if (activeLink.closest('.jtw-nav-group-single').length > 0) {
+                         activeLink.addClass('active');
+                    }
                 }
-            });
-            $navLinks.removeClass('active');
-            if (activeLink && activeLink.length > 0) {
-                activeLink.addClass('active');
-            } else if ($(window).scrollTop() + $(window).height() > $(document).height() - 100) {
-                 $navLinks.last().addClass('active');
             }
         }
         
-        $(document).off('scroll.jtw').on('scroll.jtw', onScroll);
+        $(document).off('scroll.jtw').on('scroll.jtw', debounce(onScroll, 50));
         onScroll();
+        $(window).on('resize', debounce(onScroll, 100));
     }
 
     function initializeHeaderSearch() {

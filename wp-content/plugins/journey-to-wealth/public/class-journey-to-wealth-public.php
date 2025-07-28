@@ -35,7 +35,8 @@ class Journey_To_Wealth_Public {
     }
     
     public function enqueue_scripts() {
-        wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js', array('jquery'), '3.9.1', true );
+        // **MODIFIED**: Updated Chart.js to the latest version
+        wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js', array(), '4.5.0', true );
         wp_enqueue_script( 'chartjs-adapter-date-fns', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', array('chartjs'), '1.1.0', true );
         wp_enqueue_script( 'chartjs-plugin-datalabels', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0/dist/chartjs-plugin-datalabels.min.js', array('chartjs'), '2.1.0', true );
         
@@ -102,21 +103,22 @@ class Journey_To_Wealth_Public {
             $output .= '<p class="jtw-initial-prompt">' . esc_html__('Please use the search bar in the header to analyze a stock.', 'journey-to-wealth') . '</p>';
         } else {
             $output .= '<div class="jtw-content-container">';
+            
+            // Desktop Navigation (will be hidden on mobile)
             $output .= '<nav class="jtw-anchor-nav"><ul>';
-            $output .= '<li class="jtw-nav-major-section has-link"><a href="#section-overview" class="jtw-anchor-link active">' . esc_html__('Company Overview', 'journey-to-wealth') . '</a></li>';
-            $output .= '<li class="jtw-nav-major-section">' . esc_html__('Performance', 'journey-to-wealth') . '</li>';
-            $output .= '<li class="jtw-nav-minor-section"><a href="#section-historical-data" class="jtw-anchor-link">' . esc_html__('Data Trends', 'journey-to-wealth') . '</a></li>';
-            $output .= '<li class="jtw-nav-minor-section"><a href="#section-past-performance" class="jtw-anchor-link">' . esc_html__('Visual Trends', 'journey-to-wealth') . '</a></li>';
-            $output .= '<li class="jtw-nav-major-section">' . esc_html__('Valuation', 'journey-to-wealth') . '</li>';
-            $output .= '<li class="jtw-nav-minor-section"><a href="#section-key-metrics-ratios" class="jtw-anchor-link">' . esc_html__('Key Metrics & Ratios', 'journey-to-wealth') . '</a></li>';
-            $output .= '<li class="jtw-nav-minor-section"><a href="#section-intrinsic-valuation" class="jtw-anchor-link">' . esc_html__('Fair Value Analysis', 'journey-to-wealth') . '</a></li>';
+            $output .= '<li class="jtw-nav-group jtw-nav-group-single"><a href="#section-overview" class="jtw-anchor-link jtw-nav-major-section active">' . esc_html__('Company Overview', 'journey-to-wealth') . '</a></li>';
+            $output .= '<li class="jtw-nav-group"><span class="jtw-nav-major-section">' . esc_html__('Performance', 'journey-to-wealth') . '</span><div class="jtw-nav-minor-group"><a href="#section-historical-data" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Data Trends', 'journey-to-wealth') . '</a><a href="#section-past-performance" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Visual Trends', 'journey-to-wealth') . '</a></div></li>';
+            $output .= '<li class="jtw-nav-group"><span class="jtw-nav-major-section">' . esc_html__('Valuation', 'journey-to-wealth') . '</span><div class="jtw-nav-minor-group"><a href="#section-key-metrics-ratios" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Key Metrics & Ratios', 'journey-to-wealth') . '</a><a href="#section-intrinsic-valuation" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Fair Value Analysis', 'journey-to-wealth') . '</a></div></li>';
             $output .= '</ul></nav>';
             
+            // **NEW**: Empty container for the mobile dot navigation
+            $output .= '<div class="jtw-mobile-dot-nav"></div>';
+
             $output .= '<main class="jtw-content-main">';
             $output .= '<div id="jtw-currency-notice-placeholder"></div>';
-            $output .= '<div class="jtw-major-content-group"><h2>' . esc_html__('Company Overview', 'journey-to-wealth') . '</h2><div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div></div>';
-            $output .= '<div class="jtw-major-content-group"><h2>' . esc_html__('Performance', 'journey-to-wealth') . '</h2><div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div><div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div></div>';
-            $output .= '<div class="jtw-major-content-group"><h2>' . esc_html__('Valuation', 'journey-to-wealth') . '</h2><div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div><div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div></div>';
+            $output .= '<div class="jtw-major-content-group" id="major-section-overview"><h2>' . esc_html__('Company Overview', 'journey-to-wealth') . '</h2><div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div></div>';
+            $output .= '<div class="jtw-major-content-group" id="major-section-performance"><h2>' . esc_html__('Performance', 'journey-to-wealth') . '</h2><div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div><div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div></div>';
+            $output .= '<div class="jtw-major-content-group" id="major-section-valuation"><h2>' . esc_html__('Valuation', 'journey-to-wealth') . '</h2><div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div><div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div></div>';
             $output .= '</main></div>';
         }
         
@@ -319,7 +321,7 @@ class Journey_To_Wealth_Public {
             $eps_growth_info = $dcf_model->get_eps_growth_rate($overview, $earnings['annualEarnings'], $beta_details, $risk_free_rate);
             $dcf_eps_result = $dcf_model->calculate($overview, $income_statement, $balance_sheet, $cash_flow, $treasury_yield, $latest_price, $beta_details, $eps_growth_info['rate'], $eps_growth_info['source']);
             
-            $final_dcf_result = $dcf_rev_result; // Default to revenue-based
+            $final_dcf_result = $dcf_rev_result;
             if ($analyst_target && !is_wp_error($dcf_rev_result) && !is_wp_error($dcf_eps_result)) {
                 $rev_diff = abs($dcf_rev_result['intrinsic_value_per_share'] - $analyst_target);
                 $eps_diff = abs($dcf_eps_result['intrinsic_value_per_share'] - $analyst_target);

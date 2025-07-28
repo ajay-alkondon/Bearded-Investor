@@ -150,7 +150,7 @@
 .jtw-content-main { flex: 1; min-width: 0; }
 
 .jtw-content-section-placeholder {
-    min-height: 400px; /* Prevents page jump */
+    min-height: 400px;
     margin-bottom: 25px;
     display: flex;
     align-items: center;
@@ -168,57 +168,36 @@
     width: 100%;
 }
 
+/* Desktop Navigation */
 .jtw-anchor-nav .jtw-nav-major-section {
     font-weight: 700;
     color: var(--jtw-text-dark);
-    padding: 15px 15px 5px 15px;
-    margin-top: 10px;
+    padding: 10px 15px 25px 0;
     font-size: 1.1em;
     border-bottom: 1px solid var(--jtw-border-color-light);
 }
-
-.jtw-anchor-nav .jtw-nav-major-section.has-link {
-    padding: 0;
-    margin: 0;
-    border: none;
-}
-
-.jtw-anchor-nav .jtw-nav-major-section.has-link a {
-    font-weight: 700;
-    color: var(--jtw-text-dark);
-    padding: 0 15px 5px 0;
-    margin-top: 10px;
-    font-size: 1.1em;
-    border-bottom: 1px solid var(--jtw-border-color-light);
-    border-left: none;
-}
-
-.jtw-anchor-nav .jtw-nav-major-section.has-link a.active {
-     background-color: transparent !important;
+.jtw-anchor-nav .jtw-nav-major-section.active {
+    background-color: transparent !important;
     color: var(--jtw-primary-blue) !important;
-    border-left: none;
 }
-
-
-.jtw-anchor-nav .jtw-nav-minor-section a {
-    padding: 10px 15px 10px 30px;
+.jtw-anchor-nav .jtw-nav-minor-section {
+    padding: 10px 15px 10px 15px;
     font-weight: 400;
     color: var(--jtw-text-medium);
     border-radius: 6px;
     border-left: 3px solid transparent;
 }
-
-.jtw-anchor-nav .jtw-nav-minor-section a.active {
+.jtw-anchor-nav .jtw-nav-minor-section.active {
     background-color: #e7f3ff !important;
     color: var(--jtw-primary-blue) !important;
     font-weight: 500 !important;
     border-left-color: var(--jtw-primary-blue) !important;
 }
 
+
 .jtw-major-content-group {
     margin-bottom: 25px;
 }
-
 .jtw-major-content-group > h2 {
     font-size: 1.8em;
     margin-bottom: 20px;
@@ -227,19 +206,64 @@
     color: var(--jtw-text-dark);
 }
 
+/* --- Mobile Navigation Overrides --- */
+.jtw-mobile-dot-nav {
+    display: none; /* Hidden by default */
+}
 
-/* --- Responsive Stacking --- */
 @media (max-width: 1024px) {
-    #jtw-main-content-area { padding: 0 10px; }
-    .jtw-content-container { flex-direction: column; }
     .jtw-anchor-nav {
-        position: relative; top: auto; height: auto; flex-basis: 100%; width: 100%;
-        margin-bottom: 25px; border-bottom: 1px solid var(--jtw-border-color); padding-bottom: 15px;
+        display: none; /* Hide the old nav on mobile */
     }
-    .jtw-anchor-nav ul { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    .jtw-anchor-nav ul li a { border-bottom: 3px solid transparent; border-left: none; }
-     .jtw-anchor-nav ul li a.active { border-bottom-color: var(--jtw-primary-blue); border-left: none; }
-    .jtw-content-main { flex-basis: 100%; }
+    
+    .jtw-mobile-dot-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        position: fixed;
+        top: 50%;
+        right: 15px;
+        transform: translateY(-50%);
+        z-index: 1000;
+    }
+
+    .jtw-dot-link {
+        display: block;
+        width: 12px;
+        height: 12px;
+        background-color: #ccc;
+        border-radius: 50%;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+    }
+
+    .jtw-dot-link.active {
+        background-color: var(--jtw-primary-blue);
+        transform: scale(1.3);
+    }
+
+    /* Tooltip for dots */
+    .jtw-dot-link::before {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: 50%;
+        right: 150%;
+        transform: translateY(-50%);
+        background-color: var(--jtw-text-dark);
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .jtw-dot-link:hover::before {
+        opacity: 1;
+        visibility: visible;
+    }
 }
 
 
@@ -249,13 +273,19 @@
     flex-direction: column;
     gap: 15px;
 }
-.jtw-company-description p { margin: 0; line-height: 1.6; color: var(--jtw-text-medium); font-size: 0.95em; }
+.jtw-company-description p { 
+    margin: 0; 
+    line-height: 1.6; 
+    color: var(--jtw-text-medium); 
+    font-size: 0.95em; 
+}
 
 .jtw-stats-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
-    margin-top: 15px;
+    margin-top: 25px;
+    padding-top: 25px;
 }
 @media (max-width: 768px) {
     .jtw-stats-container {
@@ -280,17 +310,18 @@
     text-transform: none;
     letter-spacing: 0;
     color: var(--jtw-text-light);
-    margin-bottom: 5px;
+    margin: 0 0 5px 0;
 }
 .jtw-metric-value {
     font-size: 1.4em;
     font-weight: 600;
     margin: 0;
+    line-height: 1.2;
 }
 
 /* --- Company Details --- */
 .jtw-company-details {
-    margin-top: 15px;
+    margin-top: 25px;
     padding-top: 25px;
 }
 .jtw-company-details h4 {
@@ -302,7 +333,7 @@
 .jtw-details-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px 25px;
+    gap: 20px 25px;
     font-size: 0.9em;
 }
 .jtw-details-grid > div {
@@ -337,12 +368,6 @@
         grid-template-columns: 1fr;
     }
 }
-
-
-.jtw-results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-/* .jtw-metric-card { background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid var(--jtw-border-color-light); text-align: center; } */
-/* .jtw-metric-title { font-size: 0.9em; font-weight: 500; color: var(--jtw-text-light); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; } */
-/* .jtw-metric-value { font-size: 1.75em; font-weight: 600; color: var(--jtw-text-dark); line-height: 1.2; } */
 
 /* --- Key Metrics & Ratios Section --- */
 .jtw-key-metrics-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; }
@@ -487,7 +512,11 @@ input:checked + .slider:before { transform: translateX(22px); }
 
 /* --- Responsive Chart Adjustments --- */
 @media (max-width: 768px) {
-    .jtw-chart-wrapper { height: auto; aspect-ratio: 1 / 1; }
+    .jtw-chart-wrapper {
+        height: auto;
+        aspect-ratio: 1 / 1;
+        max-height: 250px; /* **NEW**: Cap the height on mobile */
+    }
     .jtw-header-result-item { gap: 12px; }
     .jtw-result-name { font-size: 0.9em; }
     .jtw-result-meta { font-size: 0.8em; }
@@ -530,12 +559,12 @@ input:checked + .slider:before { transform: translateX(22px); }
 /* --- Historical Data Section (Value Line Style) --- */
 .jtw-historical-combined-wrapper { width: 100%; }
 .jtw-historical-chart-container { height: 450px; margin-bottom: 0; box-sizing: border-box; position: relative; }
-.jtw-historical-table-wrapper { width: 100%; margin-top: -20px; position: relative; z-index: 1; }
+.jtw-historical-table-wrapper { width: 100%; margin-top: -20px; position: relative; z-index: 1; overflow-x: auto; }
 .jtw-historical-table { width: 100%; border-collapse: collapse; font-size: 0.85em; table-layout: fixed; }
 .jtw-historical-table th,
 .jtw-historical-table td { padding: 6px 8px; white-space: nowrap; border-left: 1px solid var(--jtw-border-color-light); width: auto; }
 .jtw-historical-table thead th { background-color: transparent; border: none; font-weight: 600; padding-top: 20px; }
-.jtw-historical-table thead th:not(:first-child) { text-align: center; }
+.jtw-historical-table thead th:not(:first-child) { text-align: center !important; }
 .jtw-historical-table tbody td:not(:first-child) { text-align: center; }
 .jtw-historical-table tbody tr { border-bottom: 1px solid var(--jtw-border-color-light); }
 .jtw-historical-table tbody tr:last-child { border-bottom: none; }
@@ -544,4 +573,3 @@ input:checked + .slider:before { transform: translateX(22px); }
 .jtw-historical-table td:nth-child(2n+3) { background-color: var(--jtw-page-bg); }
 .jtw-historical-table th:first-child,
 .jtw-historical-table td:first-child { text-align: left; font-weight: bold; position: sticky; left: 0; background-color: var(--jtw-content-bg); z-index: 2; border-right: 1px solid var(--jtw-border-color); width: 120px; white-space: normal; }
-.jtw-historical-table tbody tr:nth-child(even) td:first-child { background-color: var(--jtw-content-bg); }
