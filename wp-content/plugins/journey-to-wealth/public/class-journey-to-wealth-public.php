@@ -644,7 +644,7 @@ class Journey_To_Wealth_Public {
         return $data;
     }
     
-    private function format_large_number($number, $prefix = '$', $decimals = 2) {
+    private function format_large_number($number, $prefix = '$', $decimals = 1) {
         if (!is_numeric($number) || $number == 0) { return $prefix === '$' ? '$0' : '0'; }
         $abs_number = abs($number); $formatted_number = '';
         if ($abs_number >= 1.0e+12) { $formatted_number = round($number / 1.0e+12, $decimals) . 'T'; } 
@@ -685,8 +685,8 @@ class Journey_To_Wealth_Public {
             'Official Site' => isset($overview['OfficialSite']) ? '<a href="' . esc_url($overview['OfficialSite']) . '" target="_blank" rel="noopener noreferrer">' . esc_html($overview['OfficialSite']) . '</a>' : 'N/A',
             'Industry' => $overview['Industry'] ?? 'N/A',
             'Fiscal Year End' => $overview['FiscalYearEnd'] ?? 'N/A',
-            '52 Week High' => isset($overview['52WeekHigh']) ? '$' . number_format((float)$overview['52WeekHigh'], 2) : 'N/A',
-            '52 Week Low' => isset($overview['52WeekLow']) ? '$' . number_format((float)$overview['52WeekLow'], 2) : 'N/A',
+            '52 Week High' => isset($overview['52WeekHigh']) ? '$' . number_format((float)$overview['52WeekHigh'], 1) : 'N/A',
+            '52 Week Low' => isset($overview['52WeekLow']) ? '$' . number_format((float)$overview['52WeekLow'], 1) : 'N/A',
             'Address' => $overview['Address'] ?? 'N/A',
         ];
         foreach ($details_map as $label => $value) {
@@ -724,8 +724,8 @@ class Journey_To_Wealth_Public {
         if (!is_numeric($trailing_eps) || $trailing_eps <= 0) {
             $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('The company is not profitable yet.', 'journey-to-wealth') . '</strong></p></div>';
         } else {
-            $growth_default = number_format((float)($peg_pegy_data['defaultGrowth'] ?? 5), 2, '.', '');
-            $dividend_yield_default = number_format((float)($peg_pegy_data['dividendYield'] ?? 0), 2, '.', '');
+            $growth_default = number_format((float)($peg_pegy_data['defaultGrowth'] ?? 5), 1, '.', '');
+            $dividend_yield_default = number_format((float)($peg_pegy_data['dividendYield'] ?? 0), 1, '.', '');
             $output .= '<div class="jtw-metric-card jtw-interactive-card"><div class="jtw-peg-pegy-calculator"><div class="jtw-peg-pegy-inputs-grid">';
             $output .= '<div class="jtw-form-group"><label for="jtw-sim-stock-price">Stock Price ($):</label><input type="number" step="0.01" id="jtw-sim-stock-price" class="jtw-sim-input" value="' . esc_attr($stock_price) . '"></div>';
             $output .= '<div class="jtw-form-group"><label for="jtw-sim-eps">Earnings per Share ($):</label><input type="number" step="0.01" id="jtw-sim-eps" class="jtw-sim-input" value="' . esc_attr($trailing_eps) . '" data-trailing-eps="' . esc_attr($trailing_eps) . '" data-forward-eps="' . esc_attr($forward_eps) . '"></div>';
@@ -817,14 +817,14 @@ class Journey_To_Wealth_Public {
         $output = '<h4>Valuation</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Source</th><th>Value</th></tr></thead><tbody>';
         $output .= '<tr><td>Valuation Model</td><td></td><td>2 Stage FCFE</td></tr>';
         $output .= '<tr><td>Base Cash Flow</td><td>' . esc_html($data['inputs']['base_cash_flow_source']) . '</td><td>' . $this->format_large_number($data['inputs']['base_cash_flow'], '$') . '</td></tr>';
-        $output .= '<tr><td>Initial Growth Rate</td><td>' . esc_html($data['inputs']['growth_rate_source']) . '</td><td>' . number_format($data['inputs']['initial_growth_rate'] * 100, 2) . '%</td></tr>';
-        $output .= '<tr><td>Discount Rate (Cost of Equity)</td><td>See below</td><td>' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%</td></tr>';
-        $output .= '<tr><td>Perpetual Growth Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%</td></tr>';
+        $output .= '<tr><td>Initial Growth Rate</td><td>' . esc_html($data['inputs']['growth_rate_source']) . '</td><td>' . number_format($data['inputs']['initial_growth_rate'] * 100, 1) . '%</td></tr>';
+        $output .= '<tr><td>Discount Rate (Cost of Equity)</td><td>See below</td><td>' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%</td></tr>';
+        $output .= '<tr><td>Perpetual Growth Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%</td></tr>';
         $output .= '</tbody></table>';
         $output .= '<h4>Discount Rate</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Risk-Free Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($discount_calc['risk_free_rate'] * 100, 2) . '%</td></tr>';
-        $output .= '<tr><td>Equity Risk Premium</td><td>' . esc_html($discount_calc['erp_source']) . '</td><td>' . number_format($discount_calc['equity_risk_premium'] * 100, 2) . '%</td></tr>';
-        $output .= '<tr><td><strong>Discount Rate/ Cost of Equity</strong></td><td><strong>' . esc_html($discount_calc['cost_of_equity_calc']) . '</strong></td><td><strong>' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%</strong></td></tr>';
+        $output .= '<tr><td>Risk-Free Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($discount_calc['risk_free_rate'] * 100, 1) . '%</td></tr>';
+        $output .= '<tr><td>Equity Risk Premium</td><td>' . esc_html($discount_calc['erp_source']) . '</td><td>' . number_format($discount_calc['equity_risk_premium'] * 100, 1) . '%</td></tr>';
+        $output .= '<tr><td><strong>Discount Rate/ Cost of Equity</strong></td><td><strong>' . esc_html($discount_calc['cost_of_equity_calc']) . '</strong></td><td><strong>' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%</strong></td></tr>';
         $output .= '</tbody></table>';
         if (isset($beta_details['unlevered_beta_avg'])) {
             $output .= '<h4>Levered Beta Calculation</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
@@ -833,21 +833,21 @@ class Journey_To_Wealth_Public {
             $output .= '<tr><td>Levered Beta</td><td>' . esc_html($beta_details['beta_source']) . '</td><td>' . number_format($discount_calc['beta'], 3) . '</td></tr>';
             $output .= '</tbody></table>';
         }
-        $output .= '<h4>FCFE Forecast</h4><table class="jtw-modal-table"><thead><tr><th></th><th>FCFE (USD)</th><th>Growth Rate</th><th>Present Value Discounted (@' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%)</th></tr></thead><tbody>';
+        $output .= '<h4>FCFE Forecast</h4><table class="jtw-modal-table"><thead><tr><th></th><th>FCFE (USD)</th><th>Growth Rate</th><th>Present Value Discounted (@' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%)</th></tr></thead><tbody>';
         foreach ($data['projection_table'] as $row) {
-            $output .= '<tr><td>' . esc_html($row['year']) . '</td><td>' . $this->format_large_number($row['cf'], '$') . '</td><td>' . number_format($row['growth_rate'] * 100, 2) . '%</td><td>' . $this->format_large_number($row['pv_cf'], '$') . '</td></tr>';
+            $output .= '<tr><td>' . esc_html($row['year']) . '</td><td>' . $this->format_large_number($row['cf'], '$') . '</td><td>' . number_format($row['growth_rate'] * 100, 1) . '%</td><td>' . $this->format_large_number($row['pv_cf'], '$') . '</td></tr>';
         }
         $output .= '<tr><td colspan="3"><strong>Present value of next 10 years cash flows</strong></td><td><strong>' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . '</strong></td></tr>';
         $output .= '</tbody></table>';
         $output .= '<h4>Final Valuation</h4><table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Terminal Value</td><td>FCFE<sub>' . end($data['projection_table'])['year'] . '</sub> &times; (1 + g) &divide; (Discount Rate - g)<br>= ' . $this->format_large_number(end($data['projection_table'])['cf'], '$') . ' &times; (1 + ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%) &divide; (' . number_format($data['inputs']['discount_rate'] * 100, 2) . '% - ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%)</td><td>' . $this->format_large_number($data['terminal_value'], '$') . '</td></tr>';
-        $output .= '<tr><td>Present Value of Terminal Value</td><td>Terminal Value &divide; (1 + r)<sup>10</sup><br>' . $this->format_large_number($data['terminal_value'], '$') . ' &divide; (1 + ' . number_format($data['inputs']['discount_rate'] * 100, 2) . '%)<sup>10</sup></td><td>' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td></tr>';
+        $output .= '<tr><td>Terminal Value</td><td>FCFE<sub>' . end($data['projection_table'])['year'] . '</sub> &times; (1 + g) &divide; (Discount Rate - g)<br>= ' . $this->format_large_number(end($data['projection_table'])['cf'], '$') . ' &times; (1 + ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%) &divide; (' . number_format($data['inputs']['discount_rate'] * 100, 1) . '% - ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%)</td><td>' . $this->format_large_number($data['terminal_value'], '$') . '</td></tr>';
+        $output .= '<tr><td>Present Value of Terminal Value</td><td>Terminal Value &divide; (1 + r)<sup>10</sup><br>' . $this->format_large_number($data['terminal_value'], '$') . ' &divide; (1 + ' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%)<sup>10</sup></td><td>' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td></tr>';
         $output .= '<tr><td><strong>' . esc_html($total_value_label) . '</strong></td><td><strong>Present value of next 10 years cash flows + PV of Terminal Value</strong><br>= ' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . ' + ' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td><td><strong>' . $this->format_large_number($data['total_equity_value'], '$') . '</strong></td></tr>';
-        $output .= '<tr><td><strong>Equity Value per Share (USD)</strong></td><td><strong>Total Equity Value / Shares Outstanding</strong><br>= ' . $this->format_large_number($data['total_equity_value'], '$') . ' / ' . number_format($data['shares_outstanding']) . '</td><td><strong>$' . number_format($value_per_share, 2) . '</strong></td></tr>';
+        $output .= '<tr><td><strong>Equity Value per Share (USD)</strong></td><td><strong>Total Equity Value / Shares Outstanding</strong><br>= ' . $this->format_large_number($data['total_equity_value'], '$') . ' / ' . number_format($data['shares_outstanding']) . '</td><td><strong>$' . number_format($value_per_share, 1) . '</strong></td></tr>';
         $output .= '</tbody></table>';
         $output .= '<h4>Discount to Share Price</h4><table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 2) . '</td></tr>';
-        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 2) . '<br>= ($' . number_format($value_per_share, 2) . ' - $' . number_format($current_price, 2) . ') / $' . number_format($current_price, 2) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
+        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 1) . '</td></tr>';
+        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 1) . '<br>= ($' . number_format($value_per_share, 1) . ' - $' . number_format($current_price, 1) . ') / $' . number_format($current_price, 1) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
         $output .= '</tbody></table>';
         return $output;
     }
@@ -859,17 +859,17 @@ class Journey_To_Wealth_Public {
         $discount_pct = ($value_per_share > 0) ? (($value_per_share - $current_price) / $current_price) * 100 : 0;
 
         $output = '<h4>Key Inputs & Calculation</h4><table class="jtw-modal-table"><tbody>';
-        $output .= '<tr><td>Annual Dividend (D0)</td><td>$' . number_format($data['d0'], 2) . '</td></tr>';
-        $output .= '<tr><td>Discount Rate (Cost of Equity)</td><td>' . number_format($data['cost_of_equity'] * 100, 2) . '%</td></tr>';
-        $output .= '<tr><td>Perpetual Growth Rate (g)</td><td>' . number_format($data['growth_rate'] * 100, 2) . '%</td></tr>';
+        $output .= '<tr><td>Annual Dividend (D0)</td><td>$' . number_format($data['d0'], 1) . '</td></tr>';
+        $output .= '<tr><td>Discount Rate (Cost of Equity)</td><td>' . number_format($data['cost_of_equity'] * 100, 1) . '%</td></tr>';
+        $output .= '<tr><td>Perpetual Growth Rate (g)</td><td>' . number_format($data['growth_rate'] * 100, 1) . '%</td></tr>';
         $output .= '<tr><td><strong>Calculation</strong></td><td>(D0 * (1 + g)) / (Cost of Equity - g)</td></tr>';
-        $output .= '<tr><td><strong>Intrinsic Value</strong></td><td><strong>$' . number_format($value_per_share, 2) . '</strong></td></tr>';
+        $output .= '<tr><td><strong>Intrinsic Value</strong></td><td><strong>$' . number_format($value_per_share, 1) . '</strong></td></tr>';
         $output .= '</tbody></table>';
 
         $output .= '<h4>Discount to Share Price</h4>';
         $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 2) . '</td></tr>';
-        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 2) . '<br>= ($' . number_format($value_per_share, 2) . ' - $' . number_format($current_price, 2) . ') / $' . number_format($current_price, 2) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
+        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 1) . '</td></tr>';
+        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 1) . '<br>= ($' . number_format($value_per_share, 1) . ' - $' . number_format($current_price, 1) . ') / $' . number_format($current_price, 1) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
         $output .= '</tbody></table>';
         return $output;
     }
@@ -896,7 +896,7 @@ class Journey_To_Wealth_Public {
         $output .= '<table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
         $output .= '<tr><td>Risk-Free Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($discount_calc['risk_free_rate'] * 100, 1) . '%</td></tr>';
         $output .= '<tr><td>Equity Risk Premium</td><td>' . esc_html($discount_calc['erp_source']) . '</td><td>' . number_format($discount_calc['equity_risk_premium'] * 100, 1) . '%</td></tr>';
-        $output .= '<tr><td><strong>Discount Rate/ Cost of Equity</strong></td><td><strong>' . esc_html($discount_calc['cost_of_equity_calc']) . '</strong></td><td><strong>' . number_format($data['inputs']['cost_of_equity'] * 100, 2) . '%</strong></td></tr>';
+        $output .= '<tr><td><strong>Discount Rate/ Cost of Equity</strong></td><td><strong>' . esc_html($discount_calc['cost_of_equity_calc']) . '</strong></td><td><strong>' . number_format($data['inputs']['cost_of_equity'] * 100, 1) . '%</strong></td></tr>';
         $output .= '</tbody></table>';
 
         // Table for Levered Beta Calculation
@@ -913,12 +913,12 @@ class Journey_To_Wealth_Public {
         
         // Table 3: AFFO Projections
         $output .= '<h4>AFFO Forecast</h4>';
-        $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>AFFO (USD)</th><th>Source</th><th>Present Value Discounted (@' . number_format($data['inputs']['cost_of_equity'] * 100, 2) . '%)</th></tr></thead><tbody>';
+        $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>AFFO (USD)</th><th>Source</th><th>Present Value Discounted (@' . number_format($data['inputs']['cost_of_equity'] * 100, 1) . '%)</th></tr></thead><tbody>';
         foreach ($data['projection_table'] as $row) {
             $output .= '<tr>';
             $output .= '<td>' . esc_html($row['year']) . '</td>';
             $output .= '<td>' . $this->format_large_number($row['affo'], '$') . '</td>';
-            $output .= '<td>Est @ ' . number_format(($row['affo'] / ($data['projection_table'][0]['affo'] / (1 + $data['inputs']['initial_growth_rate'])) - 1) * 100, 2) . '%</td>';
+            $output .= '<td>Est @ ' . number_format(($row['affo'] / ($data['projection_table'][0]['affo'] / (1 + $data['inputs']['initial_growth_rate'])) - 1) * 100, 1) . '%</td>';
             $output .= '<td>' . $this->format_large_number($row['pv_affo'], '$') . '</td>';
             $output .= '</tr>';
         }
@@ -928,17 +928,17 @@ class Journey_To_Wealth_Public {
         // Table 4 & 5: Final Valuation
         $output .= '<h4>Final Valuation</h4>';
         $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Terminal Value</td><td>FCF<sub>2035</sub> &times; (1 + g) &divide; (Discount Rate - g)<br>= ' . $this->format_large_number(end($data['projection_table'])['affo'], '$') . ' &times; (1 + ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%) &divide; (' . number_format($data['inputs']['cost_of_equity'] * 100, 2) . '% - ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 2) . '%)</td><td>' . $this->format_large_number($data['terminal_value'], '$') . '</td></tr>';
-        $output .= '<tr><td>Present Value of Terminal Value</td><td>Terminal Value &divide; (1 + r)<sup>10</sup><br>' . $this->format_large_number($data['terminal_value'], '$') . ' &divide; (1 + ' . number_format($data['inputs']['cost_of_equity'] * 100, 2) . '%)<sup>10</sup></td><td>' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td></tr>';
+        $output .= '<tr><td>Terminal Value</td><td>FCF<sub>2035</sub> &times; (1 + g) &divide; (Discount Rate - g)<br>= ' . $this->format_large_number(end($data['projection_table'])['affo'], '$') . ' &times; (1 + ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%) &divide; (' . number_format($data['inputs']['cost_of_equity'] * 100, 1) . '% - ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%)</td><td>' . $this->format_large_number($data['terminal_value'], '$') . '</td></tr>';
+        $output .= '<tr><td>Present Value of Terminal Value</td><td>Terminal Value &divide; (1 + r)<sup>10</sup><br>' . $this->format_large_number($data['terminal_value'], '$') . ' &divide; (1 + ' . number_format($data['inputs']['cost_of_equity'] * 100, 1) . '%)<sup>10</sup></td><td>' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td></tr>';
         $output .= '<tr><td><strong>Total Equity Value</strong></td><td><strong>Present value of next 10 years cash flows + PV of Terminal Value</strong><br>= ' . $this->format_large_number($data['sum_of_pv_affos'], '$') . ' + ' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td><td><strong>' . $this->format_large_number($data['total_equity_value'], '$') . '</strong></td></tr>';
-        $output .= '<tr><td><strong>Equity Value per Share (USD)</strong></td><td><strong>Total Equity Value / Shares Outstanding</strong><br>= ' . $this->format_large_number($data['total_equity_value'], '$') . ' / ' . number_format($data['shares_outstanding']) . '</td><td><strong>$' . number_format($value_per_share, 2) . '</strong></td></tr>';
+        $output .= '<tr><td><strong>Equity Value per Share (USD)</strong></td><td><strong>Total Equity Value / Shares Outstanding</strong><br>= ' . $this->format_large_number($data['total_equity_value'], '$') . ' / ' . number_format($data['shares_outstanding']) . '</td><td><strong>$' . number_format($value_per_share, 1) . '</strong></td></tr>';
         $output .= '</tbody></table>';
 
         // Table 6: Discount
         $output .= '<h4>Discount to Share Price</h4>';
         $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 2) . '</td></tr>';
-        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 2) . '<br>= ($' . number_format($value_per_share, 2) . ' - $' . number_format($current_price, 2) . ') / $' . number_format($current_price, 2) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
+        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 1) . '</td></tr>';
+        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 1) . '<br>= ($' . number_format($value_per_share, 1) . ' - $' . number_format($current_price, 1) . ') / $' . number_format($current_price, 1) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
         $output .= '</tbody></table>';
 
         return $output;
@@ -956,7 +956,7 @@ class Journey_To_Wealth_Public {
         $output = '<h4>Valuation</h4>';
         $output .= '<table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Source</th><th>Value</th></tr></thead><tbody>';
         $output .= '<tr><td>Valuation Model</td><td></td><td>' . esc_html($data['model_name']) . '</td></tr>';
-        $output .= '<tr><td>Book Value of Equity per Share</td><td>Latest Annual Report</td><td>$' . number_format($data['current_book_value_per_share'], 2) . '</td></tr>';
+        $output .= '<tr><td>Book Value of Equity per Share</td><td>Latest Annual Report</td><td>$' . number_format($data['current_book_value_per_share'], 1) . '</td></tr>';
         $output .= '<tr><td>Discount Rate (Cost of Equity)</td><td>See below</td><td>' . number_format($data['cost_of_equity'] * 100, 1) . '%</td></tr>';
         $output .= '<tr><td>Perpetual Growth Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($data['terminal_growth_rate'] * 100, 1) . '%</td></tr>';
         $output .= '</tbody></table>';
@@ -966,7 +966,7 @@ class Journey_To_Wealth_Public {
         $output .= '<table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
         $output .= '<tr><td>Risk-Free Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($discount_calc['risk_free_rate'] * 100, 1) . '%</td></tr>';
         $output .= '<tr><td>Equity Risk Premium</td><td>' . esc_html($discount_calc['erp_source']) . '</td><td>' . number_format($discount_calc['equity_risk_premium'] * 100, 1) . '%</td></tr>';
-        $output .= '<tr><td><strong>Discount Rate/ Cost of Equity</strong></td><td><strong>' . esc_html($discount_calc['cost_of_equity_calc']) . '</strong></td><td><strong>' . number_format($data['inputs']['cost_of_equity'] * 100, 2) . '%</strong></td></tr>';
+        $output .= '<tr><td><strong>Discount Rate/ Cost of Equity</strong></td><td><strong>' . esc_html($discount_calc['cost_of_equity_calc']) . '</strong></td><td><strong>' . number_format($data['inputs']['cost_of_equity'] * 100, 1) . '%</strong></td></tr>';
         $output .= '</tbody></table>';
 
         // Table for Levered Beta Calculation
@@ -984,16 +984,16 @@ class Journey_To_Wealth_Public {
         // Table 3: Excess Returns Calculation
         $output .= '<h4>Value of Excess Returns</h4>';
         $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Excess Returns</td><td>(Return on Equity - Cost of Equity) x (Book Value of Equity per share)<br>= (' . number_format($data['roe'] * 100, 1) . '% - ' . number_format($data['cost_of_equity'] * 100, 2) . '%) x $' . number_format($data['current_book_value_per_share'], 2) . '</td><td>$' . number_format($data['excess_return_per_share'], 2) . '</td></tr>';
-        $output .= '<tr><td>Terminal Value of Excess Returns</td><td>Excess Returns / (Cost of Equity - Expected Growth Rate)<br>= $' . number_format($data['excess_return_per_share'], 2) . ' / (' . number_format($data['cost_of_equity'] * 100, 2) . '% - ' . number_format($data['terminal_growth_rate'] * 100, 2) . '%)</td><td>$' . number_format($data['terminal_value_of_excess_returns_per_share'], 2) . '</td></tr>';
-        $output .= '<tr><td><strong>Value of Equity</strong></td><td><strong>Book Value per share + Terminal Value of Excess Returns</strong><br><strong>$' . number_format($data['current_book_value_per_share'], 2) . ' + $' . number_format($data['terminal_value_of_excess_returns_per_share'], 2) . '</strong></td><td><strong>$' . number_format($value_per_share, 2) . '</strong></td></tr>';
+        $output .= '<tr><td>Excess Returns</td><td>(Return on Equity - Cost of Equity) x (Book Value of Equity per share)<br>= (' . number_format($data['roe'] * 100, 1) . '% - ' . number_format($data['cost_of_equity'] * 100, 1) . '%) x $' . number_format($data['current_book_value_per_share'], 1) . '</td><td>$' . number_format($data['excess_return_per_share'], 1) . '</td></tr>';
+        $output .= '<tr><td>Terminal Value of Excess Returns</td><td>Excess Returns / (Cost of Equity - Expected Growth Rate)<br>= $' . number_format($data['excess_return_per_share'], 1) . ' / (' . number_format($data['cost_of_equity'] * 100, 1) . '% - ' . number_format($data['terminal_growth_rate'] * 100, 1) . '%)</td><td>$' . number_format($data['terminal_value_of_excess_returns_per_share'], 1) . '</td></tr>';
+        $output .= '<tr><td><strong>Value of Equity</strong></td><td><strong>Book Value per share + Terminal Value of Excess Returns</strong><br><strong>$' . number_format($data['current_book_value_per_share'], 1) . ' + $' . number_format($data['terminal_value_of_excess_returns_per_share'], 1) . '</strong></td><td><strong>$' . number_format($value_per_share, 1) . '</strong></td></tr>';
         $output .= '</tbody></table>';
 
         // Table 4: Discount to Share Price
         $output .= '<h4>Discount to Share Price</h4>';
         $output .= '<table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 2) . '</td></tr>';
-        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 2) . '<br>= ($' . number_format($value_per_share, 2) . ' - $' . number_format($current_price, 2) . ') / $' . number_format($current_price, 2) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
+        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 1) . '</td></tr>';
+        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 1) . '<br>= ($' . number_format($value_per_share, 1) . ' - $' . number_format($current_price, 1) . ') / $' . number_format($current_price, 1) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
         $output .= '</tbody></table>';
 
         return $output;
@@ -1004,7 +1004,7 @@ class Journey_To_Wealth_Public {
         if (is_numeric($value)) {
             if ($use_large_number_format) {
                 $final_prefix = ($title === 'Shares Outstanding') ? '' : $prefix;
-                $formatted_value = $this->format_large_number($value, $final_prefix, 2);
+                $formatted_value = $this->format_large_number($value, $final_prefix, 1);
             } else {
                 $temp_val = number_format((float)$value, 1);
                 if ($prefix === '$') { $formatted_value = $prefix . $temp_val; } 
@@ -1196,7 +1196,7 @@ class Journey_To_Wealth_Public {
                 if (is_numeric($value)) {
                     switch ($key) {
                         case 'shares_outstanding':
-                            $formatted_value = $this->format_large_number($value, '', 2);
+                            $formatted_value = $this->format_large_number($value, '');
                             break;
                         case 'shareholder_equity':
                             $formatted_value = ($value != 0) ? $this->format_large_number($value, '$') : 'N/A';

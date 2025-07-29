@@ -36,7 +36,7 @@
         };
     }
 
-    function formatLargeNumber(num, decimals = 2) {
+    function formatLargeNumber(num, decimals = 1) {
         if (typeof num !== 'number' || num === 0) return '0';
         const absNum = Math.abs(num);
         const sign = num < 0 ? "-" : "";
@@ -84,7 +84,7 @@
                         $bar.css('width', '0%').removeClass('good fair poor');
                         return;
                     }
-                    $valueEl.text(value.toFixed(2) + 'x');
+                    $valueEl.text(value.toFixed(1) + 'x');
                     const max_val = 2.0;
                     const width_percent = Math.min((Math.abs(value) / max_val) * 100, 100);
                     $bar.css('width', width_percent + '%').removeClass('good fair poor');
@@ -173,7 +173,7 @@
             const $epsInput = $('#jtw-sim-eps');
             if ($epsInput.length) {
                 const epsValue = $epsInput.data(`${type}-eps`);
-                $epsInput.val(isFinite(epsValue) ? parseFloat(epsValue).toFixed(2) : 0);
+                $epsInput.val(isFinite(epsValue) ? parseFloat(epsValue).toFixed(1) : 0);
             }
 
             const $growthInput = $('#jtw-sim-growth-rate');
@@ -182,7 +182,7 @@
                 if (isFinite(peValue) && isFinite(pegValue) && pegValue > 0) {
                     newGrowthRate = (peValue / pegValue);
                 }
-                $growthInput.val(parseFloat(newGrowthRate).toFixed(2));
+                $growthInput.val(parseFloat(newGrowthRate).toFixed(1));
             }
 
             if ($calculator.length) {
@@ -390,7 +390,7 @@
                         display: true,
                         formatter: (value, context) => {
                            if (context.dataIndex === 1) return null;
-                           return `${context.dataset.label}: $${value.toFixed(2)}`;
+                           return `${context.dataset.label}: $${value.toFixed(1)}`;
                         },
                         color: '#fff',
                         backgroundColor: '#333',
@@ -714,8 +714,8 @@
 
             chart.data.labels = slicedData.map(d => d.year);
             chart.data.datasets = [
-                { type: 'bar', label: 'Price Range (High-Low)', data: slicedData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]), backgroundColor: 'rgba(0, 122, 255, 0.2)', borderColor: 'rgba(0, 122, 255, 0.5)', borderWidth: 1, barPercentage: 0.5, categoryPercentage: 0.7, borderSkipped: false },
-                { type: 'line', label: 'Average Price', data: slicedData.map(d => d.avg_price), borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 1)', borderWidth: 2, pointRadius: 0, tension: 0.1 }
+                { type: 'bar', label: 'Price Range (High-Low)', yAxisID: 'yPrice', data: slicedData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]), backgroundColor: 'rgba(0, 122, 255, 0.2)', borderColor: 'rgba(0, 122, 255, 0.5)', borderWidth: 1, barPercentage: 0.5, categoryPercentage: 0.7, borderSkipped: false },
+                { type: 'line', label: 'Average Price', yAxisID: 'yPrice', data: slicedData.map(d => d.avg_price), borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 1)', borderWidth: 2, pointRadius: 0, tension: 0.1 }
             ];
             chart.options.plugins.yAxisAlignPlugin.enabled = true; 
             chart.update();
