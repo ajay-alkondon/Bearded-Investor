@@ -185,12 +185,28 @@ class Journey_To_Wealth_DCF_Model {
         if (empty($reports)) {
             return [];
         }
-        $current_year = date('Y');
-        $full_year_reports = array_filter($reports, function($e) use ($current_year) {
-            $fiscal_year = substr($e['fiscalDateEnding'], 0, 4);
-            return $fiscal_year < $current_year;
-        });
-        $sliced_reports = array_slice($full_year_reports, 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
+    
+        $current_calendar_year = (int)date('Y');
+        $processed_reports = [];
+    
+        foreach ($reports as $report) {
+            $fiscal_date = new DateTime($report['fiscalDateEnding']);
+            $report_year = (int)$fiscal_date->format('Y');
+            $report_month = (int)$fiscal_date->format('m');
+    
+            // If the fiscal year ends in Jan, Feb, or Mar, it corresponds to the previous calendar year.
+            $calendar_year = ($report_month <= 3) ? $report_year - 1 : $report_year;
+    
+            // We only want to include full, completed years.
+            if ($calendar_year < $current_calendar_year) {
+                $processed_reports[] = $report;
+            }
+        }
+    
+        // Reports from the API are newest first. Slice the most recent ones.
+        $sliced_reports = array_slice($processed_reports, 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
+    
+        // Reverse to have them in chronological order (oldest to newest) for CAGR calculation.
         return array_reverse($sliced_reports);
     }
 

@@ -5,6 +5,7 @@
  * 1. The header lookup form, which handles live search and redirects to the analysis page.
  * 2. The main analyzer page, which now uses IntersectionObserver to lazy-load section content.
  * 3. The new Historical Data "Value Line" style chart.
+ * 4. The redesigned Company Overview section with animated bars.
  *
  * @link       https://example.com/journey-to-wealth/
  * @since      1.0.0
@@ -46,6 +47,48 @@
         if (absNum >= 1.0e+6) return sign + (absNum / 1.0e+6).toFixed(decimals) + 'M';
         if (absNum >= 1.0e+3) return sign + (absNum / 1.0e+3).toFixed(decimals) + 'K';
         return sign + num.toFixed(decimals);
+    }
+
+    /**
+     * Initializes the interactive elements in the Company Overview section.
+     * Specifically handles the animation for all progress bars.
+     * @param {jQuery} $container The jQuery object for the section's container.
+     */
+    function initializeOverviewSection($container) {
+        // Animate the 52-Week Price Range indicator and fill
+        const $priceRangeBar = $container.find('.jtw-price-range-bar');
+        if ($priceRangeBar.length) {
+            const low = parseFloat($priceRangeBar.data('low'));
+            const high = parseFloat($priceRangeBar.data('high'));
+            const current = parseFloat($priceRangeBar.data('current'));
+
+            if (!isNaN(low) && !isNaN(high) && !isNaN(current) && high > low) {
+                const percentage = Math.max(0, Math.min(100, ((current - low) / (high - low)) * 100));
+                const $indicator = $priceRangeBar.find('.jtw-price-range-indicator');
+                const $fill = $priceRangeBar.find('.jtw-progress-fill');
+                
+                setTimeout(() => {
+                    $indicator.css('left', `calc(${percentage}% - 1.5px)`); // Adjust for half the indicator's width
+                    $fill.css('width', `${percentage}%`);
+                }, 100);
+            }
+        }
+
+        // Animate all other progress bars
+        $container.find('.jtw-progress-bar-container').each(function() {
+            const $barContainer = $(this);
+            const value = parseFloat($barContainer.data('value'));
+            const max = parseFloat($barContainer.data('max'));
+
+            if (!isNaN(value) && !isNaN(max) && max > 0) {
+                const percentage = Math.max(0, Math.min(100, (value / max) * 100));
+                const $fill = $barContainer.find('.jtw-progress-fill');
+                
+                setTimeout(() => {
+                    $fill.css('width', `${percentage}%`);
+                }, 100);
+            }
+        });
     }
 
     function initializeKeyMetricsRatiosSection($container) {
@@ -910,10 +953,14 @@
                             if (response.success && response.data) {
                                 if (response.data.currency_notice) $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
                                 if (response.data.html) $placeholder.html(response.data.html);
-                                if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
+                                
+                                // Call the specific initializer function for the loaded section
+                                if (section === 'overview') initializeOverviewSection($placeholder);
+                                else if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
                                 else if (section === 'past-performance') initializeHistoricalCharts($placeholder);
                                 else if (section === 'intrinsic-valuation') initializeValuationChart($placeholder);
                                 else if (section === 'key-metrics-ratios') initializeKeyMetricsRatiosSection($placeholder);
+
                             } else {
                                 $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data.message || getLocalizedText('text_error')) + '</p></div>');
                             }
