@@ -289,12 +289,12 @@
     background-color: #e9ecef;
     border-radius: 4px;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 }
 .jtw-price-range-bar .jtw-progress-fill {
     height: 100%;
     width: 0%; /* Initial width for animation */
-    background-color: #333333; /* Default color */
+    background-color: var(--jtw-primary-blue); /* Default color */
     transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .jtw-price-range-bar {
@@ -315,13 +315,11 @@
 }
 .jtw-indicator-label {
     position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    top:8px;
+    transform: translateX(-110%);
     white-space: nowrap;
     font-size: 0.9em;
-    color: var(--jtw-text-dark);
-    margin-top: 12px;
+    color: #ffffff;
 }
 .jtw-indicator-label strong {
     font-weight: 600;
