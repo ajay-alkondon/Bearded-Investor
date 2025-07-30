@@ -658,4 +658,15 @@ input:checked + .slider:before { transform: translateX(22px); }
 .jtw-historical-table th:nth-child(2n+3),
 .jtw-historical-table td:nth-child(2n+3) { background-color: var(--jtw-page-bg); }
 .jtw-historical-table th:first-child,
-.jtw-historical-table td:first-child { text-align: left; font-weight: bold; position: sticky; left: 0; background-color: var(--jtw-content-bg); z-index: 2; border-right: 1px solid var(--jtw-border-color); width: 120px; white-space: normal; }
+.jtw-historical-table td:first-child {
+    text-align: left;
+    font-weight: bold;
+    position: sticky;
+    left: 0;
+    background-color: var(--jtw-content-bg);
+    z-index: 2;
+    border-right: 1px solid var(--jtw-border-color);
+    width: 140px; /* Increased width */
+    white-space: normal; /* Allow wrapping */
+    word-break: break-word; /* Force break long words if needed */
+}
