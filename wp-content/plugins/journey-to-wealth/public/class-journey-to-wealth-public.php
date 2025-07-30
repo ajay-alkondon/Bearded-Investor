@@ -664,15 +664,20 @@ class Journey_To_Wealth_Public {
     
         $output = '<div class="jtw-content-section" id="section-overview-content">';
         $output .= '<h4>' . esc_html($ticker) . ' ' . esc_html__('Company Overview', 'journey-to-wealth') . '</h4>';
+        
+        // Overview Header Grid
+        $output .= '<div class="jtw-overview-header-grid">';
+        $output .= $this->create_metric_card('Current Price', $stock_price, '$');
+        $output .= $this->create_metric_card('Market Capitalization', $overview['MarketCapitalization'] ?? 0, '$', '', true);
+        $output .= $this->create_metric_card('Shares Outstanding', $overview['SharesOutstanding'] ?? 0, '', '', true);
+        $output .= '</div>';
+    
         $output .= '<div class="jtw-company-description"><p>' . esc_html($description) . '</p></div>';
     
-        // 52-Week Range Progress Bar
-        $output .= '<div class="jtw-price-range-bar" data-low="' . esc_attr($week_low) . '" data-high="' . esc_attr($week_high) . '" data-current="' . esc_attr($stock_price) . '">';
+        // 52-Week Range Progress Bar (Static)
+        $output .= '<div class="jtw-price-range-bar">';
         $output .= '<h5>52-Week Price Range</h5>';
-        $output .= '<div class="jtw-progress-track">';
-        $output .= '<div class="jtw-progress-fill" style="width: 0%;"></div>';
-        $output .= '<div class="jtw-price-range-indicator" style="left: 0%;"><span class="jtw-indicator-label"><strong>Current Price:</strong> $' . esc_attr(number_format($stock_price, 1)) . '</span></div>';
-        $output .= '</div>';
+        $output .= '<div class="jtw-progress-track"></div>';
         $output .= '<div class="jtw-price-range-labels">';
         $output .= '<span><strong>$' . esc_attr(number_format($week_low, 1)) . '</strong></span>';
         $output .= '<span><strong>$' . esc_attr(number_format($week_high, 1)) . '</strong></span>';
@@ -683,26 +688,24 @@ class Journey_To_Wealth_Public {
         $output .= '<div class="jtw-stats-grid">';
         
         $stats = [
-            'MarketCapitalization' => ['label' => 'Market Capitalization', 'prefix' => '$', 'format' => 'large'],
-            'SharesOutstanding' => ['label' => 'Shares Outstanding', 'prefix' => '', 'format' => 'large'],
             'PercentInsiders' => ['label' => 'Insider Ownership', 'prefix' => '', 'suffix' => '%', 'max' => 100],
             'PercentInstitutions' => ['label' => 'Institution Ownership', 'prefix' => '', 'suffix' => '%', 'max' => 100],
             '50DayMovingAverage' => ['label' => '50-Day Moving Average', 'prefix' => '$', 'max_key' => '52WeekHigh'],
             '200DayMovingAverage' => ['label' => '200-Day Moving Average', 'prefix' => '$', 'max_key' => '52WeekHigh'],
         ];
-
+    
         foreach ($stats as $key => $details) {
             $value = (float)($overview[$key] ?? 0);
             $max_value = isset($details['max']) ? $details['max'] : (isset($details['max_key']) ? (float)($overview[$details['max_key']] ?? $value) : $value);
             if ($max_value == 0 && $value > 0) $max_value = $value * 1.25;
-
+    
             $formatted_value = '';
             if (isset($details['format']) && $details['format'] === 'large') {
                 $formatted_value = $this->format_large_number($value, $details['prefix']);
             } else {
                 $formatted_value = $details['prefix'] . number_format($value, 1) . ($details['suffix'] ?? '');
             }
-
+    
             $output .= '<div class="jtw-stat-item">';
             $output .= '<h4>' . esc_html($details['label']) . '</h4>';
             $output .= '<div class="jtw-progress-bar-container" data-value="' . esc_attr($value) . '" data-max="' . esc_attr($max_value) . '">';
@@ -711,9 +714,9 @@ class Journey_To_Wealth_Public {
             $output .= '</div>';
             $output .= '</div>';
         }
-
+    
         $output .= '</div>'; // end .jtw-stats-grid
-
+    
         // SEC Filings Card
         if ($cik) {
             $sec_url = 'https://www.sec.gov/edgar/browse/?CIK=' . esc_attr($cik) . '&owner=exclude';
@@ -721,11 +724,11 @@ class Journey_To_Wealth_Public {
             $output .= '<span>View All SEC Filings</span>';
             $output .= '</a>';
         }
-
+    
         // Company Details Section
         $output .= '<h4 class="jtw-subsection-title">' . esc_html__('Company Details', 'journey-to-wealth') . '</h4>';
         $output .= '<div class="jtw-details-grid">';
-
+    
         $details_map = [
             'Exchange' => 'Exchange',
             'Sector' => 'Sector',
@@ -735,7 +738,7 @@ class Journey_To_Wealth_Public {
             'ExDividendDate' => 'Ex-Dividend Date',
             'DividendDate' => 'Dividend Date'
         ];
-
+    
         foreach ($details_map as $key => $title) {
             $value = $overview[$key] ?? 'N/A';
             if (($key === 'LatestQuarter' || $key === 'ExDividendDate' || $key === 'DividendDate') && $value !== 'N/A' && $value !== 'None') {
@@ -745,22 +748,22 @@ class Journey_To_Wealth_Public {
                  $output .= $this->create_metric_card($title, $value);
             }
         }
-
+    
         // Website card
         $website = $overview['OfficialSite'] ?? ($overview['Website'] ?? 'N/A');
         if ($website !== 'N/A' && $website !== 'None' && filter_var($website, FILTER_VALIDATE_URL)) {
             $hostname = parse_url($website, PHP_URL_HOST) ?: $website;
             $output .= '<div class="jtw-metric-card"><h3 class="jtw-metric-title">Website</h3><p class="jtw-metric-value"><a href="' . esc_url($website) . '" target="_blank" rel="noopener noreferrer">' . esc_html($hostname) . '</a></p></div>';
         }
-
+    
         // Address card
         $address = $overview['Address'] ?? 'N/A';
         if ($address !== 'N/A' && $address !== 'None') {
             $output .= $this->create_metric_card('Address', $address, '', 'jtw-address-card');
         }
-
+    
         $output .= '</div>'; // end .jtw-details-grid
-
+    
         $output .= '</div>'; // end .jtw-content-section
         return $output;
     }

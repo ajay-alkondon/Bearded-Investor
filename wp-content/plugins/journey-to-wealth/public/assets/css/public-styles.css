@@ -271,12 +271,24 @@
 
 
 /* --- Overview Section --- */
+.jtw-overview-header-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
 .jtw-company-description p { 
     margin: 0 0 25px 0;
     line-height: 1.6; 
     color: var(--jtw-text-medium); 
     font-size: 0.95em; 
 }
+
+.jtw-price-range-bar {
+    margin-bottom: 30px;
+}
+
 .jtw-price-range-bar h5 {
     font-size: 0.9em;
     color: var(--jtw-text-light);
@@ -285,53 +297,21 @@
 }
 .jtw-price-range-bar .jtw-progress-track {
     width: 100%;
-    height: 35px; /* Bar thickness */
+    height: 10px;
     background-color: #e9ecef;
     border-radius: 4px;
     position: relative;
     overflow: hidden;
 }
-.jtw-price-range-bar .jtw-progress-fill {
-    height: 100%;
-    width: 0%; /* Initial width for animation */
-    background-color: var(--jtw-primary-blue); /* Default color */
-    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-.jtw-price-range-bar {
-    border-radius: 4px;
-}
-.jtw-price-range-indicator {
-    position: absolute;
-    top: -5px;
-    left: 0%; /* JS will animate this */
-    transform: translateX(-50%);
-    width: 3px;
-    height: 45px;
-    background-color: var(--jtw-text-dark);
-    border-radius: 2px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-    transition: left 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-    z-index: 2;
-}
-.jtw-indicator-label {
-    position: absolute;
-    top:8px;
-    transform: translateX(-110%);
-    white-space: nowrap;
-    font-size: 0.9em;
-    color: #ffffff;
-}
-.jtw-indicator-label strong {
-    font-weight: 600;
-}
-.jtw-price-range-labels {
+
+.jtw-price-range-bar .jtw-price-range-labels {
     display: flex;
     justify-content: space-between;
     font-size: 0.9em;
     color: var(--jtw-text-medium);
     margin-top: 8px;
 }
-.jtw-price-range-labels strong {
+.jtw-price-range-bar .jtw-price-range-labels strong {
     font-weight: 600;
     color: var(--jtw-text-dark);
 }
@@ -340,7 +320,6 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px 30px;
-    padding-top: 25px;
 }
 .jtw-stat-item {
     display: flex;
@@ -379,12 +358,10 @@
 }
 
 /* --- Bar Colors --- */
-.jtw-stat-item:nth-child(1) .jtw-progress-fill { background-color: var(--jtw-chart-color-1); }
-.jtw-stat-item:nth-child(2) .jtw-progress-fill { background-color: var(--jtw-chart-color-2); }
-.jtw-stat-item:nth-child(3) .jtw-progress-fill { background-color: var(--jtw-chart-color-3); }
-.jtw-stat-item:nth-child(4) .jtw-progress-fill { background-color: var(--jtw-chart-color-4); }
-.jtw-stat-item:nth-child(5) .jtw-progress-fill { background-color: var(--jtw-chart-color-5); }
-.jtw-stat-item:nth-child(6) .jtw-progress-fill { background-color: var(--jtw-chart-color-6); }
+.jtw-stat-item:nth-child(1) .jtw-progress-fill { background-color: var(--jtw-chart-color-3); }
+.jtw-stat-item:nth-child(2) .jtw-progress-fill { background-color: var(--jtw-chart-color-4); }
+.jtw-stat-item:nth-child(3) .jtw-progress-fill { background-color: var(--jtw-chart-color-5); }
+.jtw-stat-item:nth-child(4) .jtw-progress-fill { background-color: var(--jtw-chart-color-6); }
 
 /* --- SEC Filings Card --- */
 .jtw-sec-filings-card {
