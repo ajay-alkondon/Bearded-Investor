@@ -416,6 +416,42 @@
     z-index: 2;
 }
 
+/* --- Company Details Grid --- */
+.jtw-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.jtw-details-grid .jtw-metric-card {
+    text-align: left;
+    padding: 20px;
+}
+
+.jtw-details-grid .jtw-metric-title {
+    text-align: left;
+}
+
+.jtw-details-grid .jtw-metric-value {
+    text-align: left;
+    font-size: 1.1em;
+    word-wrap: break-word;
+}
+
+.jtw-details-grid .jtw-metric-value a {
+    color: var(--jtw-primary-blue);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.jtw-details-grid .jtw-metric-value a:hover {
+    text-decoration: underline;
+}
+
+.jtw-details-grid .jtw-address-card {
+    grid-column: 1 / -1;
+}
+
 
 /* --- Key Metrics & Ratios Section --- */
 .jtw-key-metrics-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; }

@@ -722,6 +722,45 @@ class Journey_To_Wealth_Public {
             $output .= '</a>';
         }
 
+        // Company Details Section
+        $output .= '<h4 class="jtw-subsection-title">' . esc_html__('Company Details', 'journey-to-wealth') . '</h4>';
+        $output .= '<div class="jtw-details-grid">';
+
+        $details_map = [
+            'Exchange' => 'Exchange',
+            'Sector' => 'Sector',
+            'Industry' => 'Industry',
+            'FiscalYearEnd' => 'Fiscal Year End',
+            'LatestQuarter' => 'Latest Quarter',
+            'ExDividendDate' => 'Ex-Dividend Date',
+            'DividendDate' => 'Dividend Date'
+        ];
+
+        foreach ($details_map as $key => $title) {
+            $value = $overview[$key] ?? 'N/A';
+            if (($key === 'LatestQuarter' || $key === 'ExDividendDate' || $key === 'DividendDate') && $value !== 'N/A' && $value !== 'None') {
+                $value = date('F j, Y', strtotime($value));
+            }
+            if ($value !== 'N/A' && $value !== 'None') {
+                 $output .= $this->create_metric_card($title, $value);
+            }
+        }
+
+        // Website card
+        $website = $overview['OfficialSite'] ?? ($overview['Website'] ?? 'N/A');
+        if ($website !== 'N/A' && $website !== 'None' && filter_var($website, FILTER_VALIDATE_URL)) {
+            $hostname = parse_url($website, PHP_URL_HOST) ?: $website;
+            $output .= '<div class="jtw-metric-card"><h3 class="jtw-metric-title">Website</h3><p class="jtw-metric-value"><a href="' . esc_url($website) . '" target="_blank" rel="noopener noreferrer">' . esc_html($hostname) . '</a></p></div>';
+        }
+
+        // Address card
+        $address = $overview['Address'] ?? 'N/A';
+        if ($address !== 'N/A' && $address !== 'None') {
+            $output .= $this->create_metric_card('Address', $address, '', 'jtw-address-card');
+        }
+
+        $output .= '</div>'; // end .jtw-details-grid
+
         $output .= '</div>'; // end .jtw-content-section
         return $output;
     }
@@ -741,15 +780,24 @@ class Journey_To_Wealth_Public {
         $ebitda = (isset($overview['EBITDA']) && is_numeric($overview['EBITDA'])) ? (float)$overview['EBITDA'] : 0;
         if (is_numeric($ev_to_revenue) && $revenue_ttm > 0) { $enterprise_value = $ev_to_revenue * $revenue_ttm; } 
         elseif (is_numeric($ev_to_ebitda) && $ebitda > 0) { $enterprise_value = $ev_to_ebitda * $ebitda; }
+
         $output .= $this->create_interactive_metric_card('P/E Ratio', $key_metrics_data['trailingPeRatio'], [ 'metric' => 'pe', 'interactive-type' => 'donut', 'numerator-label' => 'Earnings', 'denominator-label' => 'Market Cap', 'denominator-value' => $market_cap, 'trailing-value' => $key_metrics_data['trailingPeRatio'], 'forward-value' => $key_metrics_data['forwardPeRatio'], 'trailing-numerator-value' => $trailing_earnings, 'forward-numerator-value' => $forward_earnings, ]);
+        
         $peg_display = is_numeric($peg_pegy_data['trailing_peg']) ? number_format($peg_pegy_data['trailing_peg'], 1) . 'x' : 'N/A';
         $pegy_display = is_numeric($peg_pegy_data['trailing_pegy']) ? number_format($peg_pegy_data['trailing_pegy'], 1) . 'x' : 'N/A';
         $output .= '<div class="jtw-metric-card is-interactive" data-metric="peg-pegy" data-interactive-type="calculator" data-trailing-peg="' . esc_attr($peg_pegy_data['trailing_peg']) . '" data-trailing-pegy="' . esc_attr($peg_pegy_data['trailing_pegy']) . '" data-forward-peg="' . esc_attr($peg_pegy_data['forward_peg']) . '" data-forward-pegy="' . esc_attr($peg_pegy_data['forward_pegy']) . '"><h3 class="jtw-metric-title">PEG / PEGY Ratios</h3><p class="jtw-metric-value">' . $peg_display . ' / ' . $pegy_display . '</p></div>';
+        
+        if (is_numeric($key_metrics_data['forwardPeRatio'])) {
+            $output .= '<div class="jtw-pe-toggle-container"><div class="jtw-pe-toggle-switch"><span class="jtw-toggle-label">Trailing P/E</span><label class="jtw-switch"><input type="checkbox" id="jtw-pe-toggle"><span class="slider round"></span></label><span class="jtw-toggle-label">Forward P/E</span></div></div>';
+        }
+
         $output .= $this->create_interactive_metric_card('P/S Ratio', $key_metrics_data['psRatio'], [ 'interactive-type' => 'donut', 'numerator-label' => 'Sales', 'numerator-value' => $revenue_ttm, 'denominator-label' => 'Market Cap', 'denominator-value' => $market_cap, ]);
         $output .= $this->create_interactive_metric_card('P/B Ratio', $key_metrics_data['pbRatio'], [ 'interactive-type' => 'donut', 'numerator-label' => 'Book', 'numerator-value' => (is_numeric($key_metrics_data['pbRatio']) && $key_metrics_data['pbRatio'] > 0) ? $market_cap / $key_metrics_data['pbRatio'] : 0, 'denominator-label' => 'Market Cap', 'denominator-value' => $market_cap, ]);
         $output .= $this->create_interactive_metric_card('EV/Revenue', $key_metrics_data['evToRevenue'], [ 'interactive-type' => 'donut', 'numerator-label' => 'Revenue', 'numerator-value' => $revenue_ttm, 'denominator-label' => 'Enterprise Value', 'denominator-value' => $enterprise_value, ]);
         $output .= $this->create_interactive_metric_card('EV/EBITDA', $key_metrics_data['evToEbitda'], [ 'interactive-type' => 'donut', 'numerator-label' => 'EBITDA', 'numerator-value' => $ebitda, 'denominator-label' => 'Enterprise Value', 'denominator-value' => $enterprise_value, ]);
-        $output .= '</div>';
+        
+        $output .= '</div>'; // End .jtw-metrics-grid
+
         $output .= '<div class="jtw-interactive-element-container"><div class="jtw-interactive-donut-container"><canvas id="jtw-key-metrics-donut-chart"></canvas><div class="jtw-donut-top-text"></div><div class="jtw-donut-center-text"></div></div>';
         $output .= '<div class="jtw-peg-pegy-calculator-container" style="display: none;">';
         if (!is_numeric($trailing_eps) || $trailing_eps <= 0) {
@@ -768,9 +816,6 @@ class Journey_To_Wealth_Public {
             $output .= '</div></div></div>';
         }
         $output .= '</div>';
-        if (is_numeric($key_metrics_data['forwardPeRatio'])) {
-            $output .= '<div class="jtw-pe-toggle-switch"><span class="jtw-toggle-label">Trailing P/E</span><label class="jtw-switch"><input type="checkbox" id="jtw-pe-toggle"><span class="slider round"></span></label><span class="jtw-toggle-label">Forward P/E</span></div>';
-        }
         $output .= '</div></div></div>';
         return $output;
     }
