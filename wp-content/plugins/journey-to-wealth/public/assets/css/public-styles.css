@@ -454,7 +454,7 @@
 
 
 /* --- Key Metrics & Ratios Section --- */
-.jtw-key-metrics-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; }
+.jtw-key-metrics-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: flex-start; }
 .jtw-metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .jtw-metric-card {
     text-align: center;
@@ -534,7 +534,11 @@
 .jtw-bar-value { padding: 0 10px; color: white; font-weight: 700; font-size: 1.1em; text-shadow: 1px 1px 1px rgba(0,0,0,0.2); white-space: nowrap; }
 
 /* --- P/E Toggle Switch --- */
-.jtw-pe-toggle-switch { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
+.jtw-pe-toggle-switch-container {
+    grid-column: 1 / -1;
+    margin-top: 20px;
+}
+.jtw-pe-toggle-switch { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .jtw-toggle-label { font-size: 0.9em; font-weight: 500; color: var(--jtw-text-medium); }
 .jtw-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
 .jtw-switch input { opacity: 0; width: 0; height: 0; }
