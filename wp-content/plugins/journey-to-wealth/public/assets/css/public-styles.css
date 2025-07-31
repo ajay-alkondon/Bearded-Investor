@@ -297,11 +297,32 @@
 }
 .jtw-price-range-bar .jtw-progress-track {
     width: 100%;
-    height: 10px;
+    height: 35px;
     background-color: #e9ecef;
     border-radius: 4px;
     position: relative;
     overflow: hidden;
+}
+
+.jtw-price-range-bar .jtw-progress-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--jtw-primary-blue);
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.jtw-price-range-indicator {
+    position: absolute;
+    top: -5px;
+    left: 0%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 45px;
+    background-color: var(--jtw-text-dark);
+    border-radius: 2px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    transition: left 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    z-index: 2;
 }
 
 .jtw-price-range-bar .jtw-price-range-labels {

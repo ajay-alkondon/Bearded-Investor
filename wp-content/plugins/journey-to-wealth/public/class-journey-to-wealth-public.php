@@ -674,13 +674,28 @@ class Journey_To_Wealth_Public {
     
         $output .= '<div class="jtw-company-description"><p>' . esc_html($description) . '</p></div>';
     
-        // 52-Week Range Progress Bar (Static)
-        $output .= '<div class="jtw-price-range-bar">';
+        // Determine the display range for the progress bar
+        $display_low = $week_low;
+        $display_high = $week_high;
+    
+        if ($stock_price < $week_low) {
+            $display_low = $stock_price;
+        }
+        if ($stock_price > $week_high) {
+            $display_high = $stock_price;
+        }
+    
+        // 52-Week Range Progress Bar
+        $output .= '<div class="jtw-price-range-bar" data-low="' . esc_attr($display_low) . '" data-high="' . esc_attr($display_high) . '" data-current="' . esc_attr($stock_price) . '">';
         $output .= '<h5>52-Week Price Range</h5>';
-        $output .= '<div class="jtw-progress-track"></div>';
+        $output .= '<div class="jtw-progress-track">';
+        $output .= '<div class="jtw-progress-fill" style="width: 0%;"></div>';
+        $output .= '<div class="jtw-price-range-indicator" style="left: 0%;"></div>';
+        $output .= '</div>';
         $output .= '<div class="jtw-price-range-labels">';
-        $output .= '<span><strong>$' . esc_attr(number_format($week_low, 1)) . '</strong></span>';
-        $output .= '<span><strong>$' . esc_attr(number_format($week_high, 1)) . '</strong></span>';
+        $output .= '<span><strong>$' . esc_attr(number_format($display_low, 1)) . '</strong></span>';
+        $output .= '<span><strong>Current: $' . esc_attr(number_format($stock_price, 1)) . '</strong></span>';
+        $output .= '<span><strong>$' . esc_attr(number_format($display_high, 1)) . '</strong></span>';
         $output .= '</div>';
         $output .= '</div>';
     
