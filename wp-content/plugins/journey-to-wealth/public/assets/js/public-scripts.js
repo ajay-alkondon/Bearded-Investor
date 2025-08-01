@@ -6,6 +6,8 @@
  * 2. The main analyzer page, which now uses IntersectionObserver to lazy-load section content.
  * 3. The new Historical Data "Value Line" style chart.
  * 4. The redesigned Company Overview section with animated bars.
+ * 5. The peer comparison feature in the Key Metrics section.
+ * 6. The interactive Fair Value Analysis section with a dual-chart layout.
  *
  * @link       https://example.com/journey-to-wealth/
  * @since      1.0.0
@@ -49,6 +51,13 @@
         return sign + num.toFixed(decimals);
     }
 
+    function formatMetricValue(value, suffix = '') {
+        if (typeof value === 'number') {
+            return value.toFixed(1) + suffix;
+        }
+        return 'N/A';
+    }
+
     /**
      * Initializes the interactive elements in the Company Overview section.
      * Specifically handles the animation for all progress bars.
@@ -64,11 +73,9 @@
 
             if (!isNaN(low) && !isNaN(high) && !isNaN(current) && high > low) {
                 const percentage = Math.max(0, Math.min(100, ((current - low) / (high - low)) * 100));
-                const $indicator = $priceRangeBar.find('.jtw-price-range-indicator');
                 const $fill = $priceRangeBar.find('.jtw-progress-fill');
                 
                 setTimeout(() => {
-                    $indicator.css('left', `calc(${percentage}% - 1.5px)`); // Adjust for half the indicator's width
                     $fill.css('width', `${percentage}%`);
                 }, 100);
             }
@@ -92,14 +99,8 @@
     }
 
     function initializeKeyMetricsRatiosSection($container) {
-        const $calculatorWrapper = $container.find('.jtw-peg-pegy-calculator-container');
-        const $donutWrapper = $container.find('.jtw-interactive-donut-container');
-        const $interactiveCards = $container.find('.is-interactive');
-        const $peToggle = $container.find('#jtw-pe-toggle');
-
+        // PEG/PEGY Calculator Logic
         const $calculator = $container.find('.jtw-peg-pegy-calculator');
-        let updateRatios = () => {}; 
-
         if ($calculator.length) {
             const $stockPriceInput = $('#jtw-sim-stock-price');
             const $epsInput = $('#jtw-sim-eps');
@@ -110,7 +111,7 @@
             const $pegBar = $('#jtw-peg-bar');
             const $pegyBar = $('#jtw-pegy-bar');
         
-            updateRatios = function() {
+            function updateRatios() {
                 const stockPrice = parseFloat($stockPriceInput.val());
                 const eps = parseFloat($epsInput.val());
                 const growthRate = parseFloat($growthInput.val());
@@ -146,107 +147,199 @@
             }
         
             $container.on('input', '.jtw-sim-input', debounce(updateRatios, 250));
-            updateRatios();
-        }
-        
-        const $donutCards = $interactiveCards.filter('[data-interactive-type="donut"]');
-        const ctx = document.getElementById('jtw-key-metrics-donut-chart');
-        if (!ctx) return;
-        
-        const $centerText = $container.find('.jtw-donut-center-text');
-        const $topText = $container.find('.jtw-donut-top-text');
-
-        const donutChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#007aff', '#dee2e6'], borderWidth: 0 }] },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
-        });
-
-        function updateDonutChart($card) {
-            const isForward = $peToggle.is(':checked');
-            const data = $card.data();
-            let numeratorValue = data.numeratorValue;
-
-            if (data.metric === 'pe') {
-                numeratorValue = isForward ? data.forwardNumeratorValue : data.trailingNumeratorValue;
-            }
-            
-            donutChart.data.labels = [data.numeratorLabel, data.denominatorLabel];
-            donutChart.data.datasets[0].data = [numeratorValue, data.denominatorValue];
-            donutChart.update();
-
-            $topText.html(`<div class="numerator-label">${data.numeratorLabel}</div><div class="numerator-value">US$${formatLargeNumber(numeratorValue)}</div>`);
-            $centerText.html(`<div class="denominator-label">${data.denominatorLabel}</div><div class="denominator-value">US$${formatLargeNumber(data.denominatorValue)}</div>`);
+            updateRatios(); // Initial calculation
         }
 
-        $interactiveCards.on('click', function() {
-            const $card = $(this);
-            $interactiveCards.removeClass('active');
-            $card.addClass('active');
+        // Peer Comparison Logic
+        let peerDataFetched = false;
+        $container.on('change', '#jtw-peer-toggle', function() {
+            const $toggle = $(this);
+            const $table = $container.find('.jtw-metrics-table');
+            const $peerCols = $table.find('.jtw-peer-col');
+            const $spinner = $container.find('.jtw-peer-loading-spinner');
+            const $errorMsg = $container.find('.jtw-peer-error-message');
 
-            if ($card.data('interactive-type') === 'donut') {
-                $calculatorWrapper.hide();
-                $donutWrapper.show();
-                updateDonutChart($card);
-            } else if ($card.data('interactive-type') === 'calculator') {
-                $donutWrapper.hide();
-                $calculatorWrapper.show();
-            }
-        });
-
-        $peToggle.on('change', function() {
-            const isForward = $(this).is(':checked');
-            const type = isForward ? 'forward' : 'trailing';
-
-            const $peCard = $container.find('[data-metric="pe"]');
-            const peValue = $peCard.data(`${type}-value`);
-            $peCard.find('.jtw-metric-value').text(isFinite(peValue) ? `${parseFloat(peValue).toFixed(1)}x` : 'N/A');
-
-            const $pegCard = $container.find('[data-metric="peg-pegy"]');
-            const pegValue = $pegCard.data(`${type}-peg`);
-            const pegyValue = $pegCard.data(`${type}-pegy`);
-            const pegDisplay = isFinite(pegValue) ? `${parseFloat(pegValue).toFixed(1)}x` : 'N/A';
-            const pegyDisplay = isFinite(pegyValue) ? `${parseFloat(pegyValue).toFixed(1)}x` : 'N/A';
-            $pegCard.find('.jtw-metric-value').text(`${pegDisplay} / ${pegyDisplay}`);
-            
-            if ($peCard.hasClass('active')) {
-                updateDonutChart($peCard);
-            }
-
-            const $epsInput = $('#jtw-sim-eps');
-            if ($epsInput.length) {
-                const epsValue = $epsInput.data(`${type}-eps`);
-                $epsInput.val(isFinite(epsValue) ? parseFloat(epsValue).toFixed(1) : 0);
-            }
-
-            const $growthInput = $('#jtw-sim-growth-rate');
-            if ($growthInput.length) {
-                let newGrowthRate = 5.0; 
-                if (isFinite(peValue) && isFinite(pegValue) && pegValue > 0) {
-                    newGrowthRate = (peValue / pegValue);
+            if ($toggle.is(':checked')) {
+                if (peerDataFetched) {
+                    $peerCols.show();
+                    $table.addClass('peer-view');
+                    return;
                 }
-                $growthInput.val(parseFloat(newGrowthRate).toFixed(1));
-            }
+                
+                $spinner.show();
+                $errorMsg.hide();
+                const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
 
-            if ($calculator.length) {
-                updateRatios();
+                $.ajax({
+                    url: jtw_public_params.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'jtw_fetch_peer_data',
+                        nonce: jtw_public_params.peer_nonce,
+                        ticker: ticker.toUpperCase(),
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        $spinner.hide();
+                        if (response.success && response.data) {
+                            peerDataFetched = true;
+                            const peers = Object.keys(response.data);
+                            const peerData = response.data;
+
+                            // Update headers
+                            if (peers.length > 0) {
+                                $table.find('.jtw-peer-1-header').text(peers[0]).show();
+                            }
+                            if (peers.length > 1) {
+                                $table.find('.jtw-peer-2-header').text(peers[1]).show();
+                            }
+                            
+                            // Update regular metric values
+                            $table.find('td[data-metric]').each(function() {
+                                const $cell = $(this);
+                                const metricKey = $cell.data('metric');
+                                const suffix = {
+                                    trailingPeRatio: 'x', forwardPeRatio: 'x', psRatio: 'x', pbRatio: 'x', evToRevenue: 'x', evToEbitda: 'x',
+                                    ttmEpsGrowth: '%', currentYearEpsGrowth: '%', nextYearEpsGrowth: '%', ttmRevenueGrowth: '%', currentYearRevenueGrowth: '%', nextYearRevenueGrowth: '%',
+                                    grossMargin: '%', netMargin: '%'
+                                }[metricKey] || '';
+
+                                if ($cell.hasClass('jtw-peer-1-value') && peers.length > 0) {
+                                    $cell.text(formatMetricValue(peerData[peers[0]][metricKey], suffix)).show();
+                                }
+                                if ($cell.hasClass('jtw-peer-2-value') && peers.length > 1) {
+                                    $cell.text(formatMetricValue(peerData[peers[1]][metricKey], suffix)).show();
+                                }
+                            });
+
+                             // Update special PEG/PEGY values
+                            $table.find('td[data-metric-peg]').each(function() {
+                                const $cell = $(this);
+                                if ($cell.hasClass('jtw-peer-1-value') && peers.length > 0) {
+                                    const peg = formatMetricValue(peerData[peers[0]]['pegRatio'], 'x');
+                                    const pegy = formatMetricValue(peerData[peers[0]]['pegyRatio'], 'x');
+                                    $cell.text(`${peg} / ${pegy}`).show();
+                                }
+                                if ($cell.hasClass('jtw-peer-2-value') && peers.length > 1) {
+                                    const peg = formatMetricValue(peerData[peers[1]]['pegRatio'], 'x');
+                                    const pegy = formatMetricValue(peerData[peers[1]]['pegyRatio'], 'x');
+                                    $cell.text(`${peg} / ${pegy}`).show();
+                                }
+                            });
+
+                            $table.addClass('peer-view');
+
+                        } else {
+                            $errorMsg.text(response.data.message || getLocalizedText('text_error')).show();
+                            $toggle.prop('checked', false);
+                        }
+                    },
+                    error: function(jqXHR) {
+                        $spinner.hide();
+                        $errorMsg.text('AJAX request failed. ' + (jqXHR.responseText || '')).show();
+                        $toggle.prop('checked', false);
+                    }
+                });
+
+            } else {
+                $peerCols.hide();
+                $table.removeClass('peer-view');
             }
         });
-
-        if ($donutCards.length > 0) {
-            $donutCards.first().trigger('click');
-        }
     }
 
-    function initializeValuationChart($container) {
-        if (window.jtwFairValueChart instanceof Chart) {
-            window.jtwFairValueChart.destroy();
+    function initializeFairValueAnalysisSection($container) {
+        initializeAnalystDonutChart($container);
+        const interactiveChart = initializeInteractiveBarChart($container);
+    
+        const recalculateValuation = debounce(function() {
+            const assumptions = { bear: {}, base: {}, bull: {} };
+            let hasAllInputs = true;
+    
+            $container.find('.jtw-assumption-input').each(function() {
+                const $input = $(this);
+                const caseType = $input.data('case');
+                const metric = $input.data('metric');
+                let value = $input.val();
+    
+                if (value === '') {
+                    hasAllInputs = false;
+                }
+                
+                if (metric === 'initialFcfe') {
+                    const multiplier = parseFloat($input.data('multiplier')) || 1;
+                    value = parseFloat(value) * multiplier;
+                }
+
+                assumptions[caseType][metric] = value;
+            });
+    
+            if (!hasAllInputs) {
+                return; // Don't run calculation if any input is empty
+            }
+    
+            const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+    
+            $container.find('.jtw-assumptions-table').css('opacity', 0.5);
+    
+            $.ajax({
+                url: jtw_public_params.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'jtw_recalculate_valuation',
+                    nonce: jtw_public_params.recalculate_nonce,
+                    ticker: ticker,
+                    assumptions: assumptions
+                },
+                dataType: 'json',
+                success: function(response) {
+                    $container.find('.jtw-assumptions-table').css('opacity', 1);
+                    if (response.success && response.data) {
+                        const data = response.data;
+                        // Update table
+                        $container.find('.jtw-bear-fv').text('$' + data.bear.fair_value.toFixed(2));
+                        $container.find('.jtw-base-fv').text('$' + data.base.fair_value.toFixed(2));
+                        $container.find('.jtw-bull-fv').text('$' + data.bull.fair_value.toFixed(2));
+                        $container.find('.jtw-bear-buy').text('$' + data.bear.buy_price.toFixed(2));
+                        $container.find('.jtw-base-buy').text('$' + data.base.buy_price.toFixed(2));
+                        $container.find('.jtw-bull-buy').text('$' + data.bull.buy_price.toFixed(2));
+    
+                        // Update interactive bar chart
+                        if (interactiveChart) {
+                            interactiveChart.data.datasets[0].data = [
+                                data.bull.fair_value,
+                                data.base.fair_value,
+                                data.bear.fair_value
+                            ];
+                            interactiveChart.update();
+                        }
+                    } else {
+                        console.error("Recalculation failed:", response.data.message);
+                    }
+                },
+                error: function() {
+                    $container.find('.jtw-assumptions-table').css('opacity', 1);
+                    console.error("AJAX error during recalculation.");
+                }
+            });
+    
+        }, 500);
+    
+        $container.on('input', '.jtw-assumption-input', recalculateValuation);
+        
+        // Trigger the initial calculation on load
+        recalculateValuation();
+    }
+
+    function initializeAnalystDonutChart($container) {
+        if (window.jtwAnalystChart instanceof Chart) {
+            window.jtwAnalystChart.destroy();
         }
     
-        const $chartContainer = $container.find('#jtw-valuation-chart-container');
+        const $chartContainer = $container.find('#jtw-analyst-chart-container');
         if (!$chartContainer.length) return;
     
-        const canvas = $container.find('#jtw-valuation-chart')[0];
+        const canvas = $container.find('#jtw-analyst-valuation-chart')[0];
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
@@ -254,7 +347,7 @@
         const fairValue = parseFloat($chartContainer.data('fair-value'));
         
         if (isNaN(currentPrice) || isNaN(fairValue) || fairValue <= 0) {
-            $chartContainer.html('<p>Valuation data not available.</p>');
+            $chartContainer.html('<p>Analyst valuation not available.</p>');
             return;
         }
         
@@ -284,24 +377,20 @@
         }
         
         const gradientBlack = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradientBlack.addColorStop(0, '#888'); // Lighter grey start
-        gradientBlack.addColorStop(1, '#212529'); // Darker end
+        gradientBlack.addColorStop(0, '#888');
+        gradientBlack.addColorStop(1, '#212529');
         
         const gradientVerdict = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradientVerdict.addColorStop(0, lightenColor(verdictColor, 75)); // Lighter start for a steeper gradient
-        gradientVerdict.addColorStop(1, verdictColor); // Darker end
-
+        gradientVerdict.addColorStop(0, lightenColor(verdictColor, 75));
+        gradientVerdict.addColorStop(1, verdictColor);
     
         const centerTextPlugin = {
             id: 'centerText',
             afterDraw: (chart) => {
-                const config = chart.options.plugins.centerText;
-                if (!config) return;
-                const { top, left, width, height } = chart.chartArea;
-                if (width <= 0 || height <= 0) return;
+                const { ctx, chartArea: { top, left, width, height } } = chart;
+                if (width <= 0) return;
                 const x = left + width / 2;
                 const y = top + height / 2;
-
                 const baseFontSize = Math.min(width, height) / 14;
 
                 ctx.save();
@@ -309,105 +398,27 @@
                 ctx.textBaseline = 'middle';
                 
                 ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
-                ctx.fillStyle = config.color;
-                ctx.fillText(config.verdict, x, y - (baseFontSize * 1.5));
+                ctx.fillStyle = verdictColor;
+                ctx.fillText(verdict, x, y - (baseFontSize * 1.5));
                 
                 ctx.font = `bold ${baseFontSize * 0.9}px sans-serif`;
                 ctx.fillStyle = "#333";
-                ctx.fillText('Fair Value:', x, y + (baseFontSize * 0.5));
+                ctx.fillText('Analyst FV:', x, y + (baseFontSize * 0.5));
                 
                 ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
-                ctx.fillStyle = config.color;
-                ctx.fillText('$' + Math.abs(fairValue).toFixed(1), x, y + (baseFontSize * 2));
+                ctx.fillStyle = verdictColor;
+                ctx.fillText('$' + fairValue.toFixed(1), x, y + (baseFontSize * 2));
                 
                 ctx.restore();
             }
         };
         
-        const smallerValue = Math.min(currentPrice, fairValue);
-        const largerValue = Math.max(currentPrice, fairValue);
-    
-        const differenceArcPlugin = {
-            id: 'differenceArcPlugin',
-            afterDraw: (chart) => {
-                const { ctx, chartArea } = chart;
-                const { top, left, width, height } = chart.chartArea;
-                if (width <= 0) return;
-    
-                const innerMeta = chart.getDatasetMeta(1);
-                const outerMeta = chart.getDatasetMeta(0);
-                if (!innerMeta.data.length || !outerMeta.data.length) return;
-    
-                const arcRadius = outerMeta.data[0].outerRadius + 15;
-                const startAngle = outerMeta.data[0].endAngle;
-                const endAngle = innerMeta.data[0].endAngle;
-                
-                ctx.save();
-                ctx.strokeStyle = verdictColor;
-                ctx.lineWidth = 15;
-                ctx.beginPath();
-                ctx.arc(left + width / 2, top + height / 2, arcRadius, startAngle, endAngle);
-                ctx.stroke();
-                
-                const drawCap = (angle) => {
-                    const capLength = 1;
-                    const x = (left + width / 2) + arcRadius * Math.cos(angle);
-                    const y = (top + height / 2) + arcRadius * Math.sin(angle);
-                    ctx.beginPath();
-                    ctx.moveTo(x - capLength / 2 * Math.sin(angle), y + capLength / 2 * Math.cos(angle));
-                    ctx.lineTo(x + capLength / 2 * Math.sin(angle), y - capLength / 2 * Math.cos(angle));
-                    ctx.stroke();
-                };
-                
-                drawCap(startAngle);
-                drawCap(endAngle);
-
-                const text = Math.abs(discountPercent).toFixed(1) + '% ' + (discountPercent > 0 ? 'Discount' : 'Premium');
-                const textRadius = arcRadius + 18;
-                const midAngle = (startAngle - endAngle) / 2;
-                drawArcText(chart, ctx, text, left + width / 2, top + height / 2, textRadius, midAngle);
-                ctx.restore();
-            }
-        };
-
-        function drawArcText(chart, ctx, str, centerX, centerY, radius, angle) {
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            
-            const baseFontSize = Math.min(chart.chartArea.width, chart.chartArea.height) / 25;
-            ctx.font = `${baseFontSize}px sans-serif`;
-            ctx.fillStyle = '#333';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            const totalWidth = ctx.measureText(str).width;
-            const totalAngle = totalWidth / radius;
-
-            let currentAngle = angle - totalAngle / 2;
-
-            for (let i = 0; i < str.length; i++) {
-                const char = str[i];
-                const charWidth = ctx.measureText(char).width;
-                const charAngle = charWidth / radius;
-                
-                const rotation = currentAngle + charAngle / 2;
-
-                ctx.save();
-                ctx.rotate(rotation);
-                ctx.fillText(char, 0, -radius);
-                ctx.restore();
-                
-                currentAngle += charAngle;
-            }
-            ctx.restore();
-        }
-    
-        window.jtwFairValueChart = new Chart(ctx, {
+        window.jtwAnalystChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 datasets: [{
                     label: 'Current Price',
-                    data: [currentPrice, fairValue - currentPrice],
+                    data: [currentPrice, Math.max(0, fairValue - currentPrice)],
                     backgroundColor: [gradientBlack, 'transparent'],
                     borderWidth: 0,
                 }, {
@@ -421,42 +432,82 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '65%',
-                spacing: 0.5,
-                layout: { padding: 40 },
-                animation: { animateScale: true, animateRotate: true },
-                animationDelay: 500,
                 plugins: {
                     legend: { display: false },
                     tooltip: { enabled: false },
-                    centerText: { verdict: verdict, discountPercent: discountPercent, color: verdictColor },
-                    datalabels: {
-                        display: true,
-                        formatter: (value, context) => {
-                           if (context.dataIndex === 1) return null;
-                           return `${context.dataset.label}: $${value.toFixed(1)}`;
-                        },
-                        color: '#fff',
-                        backgroundColor: '#333',
-                        borderRadius: 4,
-                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
-                        font: { weight: '600', size: 11 },
-                        align: 'center',
-                        anchor: 'center',
-                    }
+                    datalabels: { display: false }
                 }
             },
-            plugins: [centerTextPlugin, differenceArcPlugin, ChartDataLabels]
+            plugins: [centerTextPlugin]
         });
+    }
 
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                if (window.jtwFairValueChart) {
-                    window.jtwFairValueChart.resize();
+    function initializeInteractiveBarChart($container) {
+        const $chartContainer = $container.find('#jtw-interactive-chart-container');
+        if (!$chartContainer.length) return null;
+    
+        const canvas = $container.find('#jtw-interactive-valuation-chart')[0];
+        if (!canvas) return null;
+    
+        const currentPrice = parseFloat($container.find('#jtw-analyst-chart-container').data('current-price'));
+    
+        const chart = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: ['Bull Case FV', 'Base Case FV', 'Bear Case FV'],
+                datasets: [{
+                    data: [0, 0, 0], // Start with 0, will be updated by AJAX
+                    backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                    borderRadius: 4,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }, // Disable default tooltip
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'end',
+                        color: '#333',
+                        font: { weight: 'bold', size: 14 },
+                        formatter: function(value) {
+                            return value > 0 ? '$' + value.toFixed(2) : '';
+                        }
+                    },
+                    annotation: {
+                        annotations: {
+                            currentPriceLine: {
+                                type: 'line',
+                                xMin: currentPrice,
+                                xMax: currentPrice,
+                                borderColor: '#6c757d',
+                                borderWidth: 2,
+                                borderDash: [6, 6],
+                                label: {
+                                    content: 'Current Price: $' + currentPrice.toFixed(2),
+                                    enabled: true,
+                                    position: 'start',
+                                    backgroundColor: 'rgba(108, 117, 125, 0.8)',
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { display: false, grid: { display: false } },
+                    y: { display: false, grid: { display: false } }
                 }
             }
         });
-
-        resizeObserver.observe(canvas.parentElement);
+        return chart;
     }
 
     function initializeHistoricalCharts($container) {
@@ -774,6 +825,7 @@
         const $majorSections = $contentArea.find('.jtw-major-content-group');
 
         if ($dotNavContainer.length && $majorSections.length) {
+            $dotNavContainer.empty();
             $majorSections.each(function() {
                 const $section = $(this);
                 const sectionId = $section.find('.jtw-content-section-placeholder').attr('id');
@@ -810,7 +862,6 @@
         function onScroll() {
             const scrollPos = $(document).scrollTop();
             const windowHeight = $(window).height();
-            const docHeight = $(document).height();
             
             if ($(window).width() <= 1024) {
                 let activeDot = null;
@@ -836,10 +887,9 @@
                 
                 $navLinks.removeClass('active');
                 if (activeLink && activeLink.length > 0) {
-                    activeLink.parent().addClass('active');
-                    if (activeLink.closest('.jtw-nav-group-single').length > 0) {
-                         activeLink.addClass('active');
-                    }
+                    activeLink.addClass('active');
+                    $navLinks.closest('.jtw-nav-group').find('.jtw-nav-major-section').removeClass('active');
+                    activeLink.closest('.jtw-nav-group').find('.jtw-nav-major-section').addClass('active');
                 }
             }
         }
@@ -958,7 +1008,7 @@
                                 if (section === 'overview') initializeOverviewSection($placeholder);
                                 else if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
                                 else if (section === 'past-performance') initializeHistoricalCharts($placeholder);
-                                else if (section === 'intrinsic-valuation') initializeValuationChart($placeholder);
+                                else if (section === 'intrinsic-valuation') initializeFairValueAnalysisSection($placeholder);
                                 else if (section === 'key-metrics-ratios') initializeKeyMetricsRatiosSection($placeholder);
 
                             } else {

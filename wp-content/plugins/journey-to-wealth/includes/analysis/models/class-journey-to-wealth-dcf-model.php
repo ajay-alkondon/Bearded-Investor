@@ -115,72 +115,6 @@ class Journey_To_Wealth_DCF_Model {
         return pow(($ending_value / $beginning_value), (1 / $num_periods)) - 1;
     }
 
-    private function get_analyst_growth_rate($overview_data) {
-        $peg_ratio = $this->get_av_value($overview_data, 'PEGRatio');
-        $pe_ratio = $this->get_av_value($overview_data, 'PERatio');
-        if ($peg_ratio > 0 && $pe_ratio > 0) {
-            $analyst_growth = ($pe_ratio / $peg_ratio) / 100;
-            if ($analyst_growth > 0) {
-                return $analyst_growth;
-            }
-        }
-        return null;
-    }
-
-    private function get_dynamic_growth_cap($beta) {
-        if ($beta < 0.8) {
-            return 0.15;
-        } elseif ($beta >= 0.8 && $beta <= 1.2) {
-            return 0.25;
-        } else {
-            return 0.35;
-        }
-    }
-
-    private function get_initial_growth_rate($overview_data, $income_reports, $earnings_reports, $beta_details, $terminal_growth_rate, $method = 'revenue') {
-        $historical_cagr = null;
-        $source_key = '';
-
-        if ($method === 'revenue' && $income_reports) {
-            $historical_cagr = $this->calculate_historical_cagr($income_reports, 'totalRevenue');
-            $source_key = 'Historical Revenue CAGR (5-Year)';
-        } elseif ($method === 'eps' && $earnings_reports) {
-            $historical_cagr = $this->calculate_historical_cagr($earnings_reports, 'reportedEPS');
-            $source_key = 'Historical EPS CAGR (5-Year)';
-        }
-
-        $analyst_growth_rate = $this->get_analyst_growth_rate($overview_data);
-        $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? null;
-        $dynamic_cap = $this->get_dynamic_growth_cap($beta_details['levered_beta']);
-        $chosen_rate = null;
-        $growth_rate_source = '';
-
-        if ($unlevered_beta > 1.1 && $historical_cagr > 0 && $analyst_growth_rate !== null) {
-            $chosen_rate = max($historical_cagr, $analyst_growth_rate);
-            $growth_rate_source = 'Max of Historical or Analyst (High Beta)';
-        } else {
-            if ($historical_cagr > 0) {
-                $chosen_rate = $historical_cagr;
-                $growth_rate_source = $source_key;
-            } elseif ($analyst_growth_rate !== null) {
-                $chosen_rate = $analyst_growth_rate;
-                $growth_rate_source = 'Analyst Estimate (from PEG)';
-            }
-        }
-
-        if ($chosen_rate !== null) {
-            $initial_growth_rate = min($chosen_rate, $dynamic_cap);
-            if ($chosen_rate > $dynamic_cap) {
-                $growth_rate_source .= ' (Capped)';
-            }
-        } else {
-            $initial_growth_rate = $terminal_growth_rate;
-            $growth_rate_source = 'Perpetual Growth Rate (Default)';
-        }
-        
-        return ['rate' => $initial_growth_rate, 'source' => $growth_rate_source];
-    }
-    
     private function prepare_reports_for_cagr($reports) {
         if (empty($reports)) {
             return [];
@@ -194,33 +128,82 @@ class Journey_To_Wealth_DCF_Model {
             $report_year = (int)$fiscal_date->format('Y');
             $report_month = (int)$fiscal_date->format('m');
     
-            // If the fiscal year ends in Jan, Feb, or Mar, it corresponds to the previous calendar year.
             $calendar_year = ($report_month <= 3) ? $report_year - 1 : $report_year;
     
-            // We only want to include full, completed years.
             if ($calendar_year < $current_calendar_year) {
                 $processed_reports[] = $report;
             }
         }
     
-        // Reports from the API are newest first. Slice the most recent ones.
         $sliced_reports = array_slice($processed_reports, 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
     
-        // Reverse to have them in chronological order (oldest to newest) for CAGR calculation.
         return array_reverse($sliced_reports);
     }
 
-    public function get_revenue_growth_rate($overview_data, $income_reports, $beta_details, $terminal_growth_rate) {
-        $prepared_reports = $this->prepare_reports_for_cagr($income_reports);
-        return $this->get_initial_growth_rate($overview_data, $prepared_reports, null, $beta_details, $terminal_growth_rate, 'revenue');
-    }
+    public function get_initial_growth_rate($earnings_estimates, $income_reports, $terminal_growth_rate, $beta_details) {
+        if (!is_wp_error($earnings_estimates) && !empty($earnings_estimates['estimates'])) {
+            $estimates = $earnings_estimates['estimates'];
+            
+            $annual_estimates = array_filter($estimates, function($e) {
+                return isset($e['horizon']) && ($e['horizon'] === 'current fiscal year' || $e['horizon'] === 'next fiscal year');
+            });
 
-    public function get_eps_growth_rate($overview_data, $earnings_reports, $beta_details, $terminal_growth_rate) {
-        $prepared_reports = $this->prepare_reports_for_cagr($earnings_reports);
-        return $this->get_initial_growth_rate($overview_data, null, $prepared_reports, $beta_details, $terminal_growth_rate, 'eps');
+            if (!empty($annual_estimates)) {
+                usort($annual_estimates, function($a, $b) {
+                    return strtotime($b['date']) - strtotime($a['date']);
+                });
+
+                $next_year_estimate = null;
+                $current_year_estimate = null;
+
+                foreach ($annual_estimates as $estimate) {
+                    if ($next_year_estimate === null && $estimate['horizon'] === 'next fiscal year') {
+                        $next_year_estimate = $estimate;
+                    }
+                    if ($current_year_estimate === null && $estimate['horizon'] === 'current fiscal year') {
+                        $current_year_estimate = $estimate;
+                    }
+                    if ($next_year_estimate !== null && $current_year_estimate !== null) {
+                        break;
+                    }
+                }
+        
+                if ($next_year_estimate && $current_year_estimate) {
+                    $beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
+                    $revenue_key = 'revenue_estimate_average';
+                    $source_suffix = '(Average Beta)';
+
+                    if ($beta <= 0.9) {
+                        $revenue_key = 'revenue_estimate_low';
+                        $source_suffix = '(Low Beta)';
+                    } elseif ($beta > 1.1) {
+                        $revenue_key = 'revenue_estimate_high';
+                        $source_suffix = '(High Beta)';
+                    }
+
+                    $next_year_revenue = $this->get_av_value($next_year_estimate, $revenue_key);
+                    $current_year_revenue = $this->get_av_value($current_year_estimate, $revenue_key);
+
+                    if ($current_year_revenue > 0 && $next_year_revenue > 0) {
+                        $growth_rate = ($next_year_revenue / $current_year_revenue) - 1;
+                        if ($growth_rate > 0) {
+                            return ['rate' => $growth_rate, 'source' => 'Analyst Revenue Estimate ' . $source_suffix];
+                        }
+                    }
+                }
+            }
+        }
+    
+        $prepared_reports = $this->prepare_reports_for_cagr($income_reports);
+        $historical_cagr = $this->calculate_historical_cagr($prepared_reports, 'totalRevenue');
+        if ($historical_cagr !== null && $historical_cagr > 0) {
+            return ['rate' => $historical_cagr, 'source' => 'Historical Revenue CAGR (5-Year)'];
+        }
+    
+        return ['rate' => $terminal_growth_rate, 'source' => 'Risk-Free Rate (Fallback)'];
     }
     
-    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $current_price, $beta_details = [], $initial_growth_rate, $growth_rate_source) {
+    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $earnings_estimates, $current_price, $beta_details = [], $custom_assumptions = []) {
         $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data];
         foreach($datasets as $dataset) {
             if (is_wp_error($dataset) || (empty($dataset['annualReports']) && empty($dataset['annualEarnings'])) || count($dataset['annualReports'] ?? []) < self::MIN_YEARS_FOR_GROWTH_CALC) {
@@ -239,6 +222,11 @@ class Journey_To_Wealth_DCF_Model {
         $beta = $this->levered_beta ?? $beta_details['levered_beta'] ?? $this->get_av_value($overview_data, 'Beta');
         $this->cost_of_equity = $this->calculate_cost_of_equity($beta, $risk_free_rate);
         $this->terminal_growth_rate = $risk_free_rate;
+
+        // --- Start of default calculations ---
+        $growth_rate_info = $this->get_initial_growth_rate($earnings_estimates, $income_statement_data['annualReports'], $this->terminal_growth_rate, $beta_details);
+        $initial_growth_rate = $growth_rate_info['rate'];
+        $growth_rate_source = $growth_rate_info['source'];
 
         $base_fcfe_data = end($cagr_calculation_table);
         $base_cash_flow = $base_fcfe_data['fcfe'];
@@ -268,6 +256,33 @@ class Journey_To_Wealth_DCF_Model {
             $base_cash_flow = end($positive_cash_flows);
             $base_cash_flow_source = 'Last Positive FCFE';
         }
+        // --- End of default calculations ---
+
+        // --- NEW: Override with custom assumptions ---
+        if (!empty($custom_assumptions)) {
+            if (isset($custom_assumptions['initial_growth_rate']) && is_numeric($custom_assumptions['initial_growth_rate'])) {
+                $initial_growth_rate = (float)$custom_assumptions['initial_growth_rate'];
+                $growth_rate_source = 'User Input';
+            }
+
+            if (isset($custom_assumptions['profit_margin']) && is_numeric($custom_assumptions['profit_margin'])) {
+                $latest_income_report = $income_statement_data['annualReports'][0] ?? null;
+                if ($latest_income_report) {
+                    $latest_revenue = $this->get_av_value($latest_income_report, 'totalRevenue');
+                    if ($latest_revenue > 0) {
+                        // Approximate FCFE as Net Income (a common simplification)
+                        $base_cash_flow = $latest_revenue * ((float)$custom_assumptions['profit_margin'] / 100);
+                        $base_cash_flow_source = 'User Input (from Profit Margin)';
+                    }
+                }
+            }
+            
+            if (isset($custom_assumptions['initial_fcfe']) && is_numeric($custom_assumptions['initial_fcfe'])) {
+                 $base_cash_flow = (float)$custom_assumptions['initial_fcfe'];
+                 $base_cash_flow_source = 'User Input (Direct FCFE)';
+            }
+        }
+        // --- End of overrides ---
 
         if ($this->cost_of_equity <= $this->terminal_growth_rate) $this->terminal_growth_rate = $this->cost_of_equity - 0.005;
 

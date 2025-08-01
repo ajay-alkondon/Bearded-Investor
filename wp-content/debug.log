@@ -103,3 +103,129 @@ Stack trace:
 [28-Jul-2025 15:18:48 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
 [28-Jul-2025 15:19:03 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
 [28-Jul-2025 15:19:25 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:33:14 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:33:14 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php:253
+Stack trace:
+#0 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#1 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#2 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#3 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#4 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 253
+[31-Jul-2025 18:33:14 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php:254
+Stack trace:
+#0 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(313): Journey_To_Wealth_DCF_Model->calculate(Array, Array, Array, Array, Array, Object(WP_Error), 777.6388, Array)
+#1 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(266): Journey_To_Wealth_Public->get_valuation_results(Array, 777.6388)
+#2 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#3 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#4 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#5 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#6 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php on line 254
+[31-Jul-2025 18:33:49 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:33:50 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php:253
+Stack trace:
+#0 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#1 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#2 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#3 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#4 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 253
+[31-Jul-2025 18:33:50 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php:254
+Stack trace:
+#0 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(313): Journey_To_Wealth_DCF_Model->calculate(Array, Array, Array, Array, Array, Object(WP_Error), 777.6388, Array)
+#1 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(266): Journey_To_Wealth_Public->get_valuation_results(Array, 777.6388)
+#2 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#3 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#4 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#5 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#6 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php on line 254
+[31-Jul-2025 18:33:51 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:33:51 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php:253
+Stack trace:
+#0 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#1 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#2 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#3 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#4 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 253
+[31-Jul-2025 18:33:51 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php:254
+Stack trace:
+#0 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(313): Journey_To_Wealth_DCF_Model->calculate(Array, Array, Array, Array, Array, Object(WP_Error), 777.6388, Array)
+#1 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(266): Journey_To_Wealth_Public->get_valuation_results(Array, 777.6388)
+#2 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#3 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#4 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#5 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#6 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php on line 254
+[31-Jul-2025 18:34:45 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:34:45 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php:253
+Stack trace:
+#0 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#1 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#2 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#3 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#4 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 253
+[31-Jul-2025 18:34:45 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php:251
+Stack trace:
+#0 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(313): Journey_To_Wealth_DCF_Model->calculate(Array, Array, Array, Array, Array, Object(WP_Error), 777.6388, Array)
+#1 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(266): Journey_To_Wealth_Public->get_valuation_results(Array, 777.6388)
+#2 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#3 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#4 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#5 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#6 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php on line 251
+[31-Jul-2025 18:34:53 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:34:53 UTC] PHP Deprecated:  preg_match_all(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/media.php on line 1873
+[31-Jul-2025 18:34:53 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:34:59 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:35:03 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:35:04 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php:253
+Stack trace:
+#0 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#1 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#2 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#3 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#4 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 253
+[31-Jul-2025 18:35:04 UTC] PHP Fatal error:  Uncaught TypeError: Unsupported operand types: WP_Error * int in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php:251
+Stack trace:
+#0 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(313): Journey_To_Wealth_DCF_Model->calculate(Array, Array, Array, Array, Array, Object(WP_Error), 534.5, Array)
+#1 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(266): Journey_To_Wealth_Public->get_valuation_results(Array, 534.5)
+#2 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#3 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#4 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#5 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#6 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/includes/analysis/models/class-journey-to-wealth-dcf-model.php on line 251
+[31-Jul-2025 18:35:40 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:35:41 UTC] PHP Fatal error:  Uncaught Error: Object of class WP_Error could not be converted to string in /var/www/html/wp-includes/formatting.php:1096
+Stack trace:
+#0 /var/www/html/wp-includes/formatting.php(4664): wp_check_invalid_utf8(Object(WP_Error))
+#1 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(893): esc_html(Object(WP_Error))
+#2 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(873): Journey_To_Wealth_Public->build_dcf_modal_content(Array, Array)
+#3 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(859): Journey_To_Wealth_Public->build_valuation_assumptions_modal_html(Array, Array)
+#4 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(274): Journey_To_Wealth_Public->build_intrinsic_valuation_section_html(Array, Array, Array)
+#5 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#6 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#7 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#8 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#9 {main}
+  thrown in /var/www/html/wp-includes/formatting.php on line 1096
+[31-Jul-2025 18:36:34 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:37:55 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:38:35 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:39:57 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:40:07 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:40:10 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:40:27 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:40:27 UTC] PHP Deprecated:  preg_match_all(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/media.php on line 1873
+[31-Jul-2025 18:40:27 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:40:35 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:40:38 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:40:54 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[31-Jul-2025 18:41:55 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483

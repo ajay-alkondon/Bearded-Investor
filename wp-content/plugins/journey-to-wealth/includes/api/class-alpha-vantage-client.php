@@ -1,7 +1,6 @@
 <?php
 /**
  * Alpha Vantage API Client for Journey to Wealth plugin.
- *
  * Handles communication with the Alpha Vantage API to fetch stock data.
  * Implements caching and specific rate limit error handling.
  *
@@ -184,6 +183,21 @@ class Alpha_Vantage_Client {
 
         if ( !isset( $data['symbol'] ) || ( !isset($data['annualEarnings']) && !isset($data['quarterlyEarnings']) ) ) {
             return new WP_Error( 'no_earnings_data', sprintf( __( 'No earnings data found or unexpected structure for symbol %s.', 'journey-to-wealth' ), $symbol ) );
+        }
+        return $data;
+    }
+
+    public function get_earnings_estimates( $symbol ) {
+        if ( empty( $this->api_key ) ) return new WP_Error( 'api_key_missing', __( 'API Key not configured.', 'journey-to-wealth' ) );
+        $symbol = sanitize_text_field( strtoupper( $symbol ) );
+        $params = array( 'function' => 'EARNINGS_ESTIMATES', 'symbol' => $symbol, 'apikey' => $this->api_key );
+        $transient_key = 'jtw_earnings_est_' . md5( $symbol );
+
+        $data = $this->do_request( $params, $transient_key, $this->cache_expiration_statements );
+        if (is_wp_error($data)) return $data;
+
+        if ( !isset( $data['symbol'] ) || empty($data['estimates']) ) {
+            return new WP_Error( 'no_earnings_estimate_data', sprintf( __( 'No earnings estimate data found for symbol %s.', 'journey-to-wealth' ), $symbol ) );
         }
         return $data;
     }
