@@ -249,7 +249,6 @@
     }
 
     function initializeFairValueAnalysisSection($container) {
-        initializeAnalystDonutChart($container);
         const interactiveChart = initializeInteractiveBarChart($container);
     
         const recalculateValuation = debounce(function() {
@@ -267,8 +266,13 @@
                 }
                 
                 if (metric === 'initialFcfe') {
-                    const multiplier = parseFloat($input.data('multiplier')) || 1;
-                    value = parseFloat(value) * multiplier;
+                    // For the base case, always use the precise raw value to ensure it matches the analyst value
+                    if (caseType === 'base') {
+                        value = parseFloat($input.data('raw-value'));
+                    } else {
+                        const multiplier = parseFloat($input.data('multiplier')) || 1;
+                        value = parseFloat(value) * multiplier;
+                    }
                 }
 
                 assumptions[caseType][metric] = value;
@@ -306,11 +310,9 @@
     
                         // Update interactive bar chart
                         if (interactiveChart) {
-                            interactiveChart.data.datasets[0].data = [
-                                data.bull.fair_value,
-                                data.base.fair_value,
-                                data.bear.fair_value
-                            ];
+                            interactiveChart.data.datasets[0].data[1] = data.bull.fair_value;
+                            interactiveChart.data.datasets[0].data[2] = data.base.fair_value;
+                            interactiveChart.data.datasets[0].data[3] = data.bear.fair_value;
                             interactiveChart.update();
                         }
                     } else {
@@ -331,117 +333,6 @@
         recalculateValuation();
     }
 
-    function initializeAnalystDonutChart($container) {
-        if (window.jtwAnalystChart instanceof Chart) {
-            window.jtwAnalystChart.destroy();
-        }
-    
-        const $chartContainer = $container.find('#jtw-analyst-chart-container');
-        if (!$chartContainer.length) return;
-    
-        const canvas = $container.find('#jtw-analyst-valuation-chart')[0];
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        const currentPrice = parseFloat($chartContainer.data('current-price'));
-        const fairValue = parseFloat($chartContainer.data('fair-value'));
-        
-        if (isNaN(currentPrice) || isNaN(fairValue) || fairValue <= 0) {
-            $chartContainer.html('<p>Analyst valuation not available.</p>');
-            return;
-        }
-        
-        const discountPercent = ((fairValue - currentPrice) / currentPrice) * 100;
-
-        let verdict = 'Fairly Valued';
-        let verdictColor = '#d97706';
-        
-        if (discountPercent > 15) {
-            verdict = 'Undervalued';
-            verdictColor = '#16a34a';
-        } else if (discountPercent < -15) {
-            verdict = 'Overvalued';
-            verdictColor = '#dc2626';
-        }
-
-        function lightenColor(hex, percent) {
-            hex = hex.replace(/^#/, '');
-            const r = parseInt(hex.substring(0, 2), 16);
-            const g = parseInt(hex.substring(2, 4), 16);
-            const b = parseInt(hex.substring(4, 6), 16);
-            const p = percent / 100;
-            const newR = Math.min(255, r + (255 - r) * p);
-            const newG = Math.min(255, g + (255 - g) * p);
-            const newB = Math.min(255, b + (255 - b) * p);
-            return `rgb(${parseInt(newR)}, ${parseInt(newG)}, ${parseInt(newB)})`;
-        }
-        
-        const gradientBlack = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradientBlack.addColorStop(0, '#888');
-        gradientBlack.addColorStop(1, '#212529');
-        
-        const gradientVerdict = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradientVerdict.addColorStop(0, lightenColor(verdictColor, 75));
-        gradientVerdict.addColorStop(1, verdictColor);
-    
-        const centerTextPlugin = {
-            id: 'centerText',
-            afterDraw: (chart) => {
-                const { ctx, chartArea: { top, left, width, height } } = chart;
-                if (width <= 0) return;
-                const x = left + width / 2;
-                const y = top + height / 2;
-                const baseFontSize = Math.min(width, height) / 14;
-
-                ctx.save();
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                
-                ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
-                ctx.fillStyle = verdictColor;
-                ctx.fillText(verdict, x, y - (baseFontSize * 1.5));
-                
-                ctx.font = `bold ${baseFontSize * 0.9}px sans-serif`;
-                ctx.fillStyle = "#333";
-                ctx.fillText('Analyst FV:', x, y + (baseFontSize * 0.5));
-                
-                ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
-                ctx.fillStyle = verdictColor;
-                ctx.fillText('$' + fairValue.toFixed(1), x, y + (baseFontSize * 2));
-                
-                ctx.restore();
-            }
-        };
-        
-        window.jtwAnalystChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                datasets: [{
-                    label: 'Current Price',
-                    data: [currentPrice, Math.max(0, fairValue - currentPrice)],
-                    backgroundColor: [gradientBlack, 'transparent'],
-                    borderWidth: 0,
-                }, {
-                    label: 'Fair Value',
-                    data: [fairValue, 0],
-                    backgroundColor: [gradientVerdict, 'transparent'],                    
-                    borderWidth: 0,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '65%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false },
-                    datalabels: { display: false }
-                }
-            },
-            plugins: [centerTextPlugin]
-        });
-    }
-
     function initializeInteractiveBarChart($container) {
         const $chartContainer = $container.find('#jtw-interactive-chart-container');
         if (!$chartContainer.length) return null;
@@ -449,34 +340,54 @@
         const canvas = $container.find('#jtw-interactive-valuation-chart')[0];
         if (!canvas) return null;
     
-        const currentPrice = parseFloat($container.find('#jtw-analyst-chart-container').data('current-price'));
+        const currentPrice = parseFloat($chartContainer.data('current-price'));
+        const analystFv = parseFloat($chartContainer.data('analyst-fv'));
     
         const chart = new Chart(canvas, {
             type: 'bar',
             data: {
-                labels: ['Bull Case FV', 'Base Case FV', 'Bear Case FV'],
+                labels: ['Analyst FV', 'Bull Case FV', 'Base Case FV', 'Bear Case FV'],
                 datasets: [{
-                    data: [0, 0, 0], // Start with 0, will be updated by AJAX
-                    backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
-                    borderRadius: 4,
+                    data: [analystFv, 0, 0, 0], // Analyst value is static, others start at 0
+                    backgroundColor: '#82ca9d',
+                    borderRadius: 0,
                     borderSkipped: false,
+                    maxBarThickness: 40,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 indexAxis: 'y',
+                animation: {
+                    delay: (context) => {
+                        let delay = 0;
+                        if (context.type === 'data' && context.mode === 'default') {
+                            delay = context.dataIndex * 300;
+                        }
+                        return delay;
+                    },
+                },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { enabled: false }, // Disable default tooltip
+                    tooltip: { enabled: false },
                     datalabels: {
                         display: true,
-                        anchor: 'end',
-                        align: 'end',
-                        color: '#333',
-                        font: { weight: 'bold', size: 14 },
-                        formatter: function(value) {
-                            return value > 0 ? '$' + value.toFixed(2) : '';
+                        anchor: 'start',
+                        align: 'start',
+                        color: 'white',
+                        offset: 10,
+                        font: {
+                            weight: 'bold',
+                            size: 12
+                        },
+                        formatter: function(value, context) {
+                            const label = context.chart.data.labels[context.dataIndex];
+                            if (value > 0) {
+                                const formattedValue = '$' + value.toFixed(2);
+                                return `${label}: ${formattedValue}`;
+                            }
+                            return null;
                         }
                     },
                     annotation: {
@@ -503,7 +414,12 @@
                 },
                 scales: {
                     x: { display: false, grid: { display: false } },
-                    y: { display: false, grid: { display: false } }
+                    y: { 
+                        grid: { display: false },
+                        ticks: {
+                            display: false
+                        }
+                    }
                 }
             }
         });

@@ -367,6 +367,15 @@ class Journey_To_Wealth_Public {
             return;
         }
     
+        // Ensure authoritative shares outstanding is used for recalculation
+        $balance_sheet = $company_data['balance_sheet'];
+        if (!is_wp_error($balance_sheet) && isset($balance_sheet['annualReports'][0]['commonStockSharesOutstanding'])) {
+            $authoritative_shares = (float)$balance_sheet['annualReports'][0]['commonStockSharesOutstanding'];
+            if ($authoritative_shares > 0) {
+                $company_data['overview']['SharesOutstanding'] = $authoritative_shares;
+            }
+        }
+
         $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
         $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
         $beta_details = $this->calculate_levered_beta($ticker, $company_data['balance_sheet'], $company_data['overview']['MarketCapitalization'], $tax_rate_decimal);
@@ -1179,36 +1188,35 @@ class Journey_To_Wealth_Public {
             $analyst_growth = ($dcf_result['calculation_breakdown']['inputs']['initial_growth_rate'] ?? 0) * 100;
             $analyst_fcfe = $dcf_result['calculation_breakdown']['inputs']['base_cash_flow'] ?? 0;
             
-            // --- NEW LOGIC for FCFE formatting ---
             $fcfe_label = 'Initial FCFE';
             $fcfe_display_value = $analyst_fcfe;
             $fcfe_multiplier = 1;
     
             if (abs($analyst_fcfe) >= 1.0e+9) {
                 $fcfe_label .= ' (in Billions)';
-                $fcfe_display_value = round($analyst_fcfe / 1.0e+9, 1);
+                $fcfe_display_value = round($analyst_fcfe / 1.0e+9, 2);
                 $fcfe_multiplier = 1.0e+9;
             } elseif (abs($analyst_fcfe) >= 1.0e+6) {
                 $fcfe_label .= ' (in Millions)';
-                $fcfe_display_value = round($analyst_fcfe / 1.0e+6, 1);
+                $fcfe_display_value = round($analyst_fcfe / 1.0e+6, 2);
                 $fcfe_multiplier = 1.0e+6;
             } elseif (abs($analyst_fcfe) >= 1.0e+3) {
                 $fcfe_label .= ' (in Thousands)';
-                $fcfe_display_value = round($analyst_fcfe / 1.0e+3, 1);
+                $fcfe_display_value = round($analyst_fcfe / 1.0e+3, 2);
                 $fcfe_multiplier = 1.0e+3;
             }
-            // --- END NEW LOGIC ---
             
-            // Pre-fill values for Bear, Base, and Bull cases
             $bear_growth = $analyst_growth - 5;
             $base_growth = $analyst_growth;
             $bull_growth = $analyst_growth + 5;
+
+            $fcfe_raw_value_attr = 'data-raw-value="' . esc_attr($analyst_fcfe) . '"';
 
             $output .= '<table class="jtw-assumptions-table">';
             $output .= '<thead><tr><th></th><th>Analyst Assumptions</th><th>Bear Case</th><th>Base Case</th><th>Bull Case</th></tr></thead>';
             $output .= '<tbody>';
             $output .= '<tr><td data-label="Metric">Revenue Growth %</td><td data-label="Analyst">' . esc_html(number_format($analyst_growth, 1)) . '%</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="revGrowth" value="' . esc_attr(number_format($bear_growth, 1)) . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="revGrowth" value="' . esc_attr(number_format($base_growth, 1)) . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="revGrowth" value="' . esc_attr(number_format($bull_growth, 1)) . '"></td></tr>';
-            $output .= '<tr><td data-label="Metric">' . esc_html($fcfe_label) . '</td><td data-label="Analyst">' . esc_html($this->format_large_number($analyst_fcfe)) . '</td><td data-label="Bear"><input type="text" class="jtw-assumption-input" data-case="bear" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '"></td><td data-label="Base"><input type="text" class="jtw-assumption-input" data-case="base" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '"></td><td data-label="Bull"><input type="text" class="jtw-assumption-input" data-case="bull" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '"></td></tr>';
+            $output .= '<tr><td data-label="Metric">' . esc_html($fcfe_label) . '</td><td data-label="Analyst">' . esc_html($this->format_large_number($analyst_fcfe)) . '</td><td data-label="Bear"><input type="number" step="0.01" class="jtw-assumption-input" data-case="bear" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Base"><input type="number" step="0.01" class="jtw-assumption-input" data-case="base" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Bull"><input type="number" step="0.01" class="jtw-assumption-input" data-case="bull" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td></tr>';
             $output .= '<tr><td data-label="Metric">Desired Annual Return %</td><td data-label="Analyst">-</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="desiredReturn" value="15"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="desiredReturn" value="15"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="desiredReturn" value="15"></td></tr>';
             $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Fair Value</td><td class="jtw-analyst-fv">$' . number_format($valuation_summary['fair_value'], 2) . '</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">-</td><td class="jtw-bull-fv">-</td></tr>';
             $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Buy Price</td><td class="jtw-analyst-buy">-</td><td class="jtw-bear-buy">-</td><td class="jtw-base-buy">-</td><td class="jtw-bull-buy">-</td></tr>';
@@ -1216,10 +1224,7 @@ class Journey_To_Wealth_Public {
             $output .= '</table>';
         }
     
-        $output .= '<div class="jtw-valuation-charts-wrapper">';
-        $output .= '<div class="jtw-chart-column"><div id="jtw-analyst-chart-container" class="jtw-valuation-chart-container" data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-fair-value="' . esc_attr($valuation_summary['fair_value']) . '"><canvas id="jtw-analyst-valuation-chart"></canvas></div></div>';
-        $output .= '<div class="jtw-chart-column"><div id="jtw-interactive-chart-container" class="jtw-valuation-chart-container"><canvas id="jtw-interactive-valuation-chart"></canvas></div></div>';
-        $output .= '</div>';
+        $output .= '<div id="jtw-interactive-chart-container" class="jtw-valuation-chart-container" data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-analyst-fv="' . esc_attr($valuation_summary['fair_value']) . '"><canvas id="jtw-interactive-valuation-chart"></canvas></div>';
     
         if ($has_valid_models) {
             $modal_id = 'jtw-assumptions-modal';

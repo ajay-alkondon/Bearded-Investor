@@ -258,71 +258,81 @@ class Journey_To_Wealth_DCF_Model {
         }
         // --- End of default calculations ---
 
-        // --- NEW: Override with custom assumptions ---
+        // --- Override with custom assumptions ---
         if (!empty($custom_assumptions)) {
             if (isset($custom_assumptions['initial_growth_rate']) && is_numeric($custom_assumptions['initial_growth_rate'])) {
                 $initial_growth_rate = (float)$custom_assumptions['initial_growth_rate'];
                 $growth_rate_source = 'User Input';
             }
-
-            if (isset($custom_assumptions['profit_margin']) && is_numeric($custom_assumptions['profit_margin'])) {
-                $latest_income_report = $income_statement_data['annualReports'][0] ?? null;
-                if ($latest_income_report) {
-                    $latest_revenue = $this->get_av_value($latest_income_report, 'totalRevenue');
-                    if ($latest_revenue > 0) {
-                        // Approximate FCFE as Net Income (a common simplification)
-                        $base_cash_flow = $latest_revenue * ((float)$custom_assumptions['profit_margin'] / 100);
-                        $base_cash_flow_source = 'User Input (from Profit Margin)';
-                    }
-                }
-            }
-            
-            if (isset($custom_assumptions['initial_fcfe']) && is_numeric($custom_assumptions['initial_fcfe'])) {
-                 $base_cash_flow = (float)$custom_assumptions['initial_fcfe'];
-                 $base_cash_flow_source = 'User Input (Direct FCFE)';
+            if (isset($custom_assumptions['initial_fcfe_override']) && is_numeric($custom_assumptions['initial_fcfe_override'])) {
+                $base_cash_flow = (float)$custom_assumptions['initial_fcfe_override'];
+                $base_cash_flow_source = 'User Input';
             }
         }
-        // --- End of overrides ---
-
-        if ($this->cost_of_equity <= $this->terminal_growth_rate) $this->terminal_growth_rate = $this->cost_of_equity - 0.005;
-
+        
+        // --- Projection Logic ---
         $projection_table = [];
         $sum_of_pv_cfs = 0;
-        $future_cf = $base_cash_flow;
-        for ($year = 1; $year <= $this->projection_years; $year++) {
-            $decay_factor = ($year - 1) / ($this->projection_years - 1);
-            $current_growth_rate = $initial_growth_rate * (1 - $decay_factor) + $this->terminal_growth_rate * $decay_factor;
-            $future_cf *= (1 + $current_growth_rate);
-            $discount_factor = pow((1 + $this->cost_of_equity), $year);
-            $pv_of_cf = $future_cf / $discount_factor;
-            $sum_of_pv_cfs += $pv_of_cf;
-            $projection_table[] = ['year' => date('Y') + $year, 'cf' => $future_cf, 'pv_cf' => $pv_of_cf, 'growth_rate' => $current_growth_rate];
+        $current_cf = $base_cash_flow;
+        $current_growth_rate = $initial_growth_rate;
+        $growth_decay_rate = ($initial_growth_rate - $this->terminal_growth_rate) / $this->projection_years;
+
+        for ($i = 1; $i <= $this->projection_years; $i++) {
+            $current_cf *= (1 + $current_growth_rate);
+            $pv_cf = $current_cf / pow(1 + $this->cost_of_equity, $i);
+            $sum_of_pv_cfs += $pv_cf;
+
+            $projection_table[] = [
+                'year' => date('Y') + $i,
+                'cf' => $current_cf,
+                'growth_rate' => $current_growth_rate,
+                'pv_cf' => $pv_cf
+            ];
+
+            $current_growth_rate -= $growth_decay_rate;
         }
 
-        $terminal_value = ($future_cf * (1 + $this->terminal_growth_rate)) / ($this->cost_of_equity - $this->terminal_growth_rate);
-        $pv_of_terminal_value = $terminal_value / pow((1 + $this->cost_of_equity), $this->projection_years);
+        $terminal_value = ($current_cf * (1 + $this->terminal_growth_rate)) / ($this->cost_of_equity - $this->terminal_growth_rate);
+        if ($this->cost_of_equity <= $this->terminal_growth_rate) {
+            return new WP_Error('dcf_terminal_value_error', __('Terminal value cannot be calculated, cost of equity is not greater than terminal growth rate.', 'journey-to-wealth'));
+        }
+        
+        $pv_of_terminal_value = $terminal_value / pow(1 + $this->cost_of_equity, $this->projection_years);
         $total_equity_value = $sum_of_pv_cfs + $pv_of_terminal_value;
-        
         $shares_outstanding = $this->get_av_value($overview_data, 'SharesOutstanding');
-        if (empty($shares_outstanding)) return new WP_Error('dcf_missing_shares', __('DCF Error: Shares outstanding data not found.', 'journey-to-wealth'));
-
-        $intrinsic_value_per_share = $total_equity_value / $shares_outstanding;
+        if ($shares_outstanding == 0) return new WP_Error('dcf_shares_error', __('Shares outstanding is zero, cannot calculate per-share value.', 'journey-to-wealth'));
         
+        $intrinsic_value_per_share = $total_equity_value / $shares_outstanding;
+
         return [
-            'intrinsic_value_per_share' => round($intrinsic_value_per_share, 2),
+            'intrinsic_value_per_share' => $intrinsic_value_per_share,
             'calculation_breakdown' => [
                 'model_name' => 'DCF Model (FCFE)',
-                'inputs' => [ 
-                    'discount_rate' => $this->cost_of_equity, 
-                    'terminal_growth_rate' => $this->terminal_growth_rate, 
+                'current_price' => $current_price,
+                'shares_outstanding' => $shares_outstanding,
+                'sum_of_pv_cfs' => $sum_of_pv_cfs,
+                'terminal_value' => $terminal_value,
+                'pv_of_terminal_value' => $pv_of_terminal_value,
+                'total_equity_value' => $total_equity_value,
+                'projection_table' => $projection_table,
+                'cagr_calculation_table' => $cagr_calculation_table,
+                'inputs' => [
+                    'base_cash_flow' => $base_cash_flow,
+                    'base_cash_flow_source' => $base_cash_flow_source,
                     'initial_growth_rate' => $initial_growth_rate,
                     'growth_rate_source' => $growth_rate_source,
-                    'base_cash_flow_source' => $base_cash_flow_source,
-                    'base_cash_flow' => $base_cash_flow,
+                    'terminal_growth_rate' => $this->terminal_growth_rate,
+                    'discount_rate' => $this->cost_of_equity,
                 ],
-                'cagr_calculation_table' => $cagr_calculation_table,
-                'discount_rate_calc' => [ 'risk_free_rate' => $risk_free_rate, 'risk_free_rate_source' => '5Y Average of 10Y Treasury', 'equity_risk_premium' => $this->equity_risk_premium, 'erp_source' => 'Plugin Setting', 'beta' => $beta, 'beta_source' => $beta_details['beta_source'] ?? 'Alpha Vantage', 'beta_details' => $beta_details, 'cost_of_equity_calc' => 'Risk-Free Rate + (Levered Beta * Equity Risk Premium)', 'wacc_details' => null, ],
-                'projection_table' => $projection_table, 'sum_of_pv_cfs' => $sum_of_pv_cfs, 'terminal_value' => $terminal_value, 'pv_of_terminal_value' => $pv_of_terminal_value, 'total_equity_value' => $total_equity_value, 'shares_outstanding' => $shares_outstanding, 'current_price' => $current_price,
+                'discount_rate_calc' => [
+                    'risk_free_rate' => $risk_free_rate,
+                    'risk_free_rate_source' => 'Avg 3-Month Treasury Yield (60 days)',
+                    'equity_risk_premium' => $this->equity_risk_premium,
+                    'erp_source' => 'Plugin Setting',
+                    'beta' => $beta,
+                    'beta_details' => $beta_details,
+                    'cost_of_equity_calc' => 'Risk-Free Rate + (Beta * Equity Risk Premium)',
+                ],
             ]
         ];
     }
