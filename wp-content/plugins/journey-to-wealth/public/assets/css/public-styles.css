@@ -644,6 +644,146 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     margin: 25px 0 0 0;
 }
 
+/* --- SWS Valuation Graphic --- */
+.jtw-sws-valuation-container {
+    margin-top: 30px;
+    padding: 20px 20px 150px 20px; /* Increased bottom padding */
+    background-color: #2c3e50; /* Dark background */
+    border-radius: 8px;
+    color: #ecf0f1; /* Light text */
+    position: relative; /* New positioning context */
+}
+
+.jtw-sws-header {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.2em;
+}
+.jtw-sws-header strong {
+    display: block;
+    font-size: 1.5em;
+    padding: 5px 0;
+}
+.jtw-sws-status-positive strong { color: #2ecc71; } /* Green for undervalued */
+.jtw-sws-status-negative strong { color: #e74c3c; } /* Red for overvalued */
+.jtw-sws-status-neutral strong { color: #f1c40f; } /* Yellow for neutral */
+
+.jtw-sws-chart {
+    position: relative;
+}
+
+.jtw-sws-bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 2;
+}
+
+.jtw-sws-chart > .jtw-sws-bar-row:nth-child(2) {
+    margin-bottom: 0;
+}
+
+.jtw-sws-bar-wrapper {
+    height: 60px; /* Increased height */
+    width: 0%; 
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.jtw-sws-price-bar {
+    height: 100%;
+    width: 100%;
+    background-color: #58d68d;
+}
+
+.jtw-sws-fv-bar {
+    height: 100%;
+    width: 100%;
+    background-color: #3498db;
+}
+
+.jtw-sws-label-group {
+    position: absolute;
+    left: 15px; /* Indent from the left */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    pointer-events: none;
+}
+
+.jtw-sws-label-group span {
+    display: block;
+    font-size: 0.9em;
+    color: var(--jtw-text-dark);
+    font-weight: 500;
+}
+
+.jtw-sws-label-group strong {
+    display: block;
+    font-size: 1.4em; /* Larger font */
+    font-weight: 700;
+    color: var(--jtw-text-dark);
+}
+
+.jtw-sws-zone-bar-row {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+
+.jtw-sws-zone-bar {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.jtw-sws-zone {
+    height: 100%;
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.jtw-sws-zone.undervalued { background-color: rgba(39, 174, 96, 0.7); }
+.jtw-sws-zone.about-right { background-color: rgba(243, 156, 18, 0.7); }
+.jtw-sws-zone.overvalued {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(192, 57, 43, 0.7),
+        rgba(192, 57, 43, 0.7) 10px,
+        rgba(231, 76, 60, 0.7) 10px,
+        rgba(231, 76, 60, 0.7) 20px
+    );
+}
+
+.jtw-sws-zone-labels {
+    display: flex;
+    width: 100%;
+    position: absolute;
+    bottom: -120px; /* Position below the container's padding */
+    left: 0;
+    height: 80px; /* Give it enough height */
+}
+.jtw-sws-zone-labels span {
+    text-align: center;
+    transform: rotate(-45deg);
+    transform-origin: center center;
+    position: relative;
+    font-size: 0.8em;
+    color: #bdc3c7;
+    white-space: nowrap;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
 .jtw-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 10000; display: none; }
 .jtw-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 30px 40px; border-radius: 4px; z-index: 10001; display: none; width: 90%; max-width: 1000px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 .jtw-modal-content { max-height: 80vh; overflow-y: auto; }
@@ -664,6 +804,19 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     .jtw-header-result-item { gap: 12px; }
     .jtw-result-name { font-size: 0.9em; }
     .jtw-result-meta { font-size: 0.8em; }
+    .jtw-sws-chart { padding-left: 0; padding-bottom: 40px; }
+    .jtw-sws-label-group { 
+        position: absolute; 
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--jtw-text-dark);
+    }
+    .jtw-sws-label-group span, .jtw-sws-label-group strong {
+        color: var(--jtw-text-dark);
+    }
+    .jtw-sws-zone-bar-row, .jtw-sws-zone-labels { left: 0; width: 100%; }
+    .jtw-sws-zone-labels span { font-size: 0.7em; }
 }
 
 /* --- Header Search Visibility --- */

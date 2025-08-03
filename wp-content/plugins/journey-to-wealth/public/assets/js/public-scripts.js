@@ -250,6 +250,7 @@
 
     function initializeFairValueAnalysisSection($container) {
         const interactiveChart = initializeInteractiveBarChart($container);
+        initializeSwsValuationGraphic($container);
     
         const recalculateValuation = debounce(function() {
             const assumptions = { bear: {}, base: {}, bull: {} };
@@ -333,6 +334,71 @@
         recalculateValuation();
     }
 
+    function initializeSwsValuationGraphic($container) {
+        const $swsContainer = $container.find('.jtw-sws-valuation-container');
+        if (!$swsContainer.length) return;
+    
+        const $chart = $swsContainer.find('.jtw-sws-chart');
+        const $barRows = $chart.find('.jtw-sws-bar-row');
+        const $barWrappers = $chart.find('.jtw-sws-bar-wrapper');
+        const $zoneBarRow = $chart.find('.jtw-sws-zone-bar-row');
+    
+        // Set new bar height
+        $barWrappers.css('height', '60px');
+    
+        // 1. Overlay labels onto the bars by moving the label group inside the bar wrapper
+        $barRows.each(function() {
+            const $row = $(this);
+            const $labelGroup = $row.find('.jtw-sws-label-group');
+            const $barWrapper = $row.find('.jtw-sws-bar-wrapper');
+            if ($labelGroup.length && $barWrapper.length) {
+                $labelGroup.appendTo($barWrapper);
+            }
+        });
+    
+        // 2. Dynamically adjust the zone background to create vertical padding
+        if ($barRows.length > 1 && $zoneBarRow.length) {
+            const verticalPadding = 25; // Increased padding
+    
+            // Use a brief timeout to ensure the DOM has been painted and elements have accurate dimensions
+            setTimeout(() => {
+                if (!$chart.length || !$barRows.length) return;
+                
+                const chartHeight = $chart.innerHeight();
+                const firstBarTop = $barRows.first().position().top;
+                const lastBarRow = $barRows.last();
+                const lastBarBottom = lastBarRow.position().top + lastBarRow.outerHeight();
+    
+                const newZoneTop = firstBarTop - verticalPadding;
+                const newZoneBottom = chartHeight - lastBarBottom - verticalPadding;
+    
+                $zoneBarRow.css({
+                    'top': newZoneTop + 'px',
+                    'bottom': newZoneBottom + 'px'
+                });
+            }, 50);
+        }
+    
+        // Animate the bars' width for a smooth loading effect
+        const animateElementWidth = function() {
+            const $element = $(this);
+            const styleAttr = $element.attr('style');
+            if (!styleAttr) return;
+    
+            const widthMatch = styleAttr.match(/width:\s*([^;]+)/);
+            if (widthMatch && widthMatch[1]) {
+                const finalWidth = widthMatch[1];
+                $element.css('width', '0%');
+                setTimeout(() => {
+                    $element.css('width', finalWidth);
+                }, 100);
+            }
+        };
+    
+        $swsContainer.find('.jtw-sws-bar-wrapper').each(animateElementWidth);
+        $swsContainer.find('.jtw-sws-zone').each(animateElementWidth);
+    }
+
     function initializeInteractiveBarChart($container) {
         const $chartContainer = $container.find('#jtw-interactive-chart-container');
         if (!$chartContainer.length) return null;
@@ -373,10 +439,10 @@
                     tooltip: { enabled: false },
                     datalabels: {
                         display: true,
-                        anchor: 'start',
+                        anchor: 'end',
                         align: 'start',
-                        color: 'white',
-                        offset: 10,
+                        color: 'black',
+                        offset: 4,
                         font: {
                             weight: 'bold',
                             size: 12

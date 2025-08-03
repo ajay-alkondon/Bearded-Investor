@@ -39,7 +39,9 @@ class Journey_To_Wealth_Public {
     }
 
     public function enqueue_styles() {
-        wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/css/public-styles.css', array(), $this->version, 'all' );
+        $style_path = plugin_dir_path( __FILE__ ) . 'assets/css/public-styles.css';
+        $style_version = file_exists($style_path) ? $this->version . '.' . filemtime( $style_path ) : $this->version;
+        wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/css/public-styles.css', array(), $style_version, 'all' );
     }
     
     public function enqueue_scripts() {
@@ -389,10 +391,10 @@ class Journey_To_Wealth_Public {
             if (isset($assumptions[$case])) {
                 $case_assumptions = $assumptions[$case];
                 
-                // Prepare custom assumptions for the model
+                // Prepare custom assumptions for the model, using a specific key for the override
                 $custom_assumptions = [
                     'initial_growth_rate' => (float)$case_assumptions['revGrowth'] / 100,
-                    'initial_fcfe' => (float)$case_assumptions['initialFcfe']
+                    'initial_fcfe_override' => (float)$case_assumptions['initialFcfe']
                 ];
     
                 // Recalculate using the model
@@ -1213,18 +1215,99 @@ class Journey_To_Wealth_Public {
             $fcfe_raw_value_attr = 'data-raw-value="' . esc_attr($analyst_fcfe) . '"';
 
             $output .= '<table class="jtw-assumptions-table">';
-            $output .= '<thead><tr><th></th><th>Analyst Assumptions</th><th>Bear Case</th><th>Base Case</th><th>Bull Case</th></tr></thead>';
+            $output .= '<thead>';
+            $output .= '<tr><th class="jtw-top-header-empty"></th><th class="jtw-top-header-empty"></th><th colspan="3" class="jtw-top-header-merged">Your Projections</th></tr>';
+            $output .= '<tr><th></th><th>Intrinsic Value</th><th>Bear Case</th><th>Base Case</th><th>Bull Case</th></tr>';
+            $output .= '</thead>';
             $output .= '<tbody>';
             $output .= '<tr><td data-label="Metric">Revenue Growth %</td><td data-label="Analyst">' . esc_html(number_format($analyst_growth, 1)) . '%</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="revGrowth" value="' . esc_attr(number_format($bear_growth, 1)) . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="revGrowth" value="' . esc_attr(number_format($base_growth, 1)) . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="revGrowth" value="' . esc_attr(number_format($bull_growth, 1)) . '"></td></tr>';
             $output .= '<tr><td data-label="Metric">' . esc_html($fcfe_label) . '</td><td data-label="Analyst">' . esc_html($this->format_large_number($analyst_fcfe)) . '</td><td data-label="Bear"><input type="number" step="0.01" class="jtw-assumption-input" data-case="bear" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Base"><input type="number" step="0.01" class="jtw-assumption-input" data-case="base" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Bull"><input type="number" step="0.01" class="jtw-assumption-input" data-case="bull" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td></tr>';
             $output .= '<tr><td data-label="Metric">Desired Annual Return %</td><td data-label="Analyst">-</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="desiredReturn" value="15"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="desiredReturn" value="15"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="desiredReturn" value="15"></td></tr>';
-            $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Fair Value</td><td class="jtw-analyst-fv">$' . number_format($valuation_summary['fair_value'], 2) . '</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">-</td><td class="jtw-bull-fv">-</td></tr>';
-            $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Buy Price</td><td class="jtw-analyst-buy">-</td><td class="jtw-bear-buy">-</td><td class="jtw-base-buy">-</td><td class="jtw-bull-buy">-</td></tr>';
+            $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-analyst-fv">$' . number_format($valuation_summary['fair_value'], 2) . '</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">-</td><td class="jtw-bull-fv">-</td></tr>';
+            $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Price Target</td><td class="jtw-analyst-buy">-</td><td class="jtw-bear-buy">-</td><td class="jtw-base-buy">-</td><td class="jtw-bull-buy">-</td></tr>';
             $output .= '</tbody>';
             $output .= '</table>';
         }
     
-        $output .= '<div id="jtw-interactive-chart-container" class="jtw-valuation-chart-container" data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-analyst-fv="' . esc_attr($valuation_summary['fair_value']) . '"><canvas id="jtw-interactive-valuation-chart"></canvas></div>';
+        // --- SWS Style Valuation Graphic ---
+        $current_price = $valuation_summary['current_price'];
+        $fair_value = $valuation_summary['fair_value'];
+
+        if ($fair_value > 0 && $current_price > 0) {
+            $percentage_diff = (($current_price - $fair_value) / $fair_value) * 100;
+            $status = 'About Right';
+            $status_class = 'jtw-sws-status-neutral';
+            if ($percentage_diff > 20) {
+                $status = 'Overvalued';
+                $status_class = 'jtw-sws-status-negative';
+            } elseif ($percentage_diff < -20) {
+                $status = 'Undervalued';
+                $status_class = 'jtw-sws-status-positive';
+            }
+
+            // Define the scale for the chart
+            $range_max = max($current_price, $fair_value) * 1.3;
+            
+            // Calculate positions as percentages
+            $price_pos_pct = min(100, ($current_price / $range_max) * 100);
+            $fv_pos_pct = min(100, ($fair_value / $range_max) * 100);
+
+            // Calculate zone widths
+            $undervalued_max = $fair_value * 0.8;
+            $overvalued_min = $fair_value * 1.2;
+
+            $green_width_pct = ($undervalued_max / $range_max) * 100;
+            $yellow_width_pct = (($overvalued_min - $undervalued_max) / $range_max) * 100;
+            
+            $output .= '<div class="jtw-sws-valuation-container">';
+            $output .= '<div class="jtw-sws-header ' . $status_class . '">';
+            $output .= '<strong>' . number_format(abs($percentage_diff), 1) . '% ' . $status . '</strong>';
+            $output .= '</div>';
+            $output .= '<div class="jtw-sws-chart">';
+            
+            // Current Price Bar & Label
+            $output .= '<div class="jtw-sws-bar-row">';
+            $output .= '<div class="jtw-sws-bar-wrapper" style="width: ' . $price_pos_pct . '%;">';
+            $output .= '<div class="jtw-sws-price-bar"></div>';
+            $output .= '</div>';
+            $output .= '<div class="jtw-sws-label-group">';
+            $output .= '<span>Current Price</span>';
+            $output .= '<strong>$' . number_format($current_price, 2) . '</strong>';
+            $output .= '</div>';
+            $output .= '</div>';
+
+            // Fair Value Bar & Label
+            $output .= '<div class="jtw-sws-bar-row">';
+            $output .= '<div class="jtw-sws-bar-wrapper" style="width: ' . $fv_pos_pct . '%;">';
+            $output .= '<div class="jtw-sws-fv-bar"></div>';
+            $output .= '</div>';
+            $output .= '<div class="jtw-sws-label-group">';
+            $output .= '<span>Fair Value</span>';
+            $output .= '<strong>$' . number_format($fair_value, 2) . '</strong>';
+            $output .= '</div>';
+            $output .= '</div>';
+
+            // Zone Bar
+            $output .= '<div class="jtw-sws-zone-bar-row">';
+            $output .= '<div class="jtw-sws-zone-bar">';
+            $output .= '<div class="jtw-sws-zone undervalued" style="width: ' . $green_width_pct . '%;"></div>';
+            $output .= '<div class="jtw-sws-zone about-right" style="width: ' . $yellow_width_pct . '%;"></div>';
+            $output .= '<div class="jtw-sws-zone overvalued" style="flex-grow: 1;"></div>';
+            $output .= '</div>';
+            $output .= '</div>';
+
+            // Zone Labels
+            $output .= '<div class="jtw-sws-zone-labels">';
+            $output .= '<span class="undervalued" style="width: ' . $green_width_pct . '%;">20% Undervalued</span>';
+            $output .= '<span class="about-right" style="width: ' . $yellow_width_pct . '%;">About Right</span>';
+            $output .= '<span class="overvalued" style="flex-grow: 1;">20% Overvalued</span>';
+            $output .= '</div>';
+
+            $output .= '</div>'; // end .jtw-sws-chart
+            $output .= '</div>'; // end .jtw-sws-valuation-container
+        } else {
+             $output .= '<div class="jtw-metric-card"><p>Valuation data is not available to create a chart.</p></div>';
+        }
     
         if ($has_valid_models) {
             $modal_id = 'jtw-assumptions-modal';
