@@ -20,7 +20,6 @@ class Journey_To_Wealth_DCF_Model {
     private $terminal_growth_rate;
     private $equity_risk_premium;
     private $levered_beta;
-    private $projection_years = 10;
 
     const DEFAULT_COST_OF_EQUITY = 0.085;
     const DEFAULT_RISK_FREE_RATE = 0.045;
@@ -203,7 +202,7 @@ class Journey_To_Wealth_DCF_Model {
         return ['rate' => $terminal_growth_rate, 'source' => 'Risk-Free Rate (Fallback)'];
     }
     
-    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $earnings_estimates, $current_price, $beta_details = [], $custom_assumptions = []) {
+    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $earnings_estimates, $current_price, $beta_details = [], $custom_assumptions = [], $projection_years = 10) {
         $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data];
         foreach($datasets as $dataset) {
             if (is_wp_error($dataset) || (empty($dataset['annualReports']) && empty($dataset['annualEarnings'])) || count($dataset['annualReports'] ?? []) < self::MIN_YEARS_FOR_GROWTH_CALC) {
@@ -275,9 +274,9 @@ class Journey_To_Wealth_DCF_Model {
         $sum_of_pv_cfs = 0;
         $current_cf = $base_cash_flow;
         $current_growth_rate = $initial_growth_rate;
-        $growth_decay_rate = ($initial_growth_rate - $this->terminal_growth_rate) / $this->projection_years;
+        $growth_decay_rate = ($initial_growth_rate - $this->terminal_growth_rate) / $projection_years;
 
-        for ($i = 1; $i <= $this->projection_years; $i++) {
+        for ($i = 1; $i <= $projection_years; $i++) {
             $current_cf *= (1 + $current_growth_rate);
             $pv_cf = $current_cf / pow(1 + $this->cost_of_equity, $i);
             $sum_of_pv_cfs += $pv_cf;
@@ -297,7 +296,7 @@ class Journey_To_Wealth_DCF_Model {
             return new WP_Error('dcf_terminal_value_error', __('Terminal value cannot be calculated, cost of equity is not greater than terminal growth rate.', 'journey-to-wealth'));
         }
         
-        $pv_of_terminal_value = $terminal_value / pow(1 + $this->cost_of_equity, $this->projection_years);
+        $pv_of_terminal_value = $terminal_value / pow(1 + $this->cost_of_equity, $projection_years);
         $total_equity_value = $sum_of_pv_cfs + $pv_of_terminal_value;
         $shares_outstanding = $this->get_av_value($overview_data, 'SharesOutstanding');
         if ($shares_outstanding == 0) return new WP_Error('dcf_shares_error', __('Shares outstanding is zero, cannot calculate per-share value.', 'journey-to-wealth'));

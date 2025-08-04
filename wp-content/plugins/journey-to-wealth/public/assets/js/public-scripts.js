@@ -256,27 +256,25 @@
             const assumptions = { bear: {}, base: {}, bull: {} };
             let hasAllInputs = true;
     
-            $container.find('.jtw-assumption-input').each(function() {
+            $container.find('.jtw-assumption-input[data-case]').each(function() {
                 const $input = $(this);
                 const caseType = $input.data('case');
                 const metric = $input.data('metric');
-                let value = $input.val();
-    
-                if (value === '') {
-                    hasAllInputs = false;
-                }
                 
-                if (metric === 'initialFcfe') {
-                    // For the base case, always use the precise raw value to ensure it matches the analyst value
-                    if (caseType === 'base') {
-                        value = parseFloat($input.data('raw-value'));
-                    } else {
+                if (caseType && metric) {
+                    let value = $input.val();
+        
+                    if (value === '') {
+                        hasAllInputs = false;
+                    }
+                    
+                    if (metric === 'initialFcfe') {
                         const multiplier = parseFloat($input.data('multiplier')) || 1;
                         value = parseFloat(value) * multiplier;
                     }
+    
+                    assumptions[caseType][metric] = value;
                 }
-
-                assumptions[caseType][metric] = value;
             });
     
             if (!hasAllInputs) {
@@ -284,6 +282,7 @@
             }
     
             const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+            const timeframe = $container.find('#jtw-projection-timeframe').val();
     
             $container.find('.jtw-assumptions-table').css('opacity', 0.5);
     
@@ -294,23 +293,78 @@
                     action: 'jtw_recalculate_valuation',
                     nonce: jtw_public_params.recalculate_nonce,
                     ticker: ticker,
-                    assumptions: assumptions
+                    assumptions: assumptions,
+                    timeframe: timeframe
                 },
                 dataType: 'json',
                 success: function(response) {
                     $container.find('.jtw-assumptions-table').css('opacity', 1);
                     if (response.success && response.data) {
                         const data = response.data;
+
+                        // Update analyst value if it exists in the response
+                        if (data.analyst_fv) {
+                             $container.find('.jtw-analyst-fv').text('$' + data.analyst_fv.intrinsic_value_per_share.toFixed(1));
+                        }
+
                         // Update table
-                        $container.find('.jtw-bear-fv').text('$' + data.bear.fair_value.toFixed(2));
-                        $container.find('.jtw-base-fv').text('$' + data.base.fair_value.toFixed(2));
-                        $container.find('.jtw-bull-fv').text('$' + data.bull.fair_value.toFixed(2));
-                        $container.find('.jtw-bear-buy').text('$' + data.bear.buy_price.toFixed(2));
-                        $container.find('.jtw-base-buy').text('$' + data.base.buy_price.toFixed(2));
-                        $container.find('.jtw-bull-buy').text('$' + data.bull.buy_price.toFixed(2));
+                        $container.find('.jtw-bear-fv').text('$' + data.bear.fair_value.toFixed(1));
+                        $container.find('.jtw-base-fv').text('$' + data.base.fair_value.toFixed(1));
+                        $container.find('.jtw-bull-fv').text('$' + data.bull.fair_value.toFixed(1));
+                        $container.find('.jtw-bear-buy').text('$' + data.bear.buy_price.toFixed(1));
+                        $container.find('.jtw-base-buy').text('$' + data.base.buy_price.toFixed(1));
+                        $container.find('.jtw-bull-buy').text('$' + data.bull.buy_price.toFixed(1));
+
+                        // Update modal content if it was sent
+                        if (data.new_modal_html) {
+                            $('#jtw-assumptions-modal .jtw-modal-content').html('<span class="jtw-modal-close">&times;</span>' + data.new_modal_html);
+                        }
     
+                        // Update SWS graphic and interactive chart with the new analyst value
+                        if (data.analyst_fv) {
+                            const $swsContainer = $container.find('.jtw-sws-valuation-container');
+                            const currentPrice = parseFloat($swsContainer.data('current-price'));
+                            const fairValue = data.analyst_fv.intrinsic_value_per_share;
+        
+                            // Recalculate status and percentages
+                            const percentageDiff = ((currentPrice - fairValue) / fairValue) * 100;
+                            let status = 'About Right';
+                            let statusClass = 'jtw-sws-status-neutral';
+                            if (percentageDiff > 20) {
+                                status = 'Overvalued';
+                                statusClass = 'jtw-sws-status-negative';
+                            } else if (percentageDiff < -20) {
+                                status = 'Undervalued';
+                                statusClass = 'jtw-sws-status-positive';
+                            }
+                            
+                            // Update header
+                            $swsContainer.find('.jtw-sws-header').removeClass('jtw-sws-status-positive jtw-sws-status-negative jtw-sws-status-neutral').addClass(statusClass)
+                                .find('strong').text(Math.abs(percentageDiff).toFixed(1) + '% ' + status);
+        
+                            // Update fair value label
+                            $swsContainer.find('.jtw-sws-bar-row:nth-child(2) .jtw-sws-label-group strong').text('$' + fairValue.toFixed(2));
+                            
+                            // Recalculate and animate bars
+                            const rangeMax = Math.max(currentPrice, fairValue) * 1.3;
+                            const pricePosPct = Math.min(100, (currentPrice / rangeMax) * 100);
+                            const fvPosPct = Math.min(100, (fairValue / rangeMax) * 100);
+                            const undervaluedMax = fairValue * 0.8;
+                            const overvaluedMin = fairValue * 1.2;
+                            const greenWidthPct = (undervaluedMax / rangeMax) * 100;
+                            const yellowWidthPct = ((overvaluedMin - undervaluedMax) / rangeMax) * 100;
+        
+                            $swsContainer.find('.jtw-sws-bar-wrapper').first().css('width', pricePosPct + '%');
+                            $swsContainer.find('.jtw-sws-bar-wrapper').last().css('width', fvPosPct + '%');
+                            $swsContainer.find('.jtw-sws-zone.undervalued').css('width', greenWidthPct + '%');
+                            $swsContainer.find('.jtw-sws-zone.about-right').css('width', yellowWidthPct + '%');
+                        }
+
                         // Update interactive bar chart
                         if (interactiveChart) {
+                            if (data.analyst_fv) {
+                                interactiveChart.data.datasets[0].data[0] = data.analyst_fv.intrinsic_value_per_share;
+                            }
                             interactiveChart.data.datasets[0].data[1] = data.bull.fair_value;
                             interactiveChart.data.datasets[0].data[2] = data.base.fair_value;
                             interactiveChart.data.datasets[0].data[3] = data.bear.fair_value;
@@ -329,6 +383,7 @@
         }, 500);
     
         $container.on('input', '.jtw-assumption-input', recalculateValuation);
+        $container.on('change', '#jtw-projection-timeframe', recalculateValuation);
         
         // Trigger the initial calculation on load
         recalculateValuation();
@@ -352,6 +407,8 @@
             const $labelGroup = $row.find('.jtw-sws-label-group');
             const $barWrapper = $row.find('.jtw-sws-bar-wrapper');
             if ($labelGroup.length && $barWrapper.length) {
+                // Move the label group to be a child of the bar wrapper
+                // This allows the existing absolute positioning CSS to work correctly relative to the bar
                 $labelGroup.appendTo($barWrapper);
             }
         });
@@ -364,19 +421,21 @@
             setTimeout(() => {
                 if (!$chart.length || !$barRows.length) return;
                 
-                const chartHeight = $chart.innerHeight();
+                const chartHeight = $chart.innerHeight(); // Use innerHeight to account for padding
                 const firstBarTop = $barRows.first().position().top;
                 const lastBarRow = $barRows.last();
                 const lastBarBottom = lastBarRow.position().top + lastBarRow.outerHeight();
     
+                // Calculate new top and bottom positions for the zone background
                 const newZoneTop = firstBarTop - verticalPadding;
                 const newZoneBottom = chartHeight - lastBarBottom - verticalPadding;
     
+                // Apply the new positions via CSS
                 $zoneBarRow.css({
                     'top': newZoneTop + 'px',
                     'bottom': newZoneBottom + 'px'
                 });
-            }, 50);
+            }, 50); // A small delay like 50ms is safer than 0ms
         }
     
         // Animate the bars' width for a smooth loading effect
