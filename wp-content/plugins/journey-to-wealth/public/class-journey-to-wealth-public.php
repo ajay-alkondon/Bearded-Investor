@@ -27,6 +27,10 @@ class Journey_To_Wealth_Public {
         // Register the valuation recalculation endpoint
         add_action('wp_ajax_jtw_recalculate_valuation', array($this, 'ajax_recalculate_valuation'));
         add_action('wp_ajax_nopriv_jtw_recalculate_valuation', array($this, 'ajax_recalculate_valuation'));
+
+        // Register the transcript fetch endpoint
+        add_action('wp_ajax_jtw_fetch_transcript', array($this, 'ajax_fetch_transcript'));
+        add_action('wp_ajax_nopriv_jtw_fetch_transcript', array($this, 'ajax_fetch_transcript'));
     }
 
     private function load_dependencies() {
@@ -61,6 +65,7 @@ class Journey_To_Wealth_Public {
                 'section_nonce' => wp_create_nonce('jtw_fetch_section_nonce'),
                 'peer_nonce' => wp_create_nonce('jtw_fetch_peer_nonce'),
                 'recalculate_nonce' => wp_create_nonce('jtw_recalculate_valuation_nonce'),
+                'transcript_nonce' => wp_create_nonce('jtw_fetch_transcript_nonce'),
                 'symbol_search_nonce' => wp_create_nonce('jtw_symbol_search_nonce_action'),
                 'analysis_page_url' => $analysis_page_url,
                 'text_loading' => __('Fetching data...', 'journey-to-wealth'),
@@ -273,6 +278,7 @@ class Journey_To_Wealth_Public {
     
         $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
     
+        // Get primary company's name first
         $primary_overview = $av_client->get_company_overview($primary_ticker);
         if (is_wp_error($primary_overview) || !isset($primary_overview['Name'])) {
             wp_send_json_error(['message' => 'Could not retrieve primary company data.']);
@@ -283,12 +289,14 @@ class Journey_To_Wealth_Public {
         global $wpdb;
         $mapping_table = $wpdb->prefix . 'jtw_company_mappings';
     
+        // Find Damodaran industries for the primary ticker
         $damodaran_ids = $wpdb->get_col($wpdb->prepare("SELECT damodaran_industry_id FROM $mapping_table WHERE ticker = %s", $primary_ticker));
         if (empty($damodaran_ids)) {
             wp_send_json_error(['message' => 'No industry mapping found. Peer comparison is unavailable.']);
             return;
         }
     
+        // Find all tickers with the same Damodaran industries
         $id_placeholders = implode(',', array_fill(0, count($damodaran_ids), '%d'));
         $query = $wpdb->prepare("SELECT DISTINCT ticker FROM $mapping_table WHERE damodaran_industry_id IN ($id_placeholders) AND ticker != %s", array_merge($damodaran_ids, [$primary_ticker]));
         $all_peers = $wpdb->get_col($query);
@@ -298,6 +306,7 @@ class Journey_To_Wealth_Public {
             return;
         }
     
+        // Fetch market cap and name for all peers to find the largest, non-duplicate companies
         $peers_with_details = [];
         foreach ($all_peers as $peer_ticker) {
             $overview = get_transient('jtw_overview_' . $peer_ticker);
@@ -459,6 +468,42 @@ class Journey_To_Wealth_Public {
         }
     
         wp_send_json_success($results);
+    }
+
+    public function ajax_fetch_transcript() {
+        check_ajax_referer('jtw_fetch_transcript_nonce', 'nonce');
+        $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
+        $quarter = isset($_POST['quarter']) ? sanitize_text_field($_POST['quarter']) : '';
+        if (empty($ticker) || empty($quarter)) {
+            wp_send_json_error(['message' => 'Missing parameters for transcript.']);
+            return;
+        }
+
+        $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
+        $transcript_data = $av_client->get_earnings_transcript($ticker, $quarter);
+
+        if (is_wp_error($transcript_data)) {
+            wp_send_json_error(['message' => $transcript_data->get_error_message()]);
+            return;
+        }
+
+        $html = '<h4>' . esc_html($ticker) . ' - ' . esc_html($quarter) . ' Earnings Transcript</h4>';
+        if (isset($transcript_data['transcript']) && is_array($transcript_data['transcript'])) {
+            foreach ($transcript_data['transcript'] as $entry) {
+                $html .= '<div class="jtw-transcript-entry">';
+                $html .= '<p class="jtw-transcript-speaker">' . esc_html($entry['speaker']);
+                if (!empty($entry['title'])) {
+                    $html .= '<span class="jtw-transcript-title">' . esc_html($entry['title']) . '</span>';
+                }
+                $html .= '</p>';
+                $html .= '<div class="jtw-transcript-content">' . wpautop(esc_html($entry['content'])) . '</div>'; // Use wpautop to respect line breaks
+                $html .= '</div>';
+            }
+        } else {
+            $html .= '<p>No transcript content found.</p>';
+        }
+
+        wp_send_json_success(['html' => $html]);
     }
 
     private function get_company_key_metrics($company_data) {
@@ -938,9 +983,21 @@ class Journey_To_Wealth_Public {
         $week_high = (float)($overview['52WeekHigh'] ?? 0);
         $week_low = (float)($overview['52WeekLow'] ?? 0);
         $cik = $overview['CIK'] ?? null;
+        $latest_quarter_date = $overview['LatestQuarter'] ?? null;
+        $quarter_param = '';
+        if ($latest_quarter_date) {
+            $date = new DateTime($latest_quarter_date);
+            $year = $date->format('Y');
+            $month = (int)$date->format('m');
+            $quarter = ceil($month / 3);
+            $quarter_param = $year . 'Q' . $quarter;
+        }
     
         $output = '<div class="jtw-content-section" id="section-overview-content">';
+        $output .= '<div class="jtw-section-header">';
         $output .= '<h4>' . esc_html($ticker) . ' ' . esc_html__('Company Overview', 'journey-to-wealth') . '</h4>';
+        $output .= '<button class="jtw-modal-trigger jtw-details-button" data-modal-target="#jtw-company-details-modal">' . esc_html__('View Full Company Details', 'journey-to-wealth') . '</button>';
+        $output .= '</div>';
         
         // Overview Header Grid
         $output .= '<div class="jtw-overview-header-grid">';
@@ -976,44 +1033,8 @@ class Journey_To_Wealth_Public {
         $output .= '</div>';
         $output .= '</div>';
     
-        // Stats Grid
-        $output .= '<div class="jtw-stats-grid">';
-        
-        $stats = [
-            'PercentInsiders' => ['label' => 'Insider Ownership', 'prefix' => '', 'suffix' => '%', 'max' => 100],
-            'PercentInstitutions' => ['label' => 'Institution Ownership', 'prefix' => '', 'suffix' => '%', 'max' => 100],
-            '50DayMovingAverage' => ['label' => '50-Day Moving Average', 'prefix' => '$', 'max_key' => '52WeekHigh'],
-            '200DayMovingAverage' => ['label' => '200-Day Moving Average', 'prefix' => '$', 'max_key' => '52WeekHigh'],
-        ];
-    
-        foreach ($stats as $key => $details) {
-            $value = (float)($overview[$key] ?? 0);
-            $max_value = isset($details['max']) ? $details['max'] : (isset($details['max_key']) ? (float)($overview[$details['max_key']] ?? $value) : $value);
-            if ($max_value == 0 && $value > 0) $max_value = $value * 1.25;
-    
-            $formatted_value = '';
-            if (isset($details['format']) && $details['format'] === 'large') {
-                $formatted_value = $this->format_large_number($value, $details['prefix']);
-            } else {
-                $formatted_value = $details['prefix'] . number_format($value, 1) . ($details['suffix'] ?? '');
-            }
-    
-            $output .= '<div class="jtw-stat-item">';
-            $output .= '<h4>' . esc_html($details['label']) . '</h4>';
-            $output .= '<div class="jtw-progress-bar-container" data-value="' . esc_attr($value) . '" data-max="' . esc_attr($max_value) . '">';
-            $output .= '<div class="jtw-progress-track"><div class="jtw-progress-fill" style="width: 0%;"></div></div>';
-            $output .= '<span class="jtw-stat-value">' . esc_html($formatted_value) . '</span>';
-            $output .= '</div>';
-            $output .= '</div>';
-        }
-    
-        $output .= '</div>'; // end .jtw-stats-grid
-    
-        // Company Details Button
-        $output .= '<div class="jtw-details-button-container">';
-        $output .= '<button class="jtw-modal-trigger jtw-details-button" data-modal-target="#jtw-company-details-modal">' . esc_html__('View Full Company Details', 'journey-to-wealth') . '</button>';
-        $output .= '</div>';
-
+        // Two-column layout for links
+        $output .= '<div class="jtw-link-cards-grid">';
         // SEC Filings Card
         if ($cik) {
             $sec_url = 'https://www.sec.gov/edgar/browse/?CIK=' . esc_attr($cik) . '&owner=exclude';
@@ -1021,6 +1042,13 @@ class Journey_To_Wealth_Public {
             $output .= '<span>View All SEC Filings</span>';
             $output .= '</a>';
         }
+        // Earnings Transcript Card
+        if ($quarter_param) {
+            $output .= '<a href="#" class="jtw-sec-filings-card jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="' . esc_attr($ticker) . '" data-quarter="' . esc_attr($quarter_param) . '">';
+            $output .= '<span>' . esc_html($quarter_param) . ' Earnings Transcript</span>';
+            $output .= '</a>';
+        }
+        $output .= '</div>'; // end .jtw-link-cards-grid
     
         // Company Details Modal
         $modal_id = 'jtw-company-details-modal';
@@ -1035,16 +1063,28 @@ class Journey_To_Wealth_Public {
             'FiscalYearEnd' => 'Fiscal Year End',
             'LatestQuarter' => 'Latest Quarter',
             'ExDividendDate' => 'Ex-Dividend Date',
-            'DividendDate' => 'Dividend Date'
+            'DividendDate' => 'Dividend Date',
+            'PercentInsiders' => 'Insider Ownership',
+            'PercentInstitutions' => 'Institution Ownership',
+            '50DayMovingAverage' => '50-Day Moving Average',
+            '200DayMovingAverage' => '200-Day Moving Average'
         ];
     
         foreach ($details_map as $key => $title) {
             $value = $overview[$key] ?? 'N/A';
+            $prefix = '';
+            $suffix = '';
+            if (strpos($key, 'MovingAverage') !== false) {
+                $prefix = '$';
+            }
+            if (strpos($key, 'Percent') !== false) {
+                $suffix = '%';
+            }
             if (($key === 'LatestQuarter' || $key === 'ExDividendDate' || $key === 'DividendDate') && $value !== 'N/A' && $value !== 'None') {
                 $value = date('F j, Y', strtotime($value));
             }
             if ($value !== 'N/A' && $value !== 'None') {
-                 $output .= $this->create_metric_card($title, $value);
+                 $output .= $this->create_metric_card($title, $value, $prefix, '', false, $suffix);
             }
         }
     
@@ -1063,6 +1103,12 @@ class Journey_To_Wealth_Public {
     
         $output .= '</div>'; // end .jtw-details-grid
         $output .= '</div></div>'; // end modal content and modal
+    
+        // Transcript Modal
+        $transcript_modal_id = 'jtw-transcript-modal';
+        $output .= '<div id="' . esc_attr($transcript_modal_id) . '" class="jtw-modal jtw-fullscreen-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>';
+        $output .= '<div id="jtw-transcript-content-target"></div>';
+        $output .= '</div></div>';
     
         $output .= '<div class="jtw-modal-overlay"></div>';
         $output .= '</div>'; // end .jtw-content-section
@@ -1578,7 +1624,7 @@ class Journey_To_Wealth_Public {
         return $output;
     }
 
-    private function create_metric_card($title, $value, $prefix = '', $custom_class = '', $use_large_number_format = false) {
+    private function create_metric_card($title, $value, $prefix = '', $custom_class = '', $use_large_number_format = false, $suffix = '') {
         $formatted_value = 'N/A';
         if (is_numeric($value)) {
             if ($use_large_number_format) {
@@ -1586,9 +1632,7 @@ class Journey_To_Wealth_Public {
                 $formatted_value = $this->format_large_number($value, $final_prefix, 1);
             } else {
                 $temp_val = number_format((float)$value, 1);
-                if ($prefix === '$') { $formatted_value = $prefix . $temp_val; } 
-                elseif ($prefix === '%') { $formatted_value = $temp_val . $prefix; } 
-                else { $formatted_value = $temp_val; }
+                $formatted_value = $prefix . $temp_val . $suffix;
             }
         } elseif (!empty($value)) { $formatted_value = $value; }
         return '<div class="jtw-metric-card ' . esc_attr($custom_class) . '"><h3 class="jtw-metric-title">' . esc_html($title) . '</h3><p class="jtw-metric-value">' . esc_html($formatted_value) . '</p></div>';

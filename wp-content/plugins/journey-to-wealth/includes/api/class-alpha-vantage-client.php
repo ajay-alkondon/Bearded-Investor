@@ -271,4 +271,30 @@ class Alpha_Vantage_Client {
 
         return $this->do_request( $params, $transient_key, $this->cache_expiration_short );
     }
+
+    public function get_earnings_transcript( $symbol, $quarter ) {
+        if ( empty( $this->api_key ) ) {
+            return new WP_Error( 'api_key_missing', __( 'API Key not configured.', 'journey-to-wealth' ) );
+        }
+        $symbol = sanitize_text_field( strtoupper( $symbol ) );
+        $quarter = sanitize_text_field( $quarter );
+        $params = array( 
+            'function' => 'EARNINGS_CALL_TRANSCRIPT', 
+            'symbol' => $symbol, 
+            'quarter' => $quarter,
+            'apikey' => $this->api_key 
+        );
+        // Transcripts are large and don't change, so a long cache is fine.
+        $transient_key = 'jtw_transcript_' . md5( $symbol . $quarter );
+
+        $data = $this->do_request( $params, $transient_key, $this->cache_expiration_statements );
+        if (is_wp_error($data)) {
+            return $data;
+        }
+
+        if ( empty($data) || !isset($data['transcript']) ) {
+            return new WP_Error( 'no_transcript_data', sprintf( __( 'No earnings transcript data found for %s %s.', 'journey-to-wealth' ), $symbol, $quarter ) );
+        }
+        return $data;
+    }
 }

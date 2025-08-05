@@ -1074,9 +1074,43 @@
 
         $('body').on('click', '.jtw-modal-trigger', function(e) {
             e.preventDefault();
-            const targetModal = $(this).data('modal-target');
+            const $button = $(this);
+            const targetModal = $button.data('modal-target');
+            
             $('.jtw-modal-overlay').fadeIn(200);
             $(targetModal).fadeIn(200);
+
+            // Check if this is the transcript trigger
+            if ($button.hasClass('jtw-transcript-trigger')) {
+                const ticker = $button.data('ticker');
+                const quarter = $button.data('quarter');
+                const $modalContent = $('#jtw-transcript-content-target');
+
+                // Show loading spinner
+                $modalContent.html('<div class="jtw-loading-spinner"></div>');
+
+                $.ajax({
+                    url: jtw_public_params.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'jtw_fetch_transcript',
+                        nonce: jtw_public_params.transcript_nonce,
+                        ticker: ticker,
+                        quarter: quarter
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success && response.data.html) {
+                            $modalContent.html(response.data.html);
+                        } else {
+                            $modalContent.html('<div class="jtw-error"><p>' + (response.data.message || getLocalizedText('text_error')) + '</p></div>');
+                        }
+                    },
+                    error: function() {
+                        $modalContent.html('<div class="jtw-error"><p>' + getLocalizedText('text_error') + '</p></div>');
+                    }
+                });
+            }
         });
 
         const closeModal = () => {
