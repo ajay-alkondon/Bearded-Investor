@@ -77,6 +77,7 @@ class Admin {
 		self::$modules     = $this->get_default_modules();
 		$this->load();
 		$this->add_notices();
+		$this->add_review_notice();
 		$this->load_modules();
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'load_plugin' ) );
@@ -110,12 +111,28 @@ class Admin {
 				'type'        => 'info',
 			)
 		);
-		
-		// Add promo notice for accessibility banner
-		$notice->add_promo( 'notice_banner' );
 	}
 
-
+	/**
+	 * Add review notice
+	 *
+	 * @return void
+	 */
+	public function add_review_notice() {		
+		$expiry    = 30 * DAY_IN_SECONDS;
+		$settings  = new \CookieYes\Lite\Admin\Modules\Settings\Includes\Settings();
+		$installed = $settings->get_installed_date();
+		if ( $installed && ( $installed + $expiry > time() ) ) {
+			return;
+		}
+		$notice = Notice::get_instance();
+		$notice->add(
+			'review_notice',
+			array(
+				'expiration' => $expiry,
+			)
+		);
+	}
 
 	/**
 	 * Get the default modules array
@@ -135,6 +152,7 @@ class Admin {
 			'policies',
 			'cache',
 			'uninstall_feedback',
+			'review_feedback',
 			'upgrade',
 			'pageviews',
 			'dashboard_widget',
@@ -338,11 +356,6 @@ class Admin {
 			$global_script,
 			'ckyAppNotices',
 			$notice->get()
-		);
-		wp_localize_script(
-			$global_script,
-			'ckyPromoNotices',
-			$notice->get_promo()
 		);
 		wp_localize_script(
 			$global_script,

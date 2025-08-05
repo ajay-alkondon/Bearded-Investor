@@ -155,18 +155,6 @@ class Api extends Rest_Controller {
 		);
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/promo-notices/(?P<notice>[a-zA-Z0-9-_]+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'update_promo_notice' ),
-					'permission_callback' => array( $this, 'create_item_permissions_check' ),
-					'args'                => $this->get_collection_params(),
-				),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
 			'/' . $this->rest_base . '/expand',
 			array(
 				array(
@@ -336,23 +324,6 @@ class Api extends Rest_Controller {
 		$expiry   = isset( $request['expiry'] ) ? intval( $request['expiry'] ) : 0;
 		if ( $notice ) {
 			Notice::get_instance()->dismiss( $notice, $expiry );
-			$response['status'] = true;
-		}
-		return rest_ensure_response( $response );
-	}
-
-	/**
-	 * Update the status of promo notices.
-	 *
-	 * @param object $request Request.
-	 * @return WP_Error|WP_REST_Response
-	 */
-	public function update_promo_notice( $request ) {
-		$response = array( 'status' => false );
-		$notice   = isset( $request['notice'] ) ? $request['notice'] : false;
-		$expiry   = isset( $request['expiry'] ) ? intval( $request['expiry'] ) : 0;
-		if ( $notice ) {
-			Notice::get_instance()->dismiss_promo( $notice, $expiry );
 			$response['status'] = true;
 		}
 		return rest_ensure_response( $response );

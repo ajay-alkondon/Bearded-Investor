@@ -46,16 +46,6 @@ class Notice {
 	 * @var array $notices Array of dismissed notices.
 	 */
 	public $notices;
-
-	/**
-	 * Holds all promo notices
-	 *
-	 * @access public
-	 * @since 3.0.0
-	 * @var array $promo_notices Array of promo notices.
-	 */
-	public $promo_notices;
-
 	/**
 	 * Primary class constructor.
 	 *
@@ -69,14 +59,6 @@ class Notice {
 		foreach ( $this->notices as $notice => $timeout ) {
 			if ( $timeout && $timeout < time() ) {
 				$this->undismiss( $notice );
-			}
-		}
-
-		// Populate $promo_notices.
-		$this->promo_notices = $this->get_dismissed_promo();
-		foreach ( $this->promo_notices as $notice => $timeout ) {
-			if ( $timeout && $timeout < time() ) {
-				$this->undismiss_promo( $notice );
 			}
 		}
 	}
@@ -153,37 +135,6 @@ class Notice {
 	}
 
 	/**
-	 * Add promo notice
-	 *
-	 * @param string $notice Notice ID.
-	 * @param array  $options Notice options.
-	 * @return void
-	 */
-	public function add_promo( $notice, $options = array() ) {
-		// Check if the notice is dismissed
-		if ( $this->is_promo_dismissed( $notice ) ) {
-			return; // Don't add dismissed notices
-		}
-		
-		$options = wp_parse_args(
-			$options,
-			array(
-				'dismissible' => true,
-				'type'        => 'promo',
-				'expiration'  => 0, // Default 0 (no expiration).
-				'message'     => '',
-			)
-		);
-		if ( isset( $this->promo_notices[ $notice ] ) ) {
-			unset( $this->promo_notices[ $notice ] );
-		} else {
-			$this->promo_notices[ $notice ] = $options;
-		}
-		// Update the database
-		update_option( 'cky_promo_notices', $this->promo_notices );
-	}
-
-	/**
 	 * Get all the notices.
 	 *
 	 * @return array
@@ -193,77 +144,11 @@ class Notice {
 	}
 
 	/**
-	 * Get all the promo notices.
-	 *
-	 * @return array
-	 */
-	public function get_promo() {
-		return $this->promo_notices;
-	}
-
-	/**
 	 * Get dismissed notices
 	 *
 	 * @return array
 	 */
 	public function get_dismissed() {
 		return get_option( 'cky_admin_notices', array() );
-	}
-
-	/**
-	 * Get dismissed promo notices
-	 *
-	 * @return array
-	 */
-	public function get_dismissed_promo() {
-		return get_option( 'cky_promo_notices', array() );
-	}
-
-	/**
-	 * Marks the given promo notice as dismissed
-	 *
-	 * @since 3.0.0
-	 * @param string  $notice Programmatic Notice Name.
-	 * @param integer $expiry Notice expiry.
-	 * @return void
-	 */
-	public function dismiss_promo( $notice, $expiry = 0 ) {
-		$dismissed = $this->get_dismissed_promo();
-		if ( 0 !== $expiry ) {
-			$dismissed[ $notice ] = time() + $expiry;
-		} else {
-			$dismissed[ $notice ] = false;
-		}
-		update_option( 'cky_promo_notices', $dismissed );
-	}
-
-	/**
-	 * Marks a promo notice as not dismissed
-	 *
-	 * @access public
-	 * @since 6.0.0
-	 *
-	 * @param string $notice Programmatic Notice Name.
-	 * @return void
-	 */
-	public function undismiss_promo( $notice ) {
-		$dismissed = $this->get_dismissed_promo();
-		unset( $dismissed[ $notice ] );
-		update_option( 'cky_promo_notices', $dismissed );
-	}
-
-	/**
-	 * Checks if a given promo notice has been dismissed or not
-	 *
-	 * @since 6.0.0
-	 * @param string $notice Programmatic Notice Name.
-	 * @return boolean  Notice Dismissed
-	 */
-	public function is_promo_dismissed( $notice ) {
-		$dismissed = $this->get_dismissed_promo();
-		if ( ! isset( $dismissed[ $notice ] ) ) {
-			return false;
-		}
-		return true;
 	}
 }

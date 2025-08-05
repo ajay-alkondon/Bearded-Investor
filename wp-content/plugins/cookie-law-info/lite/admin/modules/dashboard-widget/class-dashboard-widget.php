@@ -42,6 +42,7 @@ class Dashboard_Widget extends Modules {
      */
     private static $instance;
 
+    
     /**
      * Return the current instance of the class
      *
@@ -108,7 +109,7 @@ class Dashboard_Widget extends Modules {
                 <img 
                     src="<?php echo esc_url(CKY_PLUGIN_URL . 'admin/dist/img/trends.png'); ?>" 
                     alt="Consent Trends Dummy Chart"
-                    style="display:block;margin: -11px 0px -11px -11px;max-width:600px;height:auto;"
+                    style="display:block;width:100%;height:auto;"
                 />
                 <div class="cky-modal-overlay">
                     <div class="cky-modal-content">
@@ -125,6 +126,7 @@ class Dashboard_Widget extends Modules {
             .cky-consent-chart-section {
                 position: relative;
                 min-height: 250px;
+                margin: 0px -12px -12px -12px;
             }
             .cky-modal-overlay {
                 position: absolute;
@@ -175,7 +177,7 @@ class Dashboard_Widget extends Modules {
         ?>
         <div class="cky-consent-chart-widget" id="cky-dashboard-widget-chart">
             <div class="cky-chart-container" id="cky-dashboard-widget-chart-container">
-                <canvas id="cky-pie-chart-widget" width="320" height="320" style="display:none;"></canvas>
+                <canvas id="cky-pie-chart-widget" width="320" height="320" style="display:none;width:100%;height:auto;"></canvas>
                 <div class="cky-center-total-consents" style="display:none;">
                     <span class="cky-center-total-consents-value"></span>
                     <div class="cky-center-total-consents-label">Total Consents</div>
@@ -256,33 +258,54 @@ class Dashboard_Widget extends Modules {
                                     external: function(context) {
                                         const tooltipModel = context.tooltip;
                                         const tooltip = document.getElementById('cky-consent-tooltip');
+
                                         if (tooltipModel.opacity === 0) {
                                             tooltip.style.display = 'none';
                                             return;
                                         }
-                                        const dataIndex = tooltipModel.dataPoints[0].dataIndex;
-                                        const label = tooltipModel.dataPoints[0].label;
-                                        const value = tooltipModel.dataPoints[0].parsed;
+
+                                        // Get the active tooltip data
+                                        const dataPoint = tooltipModel.dataPoints[0];
+                                        const dataIndex = dataPoint.dataIndex;
+                                        const label = dataPoint.label;
+                                        const value = dataPoint.parsed;
                                         const total = responseArr.reduce(function(a, b) { return a + b; }, 0);
                                         const percent = total ? Math.round((value / total) * 100) : 0;
-                                        let color = '#4493F9';
-                                        if (label === 'Accepted') color = '#33A881';
-                                        if (label === 'Rejected') color = '#EC4A5E';
-                                        document.getElementById('cky-tooltip-percent').style.color = color;
-                                        document.getElementById('cky-tooltip-percent').textContent = percent + '%';
+
+                                        // Define colors array to match dataset backgroundColor
+                                        const colors = ['#33A881', '#EC4A5E', '#4493F9'];
+                                        const color = colors[dataIndex];
+
+                                        // Update tooltip content
+                                        const tooltipPercent = document.getElementById('cky-tooltip-percent');
+                                        tooltipPercent.style.color = color;
+                                        tooltipPercent.textContent = percent + '%';
                                         document.getElementById('cky-tooltip-label').textContent = label + ': ' + value;
+
+                                        // Position tooltip
                                         const canvas = context.chart.canvas;
-                                        const chartContainer = canvas.parentNode;
-                                        tooltip.style.left = (tooltipModel.caretX + 20) + 'px';
-                                        tooltip.style.top = (tooltipModel.caretY - 20) + 'px';
+                                        const position = canvas.getBoundingClientRect();
+                                        const x = tooltipModel.caretX;
+                                        const y = tooltipModel.caretY;
+
+                                        tooltip.style.opacity = 1;
                                         tooltip.style.position = 'absolute';
-                                        chartContainer.appendChild(tooltip);
+                                        tooltip.style.left = x + 'px';
+                                        tooltip.style.top = y + 'px';
                                         tooltip.style.display = 'block';
                                     }
                                 }
                             },
-                            responsive: false,
-                            maintainAspectRatio: false
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            onHover: function(event, elements) {
+                                const tooltip = document.getElementById('cky-consent-tooltip');
+                                if (elements && elements.length) {
+                                    tooltip.style.opacity = 1;
+                                } else {
+                                    tooltip.style.opacity = 0;
+                                }
+                            }
                         }
                     });
 
@@ -291,15 +314,33 @@ class Dashboard_Widget extends Modules {
                         document.getElementById('cky-consent-tooltip').style.display = 'none';
                     });
 
+                    // Update mousemove event handler
+                    canvas.removeEventListener('mousemove', null); // Remove any existing handler
                     canvas.addEventListener('mousemove', function(e) {
-                        const chartContainer = canvas.parentNode;
-                        const rect = chartContainer.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
                         const tooltip = document.getElementById('cky-consent-tooltip');
                         if (tooltip.style.display === 'block') {
-                            tooltip.style.left = (x + 20) + 'px';
-                            tooltip.style.top = (y - 20) + 'px';
+                            const rect = canvas.getBoundingClientRect();
+                            const x = e.clientX - rect.left;
+                            const y = e.clientY - rect.top;
+                            
+                            // Adjust tooltip position based on available space
+                            let left = x;
+                            let top = y;
+                            
+                            if (left + tooltip.offsetWidth > canvas.width) {
+                                left = left - tooltip.offsetWidth - 10;
+                            } else {
+                                left = left + 10;
+                            }
+                            
+                            if (top + tooltip.offsetHeight > canvas.height) {
+                                top = top - tooltip.offsetHeight - 10;
+                            } else {
+                                top = top + 10;
+                            }
+
+                            tooltip.style.left = left + 'px';
+                            tooltip.style.top = top + 'px';
                         }
                     });
                 }
@@ -322,24 +363,46 @@ class Dashboard_Widget extends Modules {
         position: relative;
         width: 320px;
         height: 320px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+    #cky-pie-chart-widget {
+        position: absolute;
+        width: 100% !important;
+        height: auto !important;
     }
     .cky-center-total-consents {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -55%);
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         text-align: center;
+        pointer-events: none;
+        z-index: 1;
+        height: fit-content;
+        width: fit-content;
     }
     .cky-center-total-consents-value {
         font-size: 4em;
         font-weight: 700;
         line-height: 1;
         color: #111;
+        display: block;
+        margin-bottom: 5px;
     }
     .cky-center-total-consents-label {
         font-size: 1.5em;
         font-weight: 400;
         color: #111;
+        white-space: nowrap;
     }
     .cky-consent-tooltip {
         display: none;

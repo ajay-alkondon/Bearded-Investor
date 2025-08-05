@@ -582,6 +582,8 @@ function _ckyShowPreferenceCenter() {
 function _ckyTogglePreferenceCenter() {
     const element = _ckyGetPreferenceCenter();
     if (!element) return;
+    element.classList.toggle(_ckyGetPreferenceClass());
+    if (_ckyGetPtype() !== 'pushdown') _ckyToggleOverLay();
 
     const isOpen = element.classList.contains(_ckyGetPreferenceClass());
     element.classList.toggle(_ckyGetPreferenceClass());
