@@ -145,7 +145,6 @@
         function fetchPeerData(tickers = []) {
             $spinner.show();
             $errorMsg.hide();
-            // Clear previous peer data to avoid confusion
             $table.find('.jtw-peer-1-value, .jtw-peer-2-value').text('-');
 
             const primaryTicker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
@@ -157,7 +156,7 @@
                     action: 'jtw_fetch_peer_data',
                     nonce: jtw_public_params.peer_nonce,
                     ticker: primaryTicker.toUpperCase(),
-                    peers: tickers // Send manually entered tickers
+                    peers: tickers 
                 },
                 dataType: 'json',
                 success: function(response) {
@@ -167,11 +166,9 @@
                         const peers = Object.keys(response.data);
                         const peerData = response.data;
 
-                        // Update headers/inputs with the returned tickers
                         $container.find('#jtw-peer-1-input').val(peers.length > 0 ? peers[0] : '');
                         $container.find('#jtw-peer-2-input').val(peers.length > 1 ? peers[1] : '');
                         
-                        // Update regular metric values
                         $table.find('td[data-metric]').each(function() {
                             const $cell = $(this);
                             const metricKey = $cell.data('metric');
@@ -189,7 +186,6 @@
                             }
                         });
 
-                         // Update special PEG/PEGY values
                         $table.find('td[data-metric-peg]').each(function() {
                             const $cell = $(this);
                             if ($cell.hasClass('jtw-peer-1-value') && peers.length > 0) {
@@ -215,27 +211,21 @@
             });
         }
 
-        // **UPDATED**: Simplified toggle logic
         $container.on('change', '#jtw-peer-toggle', function() {
             if ($(this).is(':checked')) {
-                // Always show the UI elements when toggled on
                 $table.addClass('peer-view');
                 $peerCols.show();
                 $compareBtn.show();
-
-                // If data has never been fetched, get the default suggestions
                 if (!peerDataFetched) {
                     fetchPeerData();
                 }
             } else {
-                // Hide UI elements when toggled off
                 $table.removeClass('peer-view');
                 $peerCols.hide();
                 $compareBtn.hide();
             }
         });
 
-        // **UPDATED**: Added keypress handler to inputs for 'Enter' key
         $container.on('keypress', '.jtw-peer-input', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -243,16 +233,14 @@
             }
         });
 
-        // Click handler for the "Compare" button
         $container.on('click', '#jtw-compare-peers-btn', function(e) {
-            e.preventDefault(); // **FIX**: Prevent the default button action (like a page refresh)
+            e.preventDefault();
             const peer1 = $container.find('#jtw-peer-1-input').val().trim().toUpperCase();
             const peer2 = $container.find('#jtw-peer-2-input').val().trim().toUpperCase();
             const peersToFetch = [];
             if (peer1) peersToFetch.push(peer1);
             if (peer2) peersToFetch.push(peer2);
             
-            // Fetch data for the entered tickers. If empty, it will fetch default peers.
             fetchPeerData(peersToFetch);
         });
     }
@@ -329,44 +317,44 @@
                             $('#jtw-assumptions-modal .jtw-modal-content').html('<span class="jtw-modal-close">&times;</span>' + data.new_modal_html);
                         }
     
-                        // Update SWS graphic and interactive chart with the new analyst value
                         if (data.analyst_fv) {
                             const $swsContainer = $container.find('.jtw-sws-valuation-container');
-                            const currentPrice = parseFloat($swsContainer.data('current-price'));
+                            const currentPrice = parseFloat($swsContainer.attr('data-current-price'));
                             const fairValue = data.analyst_fv.intrinsic_value_per_share;
         
-                            // Recalculate status and percentages
-                            const percentageDiff = ((currentPrice - fairValue) / fairValue) * 100;
-                            let status = 'About Right';
-                            let statusClass = 'jtw-sws-status-neutral';
-                            if (percentageDiff > 20) {
-                                status = 'Overvalued';
-                                statusClass = 'jtw-sws-status-negative';
-                            } else if (percentageDiff < -20) {
-                                status = 'Undervalued';
-                                statusClass = 'jtw-sws-status-positive';
+                            if (fairValue > 0 && currentPrice > 0) {
+                                const percentageDiff = ((currentPrice - fairValue) / fairValue) * 100;
+                                let status = 'About Right';
+                                let statusClass = 'jtw-sws-status-neutral';
+                                if (percentageDiff > 20) {
+                                    status = 'Overvalued';
+                                    statusClass = 'jtw-sws-status-negative';
+                                } else if (percentageDiff < -20) {
+                                    status = 'Undervalued';
+                                    statusClass = 'jtw-sws-status-positive';
+                                }
+                                
+                                $swsContainer.find('.jtw-sws-header').removeClass('jtw-sws-status-positive jtw-sws-status-negative jtw-sws-status-neutral').addClass(statusClass)
+                                    .find('strong').text(Math.abs(percentageDiff).toFixed(1) + '% ' + status);
+            
+                                $swsContainer.find('.jtw-sws-bar-row:nth-child(2) .jtw-sws-label-group strong').text('$' + fairValue.toFixed(2));
+                                
+                                const rangeMax = Math.max(currentPrice, fairValue) * 1.3;
+                                const pricePosPct = Math.min(100, (currentPrice / rangeMax) * 100);
+                                const fvPosPct = Math.min(100, (fairValue / rangeMax) * 100);
+                                const undervaluedMax = fairValue * 0.8;
+                                const overvaluedMin = fairValue * 1.2;
+                                const greenWidthPct = (undervaluedMax / rangeMax) * 100;
+                                const yellowWidthPct = ((overvaluedMin - undervaluedMax) / rangeMax) * 100;
+            
+                                $swsContainer.find('.jtw-sws-bar-wrapper').first().css('width', pricePosPct + '%');
+                                $swsContainer.find('.jtw-sws-bar-wrapper').last().css('width', fvPosPct + '%');
+                                $swsContainer.find('.jtw-sws-zone.undervalued').css('width', greenWidthPct + '%');
+                                $swsContainer.find('.jtw-sws-zone.about-right').css('width', yellowWidthPct + '%');
+                            } else {
+                                $swsContainer.find('.jtw-sws-header strong').text('Valuation N/A');
+                                $swsContainer.find('.jtw-sws-bar-wrapper, .jtw-sws-zone').css('width', '0%');
                             }
-                            
-                            // Update header
-                            $swsContainer.find('.jtw-sws-header').removeClass('jtw-sws-status-positive jtw-sws-status-negative jtw-sws-status-neutral').addClass(statusClass)
-                                .find('strong').text(Math.abs(percentageDiff).toFixed(1) + '% ' + status);
-        
-                            // Update fair value label
-                            $swsContainer.find('.jtw-sws-bar-row:nth-child(2) .jtw-sws-label-group strong').text('$' + fairValue.toFixed(2));
-                            
-                            // Recalculate and animate bars
-                            const rangeMax = Math.max(currentPrice, fairValue) * 1.3;
-                            const pricePosPct = Math.min(100, (currentPrice / rangeMax) * 100);
-                            const fvPosPct = Math.min(100, (fairValue / rangeMax) * 100);
-                            const undervaluedMax = fairValue * 0.8;
-                            const overvaluedMin = fairValue * 1.2;
-                            const greenWidthPct = (undervaluedMax / rangeMax) * 100;
-                            const yellowWidthPct = ((overvaluedMin - undervaluedMax) / rangeMax) * 100;
-        
-                            $swsContainer.find('.jtw-sws-bar-wrapper').first().css('width', pricePosPct + '%');
-                            $swsContainer.find('.jtw-sws-bar-wrapper').last().css('width', fvPosPct + '%');
-                            $swsContainer.find('.jtw-sws-zone.undervalued').css('width', greenWidthPct + '%');
-                            $swsContainer.find('.jtw-sws-zone.about-right').css('width', yellowWidthPct + '%');
                         }
 
                         // Update interactive bar chart
@@ -407,47 +395,37 @@
         const $barWrappers = $chart.find('.jtw-sws-bar-wrapper');
         const $zoneBarRow = $chart.find('.jtw-sws-zone-bar-row');
     
-        // Set new bar height
         $barWrappers.css('height', '60px');
     
-        // 1. Overlay labels onto the bars by moving the label group inside the bar wrapper
         $barRows.each(function() {
             const $row = $(this);
             const $labelGroup = $row.find('.jtw-sws-label-group');
             const $barWrapper = $row.find('.jtw-sws-bar-wrapper');
             if ($labelGroup.length && $barWrapper.length) {
-                // Move the label group to be a child of the bar wrapper
-                // This allows the existing absolute positioning CSS to work correctly relative to the bar
                 $labelGroup.appendTo($barWrapper);
             }
         });
     
-        // 2. Dynamically adjust the zone background to create vertical padding
         if ($barRows.length > 1 && $zoneBarRow.length) {
-            const verticalPadding = 25; // Increased padding
-    
-            // Use a brief timeout to ensure the DOM has been painted and elements have accurate dimensions
+            const verticalPadding = 25; 
             setTimeout(() => {
                 if (!$chart.length || !$barRows.length) return;
                 
-                const chartHeight = $chart.innerHeight(); // Use innerHeight to account for padding
+                const chartHeight = $chart.innerHeight();
                 const firstBarTop = $barRows.first().position().top;
                 const lastBarRow = $barRows.last();
                 const lastBarBottom = lastBarRow.position().top + lastBarRow.outerHeight();
     
-                // Calculate new top and bottom positions for the zone background
                 const newZoneTop = firstBarTop - verticalPadding;
                 const newZoneBottom = chartHeight - lastBarBottom - verticalPadding;
     
-                // Apply the new positions via CSS
                 $zoneBarRow.css({
                     'top': newZoneTop + 'px',
                     'bottom': newZoneBottom + 'px'
                 });
-            }, 50); // A small delay like 50ms is safer than 0ms
+            }, 50);
         }
     
-        // Animate the bars' width for a smooth loading effect
         const animateElementWidth = function() {
             const $element = $(this);
             const styleAttr = $element.attr('style');
@@ -456,7 +434,7 @@
             const widthMatch = styleAttr.match(/width:\s*([^;]+)/);
             if (widthMatch && widthMatch[1]) {
                 const finalWidth = widthMatch[1];
-                $element.css('width', '0%');
+                $element.css('width', '0%'); 
                 setTimeout(() => {
                     $element.css('width', finalWidth);
                 }, 100);
@@ -465,6 +443,20 @@
     
         $swsContainer.find('.jtw-sws-bar-wrapper').each(animateElementWidth);
         $swsContainer.find('.jtw-sws-zone').each(animateElementWidth);
+
+        // **FIX**: Logic to check if label should be outside the bar
+        $barWrappers.each(function() {
+            const $wrapper = $(this);
+            const $label = $wrapper.find('.jtw-sws-label-group');
+            const wrapperWidth = $wrapper.width();
+            const labelWidth = $label.width();
+
+            if (wrapperWidth < (labelWidth + 30)) { // 30px is for padding
+                $label.addClass('outside');
+            } else {
+                $label.removeClass('outside');
+            }
+        });
     }
 
     function initializeInteractiveBarChart($container) {

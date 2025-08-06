@@ -609,10 +609,18 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 .jtw-section-header h4 {
     margin: 0;
     font-size: 1.2em;
+}
+
+.jtw-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
 .jtw-timeframe-selector-container {
@@ -629,13 +637,10 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
 #jtw-projection-timeframe {
     width: auto;
     max-width: none;
-    padding: 6px 10px;
 }
 
 .jtw-view-assumptions-container {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 20px;
+    margin-top: 0;
 }
 
 .jtw-view-assumptions-container .jtw-modal-trigger {
@@ -768,11 +773,12 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
 
 .jtw-sws-label-group {
     position: absolute;
-    left: 15px; /* Indent from the left */
+    left: 15px;
     top: 50%;
     transform: translateY(-50%);
     z-index: 3;
     pointer-events: none;
+    transition: color 0.3s ease;
 }
 
 .jtw-sws-label-group span {
@@ -788,6 +794,17 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     font-weight: 700;
     color: var(--jtw-text-dark);
 }
+
+.jtw-sws-label-group.outside {
+    left: 100%;
+    margin-left: 10px;
+    color: #ecf0f1;
+}
+.jtw-sws-label-group.outside span,
+.jtw-sws-label-group.outside strong {
+    color: #ecf0f1;
+}
+
 
 .jtw-sws-zone-bar-row {
     position: absolute;
@@ -935,6 +952,14 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     .jtw-sws-zone-bar-row, .jtw-sws-zone-labels { left: 0; width: 100%; }
     .jtw-sws-zone-labels span { font-size: 0.7em; }
     .jtw-link-cards-grid { grid-template-columns: 1fr; }
+    
+    .jtw-assumption-input {
+        padding: 0px !important;
+    }
+    .jtw-assumptions-table th, 
+    .jtw-assumptions-table td {
+        padding: 0px !important;
+    }
 }
 
 /* --- Header Search Visibility --- */

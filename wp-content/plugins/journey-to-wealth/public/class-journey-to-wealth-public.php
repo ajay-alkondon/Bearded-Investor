@@ -123,7 +123,7 @@ class Journey_To_Wealth_Public {
             // Desktop Navigation (will be hidden on mobile)
             $output .= '<nav class="jtw-anchor-nav"><ul>';
             $output .= '<li class="jtw-nav-group jtw-nav-group-single"><a href="#section-overview" class="jtw-anchor-link jtw-nav-major-section active">' . esc_html__('Company Overview', 'journey-to-wealth') . '</a></li>';
-            $output .= '<li class="jtw-nav-group"><span class="jtw-nav-major-section">' . esc_html__('Valuation', 'journey-to-wealth') . '</span><div class="jtw-nav-minor-group"><a href="#section-key-metrics-ratios" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Key Metrics & Ratios', 'journey-to-wealth') . '</a><a href="#section-intrinsic-valuation" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Fair Value Analysis', 'journey-to-wealth') . '</a></div></li>';
+            $output .= '<li class="jtw-nav-group"><span class="jtw-nav-major-section">' . esc_html__('Valuation', 'journey-to-wealth') . '</span><div class="jtw-nav-minor-group"><a href="#section-intrinsic-valuation" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Intrinsic Value Projection', 'journey-to-wealth') . '</a><a href="#section-key-metrics-ratios" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Key Metrics & Ratios', 'journey-to-wealth') . '</a></div></li>';
             $output .= '<li class="jtw-nav-group"><span class="jtw-nav-major-section">' . esc_html__('Past Performance', 'journey-to-wealth') . '</span><div class="jtw-nav-minor-group"><a href="#section-historical-data" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Data Trends', 'journey-to-wealth') . '</a><a href="#section-past-performance" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Visual Trends', 'journey-to-wealth') . '</a></div></li>';
             $output .= '</ul></nav>';
             
@@ -132,7 +132,7 @@ class Journey_To_Wealth_Public {
             $output .= '<main class="jtw-content-main">';
             $output .= '<div id="jtw-currency-notice-placeholder"></div>';
             $output .= '<div class="jtw-major-content-group" id="major-section-overview"><h2>' . esc_html__('Company Overview', 'journey-to-wealth') . '</h2><div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div></div>';
-            $output .= '<div class="jtw-major-content-group" id="major-section-valuation"><h2>' . esc_html__('Valuation', 'journey-to-wealth') . '</h2><div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div><div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div></div>';
+            $output .= '<div class="jtw-major-content-group" id="major-section-valuation"><h2>' . esc_html__('Valuation', 'journey-to-wealth') . '</h2><div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div><div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div></div>';
             $output .= '<div class="jtw-major-content-group" id="major-section-performance"><h2>' . esc_html__('Past Performance', 'journey-to-wealth') . '</h2><div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div><div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div></div>';
             $output .= '</main></div>';
         }
@@ -274,7 +274,6 @@ class Journey_To_Wealth_Public {
     public function ajax_fetch_peer_data() {
         check_ajax_referer('jtw_fetch_peer_nonce', 'nonce');
         $primary_ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
-        // **FIX**: Check for manually entered peers from the AJAX request
         $manual_peers = isset($_POST['peers']) && is_array($_POST['peers']) ? array_map('sanitize_text_field', $_POST['peers']) : [];
 
         if (empty($primary_ticker)) {
@@ -285,11 +284,9 @@ class Journey_To_Wealth_Public {
         $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
         $top_peers = [];
 
-        // **FIX**: If manual peers are provided by the user, use them. Otherwise, find default peers.
         if (!empty($manual_peers)) {
-            $top_peers = array_slice($manual_peers, 0, 2); // Use up to 2 manually entered peers
+            $top_peers = array_slice($manual_peers, 0, 2);
         } else {
-            // This is the original logic to find default peers if none are entered
             global $wpdb;
             $mapping_table = $wpdb->prefix . 'jtw_company_mappings';
             $damodaran_ids = $wpdb->get_col($wpdb->prepare("SELECT damodaran_industry_id FROM $mapping_table WHERE ticker = %s", $primary_ticker));
@@ -402,7 +399,6 @@ class Journey_To_Wealth_Public {
     
         $results = [];
 
-        // **FIX**: Recalculate the analyst's fair value using the new timeframe
         $analyst_result = $dcf_model->calculate(
             $company_data['overview'], $company_data['income_statement'], $company_data['balance_sheet'],
             $company_data['cash_flow'], $company_data['treasury_yield'], $company_data['earnings_estimates'],
@@ -1245,7 +1241,8 @@ class Journey_To_Wealth_Public {
     private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $income_statement) {
         $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section">';
         $output .= '<div class="jtw-section-header">';
-        $output .= '<h4>' . esc_html__('Fair Value Analysis', 'journey-to-wealth') . '</h4>';
+        $output .= '<h4>' . esc_html__('Intrinsic Value Projection', 'journey-to-wealth') . '</h4>';
+        $output .= '<div class="jtw-header-controls">';
         $output .= '<div class="jtw-timeframe-selector-container">';
         $output .= '<label for="jtw-projection-timeframe">Projection:</label>';
         $output .= '<select id="jtw-projection-timeframe" class="jtw-assumption-input">';
@@ -1254,12 +1251,17 @@ class Journey_To_Wealth_Public {
         $output .= '<option value="15">15 Years</option>';
         $output .= '</select>';
         $output .= '</div>';
+        $output .= '<div class="jtw-view-assumptions-container">';
+        $output .= '<button class="jtw-modal-trigger" data-modal-target="#jtw-assumptions-modal">' . esc_html__('View Assumptions', 'journey-to-wealth') . '</button>';
+        $output .= '</div>';
+        $output .= '</div>';
         $output .= '</div>';
     
         // --- Assumptions Table ---
         $dcf_result = $valuation_data['DCF Model'] ?? null;
         if ($dcf_result && !is_wp_error($dcf_result)) {
             $analyst_growth = ($dcf_result['calculation_breakdown']['inputs']['initial_growth_rate'] ?? 0) * 100;
+            $analyst_discount_rate = ($dcf_result['calculation_breakdown']['inputs']['discount_rate'] ?? 0) * 100;
             $analyst_fcfe = $dcf_result['calculation_breakdown']['inputs']['base_cash_flow'] ?? 0;
             
             $fcfe_label = 'Initial FCFE';
@@ -1288,14 +1290,15 @@ class Journey_To_Wealth_Public {
 
             $output .= '<table class="jtw-assumptions-table">';
             $output .= '<thead>';
-            $output .= '<tr><th class="jtw-top-header-empty"></th><th class="jtw-top-header-empty"></th><th colspan="3" class="jtw-top-header-merged">Your Projections</th></tr>';
-            $output .= '<tr><th></th><th>Intrinsic Value</th><th>Bear Case</th><th>Base Case</th><th>Bull Case</th></tr>';
+            $output .= '<tr><th class="jtw-top-header-empty"></th><th class="jtw-top-header-empty"></th><th colspan="3" class="jtw-top-header-merged">Your DCF Projections</th></tr>';
+            $output .= '<tr><th></th><th>Calculated Value</th><th>Bear Case</th><th>Base Case</th><th>Bull Case</th></tr>';
             $output .= '</thead>';
             $output .= '<tbody>';
-            $output .= '<tr><td data-label="Metric">Revenue Growth %</td><td data-label="Analyst">' . esc_html(number_format($analyst_growth, 1)) . '%</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="revGrowth" value="' . esc_attr(number_format($bear_growth, 1)) . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="revGrowth" value="' . esc_attr(number_format($base_growth, 1)) . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="revGrowth" value="' . esc_attr(number_format($bull_growth, 1)) . '"></td></tr>';
+            $output .= '<tr><td data-label="Metric">Initial Growth Rate %</td><td data-label="Analyst">' . esc_html(number_format($analyst_growth, 1)) . '%</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="revGrowth" value="' . esc_attr(number_format($bear_growth, 1)) . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="revGrowth" value="' . esc_attr(number_format($base_growth, 1)) . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="revGrowth" value="' . esc_attr(number_format($bull_growth, 1)) . '"></td></tr>';
+            $output .= '<tr><td data-label="Metric">Discount Rate %</td><td colspan="4" data-label="Analyst">' . esc_html(number_format($analyst_discount_rate, 1)) . '%</td></tr>';
             $output .= '<tr><td data-label="Metric">' . esc_html($fcfe_label) . '</td><td data-label="Analyst">' . esc_html($this->format_large_number($analyst_fcfe)) . '</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td></tr>';
-            $output .= '<tr><td data-label="Metric">Desired CAGR %</td><td data-label="Analyst">-</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="desiredReturn" value="10"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="desiredReturn" value="10"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="desiredReturn" value="10"></td></tr>';
             $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-analyst-fv">$' . number_format($valuation_summary['fair_value'], 1) . '</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">-</td><td class="jtw-bull-fv">-</td></tr>';
+            $output .= '<tr><td data-label="Metric">Desired CAGR %</td><td data-label="Analyst">-</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="desiredReturn" value="10"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="desiredReturn" value="10"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="desiredReturn" value="10"></td></tr>';
             $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Price Target</td><td class="jtw-analyst-buy">-</td><td class="jtw-bear-buy">-</td><td class="jtw-base-buy">-</td><td class="jtw-bull-buy">-</td></tr>';
             $output .= '</tbody>';
             $output .= '</table>';
@@ -1331,7 +1334,7 @@ class Journey_To_Wealth_Public {
             $green_width_pct = ($undervalued_max / $range_max) * 100;
             $yellow_width_pct = (($overvalued_min - $undervalued_max) / $range_max) * 100;
             
-            $output .= '<div class="jtw-sws-valuation-container">';
+            $output .= '<div class="jtw-sws-valuation-container" data-current-price="' . esc_attr($current_price) . '">';
             $output .= '<div class="jtw-sws-header ' . $status_class . '">';
             $output .= '<strong>' . number_format(abs($percentage_diff), 1) . '% ' . $status . '</strong>';
             $output .= '</div>';
@@ -1384,10 +1387,6 @@ class Journey_To_Wealth_Public {
         $has_valid_models = false;
         foreach ($valuation_data as $result) { if (!is_wp_error($result)) { $has_valid_models = true; break; } }
         if ($has_valid_models) {
-            $output .= '<div class="jtw-view-assumptions-container">';
-            $output .= '<button class="jtw-modal-trigger" data-modal-target="#jtw-assumptions-modal">' . esc_html__('View Assumptions', 'journey-to-wealth') . '</button>';
-            $output .= '</div>';
-
             $modal_id = 'jtw-assumptions-modal';
             $output .= '<div id="' . $modal_id . '" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>';
             foreach ($valuation_data as $model_name => $result) {
