@@ -274,93 +274,78 @@ class Journey_To_Wealth_Public {
     public function ajax_fetch_peer_data() {
         check_ajax_referer('jtw_fetch_peer_nonce', 'nonce');
         $primary_ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
-        if (empty($primary_ticker)) { wp_send_json_error(['message' => 'Missing ticker.']); return; }
+        // **FIX**: Check for manually entered peers from the AJAX request
+        $manual_peers = isset($_POST['peers']) && is_array($_POST['peers']) ? array_map('sanitize_text_field', $_POST['peers']) : [];
+
+        if (empty($primary_ticker)) {
+            wp_send_json_error(['message' => 'Missing primary ticker.']);
+            return;
+        }
     
         $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
-    
-        // Get primary company's name first
-        $primary_overview = $av_client->get_company_overview($primary_ticker);
-        if (is_wp_error($primary_overview) || !isset($primary_overview['Name'])) {
-            wp_send_json_error(['message' => 'Could not retrieve primary company data.']);
-            return;
-        }
-        $primary_company_name = $primary_overview['Name'];
-    
-        global $wpdb;
-        $mapping_table = $wpdb->prefix . 'jtw_company_mappings';
-    
-        // Find Damodaran industries for the primary ticker
-        $damodaran_ids = $wpdb->get_col($wpdb->prepare("SELECT damodaran_industry_id FROM $mapping_table WHERE ticker = %s", $primary_ticker));
-        if (empty($damodaran_ids)) {
-            wp_send_json_error(['message' => 'No industry mapping found. Peer comparison is unavailable.']);
-            return;
-        }
-    
-        // Find all tickers with the same Damodaran industries
-        $id_placeholders = implode(',', array_fill(0, count($damodaran_ids), '%d'));
-        $query = $wpdb->prepare("SELECT DISTINCT ticker FROM $mapping_table WHERE damodaran_industry_id IN ($id_placeholders) AND ticker != %s", array_merge($damodaran_ids, [$primary_ticker]));
-        $all_peers = $wpdb->get_col($query);
-    
-        if (empty($all_peers)) {
-            wp_send_json_error(['message' => 'No direct peers found based on industry mapping.']);
-            return;
-        }
-    
-        // Fetch market cap and name for all peers to find the largest, non-duplicate companies
-        $peers_with_details = [];
-        foreach ($all_peers as $peer_ticker) {
-            $overview = get_transient('jtw_overview_' . $peer_ticker);
-            if (false === $overview) {
-                $overview = $av_client->get_company_overview($peer_ticker);
-                if (!is_wp_error($overview) && isset($overview['MarketCapitalization'])) {
-                    set_transient('jtw_overview_' . $peer_ticker, $overview, DAY_IN_SECONDS);
-                }
-            }
-    
-            if (!is_wp_error($overview) && isset($overview['MarketCapitalization'], $overview['Name']) && is_numeric($overview['MarketCapitalization'])) {
-                $peers_with_details[] = [
-                    'ticker' => $peer_ticker,
-                    'name' => $overview['Name'],
-                    'market_cap' => (float)$overview['MarketCapitalization']
-                ];
-            }
-        }
-    
-        if (empty($peers_with_details)) {
-            wp_send_json_error(['message' => 'No suitable peers found after filtering.']);
-            return;
-        }
-    
-        // Sort by market cap descending
-        usort($peers_with_details, function($a, $b) {
-            return $b['market_cap'] <=> $a['market_cap'];
-        });
-    
-        // Filter out different share classes of the same company
         $top_peers = [];
-        $selected_names = [];
-        foreach ($peers_with_details as $peer) {
-            $is_duplicate = false;
-            foreach ($selected_names as $selected_name) {
-                similar_text(strtolower($peer['name']), strtolower($selected_name), $percent);
-                if ($percent > 95.0) {
-                    $is_duplicate = true;
-                    break;
+
+        // **FIX**: If manual peers are provided by the user, use them. Otherwise, find default peers.
+        if (!empty($manual_peers)) {
+            $top_peers = array_slice($manual_peers, 0, 2); // Use up to 2 manually entered peers
+        } else {
+            // This is the original logic to find default peers if none are entered
+            global $wpdb;
+            $mapping_table = $wpdb->prefix . 'jtw_company_mappings';
+            $damodaran_ids = $wpdb->get_col($wpdb->prepare("SELECT damodaran_industry_id FROM $mapping_table WHERE ticker = %s", $primary_ticker));
+            
+            if (empty($damodaran_ids)) {
+                wp_send_json_error(['message' => 'No industry mapping found. Peer comparison is unavailable.']);
+                return;
+            }
+        
+            $id_placeholders = implode(',', array_fill(0, count($damodaran_ids), '%d'));
+            $query = $wpdb->prepare("SELECT DISTINCT ticker FROM $mapping_table WHERE damodaran_industry_id IN ($id_placeholders) AND ticker != %s", array_merge($damodaran_ids, [$primary_ticker]));
+            $all_peers = $wpdb->get_col($query);
+        
+            if (empty($all_peers)) {
+                wp_send_json_error(['message' => 'No direct peers found based on industry mapping.']);
+                return;
+            }
+        
+            $peers_with_details = [];
+            foreach ($all_peers as $peer_ticker) {
+                $overview = get_transient('jtw_overview_' . $peer_ticker);
+                if (false === $overview) {
+                    $overview = $av_client->get_company_overview($peer_ticker);
+                    if (!is_wp_error($overview) && isset($overview['MarketCapitalization'])) {
+                        set_transient('jtw_overview_' . $peer_ticker, $overview, DAY_IN_SECONDS);
+                    }
+                }
+                if (!is_wp_error($overview) && isset($overview['MarketCapitalization'], $overview['Name']) && is_numeric($overview['MarketCapitalization'])) {
+                    $peers_with_details[] = [ 'ticker' => $peer_ticker, 'name' => $overview['Name'], 'market_cap' => (float)$overview['MarketCapitalization'] ];
                 }
             }
-    
-            if (!$is_duplicate) {
-                $top_peers[] = $peer['ticker'];
-                $selected_names[] = $peer['name'];
+        
+            if (empty($peers_with_details)) {
+                wp_send_json_error(['message' => 'No suitable peers found after filtering.']);
+                return;
             }
-    
-            if (count($top_peers) >= 2) {
-                break;
+        
+            usort($peers_with_details, function($a, $b) { return $b['market_cap'] <=> $a['market_cap']; });
+        
+            $selected_names = [];
+            foreach ($peers_with_details as $peer) {
+                $is_duplicate = false;
+                foreach ($selected_names as $selected_name) {
+                    similar_text(strtolower($peer['name']), strtolower($selected_name), $percent);
+                    if ($percent > 95.0) { $is_duplicate = true; break; }
+                }
+                if (!$is_duplicate) {
+                    $top_peers[] = $peer['ticker'];
+                    $selected_names[] = $peer['name'];
+                }
+                if (count($top_peers) >= 2) break;
             }
         }
     
         if (empty($top_peers)) {
-            wp_send_json_error(['message' => 'Could not retrieve data for any potential peers.']);
+            wp_send_json_error(['message' => 'Could not find any valid peers to compare.']);
             return;
         }
     
@@ -373,7 +358,7 @@ class Journey_To_Wealth_Public {
         }
     
         if (empty($peer_metrics_data)) {
-            wp_send_json_error(['message' => 'Failed to fetch detailed metrics for top peers.']);
+            wp_send_json_error(['message' => 'Failed to fetch detailed metrics for the selected peers.']);
             return;
         }
     
@@ -1121,9 +1106,10 @@ class Journey_To_Wealth_Public {
         // Section Header with Toggle
         $output .= '<div class="jtw-section-header">';
         $output .= '<h4>' . esc_html__('Key Metrics & Ratios', 'journey-to-wealth') . '</h4>';
-        $output .= '<div class="jtw-peer-toggle-container">';
+        $output .= '<div class="jtw-peer-controls-container">'; // New wrapper
         $output .= '<span>' . esc_html__('Peer Comparison', 'journey-to-wealth') . '</span>';
         $output .= '<label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>';
+        $output .= '<button id="jtw-compare-peers-btn" class="jtw-compare-button" style="display:none;">Compare</button>'; // New button
         $output .= '</div></div>';
         
         $output .= '<div class="jtw-metrics-table-container">';
@@ -1133,8 +1119,8 @@ class Journey_To_Wealth_Public {
         $output .= '<thead><tr>';
         $output .= '<th>Metric</th>';
         $output .= '<th class="jtw-primary-col">' . esc_html($ticker) . '</th>';
-        $output .= '<th class="jtw-peer-col jtw-peer-1-header" style="display:none;"></th>';
-        $output .= '<th class="jtw-peer-col jtw-peer-2-header" style="display:none;"></th>';
+        $output .= '<th class="jtw-peer-col" style="display:none;"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
+        $output .= '<th class="jtw-peer-col" style="display:none;"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
         $output .= '</tr></thead>';
     
         // Table Body
@@ -1345,7 +1331,7 @@ class Journey_To_Wealth_Public {
             $green_width_pct = ($undervalued_max / $range_max) * 100;
             $yellow_width_pct = (($overvalued_min - $undervalued_max) / $range_max) * 100;
             
-            $output .= '<div class="jtw-sws-valuation-container" data-current-price="' . esc_attr($current_price) . '">';
+            $output .= '<div class="jtw-sws-valuation-container">';
             $output .= '<div class="jtw-sws-header ' . $status_class . '">';
             $output .= '<strong>' . number_format(abs($percentage_diff), 1) . '% ' . $status . '</strong>';
             $output .= '</div>';

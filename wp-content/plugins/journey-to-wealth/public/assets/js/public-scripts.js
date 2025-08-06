@@ -80,22 +80,6 @@
                 }, 100);
             }
         }
-
-        // Animate all other progress bars
-        $container.find('.jtw-progress-bar-container').each(function() {
-            const $barContainer = $(this);
-            const value = parseFloat($barContainer.data('value'));
-            const max = parseFloat($barContainer.data('max'));
-
-            if (!isNaN(value) && !isNaN(max) && max > 0) {
-                const percentage = Math.max(0, Math.min(100, (value / max) * 100));
-                const $fill = $barContainer.find('.jtw-progress-fill');
-                
-                setTimeout(() => {
-                    $fill.css('width', `${percentage}%`);
-                }, 100);
-            }
-        });
     }
 
     function initializeKeyMetricsRatiosSection($container) {
@@ -152,99 +136,124 @@
 
         // Peer Comparison Logic
         let peerDataFetched = false;
-        $container.on('change', '#jtw-peer-toggle', function() {
-            const $toggle = $(this);
-            const $table = $container.find('.jtw-metrics-table');
-            const $peerCols = $table.find('.jtw-peer-col');
-            const $spinner = $container.find('.jtw-peer-loading-spinner');
-            const $errorMsg = $container.find('.jtw-peer-error-message');
+        const $table = $container.find('.jtw-metrics-table');
+        const $peerCols = $table.find('.jtw-peer-col');
+        const $spinner = $container.find('.jtw-peer-loading-spinner');
+        const $errorMsg = $container.find('.jtw-peer-error-message');
+        const $compareBtn = $container.find('#jtw-compare-peers-btn');
 
-            if ($toggle.is(':checked')) {
-                if (peerDataFetched) {
-                    $peerCols.show();
-                    $table.addClass('peer-view');
-                    return;
-                }
-                
-                $spinner.show();
-                $errorMsg.hide();
-                const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+        function fetchPeerData(tickers = []) {
+            $spinner.show();
+            $errorMsg.hide();
+            // Clear previous peer data to avoid confusion
+            $table.find('.jtw-peer-1-value, .jtw-peer-2-value').text('-');
 
-                $.ajax({
-                    url: jtw_public_params.ajax_url,
-                    type: 'POST',
-                    data: {
-                        action: 'jtw_fetch_peer_data',
-                        nonce: jtw_public_params.peer_nonce,
-                        ticker: ticker.toUpperCase(),
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        $spinner.hide();
-                        if (response.success && response.data) {
-                            peerDataFetched = true;
-                            const peers = Object.keys(response.data);
-                            const peerData = response.data;
+            const primaryTicker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
 
-                            // Update headers
-                            if (peers.length > 0) {
-                                $table.find('.jtw-peer-1-header').text(peers[0]).show();
+            $.ajax({
+                url: jtw_public_params.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'jtw_fetch_peer_data',
+                    nonce: jtw_public_params.peer_nonce,
+                    ticker: primaryTicker.toUpperCase(),
+                    peers: tickers // Send manually entered tickers
+                },
+                dataType: 'json',
+                success: function(response) {
+                    $spinner.hide();
+                    if (response.success && response.data) {
+                        peerDataFetched = true;
+                        const peers = Object.keys(response.data);
+                        const peerData = response.data;
+
+                        // Update headers/inputs with the returned tickers
+                        $container.find('#jtw-peer-1-input').val(peers.length > 0 ? peers[0] : '');
+                        $container.find('#jtw-peer-2-input').val(peers.length > 1 ? peers[1] : '');
+                        
+                        // Update regular metric values
+                        $table.find('td[data-metric]').each(function() {
+                            const $cell = $(this);
+                            const metricKey = $cell.data('metric');
+                            const suffix = {
+                                trailingPeRatio: 'x', forwardPeRatio: 'x', psRatio: 'x', pbRatio: 'x', evToRevenue: 'x', evToEbitda: 'x',
+                                ttmEpsGrowth: '%', currentYearEpsGrowth: '%', nextYearEpsGrowth: '%', ttmRevenueGrowth: '%', currentYearRevenueGrowth: '%', nextYearRevenueGrowth: '%',
+                                grossMargin: '%', netMargin: '%'
+                            }[metricKey] || '';
+
+                            if ($cell.hasClass('jtw-peer-1-value') && peers.length > 0) {
+                                $cell.text(formatMetricValue(peerData[peers[0]][metricKey], suffix));
                             }
-                            if (peers.length > 1) {
-                                $table.find('.jtw-peer-2-header').text(peers[1]).show();
+                            if ($cell.hasClass('jtw-peer-2-value') && peers.length > 1) {
+                                $cell.text(formatMetricValue(peerData[peers[1]][metricKey], suffix));
                             }
-                            
-                            // Update regular metric values
-                            $table.find('td[data-metric]').each(function() {
-                                const $cell = $(this);
-                                const metricKey = $cell.data('metric');
-                                const suffix = {
-                                    trailingPeRatio: 'x', forwardPeRatio: 'x', psRatio: 'x', pbRatio: 'x', evToRevenue: 'x', evToEbitda: 'x',
-                                    ttmEpsGrowth: '%', currentYearEpsGrowth: '%', nextYearEpsGrowth: '%', ttmRevenueGrowth: '%', currentYearRevenueGrowth: '%', nextYearRevenueGrowth: '%',
-                                    grossMargin: '%', netMargin: '%'
-                                }[metricKey] || '';
+                        });
 
-                                if ($cell.hasClass('jtw-peer-1-value') && peers.length > 0) {
-                                    $cell.text(formatMetricValue(peerData[peers[0]][metricKey], suffix)).show();
-                                }
-                                if ($cell.hasClass('jtw-peer-2-value') && peers.length > 1) {
-                                    $cell.text(formatMetricValue(peerData[peers[1]][metricKey], suffix)).show();
-                                }
-                            });
+                         // Update special PEG/PEGY values
+                        $table.find('td[data-metric-peg]').each(function() {
+                            const $cell = $(this);
+                            if ($cell.hasClass('jtw-peer-1-value') && peers.length > 0) {
+                                const peg = formatMetricValue(peerData[peers[0]]['pegRatio'], 'x');
+                                const pegy = formatMetricValue(peerData[peers[0]]['pegyRatio'], 'x');
+                                $cell.text(`${peg} / ${pegy}`);
+                            }
+                            if ($cell.hasClass('jtw-peer-2-value') && peers.length > 1) {
+                                const peg = formatMetricValue(peerData[peers[1]]['pegRatio'], 'x');
+                                const pegy = formatMetricValue(peerData[peers[1]]['pegyRatio'], 'x');
+                                $cell.text(`${peg} / ${pegy}`);
+                            }
+                        });
 
-                             // Update special PEG/PEGY values
-                            $table.find('td[data-metric-peg]').each(function() {
-                                const $cell = $(this);
-                                if ($cell.hasClass('jtw-peer-1-value') && peers.length > 0) {
-                                    const peg = formatMetricValue(peerData[peers[0]]['pegRatio'], 'x');
-                                    const pegy = formatMetricValue(peerData[peers[0]]['pegyRatio'], 'x');
-                                    $cell.text(`${peg} / ${pegy}`).show();
-                                }
-                                if ($cell.hasClass('jtw-peer-2-value') && peers.length > 1) {
-                                    const peg = formatMetricValue(peerData[peers[1]]['pegRatio'], 'x');
-                                    const pegy = formatMetricValue(peerData[peers[1]]['pegyRatio'], 'x');
-                                    $cell.text(`${peg} / ${pegy}`).show();
-                                }
-                            });
-
-                            $table.addClass('peer-view');
-
-                        } else {
-                            $errorMsg.text(response.data.message || getLocalizedText('text_error')).show();
-                            $toggle.prop('checked', false);
-                        }
-                    },
-                    error: function(jqXHR) {
-                        $spinner.hide();
-                        $errorMsg.text('AJAX request failed. ' + (jqXHR.responseText || '')).show();
-                        $toggle.prop('checked', false);
+                    } else {
+                        $errorMsg.text(response.data.message || getLocalizedText('text_error')).show();
                     }
-                });
+                },
+                error: function(jqXHR) {
+                    $spinner.hide();
+                    $errorMsg.text('AJAX request failed. ' + (jqXHR.responseText || '')).show();
+                }
+            });
+        }
 
+        // **UPDATED**: Simplified toggle logic
+        $container.on('change', '#jtw-peer-toggle', function() {
+            if ($(this).is(':checked')) {
+                // Always show the UI elements when toggled on
+                $table.addClass('peer-view');
+                $peerCols.show();
+                $compareBtn.show();
+
+                // If data has never been fetched, get the default suggestions
+                if (!peerDataFetched) {
+                    fetchPeerData();
+                }
             } else {
-                $peerCols.hide();
+                // Hide UI elements when toggled off
                 $table.removeClass('peer-view');
+                $peerCols.hide();
+                $compareBtn.hide();
             }
+        });
+
+        // **UPDATED**: Added keypress handler to inputs for 'Enter' key
+        $container.on('keypress', '.jtw-peer-input', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $compareBtn.trigger('click');
+            }
+        });
+
+        // Click handler for the "Compare" button
+        $container.on('click', '#jtw-compare-peers-btn', function(e) {
+            e.preventDefault(); // **FIX**: Prevent the default button action (like a page refresh)
+            const peer1 = $container.find('#jtw-peer-1-input').val().trim().toUpperCase();
+            const peer2 = $container.find('#jtw-peer-2-input').val().trim().toUpperCase();
+            const peersToFetch = [];
+            if (peer1) peersToFetch.push(peer1);
+            if (peer2) peersToFetch.push(peer2);
+            
+            // Fetch data for the entered tickers. If empty, it will fetch default peers.
+            fetchPeerData(peersToFetch);
         });
     }
 

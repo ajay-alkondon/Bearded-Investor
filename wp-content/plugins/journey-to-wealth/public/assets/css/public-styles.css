@@ -512,8 +512,8 @@
 }
 
 /* --- Key Metrics & Ratios Section --- */
-.jtw-peer-toggle-container { display: flex; align-items: center; gap: 10px; }
-.jtw-peer-toggle-container span { font-size: 0.9em; color: var(--jtw-text-medium); font-weight: 500; }
+.jtw-peer-controls-container { display: flex; align-items: center; gap: 15px; }
+.jtw-peer-controls-container span { font-size: 0.9em; color: var(--jtw-text-medium); font-weight: 500; }
 .jtw-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
 .jtw-switch input { opacity: 0; width: 0; height: 0; }
 .jtw-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
@@ -521,6 +521,31 @@
 input:checked + .jtw-slider { background-color: var(--jtw-primary-blue); }
 input:focus + .jtw-slider { box-shadow: 0 0 1px var(--jtw-primary-blue); }
 input:checked + .jtw-slider:before { transform: translateX(22px); }
+
+.jtw-compare-button {
+    background-color: var(--jtw-primary-blue);
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85em;
+    transition: background-color 0.2s ease;
+}
+.jtw-compare-button:hover {
+    background-color: #0056b3;
+}
+
+.jtw-peer-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--jtw-border-color);
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
 
 .jtw-metrics-table-container { position: relative; }
 .jtw-metrics-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
