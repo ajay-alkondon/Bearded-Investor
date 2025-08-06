@@ -444,7 +444,6 @@
         $swsContainer.find('.jtw-sws-bar-wrapper').each(animateElementWidth);
         $swsContainer.find('.jtw-sws-zone').each(animateElementWidth);
 
-        // **FIX**: Logic to check if label should be outside the bar
         $barWrappers.each(function() {
             const $wrapper = $(this);
             const $label = $wrapper.find('.jtw-sws-label-group');
@@ -762,12 +761,15 @@
             return;
         }
 
+        let chart; // Keep a reference to the chart instance
+        let activeMetricKey = 'price'; // Default to price chart
+
         const yAxisAlignPlugin = {
             id: 'yAxisAlignPlugin',
             afterLayout: (chart) => {
                 if (!chart.options.plugins.yAxisAlignPlugin.enabled) return;
                 const firstColumnWidth = $container.find('.jtw-historical-table thead th:first-child').outerWidth();
-                const yAxisWidth = chart.scales.yPrice.width;
+                const yAxisWidth = chart.scales.y.width;
                 const requiredPadding = firstColumnWidth - yAxisWidth;
                 if (requiredPadding > 0 && chart.options.layout.padding.left !== requiredPadding) {
                     chart.options.layout.padding.left = requiredPadding;
@@ -794,43 +796,34 @@
             }
         };
 
-        const chart = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: [], datasets: [] },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                layout: { padding: { left: 0, right: 0 } },
-                scales: {
-                    x: { ticks: { display: false }, grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)', offset: true }, offset: true },
-                    yPrice: { type: 'logarithmic', position: 'left', grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)' }, title: { display: true, text: 'Price (Log Scale)' }, ticks: { callback: function(value) { return '$' + formatLargeNumber(value, 0); } } }
-                },
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.dataset.type === 'bar' && Array.isArray(context.raw)) { label += '$' .concat(formatLargeNumber(context.raw[0]), ' - $', formatLargeNumber(context.raw[1])); } else if (context.parsed.y !== null) { label += '$' .concat(formatLargeNumber(context.parsed.y)); } return label; } } },
-                    yAxisAlignPlugin: { enabled: true }
-                }
-            },
-            plugins: [yAxisAlignPlugin, verticalStripesPlugin]
-        });
-
         function buildTable(data) {
-            const metrics = { 'revenue_ps': 'Revenue / Share', 'eps': 'EPS', 'cash_flow_ps': 'FCF / Share', 'book_value_ps': 'Book Value / Share', 'shares_outstanding': 'Shares (M)', 'net_profit_margin': 'Net Profit Margin', 'return_on_equity': 'Return on Equity', 'return_on_capital': 'Return on Capital', 'shareholder_equity': 'Shareholder Equity' };
+            const metrics = {
+                'price': { 'label': 'Price / Share', 'prefix': '$' },
+                'revenue_ps': { 'label': 'Revenue / Share', 'prefix': '$' },
+                'eps': { 'label': 'EPS', 'prefix': '$' },
+                'cash_flow_ps': { 'label': 'FCF / Share', 'prefix': '$' },
+                'book_value_ps': { 'label': 'Book Value / Share', 'prefix': '$' },
+                'net_profit_margin': { 'label': 'Net Profit Margin', 'prefix': '%' },
+                'return_on_equity': { 'label': 'Return on Equity', 'prefix': '%' },
+                'return_on_capital': { 'label': 'Return on Capital', 'prefix': '%' },
+            };
+
             let tableHtml = '<table class="jtw-historical-table"><thead><tr><th>Metric</th>';
             data.forEach(dp => tableHtml += `<th>${dp.year}</th>`);
             tableHtml += '</tr></thead><tbody>';
-            Object.entries(metrics).forEach(([key, label]) => {
-                tableHtml += `<tr><td>${label}</td>`;
+
+            Object.entries(metrics).forEach(([key, details]) => {
+                tableHtml += `<tr data-metric-key="${key}" data-metric-label="${details.label}" data-metric-prefix="${details.prefix}">`;
+                tableHtml += `<td>${details.label}</td>`;
                 data.forEach(dp => {
-                    const value = dp[key];
+                    const valueKey = (key === 'price') ? 'avg_price' : key;
+                    const value = dp[valueKey];
                     let formattedValue = 'N/A';
                     if (isFinite(value)) {
-                        switch (key) {
-                            case 'shares_outstanding': formattedValue = formatLargeNumber(value, 0); break;
-                            case 'shareholder_equity': formattedValue = (value != 0) ? formatLargeNumber(value) : 'N/A'; break;
-                            case 'net_profit_margin': case 'return_on_equity': case 'return_on_capital': formattedValue = `${Number(value).toFixed(1)}%`; break;
-                            default: formattedValue = `$${Number(value).toFixed(1)}`;
+                        if (details.prefix === '%') {
+                            formattedValue = Number(value).toFixed(1) + '%';
+                        } else {
+                            formattedValue = '$' + Number(value).toFixed(1);
                         }
                     }
                     tableHtml += `<td>${formattedValue}</td>`;
@@ -848,14 +841,63 @@
 
             buildTable(slicedData);
 
-            chart.data.labels = slicedData.map(d => d.year);
-            chart.data.datasets = [
-                { type: 'bar', label: 'Price Range (High-Low)', yAxisID: 'yPrice', data: slicedData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]), backgroundColor: 'rgba(0, 122, 255, 0.2)', borderColor: 'rgba(0, 122, 255, 0.5)', borderWidth: 1, barPercentage: 0.5, categoryPercentage: 0.7, borderSkipped: false },
-                { type: 'line', label: 'Average Price', yAxisID: 'yPrice', data: slicedData.map(d => d.avg_price), borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 1)', borderWidth: 2, pointRadius: 0, tension: 0.1 }
-            ];
-            chart.options.plugins.yAxisAlignPlugin.enabled = true; 
-            chart.update();
+            $container.find('.jtw-historical-table tbody tr').removeClass('active');
+            $container.find(`.jtw-historical-table tbody tr[data-metric-key="${activeMetricKey}"]`).addClass('active');
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            let config;
+            if (activeMetricKey === 'price') {
+                config = {
+                    type: 'bar',
+                    data: {
+                        labels: slicedData.map(d => d.year),
+                        datasets: [
+                            { type: 'bar', label: 'Price Range (High-Low)', yAxisID: 'y', data: slicedData.map(d => (d.price_low && d.price_high) ? [d.price_low, d.price_high] : [null, null]), backgroundColor: 'rgba(0, 122, 255, 0.2)', borderColor: 'rgba(0, 122, 255, 0.5)', borderWidth: 1, barPercentage: 0.5, categoryPercentage: 0.7, borderSkipped: false },
+                            { type: 'line', label: 'Average Price', yAxisID: 'y', data: slicedData.map(d => d.avg_price), borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 1)', borderWidth: 2, pointRadius: 0, tension: 0.1 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, layout: { padding: { left: 0, right: 0 } },
+                        scales: { x: { ticks: { display: false }, grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)', offset: true }, offset: true }, y: { type: 'logarithmic', position: 'left', grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)' }, title: { display: true, text: 'Price (Log Scale)' }, ticks: { callback: function(value) { return '$' + formatLargeNumber(value, 0); } } } },
+                        plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.dataset.type === 'bar' && Array.isArray(context.raw)) { label += '$' .concat(formatLargeNumber(context.raw[0]), ' - $', formatLargeNumber(context.raw[1])); } else if (context.parsed.y !== null) { label += '$' .concat(formatLargeNumber(context.parsed.y)); } return label; } } }, yAxisAlignPlugin: { enabled: true } }
+                    },
+                    plugins: [yAxisAlignPlugin, verticalStripesPlugin]
+                };
+            } else {
+                const $activeRow = $container.find(`.jtw-historical-table tbody tr[data-metric-key="${activeMetricKey}"]`);
+                const metricLabel = $activeRow.data('metric-label');
+                const metricPrefix = $activeRow.data('metric-prefix');
+                const newData = slicedData.map(d => d[activeMetricKey]);
+
+                config = {
+                    type: 'bar',
+                    data: {
+                        labels: slicedData.map(d => d.year),
+                        datasets: [{
+                            label: metricLabel,
+                            data: newData,
+                            backgroundColor: 'rgba(0, 122, 255, 0.6)'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, layout: { padding: { left: 0, right: 0 } },
+                        scales: { x: { ticks: { display: false }, grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)', offset: true }, offset: true }, y: { type: 'linear', position: 'left', grid: { display: true, drawOnChartArea: true, color: 'rgba(0, 0, 0, 0.05)' }, title: { display: true, text: metricLabel }, ticks: { callback: function(value) { if (metricPrefix === '%') { return value.toFixed(0) + '%'; } return metricPrefix + formatLargeNumber(value).replace('.00',''); } } } },
+                        plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.parsed.y !== null) { if (metricPrefix === '%') { label += context.parsed.y.toFixed(1) + '%'; } else { label += metricPrefix + formatLargeNumber(context.parsed.y); } } return label; } } }, yAxisAlignPlugin: { enabled: true } }
+                    },
+                    plugins: [yAxisAlignPlugin, verticalStripesPlugin]
+                };
+            }
+            chart = new Chart(ctx, config);
         }
+
+        $container.on('click', '.jtw-historical-table tbody tr', function() {
+            const $row = $(this);
+            activeMetricKey = $row.data('metric-key');
+            updateChartAndTable();
+        });
 
         const resizeObserver = new ResizeObserver(debounce(updateChartAndTable, 150));
         resizeObserver.observe($container[0]);

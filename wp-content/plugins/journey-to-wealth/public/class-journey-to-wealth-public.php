@@ -124,7 +124,7 @@ class Journey_To_Wealth_Public {
             $output .= '<nav class="jtw-anchor-nav"><ul>';
             $output .= '<li class="jtw-nav-group jtw-nav-group-single"><a href="#section-overview" class="jtw-anchor-link jtw-nav-major-section active">' . esc_html__('Company Overview', 'journey-to-wealth') . '</a></li>';
             $output .= '<li class="jtw-nav-group"><span class="jtw-nav-major-section">' . esc_html__('Valuation', 'journey-to-wealth') . '</span><div class="jtw-nav-minor-group"><a href="#section-intrinsic-valuation" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Intrinsic Value Projection', 'journey-to-wealth') . '</a><a href="#section-key-metrics-ratios" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Key Metrics & Ratios', 'journey-to-wealth') . '</a></div></li>';
-            $output .= '<li class="jtw-nav-group"><span class="jtw-nav-major-section">' . esc_html__('Past Performance', 'journey-to-wealth') . '</span><div class="jtw-nav-minor-group"><a href="#section-historical-data" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Data Trends', 'journey-to-wealth') . '</a><a href="#section-past-performance" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Visual Trends', 'journey-to-wealth') . '</a></div></li>';
+            $output .= '<li class="jtw-nav-group"><span class="jtw-nav-major-section">' . esc_html__('Past Performance', 'journey-to-wealth') . '</span><div class="jtw-nav-minor-group"><a href="#section-historical-data" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Shareholder Metrics', 'journey-to-wealth') . '</a><a href="#section-past-performance" class="jtw-anchor-link jtw-nav-minor-section">' . esc_html__('Visual Data Trends', 'journey-to-wealth') . '</a></div></li>';
             $output .= '</ul></nav>';
             
             $output .= '<div class="jtw-mobile-dot-nav"></div>';
@@ -980,15 +980,7 @@ class Journey_To_Wealth_Public {
         $output .= '<button class="jtw-modal-trigger jtw-details-button" data-modal-target="#jtw-company-details-modal">' . esc_html__('View Full Company Details', 'journey-to-wealth') . '</button>';
         $output .= '</div>';
         
-        // Overview Header Grid
-        $output .= '<div class="jtw-overview-header-grid">';
-        $output .= $this->create_metric_card('Current Price', $stock_price, '$');
-        $output .= $this->create_metric_card('Market Capitalization', $overview['MarketCapitalization'] ?? 0, '$', '', true);
-        $output .= $this->create_metric_card('Shares Outstanding', $overview['SharesOutstanding'] ?? 0, '', '', true);
-        $output .= '</div>';
-    
-        $output .= '<div class="jtw-company-description"><p>' . esc_html($description) . '</p></div>';
-    
+        // **FIX**: Moved 52-week bar before metric boxes
         // Determine the display range for the progress bar
         $display_low = $week_low;
         $display_high = $week_high;
@@ -1013,6 +1005,15 @@ class Journey_To_Wealth_Public {
         $output .= '<span><strong>$' . esc_attr(number_format($display_high, 1)) . '</strong></span>';
         $output .= '</div>';
         $output .= '</div>';
+
+        // Overview Header Grid
+        $output .= '<div class="jtw-overview-header-grid">';
+        $output .= $this->create_metric_card('Current Price', $stock_price, '$');
+        $output .= $this->create_metric_card('Market Capitalization', $overview['MarketCapitalization'] ?? 0, '$', '', true);
+        $output .= $this->create_metric_card('Shares Outstanding', $overview['SharesOutstanding'] ?? 0, '', '', true);
+        $output .= '</div>';
+    
+        $output .= '<div class="jtw-company-description"><p>' . esc_html($description) . '</p></div>';
     
         // Two-column layout for links
         $output .= '<div class="jtw-link-cards-grid">';
@@ -1138,8 +1139,8 @@ class Journey_To_Wealth_Public {
                 'nextYearRevenueGrowth' => ['label' => 'Next Year Revenue Growth (Est)', 'suffix' => '%'],
             ],
             'Profitability' => [
-                'grossMargin' => ['label' => 'Gross Margin', 'suffix' => '%'],
-                'netMargin' => ['label' => 'Net Profit Margin', 'suffix' => '%'],
+                'grossMargin' => ['label' => 'TTM Gross Margin', 'suffix' => '%'],
+                'netMargin' => ['label' => 'TTM Net Profit Margin', 'suffix' => '%'],
             ],
             'Other Ratios' => [
                 'psRatio' => ['label' => 'TTM P/S Ratio', 'suffix' => 'x'],
@@ -1219,7 +1220,7 @@ class Journey_To_Wealth_Public {
     private function build_past_performance_section_html($historical_data) {
         $unique_id = 'hist-trends-' . uniqid();
         $output = '<div id="section-past-performance-content" class="jtw-content-section">';
-        $output .= '<h4>' . esc_html__('Visual Trends', 'journey-to-wealth') . '</h4>';
+        $output .= '<h4>' . esc_html__('Visual Data Trends', 'journey-to-wealth') . '</h4>';
         $output .= '<div class="jtw-chart-controls"><div class="jtw-period-toggle"><button class="jtw-period-button active" data-period="annual">Annual</button><button class="jtw-period-button" data-period="quarterly">Quarterly</button></div>';
         $output .= '<div class="jtw-chart-filter-toggle"><button class="jtw-category-button active" data-category="all">All Charts</button><button class="jtw-category-button" data-category="growth">Growth</button><button class="jtw-category-button" data-category="profitability">Profitability</button><button class="jtw-category-button" data-category="financial_health">Financial Health</button><button class="jtw-category-button" data-category="dividends_capital">Dividends & Capital</button></div></div>';
         $output .= '<div class="jtw-historical-charts-grid" id="' . esc_attr($unique_id) . '">';
@@ -1295,11 +1296,11 @@ class Journey_To_Wealth_Public {
             $output .= '</thead>';
             $output .= '<tbody>';
             $output .= '<tr><td data-label="Metric">Initial Growth Rate %</td><td data-label="Analyst">' . esc_html(number_format($analyst_growth, 1)) . '%</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="revGrowth" value="' . esc_attr(number_format($bear_growth, 1)) . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="revGrowth" value="' . esc_attr(number_format($base_growth, 1)) . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="revGrowth" value="' . esc_attr(number_format($bull_growth, 1)) . '"></td></tr>';
-            $output .= '<tr><td data-label="Metric">Discount Rate %</td><td colspan="4" data-label="Analyst">' . esc_html(number_format($analyst_discount_rate, 1)) . '%</td></tr>';
             $output .= '<tr><td data-label="Metric">' . esc_html($fcfe_label) . '</td><td data-label="Analyst">' . esc_html($this->format_large_number($analyst_fcfe)) . '</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td></tr>';
+            $output .= '<tr><td data-label="Metric">Discount Rate %</td><td colspan="4" data-label="Analyst">' . esc_html(number_format($analyst_discount_rate, 1)) . '%</td></tr>';
             $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-analyst-fv">$' . number_format($valuation_summary['fair_value'], 1) . '</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">-</td><td class="jtw-bull-fv">-</td></tr>';
             $output .= '<tr><td data-label="Metric">Desired CAGR %</td><td data-label="Analyst">-</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="desiredReturn" value="10"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="desiredReturn" value="10"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="desiredReturn" value="10"></td></tr>';
-            $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Price Target</td><td class="jtw-analyst-buy">-</td><td class="jtw-bear-buy">-</td><td class="jtw-base-buy">-</td><td class="jtw-bull-buy">-</td></tr>';
+            $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Price Target For Desired CAGR</td><td class="jtw-analyst-buy">-</td><td class="jtw-bear-buy">-</td><td class="jtw-base-buy">-</td><td class="jtw-bull-buy">-</td></tr>';
             $output .= '</tbody>';
             $output .= '</table>';
         }
@@ -1745,11 +1746,9 @@ class Journey_To_Wealth_Public {
                 'eps' => $eps,
                 'cash_flow_ps' => $shares > 0 ? $fcf / $shares : 0,
                 'book_value_ps' => $shares > 0 ? $shareholder_equity / $shares : 0,
-                'shares_outstanding' => $shares,
                 'net_profit_margin' => $revenue > 0 ? ($net_income / $revenue) * 100 : 0,
                 'return_on_equity' => $shareholder_equity > 0 ? ($net_income / $shareholder_equity) * 100 : 0,
                 'return_on_capital' => $total_capital > 0 ? ($ebit / $total_capital) * 100 : 0,
-                'shareholder_equity' => $shareholder_equity,
             ];
         }
     
@@ -1758,7 +1757,7 @@ class Journey_To_Wealth_Public {
 
     private function build_historical_data_section_html($table_data) {
         $output = '<div class="jtw-content-section" id="section-historical-data-content">';
-        $output .= '<h4>' . esc_html__('Data Trends', 'journey-to-wealth') . '</h4>';
+        $output .= '<h4>' . esc_html__('Shareholder Metrics', 'journey-to-wealth') . '</h4>';
     
         // Combined Chart and Table Wrapper
         $output .= '<div class="jtw-historical-combined-wrapper">';
@@ -1775,15 +1774,14 @@ class Journey_To_Wealth_Public {
         
         // Define the rows for the pivoted table
         $metrics = [
-            'revenue_ps' => 'Revenue / Share',
-            'eps' => 'EPS',
-            'cash_flow_ps' => 'FCF / Share',
-            'book_value_ps' => 'Book Value / Share',
-            'shares_outstanding' => 'Shares (M)',
-            'net_profit_margin' => 'Net Profit Margin',
-            'return_on_equity' => 'Return on Equity',
-            'return_on_capital' => 'Return on Capital',
-            'shareholder_equity' => 'Shareholder Equity',
+            'price' => ['label' => 'Price / Share', 'prefix' => '$'],
+            'revenue_ps' => ['label' => 'Revenue / Share', 'prefix' => '$'],
+            'eps' => ['label' => 'EPS', 'prefix' => '$'],
+            'cash_flow_ps' => ['label' => 'FCF / Share', 'prefix' => '$'],
+            'book_value_ps' => ['label' => 'Book Value / Share', 'prefix' => '$'],
+            'net_profit_margin' => ['label' => 'Net Profit Margin', 'prefix' => '%'],
+            'return_on_equity' => ['label' => 'Return on Equity', 'prefix' => '%'],
+            'return_on_capital' => ['label' => 'Return on Capital', 'prefix' => '%'],
         ];
     
         // Table Header (Years)
@@ -1795,27 +1793,18 @@ class Journey_To_Wealth_Public {
     
         // Table Body (Metrics as rows)
         $output .= '<tbody>';
-        foreach ($metrics as $key => $label) {
-            $output .= '<tr>';
-            $output .= '<td>' . esc_html($label) . '</td>'; // First cell is the metric label
+        foreach ($metrics as $key => $details) {
+            $output .= '<tr data-metric-key="' . esc_attr($key) . '" data-metric-label="' . esc_html($details['label']) . '" data-metric-prefix="' . esc_html($details['prefix']) . '">';
+            $output .= '<td>' . esc_html($details['label']) . '</td>'; // First cell is the metric label
             foreach ($table_data as $data_point) {
-                $value = $data_point[$key] ?? 'N/A';
+                $value_key = ($key === 'price') ? 'avg_price' : $key;
+                $value = $data_point[$value_key] ?? 'N/A';
                 $formatted_value = 'N/A';
                 if (is_numeric($value)) {
-                    switch ($key) {
-                        case 'shares_outstanding':
-                            $formatted_value = $this->format_large_number($value, '', 1);
-                            break;
-                        case 'shareholder_equity':
-                            $formatted_value = ($value != 0) ? $this->format_large_number($value, '$', 1) : 'N/A';
-                            break;
-                        case 'net_profit_margin':
-                        case 'return_on_equity':
-                        case 'return_on_capital':
-                            $formatted_value = number_format($value, 1) . '%';
-                            break;
-                        default:
-                            $formatted_value = '$' . number_format($value, 1);
+                    if ($details['prefix'] === '%') {
+                        $formatted_value = number_format($value, 1) . '%';
+                    } else {
+                        $formatted_value = '$' . number_format($value, 1);
                     }
                 }
                 $output .= '<td>' . esc_html($formatted_value) . '</td>';
