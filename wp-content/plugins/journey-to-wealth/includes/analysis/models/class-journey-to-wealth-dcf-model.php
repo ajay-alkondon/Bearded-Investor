@@ -27,14 +27,13 @@ class Journey_To_Wealth_DCF_Model {
     const MAX_YEARS_FOR_HISTORICAL_CALCS = 6;
     const MIN_YEARS_FOR_GROWTH_CALC = 3;
     
-    const HIGH_CAPEX_THRESHOLD = 0.70;
-
     public function __construct($equity_risk_premium = null, $levered_beta = null) {
         $this->equity_risk_premium = is_numeric($equity_risk_premium) ? $equity_risk_premium : 0.055;
         $this->levered_beta = is_numeric($levered_beta) ? $levered_beta : null;
     }
 
     private function get_av_value($report, $key, $default = 0) {
+        // This function correctly handles "none" values by treating them as the default (0).
         return isset($report[$key]) && is_numeric($report[$key]) && $report[$key] !== 'None' ? (float)$report[$key] : $default;
     }
 
@@ -58,42 +57,6 @@ class Journey_To_Wealth_DCF_Model {
         return ($beta > 0) ? $risk_free_rate + ($beta * $this->equity_risk_premium) : self::DEFAULT_COST_OF_EQUITY;
     }
 
-    private function get_historical_fcfe_and_breakdown($income_reports, $balance_reports, $cash_flow_reports) {
-        $fcfe_breakdown = [];
-        $income_map = [];
-        foreach($income_reports as $report) { $income_map[substr($report['fiscalDateEnding'], 0, 4)] = $report; }
-        $balance_map = [];
-        foreach($balance_reports as $report) { $balance_map[substr($report['fiscalDateEnding'], 0, 4)] = $report; }
-        $cash_flow_map = [];
-        foreach($cash_flow_reports as $report) { $cash_flow_map[substr($report['fiscalDateEnding'], 0, 4)] = $report; }
-        $sorted_years = array_keys($income_map);
-        rsort($sorted_years);
-
-        for ($i = 0; $i < count($sorted_years) - 1; $i++) {
-            $year_curr = $sorted_years[$i];
-            $year_prev = $sorted_years[$i+1];
-            $is_curr = $income_map[$year_curr] ?? null;
-            $cf_curr = $cash_flow_map[$year_curr] ?? null;
-            $bs_curr = $balance_map[$year_curr] ?? null;
-            $bs_prev = $balance_map[$year_prev] ?? null;
-            if (!$is_curr || !$cf_curr || !$bs_curr || !$bs_prev) continue;
-            $op_cash_flow = $this->get_av_value($cf_curr, 'operatingCashflow');
-            $capex = abs($this->get_av_value($cf_curr, 'capitalExpenditures'));
-            $debt_curr = $this->get_av_value($bs_curr, 'longTermDebt') + $this->get_av_value($bs_curr, 'shortTermDebt');
-            $debt_prev = $this->get_av_value($bs_prev, 'longTermDebt') + $this->get_av_value($bs_prev, 'shortTermDebt');
-            $net_borrowing = $debt_curr - $debt_prev;
-            $fcfe = $op_cash_flow - $capex + $net_borrowing;
-            $fcfe_breakdown[] = [
-                'year' => $year_curr,
-                'operating_cash_flow' => $op_cash_flow,
-                'capex' => -$capex,
-                'net_debt_issued' => $net_borrowing,
-                'fcfe' => $fcfe,
-            ];
-        }
-        return array_reverse($fcfe_breakdown);
-    }
-    
     private function calculate_historical_cagr($reports, $key) {
         if (empty($reports) || count($reports) < self::MIN_YEARS_FOR_GROWTH_CALC) {
             return null;
@@ -210,88 +173,131 @@ class Journey_To_Wealth_DCF_Model {
             }
         }
 
-        $income_reports = array_slice($income_statement_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
-        $balance_reports = array_slice($balance_sheet_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
-        $cash_flow_reports = array_slice($cash_flow_data['annualReports'], 0, self::MAX_YEARS_FOR_HISTORICAL_CALCS);
-        
-        $cagr_calculation_table = $this->get_historical_fcfe_and_breakdown($income_reports, $balance_reports, $cash_flow_reports);
-        if(empty($cagr_calculation_table)) return new WP_Error('dcf_calc_error', __('Could not calculate historical FCFE.', 'journey-to-wealth'));
-        
+        // --- Setup initial parameters ---
         $risk_free_rate = $this->calculate_average_risk_free_rate($treasury_yield_data);
         $beta = $this->levered_beta ?? $beta_details['levered_beta'] ?? $this->get_av_value($overview_data, 'Beta');
         $this->cost_of_equity = $this->calculate_cost_of_equity($beta, $risk_free_rate);
         $this->terminal_growth_rate = $risk_free_rate;
-
-        // --- Start of default calculations ---
+        $historical_ratios = $this->calculate_historical_ratios($income_statement_data['annualReports'], $cash_flow_data['annualReports'], $balance_sheet_data['annualReports'], $overview_data);
+        
+        // --- Determine Base Revenue and Initial Growth Rate ---
+        $last_revenue = null;
         $growth_rate_info = $this->get_initial_growth_rate($earnings_estimates, $income_statement_data['annualReports'], $this->terminal_growth_rate, $beta_details);
         $initial_growth_rate = $growth_rate_info['rate'];
         $growth_rate_source = $growth_rate_info['source'];
 
-        $base_fcfe_data = end($cagr_calculation_table);
-        $base_cash_flow = $base_fcfe_data['fcfe'];
-        $base_cash_flow_source = 'FCFE';
+        // **DEFINITIVE FIX**: Directly find the most recent analyst estimate for the current year to use as the base revenue.
+        if (!is_wp_error($earnings_estimates) && !empty($earnings_estimates['estimates'])) {
+            $estimates = $earnings_estimates['estimates'];
+            
+            $current_year_estimates = array_filter($estimates, function($e) {
+                return isset($e['horizon']) && $e['horizon'] === 'current fiscal year';
+            });
 
-        $high_capex_year_count = 0;
-        $historical_years_for_capex = array_slice($cagr_calculation_table, -3);
+            if (!empty($current_year_estimates)) {
+                usort($current_year_estimates, function($a, $b) {
+                    return strtotime($b['date']) - strtotime($a['date']);
+                });
+                
+                $latest_current_year_estimate = $current_year_estimates[0];
+                
+                $beta_for_growth = $beta_details['unlevered_beta_avg'] ?? 1.0;
+                $revenue_key = 'revenue_estimate_average';
+                if ($beta_for_growth <= 0.9) $revenue_key = 'revenue_estimate_low';
+                elseif ($beta_for_growth > 1.1) $revenue_key = 'revenue_estimate_high';
 
-        if(count($historical_years_for_capex) >= 3) {
-            foreach ($historical_years_for_capex as $year_data) {
-                $op_cash_flow = $year_data['operating_cash_flow'];
-                $capex = abs($year_data['capex']);
-                if ($op_cash_flow > 0 && ($capex / $op_cash_flow) >= self::HIGH_CAPEX_THRESHOLD) {
-                    $high_capex_year_count++;
-                }
+                $last_revenue = $this->get_av_value($latest_current_year_estimate, $revenue_key);
             }
         }
 
-        if ($high_capex_year_count >= 2) {
-            $base_cash_flow = $base_fcfe_data['operating_cash_flow'];
-            $base_cash_flow_source = 'Operating Cash Flow (Majority High CapEx - 3Y)';
-        }
-
-        if ($base_cash_flow <= 0) {
-            $positive_cash_flows = array_filter(array_column($cagr_calculation_table, 'fcfe'), function($cf) { return $cf > 0; });
-            if (empty($positive_cash_flows)) return new WP_Error('dcf_negative_inputs', __('Company has no history of positive cash flows, cannot create valuation.', 'journey-to-wealth'));
-            $base_cash_flow = end($positive_cash_flows);
-            $base_cash_flow_source = 'Last Positive FCFE';
-        }
-        // --- End of default calculations ---
-
-        // --- Override with custom assumptions ---
-        if (!empty($custom_assumptions)) {
-            if (isset($custom_assumptions['initial_growth_rate']) && is_numeric($custom_assumptions['initial_growth_rate'])) {
-                $initial_growth_rate = (float)$custom_assumptions['initial_growth_rate'];
-                $growth_rate_source = 'User Input';
-            }
-            if (isset($custom_assumptions['initial_fcfe_override']) && is_numeric($custom_assumptions['initial_fcfe_override'])) {
-                $base_cash_flow = (float)$custom_assumptions['initial_fcfe_override'];
-                $base_cash_flow_source = 'User Input';
-            }
+        // Fallback to the most recent historical annual revenue if no valid analyst estimate was found
+        if ($last_revenue === null || $last_revenue == 0) {
+            $last_revenue = $this->get_av_value($income_statement_data['annualReports'][0], 'totalRevenue');
         }
         
         // --- Projection Logic ---
         $projection_table = [];
         $sum_of_pv_cfs = 0;
-        $current_cf = $base_cash_flow;
-        $current_growth_rate = $initial_growth_rate;
-        $growth_decay_rate = ($initial_growth_rate - $this->terminal_growth_rate) / $projection_years;
+        $current_calendar_year = (int)date('Y');
+        $start_projection_year = $current_calendar_year + 1;
+        
+        $current_growth_rate = $initial_growth_rate; 
+
+        if (isset($custom_assumptions['initial_growth_rate']) && is_numeric($custom_assumptions['initial_growth_rate'])) {
+            $current_growth_rate = (float)$custom_assumptions['initial_growth_rate'];
+            $initial_growth_rate = $current_growth_rate;
+            $growth_rate_source = 'User Input';
+        }
+
+        $growth_decay_rate = 0;
+        $decay_is_setup = false;
+        $first_projected_fcfe = null;
+        $last_fcfe = 0;
 
         for ($i = 1; $i <= $projection_years; $i++) {
-            $current_cf *= (1 + $current_growth_rate);
-            $pv_cf = $current_cf / pow(1 + $this->cost_of_equity, $i);
+            $projection_year = $start_projection_year + $i - 1;
+            $projected_revenue = 0;
+            $period_growth_rate = 0;
+            
+            if ($i == 1) {
+                $period_growth_rate = $initial_growth_rate;
+            } else {
+                if (!$decay_is_setup) {
+                    $remaining_years = $projection_years - 1;
+                    if ($remaining_years > 0) {
+                        $growth_decay_rate = ($current_growth_rate - $this->terminal_growth_rate) / $remaining_years;
+                    }
+                    $decay_is_setup = true;
+                }
+                $current_growth_rate -= $growth_decay_rate;
+                $period_growth_rate = $current_growth_rate;
+            }
+            
+            $projected_revenue = $last_revenue * (1 + $period_growth_rate);
+            
+            $projected_fcfe = 0;
+            if ($i == 1) {
+                if (isset($custom_assumptions['initial_fcfe_override']) && is_numeric($custom_assumptions['initial_fcfe_override'])) {
+                    $projected_fcfe = (float)$custom_assumptions['initial_fcfe_override'];
+                } else {
+                    $projected_net_income = $projected_revenue * $historical_ratios['ttm_profit_margin'];
+                    $projected_depreciation = $projected_revenue * $historical_ratios['depreciation_of_revenue'];
+                    $projected_capex = $projected_revenue * $historical_ratios['capex_of_revenue'];
+                    $projected_change_in_nwc = $projected_revenue * $historical_ratios['nwc_of_revenue'];
+                    $projected_net_borrowing = $projected_revenue * $historical_ratios['net_borrowing_of_revenue'];
+                    $projected_fcfe = $projected_net_income + $projected_depreciation - $projected_capex - $projected_change_in_nwc + $projected_net_borrowing;
+                }
+                $first_projected_fcfe = $projected_fcfe;
+            } else {
+                if ($first_projected_fcfe < 0) {
+                    $improvement_amount = abs($first_projected_fcfe) * $period_growth_rate;
+                    $projected_fcfe = $last_fcfe + $improvement_amount;
+                } else {
+                    $projected_net_income = $projected_revenue * $historical_ratios['ttm_profit_margin'];
+                    $projected_depreciation = $projected_revenue * $historical_ratios['depreciation_of_revenue'];
+                    $projected_capex = $projected_revenue * $historical_ratios['capex_of_revenue'];
+                    $projected_change_in_nwc = $projected_revenue * $historical_ratios['nwc_of_revenue'];
+                    $projected_net_borrowing = $projected_revenue * $historical_ratios['net_borrowing_of_revenue'];
+                    $projected_fcfe = $projected_net_income + $projected_depreciation - $projected_capex - $projected_change_in_nwc + $projected_net_borrowing;
+                }
+            }
+
+            $pv_cf = $projected_fcfe / pow(1 + $this->cost_of_equity, $i);
             $sum_of_pv_cfs += $pv_cf;
 
             $projection_table[] = [
-                'year' => date('Y') + $i,
-                'cf' => $current_cf,
-                'growth_rate' => $current_growth_rate,
+                'year' => $projection_year,
+                'cf' => $projected_fcfe,
+                'growth_rate' => $period_growth_rate,
                 'pv_cf' => $pv_cf
             ];
 
-            $current_growth_rate -= $growth_decay_rate;
+            $last_revenue = $projected_revenue;
+            $last_fcfe = $projected_fcfe;
         }
 
-        $terminal_value = ($current_cf * (1 + $this->terminal_growth_rate)) / ($this->cost_of_equity - $this->terminal_growth_rate);
+        $last_projected_fcfe = end($projection_table)['cf'];
+        $terminal_value = ($last_projected_fcfe * (1 + $this->terminal_growth_rate)) / ($this->cost_of_equity - $this->terminal_growth_rate);
         if ($this->cost_of_equity <= $this->terminal_growth_rate) {
             return new WP_Error('dcf_terminal_value_error', __('Terminal value cannot be calculated, cost of equity is not greater than terminal growth rate.', 'journey-to-wealth'));
         }
@@ -314,10 +320,9 @@ class Journey_To_Wealth_DCF_Model {
                 'pv_of_terminal_value' => $pv_of_terminal_value,
                 'total_equity_value' => $total_equity_value,
                 'projection_table' => $projection_table,
-                'cagr_calculation_table' => $cagr_calculation_table,
                 'inputs' => [
-                    'base_cash_flow' => $base_cash_flow,
-                    'base_cash_flow_source' => $base_cash_flow_source,
+                    'base_cash_flow' => $first_projected_fcfe,
+                    'base_cash_flow_source' => 'Projected from Component Ratios',
                     'initial_growth_rate' => $initial_growth_rate,
                     'growth_rate_source' => $growth_rate_source,
                     'terminal_growth_rate' => $this->terminal_growth_rate,
@@ -332,7 +337,76 @@ class Journey_To_Wealth_DCF_Model {
                     'beta_details' => $beta_details,
                     'cost_of_equity_calc' => 'Risk-Free Rate + (Beta * Equity Risk Premium)',
                 ],
+                'component_ratios' => $historical_ratios,
+                'last_revenue' => $last_revenue,
             ]
         ];
+    }
+
+    private function calculate_historical_ratios($income_reports, $cash_flow_reports, $balance_reports, $overview_data, $num_years = 5) {
+        $income_reports = array_slice($income_reports, 0, $num_years);
+        $cash_flow_reports = array_slice($cash_flow_reports, 0, $num_years);
+        $balance_reports = array_slice($balance_reports, 0, $num_years + 1); // Need one extra year for debt calculation
+
+        $ratios = [
+            'depreciation_of_revenue' => [],
+            'capex_of_revenue' => [],
+            'nwc_of_revenue' => [],
+            'net_borrowing_of_revenue' => [],
+        ];
+
+        $income_map = [];
+        foreach($income_reports as $report) { $income_map[substr($report['fiscalDateEnding'], 0, 4)] = $report; }
+        $cash_flow_map = [];
+        foreach($cash_flow_reports as $report) { $cash_flow_map[substr($report['fiscalDateEnding'], 0, 4)] = $report; }
+        $balance_map = [];
+        foreach($balance_reports as $report) { $balance_map[substr($report['fiscalDateEnding'], 0, 4)] = $report; }
+        
+        $sorted_years = array_keys($income_map);
+        rsort($sorted_years);
+
+        foreach ($sorted_years as $year) {
+            $previous_year = $year - 1;
+            $income = $income_map[$year] ?? null;
+            $cash_flow = $cash_flow_map[$year] ?? null;
+            $balance_current = $balance_map[$year] ?? null;
+            $balance_previous = $balance_map[$previous_year] ?? null;
+
+            if (!$income || !$cash_flow || !$balance_current || !$balance_previous) continue;
+
+            $revenue = $this->get_av_value($income, 'totalRevenue');
+            if ($revenue > 0) {
+                $ratios['depreciation_of_revenue'][] = $this->get_av_value($cash_flow, 'depreciationDepletionAndAmortization') / $revenue;
+                $ratios['capex_of_revenue'][] = abs($this->get_av_value($cash_flow, 'capitalExpenditures')) / $revenue;
+                
+                $changeInInventory = $this->get_av_value($cash_flow, 'changeInInventory');
+                $changeInReceivables = $this->get_av_value($cash_flow, 'changeInReceivables');
+                $changeInOpLiabilities = $this->get_av_value($cash_flow, 'changeInOperatingLiabilities');
+                $changeInWorkingCapital = -$changeInReceivables - $changeInInventory + $changeInOpLiabilities;
+                $ratios['nwc_of_revenue'][] = $changeInWorkingCapital / $revenue;
+
+                $proceeds_long_term = $this->get_av_value($cash_flow, 'proceedsFromIssuanceOfLongTermDebtAndCapitalSecuritiesNet');
+                $ltd_current = $this->get_av_value($balance_current, 'longTermDebt');
+                $ltd_previous = $this->get_av_value($balance_previous, 'longTermDebt');
+                $change_in_ltd = $ltd_current - $ltd_previous;
+                $repayment_long_term = $proceeds_long_term - $change_in_ltd;
+                $proceeds_short_term = $this->get_av_value($cash_flow, 'proceedsFromRepaymentsOfShortTermDebt');
+                $net_borrowing = $proceeds_short_term + $proceeds_long_term - $repayment_long_term;
+                $ratios['net_borrowing_of_revenue'][] = $net_borrowing / $revenue;
+            }
+        }
+
+        $averages = [];
+        foreach ($ratios as $key => $values) {
+            if (count($values) > 0) {
+                $averages[$key] = array_sum($values) / count($values);
+            } else {
+                $averages[$key] = 0.05;
+            }
+        }
+        
+        $averages['ttm_profit_margin'] = $this->get_av_value($overview_data, 'ProfitMargin', 0.10);
+
+        return $averages;
     }
 }
