@@ -186,7 +186,6 @@ class Journey_To_Wealth_DCF_Model {
         $initial_growth_rate = $growth_rate_info['rate'];
         $growth_rate_source = $growth_rate_info['source'];
 
-        // **DEFINITIVE FIX**: Directly find the most recent analyst estimate for the current year to use as the base revenue.
         if (!is_wp_error($earnings_estimates) && !empty($earnings_estimates['estimates'])) {
             $estimates = $earnings_estimates['estimates'];
             
@@ -194,27 +193,32 @@ class Journey_To_Wealth_DCF_Model {
                 return isset($e['horizon']) && $e['horizon'] === 'current fiscal year';
             });
 
+            $latest_current_year_estimate = null;
             if (!empty($current_year_estimates)) {
                 usort($current_year_estimates, function($a, $b) {
                     return strtotime($b['date']) - strtotime($a['date']);
                 });
-                
                 $latest_current_year_estimate = $current_year_estimates[0];
-                
+            }
+
+            if ($latest_current_year_estimate) {
                 $beta_for_growth = $beta_details['unlevered_beta_avg'] ?? 1.0;
                 $revenue_key = 'revenue_estimate_average';
-                if ($beta_for_growth <= 0.9) $revenue_key = 'revenue_estimate_low';
-                elseif ($beta_for_growth > 1.1) $revenue_key = 'revenue_estimate_high';
-
+                if ($beta_for_growth <= 0.9) {
+                    $revenue_key = 'revenue_estimate_low';
+                } elseif ($beta_for_growth > 1.1) {
+                    $revenue_key = 'revenue_estimate_high';
+                }
                 $last_revenue = $this->get_av_value($latest_current_year_estimate, $revenue_key);
             }
         }
 
-        // Fallback to the most recent historical annual revenue if no valid analyst estimate was found
         if ($last_revenue === null || $last_revenue == 0) {
             $last_revenue = $this->get_av_value($income_statement_data['annualReports'][0], 'totalRevenue');
         }
         
+        $base_revenue = $last_revenue;
+
         // --- Projection Logic ---
         $projection_table = [];
         $sum_of_pv_cfs = 0;
@@ -233,6 +237,7 @@ class Journey_To_Wealth_DCF_Model {
         $decay_is_setup = false;
         $first_projected_fcfe = null;
         $last_fcfe = 0;
+        $ratios_for_projection = $historical_ratios['projection_ratios'];
 
         for ($i = 1; $i <= $projection_years; $i++) {
             $projection_year = $start_projection_year + $i - 1;
@@ -260,25 +265,20 @@ class Journey_To_Wealth_DCF_Model {
                 if (isset($custom_assumptions['initial_fcfe_override']) && is_numeric($custom_assumptions['initial_fcfe_override'])) {
                     $projected_fcfe = (float)$custom_assumptions['initial_fcfe_override'];
                 } else {
-                    $projected_net_income = $projected_revenue * $historical_ratios['ttm_profit_margin'];
-                    $projected_depreciation = $projected_revenue * $historical_ratios['depreciation_of_revenue'];
-                    $projected_capex = $projected_revenue * $historical_ratios['capex_of_revenue'];
-                    $projected_change_in_nwc = $projected_revenue * $historical_ratios['nwc_of_revenue'];
-                    $projected_net_borrowing = $projected_revenue * $historical_ratios['net_borrowing_of_revenue'];
+                    $projected_net_income = $projected_revenue * $ratios_for_projection['net_income_of_revenue'];
+                    $projected_depreciation = $projected_revenue * $ratios_for_projection['depreciation_of_revenue'];
+                    $projected_capex = $projected_revenue * $ratios_for_projection['capex_of_revenue'];
+                    $projected_change_in_nwc = $projected_revenue * $ratios_for_projection['nwc_of_revenue'];
+                    $projected_net_borrowing = $projected_revenue * $ratios_for_projection['net_borrowing_of_revenue'];
                     $projected_fcfe = $projected_net_income + $projected_depreciation - $projected_capex - $projected_change_in_nwc + $projected_net_borrowing;
                 }
                 $first_projected_fcfe = $projected_fcfe;
             } else {
-                if ($first_projected_fcfe < 0) {
-                    $improvement_amount = abs($first_projected_fcfe) * $period_growth_rate;
-                    $projected_fcfe = $last_fcfe + $improvement_amount;
+                if ($last_fcfe < 0) {
+                    $improvement = abs($last_fcfe) * $period_growth_rate;
+                    $projected_fcfe = $last_fcfe + $improvement;
                 } else {
-                    $projected_net_income = $projected_revenue * $historical_ratios['ttm_profit_margin'];
-                    $projected_depreciation = $projected_revenue * $historical_ratios['depreciation_of_revenue'];
-                    $projected_capex = $projected_revenue * $historical_ratios['capex_of_revenue'];
-                    $projected_change_in_nwc = $projected_revenue * $historical_ratios['nwc_of_revenue'];
-                    $projected_net_borrowing = $projected_revenue * $historical_ratios['net_borrowing_of_revenue'];
-                    $projected_fcfe = $projected_net_income + $projected_depreciation - $projected_capex - $projected_change_in_nwc + $projected_net_borrowing;
+                    $projected_fcfe = $last_fcfe * (1 + $period_growth_rate);
                 }
             }
 
@@ -338,7 +338,7 @@ class Journey_To_Wealth_DCF_Model {
                     'cost_of_equity_calc' => 'Risk-Free Rate + (Beta * Equity Risk Premium)',
                 ],
                 'component_ratios' => $historical_ratios,
-                'last_revenue' => $last_revenue,
+                'base_revenue' => $base_revenue,
             ]
         ];
     }
@@ -349,11 +349,14 @@ class Journey_To_Wealth_DCF_Model {
         $balance_reports = array_slice($balance_reports, 0, $num_years + 1); // Need one extra year for debt calculation
 
         $ratios = [
+            'net_income_of_revenue' => [],
             'depreciation_of_revenue' => [],
             'capex_of_revenue' => [],
             'nwc_of_revenue' => [],
             'net_borrowing_of_revenue' => [],
         ];
+        
+        $yearly_data = [];
 
         $income_map = [];
         foreach($income_reports as $report) { $income_map[substr($report['fiscalDateEnding'], 0, 4)] = $report; }
@@ -376,14 +379,15 @@ class Journey_To_Wealth_DCF_Model {
 
             $revenue = $this->get_av_value($income, 'totalRevenue');
             if ($revenue > 0) {
-                $ratios['depreciation_of_revenue'][] = $this->get_av_value($cash_flow, 'depreciationDepletionAndAmortization') / $revenue;
-                $ratios['capex_of_revenue'][] = abs($this->get_av_value($cash_flow, 'capitalExpenditures')) / $revenue;
+                // Calculate individual components
+                $net_income = $this->get_av_value($income, 'netIncome');
+                $depreciation = $this->get_av_value($cash_flow, 'depreciationDepletionAndAmortization');
+                $capex = abs($this->get_av_value($cash_flow, 'capitalExpenditures'));
                 
                 $changeInInventory = $this->get_av_value($cash_flow, 'changeInInventory');
                 $changeInReceivables = $this->get_av_value($cash_flow, 'changeInReceivables');
                 $changeInOpLiabilities = $this->get_av_value($cash_flow, 'changeInOperatingLiabilities');
                 $changeInWorkingCapital = -$changeInReceivables - $changeInInventory + $changeInOpLiabilities;
-                $ratios['nwc_of_revenue'][] = $changeInWorkingCapital / $revenue;
 
                 $proceeds_long_term = $this->get_av_value($cash_flow, 'proceedsFromIssuanceOfLongTermDebtAndCapitalSecuritiesNet');
                 $ltd_current = $this->get_av_value($balance_current, 'longTermDebt');
@@ -392,21 +396,79 @@ class Journey_To_Wealth_DCF_Model {
                 $repayment_long_term = $proceeds_long_term - $change_in_ltd;
                 $proceeds_short_term = $this->get_av_value($cash_flow, 'proceedsFromRepaymentsOfShortTermDebt');
                 $net_borrowing = $proceeds_short_term + $proceeds_long_term - $repayment_long_term;
+
+                // Add to ratios array for averaging
+                $ratios['net_income_of_revenue'][] = $net_income / $revenue;
+                $ratios['depreciation_of_revenue'][] = $depreciation / $revenue;
+                $ratios['capex_of_revenue'][] = $capex / $revenue;
+                $ratios['nwc_of_revenue'][] = $changeInWorkingCapital / $revenue;
                 $ratios['net_borrowing_of_revenue'][] = $net_borrowing / $revenue;
+                
+                // Store detailed data for this year
+                $yearly_data[$year] = [
+                    'revenue' => $revenue,
+                    'net_income' => $net_income,
+                    'depreciation' => $depreciation,
+                    'capex' => $capex,
+                    'change_in_nwc' => $changeInWorkingCapital,
+                    'net_borrowing' => $net_borrowing
+                ];
             }
         }
 
         $averages = [];
         foreach ($ratios as $key => $values) {
-            if (count($values) > 0) {
+            if (count($values) >= 3) {
+                sort($values);
+                $trimmed_values = array_slice($values, 1, -1);
+                $averages[$key] = array_sum($trimmed_values) / count($trimmed_values);
+            } elseif (count($values) > 0) {
                 $averages[$key] = array_sum($values) / count($values);
             } else {
-                $averages[$key] = 0.05;
+                $averages[$key] = ($key === 'net_income_of_revenue') ? 0.10 : 0.05;
             }
         }
         
-        $averages['ttm_profit_margin'] = $this->get_av_value($overview_data, 'ProfitMargin', 0.10);
+        $projection_ratios = $averages; // Start with averages as a fallback.
+        $most_recent_year = $sorted_years[0] ?? null;
 
-        return $averages;
+        if ($most_recent_year && isset($yearly_data[$most_recent_year])) {
+            $most_recent_data = $yearly_data[$most_recent_year];
+            $most_recent_revenue = $most_recent_data['revenue'];
+
+            if ($most_recent_revenue > 0) {
+                $last_year_ratios = [
+                    'net_income_of_revenue' => $most_recent_data['net_income'] / $most_recent_revenue,
+                    'depreciation_of_revenue' => $most_recent_data['depreciation'] / $most_recent_revenue,
+                    'capex_of_revenue' => $most_recent_data['capex'] / $most_recent_revenue,
+                    'nwc_of_revenue' => $most_recent_data['change_in_nwc'] / $most_recent_revenue,
+                    'net_borrowing_of_revenue' => $most_recent_data['net_borrowing'] / $most_recent_revenue,
+                ];
+
+                foreach ($last_year_ratios as $key => $last_year_value) {
+                    $is_outlier = false;
+
+                    if (($key === 'capex_of_revenue' || $key === 'depreciation_of_revenue') && $last_year_value <= 0) {
+                        $is_outlier = true;
+                    }
+
+                    if (!$is_outlier) {
+                        $projection_ratios[$key] = $last_year_value;
+                    }
+                }
+            }
+        }
+        
+        // **FIX**: Removed the TTM profit margin override to ensure the last full year's ratio is used.
+        // $ttm_profit_margin = $this->get_av_value($overview_data, 'ProfitMargin');
+        // if (is_numeric($ttm_profit_margin)) {
+        //     $projection_ratios['net_income_of_revenue'] = $ttm_profit_margin;
+        // }
+
+        return [
+            'averages' => $averages,
+            'yearly_data' => $yearly_data,
+            'projection_ratios' => $projection_ratios
+        ];
     }
 }
