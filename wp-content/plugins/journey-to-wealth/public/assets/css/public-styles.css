@@ -724,15 +724,12 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     text-align: center;
     margin-bottom: 25px;
     font-size: 1.2em;
+    height: 2em; /* Reserve space for the text */
 }
-.jtw-sws-header strong {
-    display: block;
-    font-size: 1.5em;
-    padding: 5px 0;
-}
-.jtw-sws-status-positive strong { color: #2ecc71; } /* Green for undervalued */
-.jtw-sws-status-negative strong { color: #e74c3c; } /* Red for overvalued */
-.jtw-sws-status-neutral strong { color: #f1c40f; } /* Yellow for neutral */
+
+.jtw-sws-status-positive { color: #2ecc71; } /* Green for undervalued */
+.jtw-sws-status-negative { color: #e74c3c; } /* Red for overvalued */
+.jtw-sws-status-neutral { color: #f1c40f; } /* Yellow for neutral */
 
 .jtw-sws-chart {
     position: relative;
@@ -765,11 +762,21 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     background-color: #58d68d;
 }
 
-.jtw-sws-fv-bar {
+/* Styles for the stacked bar */
+.jtw-sws-stacked-bar {
+    display: flex;
     height: 100%;
     width: 100%;
-    background-color: #3498db;
 }
+.jtw-sws-stacked-bar .jtw-sws-zone {
+    height: 100%;
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+/* **MODIFIED**: Updated colors for better contrast */
+.jtw-sws-stacked-bar .bear-case { background-color: #a9cce3; } /* Light Steel Blue */
+.jtw-sws-stacked-bar .base-case { background-color: #5dade2; } /* Picton Blue */
+.jtw-sws-stacked-bar .bull-case { background-color: #2e86c1; } /* Curious Blue */
+
 
 .jtw-sws-label-group {
     position: absolute;
@@ -781,16 +788,17 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     transition: color 0.3s ease;
 }
 
+/* **MODIFIED**: Reduced font size */
 .jtw-sws-label-group span {
     display: block;
-    font-size: 0.9em;
+    font-size: 0.8em;
     color: var(--jtw-text-dark);
     font-weight: 500;
 }
 
 .jtw-sws-label-group strong {
     display: block;
-    font-size: 1.4em; /* Larger font */
+    font-size: 1.2em; 
     font-weight: 700;
     color: var(--jtw-text-dark);
 }
@@ -812,7 +820,7 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 1;
+    z-index: 1; /* **FIX**: Ensure this is behind the bars */
 }
 
 .jtw-sws-zone-bar {
@@ -838,28 +846,12 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
         rgba(231, 76, 60, 0.7) 10px,
         rgba(231, 76, 60, 0.7) 20px
     );
+    flex-grow: 1; /* **FIX**: Removed this to allow JS to control width */
 }
 
-.jtw-sws-zone-labels {
-    display: flex;
-    width: 100%;
-    position: absolute;
-    bottom: -120px; /* Position below the container's padding */
-    left: 0;
-    height: 80px; /* Give it enough height */
-}
-.jtw-sws-zone-labels span {
-    text-align: center;
-    transform: rotate(-45deg);
-    transform-origin: center center;
-    position: relative;
-    font-size: 0.8em;
-    color: #bdc3c7;
-    white-space: nowrap;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+/* **REMOVED**: Old label styles are no longer needed */
+.jtw-sws-zone-labels { display: none; }
+.jtw-case-label { display: none; }
 
 
 /* --- Modals --- */
@@ -950,7 +942,7 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
         color: var(--jtw-text-dark);
     }
     .jtw-sws-zone-bar-row, .jtw-sws-zone-labels { left: 0; width: 100%; }
-    .jtw-sws-zone-labels span { font-size: 0.7em; }
+    .jtw-case-label { font-size: 0.9em; }
     .jtw-link-cards-grid { grid-template-columns: 1fr; }
     
     .jtw-assumption-input {
@@ -1007,7 +999,7 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     white-space: nowrap; 
     border-left: 1px solid var(--jtw-border-color-light); 
     width: auto;
-    transition: background-color 0.2s ease;
+    background-color: 0.2s ease;
 }
 .jtw-historical-table thead th { background-color: transparent; border: none; font-weight: 600; padding-top: 20px; }
 .jtw-historical-table thead th:not(:first-child) { text-align: center !important; }

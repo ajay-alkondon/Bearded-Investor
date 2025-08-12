@@ -7,7 +7,7 @@
  * 3. The new Historical Data "Value Line" style chart.
  * 4. The redesigned Company Overview section with animated bars.
  * 5. The peer comparison feature in the Key Metrics section.
- * 6. The interactive Fair Value Analysis section with a dual-chart layout.
+ * 6. The interactive Fair Value Analysis section with a stacked bar graphic.
  *
  * @link       https://example.com/journey-to-wealth/
  * @since      1.0.0
@@ -246,7 +246,6 @@
     }
 
     function initializeFairValueAnalysisSection($container) {
-        const interactiveChart = initializeInteractiveBarChart($container);
         initializeSwsValuationGraphic($container);
     
         const recalculateValuation = debounce(function() {
@@ -299,11 +298,6 @@
                     if (response.success && response.data) {
                         const data = response.data;
 
-                        // Update analyst value if it exists in the response
-                        if (data.analyst_fv) {
-                             $container.find('.jtw-analyst-fv').text('$' + data.analyst_fv.intrinsic_value_per_share.toFixed(1));
-                        }
-
                         // Update table
                         $container.find('.jtw-bear-fv').text('$' + data.bear.fair_value.toFixed(1));
                         $container.find('.jtw-base-fv').text('$' + data.base.fair_value.toFixed(1));
@@ -317,58 +311,56 @@
                             $('#jtw-assumptions-modal .jtw-modal-content').html('<span class="jtw-modal-close">&times;</span>' + data.new_modal_html);
                         }
     
-                        if (data.analyst_fv) {
-                            const $swsContainer = $container.find('.jtw-sws-valuation-container');
-                            const currentPrice = parseFloat($swsContainer.attr('data-current-price'));
-                            const fairValue = data.analyst_fv.intrinsic_value_per_share;
-        
-                            if (fairValue > 0 && currentPrice > 0) {
-                                const percentageDiff = ((currentPrice - fairValue) / fairValue) * 100;
-                                let status = 'About Right';
-                                let statusClass = 'jtw-sws-status-neutral';
-                                if (percentageDiff > 20) {
-                                    status = 'Overvalued';
-                                    statusClass = 'jtw-sws-status-negative';
-                                } else if (percentageDiff < -20) {
-                                    status = 'Undervalued';
-                                    statusClass = 'jtw-sws-status-positive';
-                                }
-                                
-                                $swsContainer.find('.jtw-sws-header').removeClass('jtw-sws-status-positive jtw-sws-status-negative jtw-sws-status-neutral').addClass(statusClass)
-                                    .find('strong').text(Math.abs(percentageDiff).toFixed(1) + '% ' + status);
-            
-                                $swsContainer.find('.jtw-sws-bar-row:nth-child(2) .jtw-sws-label-group strong').text('$' + fairValue.toFixed(2));
-                                
-                                const rangeMax = Math.max(currentPrice, fairValue) * 1.3;
-                                const pricePosPct = Math.min(100, (currentPrice / rangeMax) * 100);
-                                const fvPosPct = Math.min(100, (fairValue / rangeMax) * 100);
-                                const undervaluedMax = fairValue * 0.8;
-                                const overvaluedMin = fairValue * 1.2;
-                                const greenWidthPct = (undervaluedMax / rangeMax) * 100;
-                                const yellowWidthPct = ((overvaluedMin - undervaluedMax) / rangeMax) * 100;
-            
-                                $swsContainer.find('.jtw-sws-bar-wrapper').first().css('width', pricePosPct + '%');
-                                $swsContainer.find('.jtw-sws-bar-wrapper').last().css('width', fvPosPct + '%');
-                                $swsContainer.find('.jtw-sws-zone.undervalued').css('width', greenWidthPct + '%');
-                                $swsContainer.find('.jtw-sws-zone.about-right').css('width', yellowWidthPct + '%');
-                            } else {
-                                $swsContainer.find('.jtw-sws-header strong').text('Valuation N/A');
-                                $swsContainer.find('.jtw-sws-bar-wrapper, .jtw-sws-zone').css('width', '0%');
-                            }
-                        }
+                        // Update the SWS Valuation Graphic
+                        const $swsContainer = $container.find('.jtw-sws-valuation-container');
+                        const currentPrice = parseFloat($swsContainer.attr('data-current-price'));
+                        const bear_fv = data.bear.fair_value;
+                        const base_fv = data.base.fair_value;
+                        const bull_fv = data.bull.fair_value;
+    
+                        if (bull_fv > 0 && currentPrice > 0) {
+                            
+                            const rangeMax = Math.max(currentPrice, bull_fv) * 1.3;
+                            
+                            const pricePosPct = Math.min(100, (currentPrice / rangeMax) * 100);
+                            $swsContainer.find('.jtw-sws-bar-row:not(.jtw-sws-stacked-bar-row) .jtw-sws-bar-wrapper').css('width', pricePosPct + '%');
+                            
+                            const stackedBarTotalWidthPct = (bull_fv / rangeMax) * 100;
+                            $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-bar-wrapper').css('width', (stackedBarTotalWidthPct > 0 ? stackedBarTotalWidthPct : 0) + '%');
 
-                        // Update interactive bar chart
-                        if (interactiveChart) {
-                            if (data.analyst_fv) {
-                                interactiveChart.data.datasets[0].data[0] = data.analyst_fv.intrinsic_value_per_share;
+                            if (bull_fv > 0) {
+                                const bearWidthPct = (bear_fv / bull_fv) * 100;
+                                const baseWidthPct = ((base_fv - bear_fv) / bull_fv) * 100;
+                                const bullWidthPct = ((bull_fv - base_fv) / bull_fv) * 100;
+
+                                $swsContainer.find('.jtw-sws-zone.bear-case').css('width', (bearWidthPct > 0 ? bearWidthPct : 0) + '%');
+                                $swsContainer.find('.jtw-sws-zone.base-case').css('width', (baseWidthPct > 0 ? baseWidthPct : 0) + '%');
+                                $swsContainer.find('.jtw-sws-zone.bull-case').css('width', (bullWidthPct > 0 ? bullWidthPct : 0) + '%');
+                            } else {
+                                $swsContainer.find('.jtw-sws-zone.bear-case, .jtw-sws-zone.base-case, .jtw-sws-zone.bull-case').css('width', '0%');
                             }
-                            interactiveChart.data.datasets[0].data[1] = data.bull.fair_value;
-                            interactiveChart.data.datasets[0].data[2] = data.base.fair_value;
-                            interactiveChart.data.datasets[0].data[3] = data.bear.fair_value;
-                            interactiveChart.update();
+
+                            // Recalculate and update the background zone widths
+                            const undervalued_boundary = base_fv * 0.8;
+                            const overvalued_boundary = base_fv * 1.2;
+                            const undervalued_width_pct = (undervalued_boundary / rangeMax) * 100;
+                            const about_right_width_pct = ((overvalued_boundary - undervalued_boundary) / rangeMax) * 100;
+
+                            $swsContainer.find('.jtw-sws-zone.undervalued').css('width', undervalued_width_pct + '%');
+                            $swsContainer.find('.jtw-sws-zone.about-right').css('width', about_right_width_pct + '%');
+
+                            const $stackedBarLabel = $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-label-group');
+                            $stackedBarLabel.html(`
+                                <span>Bear | Base | Bull</span>
+                                <strong>$${bear_fv.toFixed(1)} | $${base_fv.toFixed(1)} | $${bull_fv.toFixed(1)}</strong>
+                            `);
+
+                        } else {
+                            $swsContainer.find('.jtw-sws-header').empty();
+                            $swsContainer.find('.jtw-sws-bar-wrapper, .jtw-sws-zone').css('width', '0%');
                         }
                     } else {
-                        console.error("Recalculation failed:", response.data.message);
+                        console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
                     }
                 },
                 error: function() {
@@ -382,7 +374,6 @@
         $container.on('input', '.jtw-assumption-input', recalculateValuation);
         $container.on('change', '#jtw-projection-timeframe', recalculateValuation);
         
-        // Trigger the initial calculation on load
         recalculateValuation();
     }
 
@@ -407,7 +398,7 @@
         });
     
         if ($barRows.length > 1 && $zoneBarRow.length) {
-            const verticalPadding = 25; 
+            const verticalPadding = 40; 
             setTimeout(() => {
                 if (!$chart.length || !$barRows.length) return;
                 
@@ -426,129 +417,34 @@
             }, 50);
         }
     
-        const animateElementWidth = function() {
-            const $element = $(this);
-            const styleAttr = $element.attr('style');
-            if (!styleAttr) return;
-    
-            const widthMatch = styleAttr.match(/width:\s*([^;]+)/);
-            if (widthMatch && widthMatch[1]) {
-                const finalWidth = widthMatch[1];
-                $element.css('width', '0%'); 
-                setTimeout(() => {
-                    $element.css('width', finalWidth);
-                }, 100);
-            }
-        };
-    
-        $swsContainer.find('.jtw-sws-bar-wrapper').each(animateElementWidth);
-        $swsContainer.find('.jtw-sws-zone').each(animateElementWidth);
-
+        // **NEW**: Hide labels initially and add hover/click functionality
         $barWrappers.each(function() {
             const $wrapper = $(this);
             const $label = $wrapper.find('.jtw-sws-label-group');
-            const wrapperWidth = $wrapper.width();
-            const labelWidth = $label.width();
-
-            if (wrapperWidth < (labelWidth + 30)) { // 30px is for padding
-                $label.addClass('outside');
-            } else {
-                $label.removeClass('outside');
-            }
-        });
-    }
-
-    function initializeInteractiveBarChart($container) {
-        const $chartContainer = $container.find('#jtw-interactive-chart-container');
-        if (!$chartContainer.length) return null;
+            //$label.hide(); // Hide initially
     
-        const canvas = $container.find('#jtw-interactive-valuation-chart')[0];
-        if (!canvas) return null;
+            /*$wrapper.on('mouseenter', function() {
+                const $currentWrapper = $(this);
+                const $currentLabel = $currentWrapper.find('.jtw-sws-label-group');
+                
+                // Check position before fading in to prevent flash of misplaced content
+                const wrapperWidth = $currentWrapper.width();
+                // Temporarily show to get width, then hide again before fade
+                const labelWidth = $currentLabel.show().width(); 
+                $currentLabel.hide();
     
-        const currentPrice = parseFloat($chartContainer.data('current-price'));
-        const analystFv = parseFloat($chartContainer.data('analyst-fv'));
-    
-        const chart = new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels: ['Analyst FV', 'Bull Case FV', 'Base Case FV', 'Bear Case FV'],
-                datasets: [{
-                    data: [analystFv, 0, 0, 0], // Analyst value is static, others start at 0
-                    backgroundColor: '#82ca9d',
-                    borderRadius: 0,
-                    borderSkipped: false,
-                    maxBarThickness: 40,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                animation: {
-                    delay: (context) => {
-                        let delay = 0;
-                        if (context.type === 'data' && context.mode === 'default') {
-                            delay = context.dataIndex * 300;
-                        }
-                        return delay;
-                    },
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false },
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: 'start',
-                        color: 'black',
-                        offset: 4,
-                        font: {
-                            weight: 'bold',
-                            size: 12
-                        },
-                        formatter: function(value, context) {
-                            const label = context.chart.data.labels[context.dataIndex];
-                            if (value > 0) {
-                                const formattedValue = '$' + value.toFixed(2);
-                                return `${label}: ${formattedValue}`;
-                            }
-                            return null;
-                        }
-                    },
-                    annotation: {
-                        annotations: {
-                            currentPriceLine: {
-                                type: 'line',
-                                xMin: currentPrice,
-                                xMax: currentPrice,
-                                borderColor: '#6c757d',
-                                borderWidth: 2,
-                                borderDash: [6, 6],
-                                label: {
-                                    content: 'Current Price: $' + currentPrice.toFixed(2),
-                                    enabled: true,
-                                    position: 'start',
-                                    backgroundColor: 'rgba(108, 117, 125, 0.8)',
-                                    font: {
-                                        size: 10
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { display: false, grid: { display: false } },
-                    y: { 
-                        grid: { display: false },
-                        ticks: {
-                            display: false
-                        }
-                    }
+                if (wrapperWidth < (labelWidth + 30)) { // 30px is for padding
+                    $currentLabel.addClass('outside');
+                } else {
+                    $currentLabel.removeClass('outside');
                 }
-            }
+                
+                $currentLabel.stop(true, true).fadeIn(150);
+    
+            }).on('mouseleave', function() {
+                $(this).find('.jtw-sws-label-group').stop(true, true).fadeOut(150);
+            });*/
         });
-        return chart;
     }
 
     function initializeHistoricalCharts($container) {
