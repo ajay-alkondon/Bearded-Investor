@@ -474,6 +474,16 @@ class Journey_To_Wealth_Public {
                 ];
             }
         }
+        
+        // **NEW**: Conditionally add the SWS graphic HTML to the response
+        if (isset($_POST['needs_graphic_html']) && $_POST['needs_graphic_html'] === 'true') {
+            $results['sws_graphic_html'] = $this->build_sws_graphic_html(
+                (float)($company_data['quote']['05. price'] ?? 0),
+                $results['bear']['fair_value'],
+                $results['base']['fair_value'],
+                $results['bull']['fair_value']
+            );
+        }
     
         wp_send_json_success($results);
     }
@@ -1393,8 +1403,9 @@ class Journey_To_Wealth_Public {
             
             if (!is_wp_error($corrected_dcf_result)) {
                 $valuation_summary['fair_value'] = $corrected_dcf_result['intrinsic_value_per_share'];
-                // **FIX**: Update the main dcf_result with the corrected one
+                // **FIX**: Update the main dcf_result and the entry in valuation_data with the corrected one
                 $dcf_result = $corrected_dcf_result;
+                $valuation_data['DCF Model'] = $corrected_dcf_result;
             }
             
             $analyst_fcfe = $calculated_initial_fcfe;
@@ -1467,11 +1478,10 @@ class Journey_To_Wealth_Public {
             $modal_id = 'jtw-assumptions-modal';
             $output .= '<div id="' . $modal_id . '" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>';
             foreach ($valuation_data as $model_name => $result) {
-                if (is_wp_error($result)) { $output .= '<h4>' . esc_html($model_name) . '</h4><div class="jtw-metric-card"><p><strong>' . esc_html__('Error:', 'journey-to-wealth') . '</strong> ' . esc_html($result->get_error_message()) . '</p></div>';
+                if (is_wp_error($result)) { 
+                    $output .= '<h4>' . esc_html($model_name) . '</h4><div class="jtw-metric-card"><p><strong>' . esc_html__('Error:', 'journey-to-wealth') . '</strong> ' . esc_html($result->get_error_message()) . '</p></div>';
                 } else { 
-                    // **FIX**: Pass the corrected DCF result to the modal builder
-                    $modal_result = ($model_name === 'DCF Model (FCFE)' && isset($corrected_dcf_result)) ? $corrected_dcf_result : $result;
-                    $output .= $this->build_valuation_assumptions_modal_html($modal_result, $details, $income_statement, $company_data['cash_flow']); 
+                    $output .= $this->build_valuation_assumptions_modal_html($result, $details, $income_statement, $company_data['cash_flow']); 
                 }
             }
             $output .= '</div></div>';
@@ -1987,6 +1997,62 @@ class Journey_To_Wealth_Public {
         $output .= "</script>";
     
         $output .= '</div>';
+        return $output;
+    }
+
+    private function build_sws_graphic_html($current_price, $bear_fv, $base_fv, $bull_fv) {
+        $output = '';
+        
+        // Initial calculation for zones based on base_fv
+        $undervalued_width_pct = 0;
+        $about_right_width_pct = 0;
+        if ($base_fv > 0 && $current_price > 0) {
+            $rangeMax = max($current_price, $bull_fv, $base_fv) * 1.3;
+            if ($rangeMax == 0) $rangeMax = $current_price * 1.3;
+
+            $undervalued_boundary = $base_fv * 0.8;
+            $overvalued_boundary = $base_fv * 1.2;
+            $undervalued_width_pct = ($undervalued_boundary / $rangeMax) * 100;
+            $about_right_width_pct = (($overvalued_boundary - $undervalued_boundary) / $rangeMax) * 100;
+        }
+
+        $output .= '<div class="jtw-sws-valuation-container" data-current-price="' . esc_attr($current_price) . '">';
+        $output .= '<div class="jtw-sws-header"></div>';
+        $output .= '<div class="jtw-sws-chart">';
+        
+        $output .= '<div class="jtw-sws-bar-row">';
+        $output .= '<div class="jtw-sws-label-group">';
+        $output .= '<span>Price</span>';
+        $output .= '<strong>$' . number_format($current_price, 2) . '</strong>';
+        $output .= '</div>';
+        $output .= '<div class="jtw-sws-bar-wrapper" style="width: 0%;">';
+        $output .= '<div class="jtw-sws-price-bar"></div>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="jtw-sws-bar-row jtw-sws-stacked-bar-row">';
+        $output .= '<div class="jtw-sws-label-group jtw-stacked-bar-label-group">';
+        $output .= '</div>';
+        $output .= '<div class="jtw-sws-bar-wrapper">';
+        $output .= '<div class="jtw-sws-stacked-bar">';
+        $output .= '<div class="jtw-sws-zone bear-case" data-label="Bear Case"></div>';
+        $output .= '<div class="jtw-sws-zone base-case" data-label="Base Case"></div>';
+        $output .= '<div class="jtw-sws-zone bull-case" data-label="Bull Case"></div>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>';
+
+        $output .= '<div class="jtw-sws-zone-bar-row">';
+        $output .= '<div class="jtw-sws-zone-bar">';
+        $output .= '<div class="jtw-sws-zone undervalued" style="width: ' . esc_attr($undervalued_width_pct) . '%;"></div>';
+        $output .= '<div class="jtw-sws-zone about-right" style="width: ' . esc_attr($about_right_width_pct) . '%;"></div>';
+        $output .= '<div class="jtw-sws-zone overvalued"></div>';
+        $output .= '</div>';
+        $output .= '</div>';
+        
+        $output .= '</div>'; // end .jtw-sws-chart
+        $output .= '</div>'; // end .jtw-sws-valuation-container
+
         return $output;
     }
 }

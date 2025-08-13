@@ -38,3 +38,16 @@ Stack trace:
 #4 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
 #5 {main}
   thrown in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 1455
+[13-Aug-2025 14:51:36 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[13-Aug-2025 14:51:37 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Journey_To_Wealth_Public::build_sws_graphic_html() in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php:1455
+Stack trace:
+#0 /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php(287): Journey_To_Wealth_Public->build_intrinsic_valuation_section_html(Array, Array, Array, Array, Array, Array, Array, Array)
+#1 /var/www/html/wp-includes/class-wp-hook.php(324): Journey_To_Wealth_Public->ajax_fetch_section_data('')
+#2 /var/www/html/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#3 /var/www/html/wp-includes/plugin.php(517): WP_Hook->do_action(Array)
+#4 /var/www/html/wp-admin/admin-ajax.php(192): do_action('wp_ajax_jtw_fet...')
+#5 {main}
+  thrown in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 1455
+[13-Aug-2025 14:51:37 UTC] PHP Deprecated:  preg_split(): Passing null to parameter #2 ($subject) of type string is deprecated in /var/www/html/wp-includes/formatting.php on line 3483
+[13-Aug-2025 14:51:38 UTC] PHP Warning:  Undefined array key "change_in_nwc" in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 1557
+[13-Aug-2025 14:51:38 UTC] PHP Warning:  Undefined array key "change_in_nwc" in /var/www/html/wp-content/plugins/journey-to-wealth/public/class-journey-to-wealth-public.php on line 1557
