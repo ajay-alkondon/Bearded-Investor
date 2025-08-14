@@ -251,6 +251,7 @@
         const recalculateValuation = debounce(function() {
             const assumptions = { bear: {}, base: {}, bull: {} };
             let hasAllInputs = true;
+            let initialFcfeIsNegative = false;
     
             $container.find('.jtw-assumption-input[data-case]').each(function() {
                 const $input = $(this);
@@ -267,6 +268,9 @@
                     if (metric === 'initialFcfe') {
                         const multiplier = parseFloat($input.data('multiplier')) || 1;
                         value = parseFloat(value) * multiplier;
+                        if (caseType === 'base' && value < 0) {
+                            initialFcfeIsNegative = true;
+                        }
                     }
     
                     assumptions[caseType][metric] = value;
@@ -279,6 +283,7 @@
     
             const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
             const timeframe = $container.find('#jtw-projection-timeframe').val();
+            const needsGraphic = initialFcfeIsNegative && assumptions.base.initialFcfe > 0;
     
             $container.find('.jtw-assumptions-table').css('opacity', 0.5);
     
@@ -290,21 +295,48 @@
                     nonce: jtw_public_params.recalculate_nonce,
                     ticker: ticker,
                     assumptions: assumptions,
-                    timeframe: timeframe
+                    timeframe: timeframe,
+                    needs_graphic_html: needsGraphic
                 },
                 dataType: 'json',
                 success: function(response) {
                     $container.find('.jtw-assumptions-table').css('opacity', 1);
                     if (response.success && response.data) {
                         const data = response.data;
+                        const $tbody = $container.find('.jtw-assumptions-table-body');
 
                         // Update table
-                        $container.find('.jtw-bear-fv').text('$' + data.bear.fair_value.toFixed(1));
-                        $container.find('.jtw-base-fv').text('$' + data.base.fair_value.toFixed(1));
-                        $container.find('.jtw-bull-fv').text('$' + data.bull.fair_value.toFixed(1));
-                        $container.find('.jtw-bear-buy').text('$' + data.bear.buy_price.toFixed(1));
-                        $container.find('.jtw-base-buy').text('$' + data.base.buy_price.toFixed(1));
-                        $container.find('.jtw-bull-buy').text('$' + data.bull.buy_price.toFixed(1));
+                        if (assumptions.base.initialFcfe > 0) {
+                            $tbody.find('.jtw-valuation-error-row').remove();
+                            // **MODIFIED**: If rows are missing, recreate them with the new structure
+                            if ($tbody.find('.jtw-results-row').length === 0) {
+                                $tbody.append(`
+                                    <tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">-</td><td class="jtw-bull-fv">-</td></tr>
+                                    <tr class="jtw-results-row jtw-return-row"><td class="jtw-results-label">% Return</td><td class="jtw-bear-return">-</td><td class="jtw-base-return">-</td><td class="jtw-bull-return">-</td></tr>
+                                `);
+                            }
+                            // Update Fair Values
+                            $tbody.find('.jtw-bear-fv').text('$' + data.bear.fair_value.toFixed(1));
+                            $tbody.find('.jtw-base-fv').text('$' + data.base.fair_value.toFixed(1));
+                            $tbody.find('.jtw-bull-fv').text('$' + data.bull.fair_value.toFixed(1));
+
+                            // **NEW**: Calculate and update % Return
+                            const currentPrice = parseFloat($container.find('.jtw-sws-valuation-container').attr('data-current-price'));
+                            if (currentPrice > 0) {
+                                const bearReturn = ((data.bear.fair_value - currentPrice) / currentPrice) * 100;
+                                const baseReturn = ((data.base.fair_value - currentPrice) / currentPrice) * 100;
+                                const bullReturn = ((data.bull.fair_value - currentPrice) / currentPrice) * 100;
+                                
+                                $tbody.find('.jtw-bear-return').text(bearReturn.toFixed(1) + '%');
+                                $tbody.find('.jtw-base-return').text(baseReturn.toFixed(1) + '%');
+                                $tbody.find('.jtw-bull-return').text(bullReturn.toFixed(1) + '%');
+                            }
+                        } else {
+                            $tbody.find('.jtw-results-row, tr:has([data-metric="desiredReturn"])').remove();
+                            if ($tbody.find('.jtw-valuation-error-row').length === 0) {
+                                $tbody.append('<tr class="jtw-results-row jtw-valuation-error-row"><td colspan="4">Valuation data is not available to create a chart.</td></tr>');
+                            }
+                        }
 
                         // Update modal content if it was sent
                         if (data.new_modal_html) {
@@ -312,52 +344,59 @@
                         }
     
                         // Update the SWS Valuation Graphic
+                        if (data.sws_graphic_html) {
+                            $('#jtw-sws-graphic-wrapper').html(data.sws_graphic_html);
+                            initializeSwsValuationGraphic($container);
+                        }
+                        
                         const $swsContainer = $container.find('.jtw-sws-valuation-container');
-                        const currentPrice = parseFloat($swsContainer.attr('data-current-price'));
-                        const bear_fv = data.bear.fair_value;
-                        const base_fv = data.base.fair_value;
-                        const bull_fv = data.bull.fair_value;
-    
-                        if (bull_fv > 0 && currentPrice > 0) {
-                            
-                            const rangeMax = Math.max(currentPrice, bull_fv) * 1.3;
-                            
-                            const pricePosPct = Math.min(100, (currentPrice / rangeMax) * 100);
-                            $swsContainer.find('.jtw-sws-bar-row:not(.jtw-sws-stacked-bar-row) .jtw-sws-bar-wrapper').css('width', pricePosPct + '%');
-                            
-                            const stackedBarTotalWidthPct = (bull_fv / rangeMax) * 100;
-                            $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-bar-wrapper').css('width', (stackedBarTotalWidthPct > 0 ? stackedBarTotalWidthPct : 0) + '%');
+                        if ($swsContainer.length) {
+                            const currentPrice = parseFloat($swsContainer.attr('data-current-price'));
+                            const bear_fv = data.bear.fair_value;
+                            const base_fv = data.base.fair_value;
+                            const bull_fv = data.bull.fair_value;
+        
+                            if (bull_fv > 0 && currentPrice > 0) {
+                                
+                                const rangeMax = Math.max(currentPrice, bull_fv) * 1.3;
+                                
+                                const pricePosPct = Math.min(100, (currentPrice / rangeMax) * 100);
+                                $swsContainer.find('.jtw-sws-bar-row:not(.jtw-sws-stacked-bar-row) .jtw-sws-bar-wrapper').css('width', pricePosPct + '%');
+                                
+                                const stackedBarTotalWidthPct = (bull_fv / rangeMax) * 100;
+                                $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-bar-wrapper').css('width', (stackedBarTotalWidthPct > 0 ? stackedBarTotalWidthPct : 0) + '%');
 
-                            if (bull_fv > 0) {
-                                const bearWidthPct = (bear_fv / bull_fv) * 100;
-                                const baseWidthPct = ((base_fv - bear_fv) / bull_fv) * 100;
-                                const bullWidthPct = ((bull_fv - base_fv) / bull_fv) * 100;
+                                if (bull_fv > 0) {
+                                    const bearWidthPct = (bear_fv / bull_fv) * 100;
+                                    const baseWidthPct = ((base_fv - bear_fv) / bull_fv) * 100;
+                                    const bullWidthPct = ((bull_fv - base_fv) / bull_fv) * 100;
 
-                                $swsContainer.find('.jtw-sws-zone.bear-case').css('width', (bearWidthPct > 0 ? bearWidthPct : 0) + '%');
-                                $swsContainer.find('.jtw-sws-zone.base-case').css('width', (baseWidthPct > 0 ? baseWidthPct : 0) + '%');
-                                $swsContainer.find('.jtw-sws-zone.bull-case').css('width', (bullWidthPct > 0 ? bullWidthPct : 0) + '%');
+                                    $swsContainer.find('.jtw-sws-zone.bear-case').css('width', (bearWidthPct > 0 ? bearWidthPct : 0) + '%');
+                                    $swsContainer.find('.jtw-sws-zone.base-case').css('width', (baseWidthPct > 0 ? baseWidthPct : 0) + '%');
+                                    $swsContainer.find('.jtw-sws-zone.bull-case').css('width', (bullWidthPct > 0 ? bullWidthPct : 0) + '%');
+                                } else {
+                                    $swsContainer.find('.jtw-sws-zone.bear-case, .jtw-sws-zone.base-case, .jtw-sws-zone.bull-case').css('width', '0%');
+                                }
+
+                                // Recalculate and update the background zone widths
+                                const undervalued_boundary = base_fv * 0.8;
+                                const overvalued_boundary = base_fv * 1.2;
+                                const undervalued_width_pct = (undervalued_boundary / rangeMax) * 100;
+                                const about_right_width_pct = ((overvalued_boundary - undervalued_boundary) / rangeMax) * 100;
+
+                                $swsContainer.find('.jtw-sws-zone.undervalued').css('width', undervalued_width_pct + '%');
+                                $swsContainer.find('.jtw-sws-zone.about-right').css('width', about_right_width_pct + '%');
+
+                                const $stackedBarLabel = $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-label-group');
+                                $stackedBarLabel.html(`
+                                    <span>Bear | Base | Bull</span>
+                                    <strong>$${bear_fv.toFixed(1)} | $${base_fv.toFixed(1)} | $${bull_fv.toFixed(1)}</strong>
+                                `);
+
                             } else {
-                                $swsContainer.find('.jtw-sws-zone.bear-case, .jtw-sws-zone.base-case, .jtw-sws-zone.bull-case').css('width', '0%');
+                                $swsContainer.find('.jtw-sws-header').empty();
+                                $swsContainer.find('.jtw-sws-bar-wrapper, .jtw-sws-zone').css('width', '0%');
                             }
-
-                            // Recalculate and update the background zone widths
-                            const undervalued_boundary = base_fv * 0.8;
-                            const overvalued_boundary = base_fv * 1.2;
-                            const undervalued_width_pct = (undervalued_boundary / rangeMax) * 100;
-                            const about_right_width_pct = ((overvalued_boundary - undervalued_boundary) / rangeMax) * 100;
-
-                            $swsContainer.find('.jtw-sws-zone.undervalued').css('width', undervalued_width_pct + '%');
-                            $swsContainer.find('.jtw-sws-zone.about-right').css('width', about_right_width_pct + '%');
-
-                            const $stackedBarLabel = $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-label-group');
-                            $stackedBarLabel.html(`
-                                <span>Bear | Base | Bull</span>
-                                <strong>$${bear_fv.toFixed(1)} | $${base_fv.toFixed(1)} | $${bull_fv.toFixed(1)}</strong>
-                            `);
-
-                        } else {
-                            $swsContainer.find('.jtw-sws-header').empty();
-                            $swsContainer.find('.jtw-sws-bar-wrapper, .jtw-sws-zone').css('width', '0%');
                         }
                     } else {
                         console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');

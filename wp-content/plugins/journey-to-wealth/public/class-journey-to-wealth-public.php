@@ -419,7 +419,7 @@ class Journey_To_Wealth_Public {
     
         $results = [];
 
-        // **FIX**: The modal HTML should be generated based on the user's 'base' case assumptions, not the pure analyst case.
+        // The modal HTML should be generated based on the user's 'base' case assumptions, not the pure analyst case.
         $base_case_assumptions = [];
         if (isset($assumptions['base'])) {
             $base_case_assumptions = [
@@ -464,7 +464,6 @@ class Journey_To_Wealth_Public {
                 $buy_price = 0;
                 $desired_return = (float)($case_assumptions['desiredReturn'] ?? 10) / 100;
                 if ($fair_value > 0) {
-                    // **MODIFIED**: Changed calculation to a simple discount.
                     $buy_price = $fair_value * (1 - $desired_return);
                 }
     
@@ -475,7 +474,6 @@ class Journey_To_Wealth_Public {
             }
         }
         
-        // **NEW**: Conditionally add the SWS graphic HTML to the response
         if (isset($_POST['needs_graphic_html']) && $_POST['needs_graphic_html'] === 'true') {
             $results['sws_graphic_html'] = $this->build_sws_graphic_html(
                 (float)($company_data['quote']['05. price'] ?? 0),
@@ -629,24 +627,27 @@ class Journey_To_Wealth_Public {
             'nextYearRevenueGrowth' => 'N/A',
         ];
     
-        // TTM Growth Calculations
-        $earnings = $company_data['earnings']['annualEarnings'] ?? [];
+        $earnings = $company_data['earnings'];
         $income = $company_data['income_statement']['annualReports'] ?? [];
         $overview = $company_data['overview'];
     
-        if (count($earnings) >= 2) {
-            $ttm_eps = (float)($overview['EPS'] ?? 0);
-            $prev_eps = (float)($earnings[0]['reportedEPS'] ?? 0);
-            if ($prev_eps != 0) { // Avoid division by zero
-                $growth['ttmEpsGrowth'] = (($ttm_eps / $prev_eps) - 1) * 100;
+        // **MODIFIED TTM EPS Growth Calculation**
+        if (isset($earnings['quarterlyEarnings']) && count($earnings['quarterlyEarnings']) >= 8) {
+            $quarterly_earnings = $earnings['quarterlyEarnings'];
+            
+            $current_ttm_eps = array_sum(array_column(array_slice($quarterly_earnings, 0, 4), 'reportedEPS'));
+            $previous_ttm_eps = array_sum(array_column(array_slice($quarterly_earnings, 4, 4), 'reportedEPS'));
+    
+            if (abs($previous_ttm_eps) > 0.0001) {
+                $growth['ttmEpsGrowth'] = (($current_ttm_eps - $previous_ttm_eps) / abs($previous_ttm_eps)) * 100;
             }
         }
     
         if (count($income) >= 2) {
             $ttm_revenue = (float)($overview['RevenueTTM'] ?? 0);
             $prev_revenue = (float)($income[0]['totalRevenue'] ?? 0);
-            if ($prev_revenue > 0) {
-                $growth['ttmRevenueGrowth'] = (($ttm_revenue / $prev_revenue) - 1) * 100;
+            if (abs($prev_revenue) > 0.0001) {
+                $growth['ttmRevenueGrowth'] = (($ttm_revenue - $prev_revenue) / abs($prev_revenue)) * 100;
             }
         }
     
@@ -676,7 +677,6 @@ class Journey_To_Wealth_Public {
             }
     
             if ($current_year_estimate) {
-                // **FIX**: Apply beta-based logic to select correct estimate keys
                 $beta_for_growth = $beta_details['unlevered_beta_avg'] ?? 1.0;
                 $revenue_key = 'revenue_estimate_average';
                 $eps_key = 'eps_estimate_average';
@@ -692,19 +692,18 @@ class Journey_To_Wealth_Public {
                 $current_year_eps = (float)($current_year_estimate[$eps_key] ?? 0);
                 $current_year_revenue = (float)($current_year_estimate[$revenue_key] ?? 0);
 
-                // **FIX**: Compare to last full year's actuals, not TTM
-                $last_year_eps = (float)($earnings[0]['reportedEPS'] ?? 0);
+                $last_year_eps = (float)(($earnings['annualEarnings'][0]['reportedEPS'] ?? 0));
                 $last_year_revenue = (float)($income[0]['totalRevenue'] ?? 0);
     
-                if ($last_year_eps != 0) $growth['currentYearEpsGrowth'] = (($current_year_eps / $last_year_eps) - 1) * 100;
-                if ($last_year_revenue > 0) $growth['currentYearRevenueGrowth'] = (($current_year_revenue / $last_year_revenue) - 1) * 100;
+                if (abs($last_year_eps) > 0.0001) $growth['currentYearEpsGrowth'] = (($current_year_eps - $last_year_eps) / abs($last_year_eps)) * 100;
+                if (abs($last_year_revenue) > 0.0001) $growth['currentYearRevenueGrowth'] = (($current_year_revenue - $last_year_revenue) / abs($last_year_revenue)) * 100;
     
                 if ($next_year_estimate) {
                     $next_year_eps = (float)($next_year_estimate[$eps_key] ?? 0);
                     $next_year_revenue = (float)($next_year_estimate[$revenue_key] ?? 0);
     
-                    if ($current_year_eps != 0) $growth['nextYearEpsGrowth'] = (($next_year_eps / $current_year_eps) - 1) * 100;
-                    if ($current_year_revenue > 0) $growth['nextYearRevenueGrowth'] = (($next_year_revenue / $current_year_revenue) - 1) * 100;
+                    if (abs($current_year_eps) > 0.0001) $growth['nextYearEpsGrowth'] = (($next_year_eps - $current_year_eps) / abs($current_year_eps)) * 100;
+                    if (abs($current_year_revenue) > 0.0001) $growth['nextYearRevenueGrowth'] = (($next_year_revenue - $current_year_revenue) / abs($current_year_revenue)) * 100;
                 }
             }
         }
@@ -744,8 +743,30 @@ class Journey_To_Wealth_Public {
             if (!is_wp_error($result)) { $valuation_data['Excess Return Model'] = $result; }
         } else {
             $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $levered_beta);
-            $dcf_result = $dcf_model->calculate($overview, $income_statement, $balance_sheet, $cash_flow, $treasury_yield, $earnings_estimates, $latest_price, $beta_details, [], $projection_years);
-            if (!is_wp_error($dcf_result)) { $valuation_data['DCF Model'] = $dcf_result; }
+
+            // Determine the initial growth rate based on beta, which is the intended logic
+            // This logic is duplicated from the build_intrinsic_valuation_section_html function to ensure consistency.
+            $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
+            if ($unlevered_beta < 0.95) {
+                $base_growth = 10.0; // 10% for base case
+            } elseif ($unlevered_beta >= 0.95 && $unlevered_beta <= 1.1) {
+                $base_growth = 20.0; // 20% for base case
+            } elseif ($unlevered_beta > 1.1 && $unlevered_beta <= 1.2) {
+                $base_growth = 25.0; // 25% for base case
+            } else { // Greater than 1.2
+                $base_growth = 30.0; // 35% for base case
+            }
+
+            // Pass this growth rate directly to the model. This is the single source of truth now.
+            $custom_assumptions = ['initial_growth_rate' => $base_growth / 100];
+            
+            $dcf_result = $dcf_model->calculate(
+                $overview, $income_statement, $balance_sheet, $cash_flow, 
+                $treasury_yield, $earnings_estimates, $latest_price, 
+                $beta_details, $custom_assumptions, $projection_years
+            );
+
+            $valuation_data['DCF Model'] = $dcf_result;
         }
     
         if (empty($valuation_data) && isset($overview['DividendPerShare']) && (float)$overview['DividendPerShare'] > 0) {
@@ -1089,8 +1110,6 @@ class Journey_To_Wealth_Public {
         $output .= '<button class="jtw-modal-trigger jtw-details-button" data-modal-target="#jtw-company-details-modal">' . esc_html__('View Full Company Details', 'journey-to-wealth') . '</button>';
         $output .= '</div>';
         
-        // **FIX**: Moved 52-week bar before metric boxes
-        // Determine the display range for the progress bar
         $display_low = $week_low;
         $display_high = $week_high;
     
@@ -1122,8 +1141,11 @@ class Journey_To_Wealth_Public {
         $output .= $this->create_metric_card('Shares Outstanding', $overview['SharesOutstanding'] ?? 0, '', '', true);
         $output .= '</div>';
     
-        $output .= '<div class="jtw-company-description"><p>' . esc_html($description) . '</p></div>';
-    
+        // **FIX**: Only display the description if it exists and is not "None".
+        if (!empty($description) && strcasecmp(trim($description), 'none') !== 0) {
+            $output .= '<div class="jtw-company-description"><p>' . esc_html($description) . '</p></div>';
+        }
+            
         // Two-column layout for links
         $output .= '<div class="jtw-link-cards-grid">';
         // SEC Filings Card
@@ -1306,7 +1328,6 @@ class Journey_To_Wealth_Public {
             $output .= '<div class="jtw-form-group"><label for="jtw-sim-growth-rate">Est. Annual Earnings Growth (%):</label><input type="number" step="0.1" id="jtw-sim-growth-rate" class="jtw-sim-input" value="' . esc_attr($growth_default) . '"></div>';
             $output .= '<div class="jtw-form-group"><label for="jtw-sim-dividend-yield">Est. Annual Dividend Yield (%):</label><input type="number" step="0.01" id="jtw-sim-dividend-yield" class="jtw-sim-input" value="' . esc_attr($dividend_yield_default) . '"></div>';
             $output .= '</div>';
-            // **NEW**: Added the clarification note.
             $output .= '<p class="jtw-calculator-note">' . esc_html__('Note: The earnings growth rate is a forward-looking analyst estimate for future years (typically 3-5 years) and may differ from the single next-year growth rate.', 'journey-to-wealth') . '</p>';
             $output .= '<div class="jtw-peg-pegy-results">';
             $output .= '<div class="jtw-bar-result"><span class="jtw-result-label">PEG Ratio</span><div class="jtw-bar-container"><div id="jtw-peg-bar" class="jtw-bar"><span id="jtw-peg-value" class="jtw-bar-value">-</span></div></div></div>';
@@ -1378,45 +1399,24 @@ class Journey_To_Wealth_Public {
         // --- Assumptions Table ---
         $dcf_result = $valuation_data['DCF Model'] ?? null;
         if ($dcf_result && !is_wp_error($dcf_result)) {
-            // **FIX**: Recalculate the initial FCFE based on the components to ensure accuracy for the initial view.
             $breakdown = $dcf_result['calculation_breakdown'];
-            $ratios = $breakdown['component_ratios']['projection_ratios'];
-            $projected_revenue_next_year = $breakdown['base_revenue'] * (1 + $breakdown['inputs']['initial_growth_rate']);
             
-            $proj_net_income = $projected_revenue_next_year * $ratios['net_income_of_revenue'];
-            $proj_depreciation = $projected_revenue_next_year * $ratios['depreciation_of_revenue'];
-            $proj_capex = $projected_revenue_next_year * $ratios['capex_of_revenue'];
-            $proj_change_nwc = $projected_revenue_next_year * $ratios['nwc_of_revenue'];
-            $proj_net_borrowing = $projected_revenue_next_year * $ratios['net_borrowing_of_revenue'];
-            $calculated_initial_fcfe = $proj_net_income + $proj_depreciation - $proj_capex - $proj_change_nwc + $proj_net_borrowing;
-
-            // **FIX**: Re-run the valuation with the corrected FCFE to get the most accurate initial display values.
-            $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
-            $beta_details = $breakdown['discount_rate_calc']['beta_details'];
-            $levered_beta = $beta_details['levered_beta'];
-            $dcf_model_rerun = new Journey_To_Wealth_DCF_Model($erp_decimal, $levered_beta);
-            $custom_assumptions_for_initial_run = [
-                'initial_growth_rate' => $breakdown['inputs']['initial_growth_rate'],
-                'initial_fcfe_override' => $calculated_initial_fcfe
-            ];
-            $corrected_dcf_result = $dcf_model_rerun->calculate($details, $income_statement, $balance_sheet, $cash_flow, $company_data['treasury_yield'], $earnings_estimates, $valuation_summary['current_price'], $beta_details, $custom_assumptions_for_initial_run, 10);
-            
-            if (!is_wp_error($corrected_dcf_result)) {
-                $valuation_summary['fair_value'] = $corrected_dcf_result['intrinsic_value_per_share'];
-                // **FIX**: Update the main dcf_result and the entry in valuation_data with the corrected one
-                $dcf_result = $corrected_dcf_result;
-                $valuation_data['DCF Model'] = $corrected_dcf_result;
-            }
-            
-            $analyst_fcfe = $calculated_initial_fcfe;
+            // The FCFE from the model is now the correct one because of the fix in get_valuation_results()
+            $analyst_fcfe = $breakdown['inputs']['base_cash_flow'];
             $analyst_discount_rate = ($breakdown['inputs']['discount_rate'] ?? 0) * 100;
 
             $beta_details = $breakdown['discount_rate_calc']['beta_details'] ?? [];
             $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
 
-            if ($unlevered_beta < 0.95) { $bear_growth = 5.0; $base_growth = 10.0; $bull_growth = 15.0;
-            } elseif ($unlevered_beta > 1.1) { $bear_growth = 30.0; $base_growth = 35.0; $bull_growth = 40.0;
-            } else { $bear_growth = 15.0; $base_growth = 20.0; $bull_growth = 25.0; }
+            if ($unlevered_beta < 0.95) {
+                $bear_growth = 5.0; $base_growth = 10.0; $bull_growth = 15.0;
+            } elseif ($unlevered_beta >= 0.95 && $unlevered_beta <= 1.1) {
+                $bear_growth = 15.0; $base_growth = 20.0; $bull_growth = 25.0;
+            } elseif ($unlevered_beta > 1.1 && $unlevered_beta <= 1.2) {
+                $bear_growth = 20.0; $base_growth = 25.0; $bull_growth = 30.0;
+            } else { // Greater than 1.2
+                $bear_growth = 25.0; $base_growth = 30.0; $bull_growth = 35.0;
+            }
             
             $fcfe_label = 'Initial FCFE';
             $fcfe_display_value = $analyst_fcfe;
@@ -1449,9 +1449,14 @@ class Journey_To_Wealth_Public {
             $output .= '<tr><td data-label="Metric">Discount Rate %</td><td colspan="3" data-label="Analyst">' . esc_html(number_format($analyst_discount_rate, 1)) . '%</td></tr>';
             
             if ($analyst_fcfe > 0) {
-                $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">$' . number_format($valuation_summary['fair_value'], 1) . '</td><td class="jtw-bull-fv">-</td></tr>';
-                $output .= '<tr><td data-label="Metric">Desired Return %</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="desiredReturn" value="10"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="desiredReturn" value="10"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="desiredReturn" value="10"></td></tr>';
-                $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Price Target For Desired Return</td><td class="jtw-bear-buy">-</td><td class="jtw-base-buy">-</td><td class="jtw-bull-buy">-</td></tr>';
+                // **MODIFIED**: Calculate initial return for the base case
+                $current_price = $valuation_summary['current_price'] ?? 0;
+                $base_fv = $valuation_summary['fair_value'] ?? 0;
+                $base_return_pct = ($current_price > 0 && $base_fv > 0) ? (($base_fv - $current_price) / $current_price) * 100 : 0;
+
+                $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">$' . number_format($base_fv, 1) . '</td><td class="jtw-bull-fv">-</td></tr>';
+                // **NEW**: Added % Return row and removed Desired Return/Price Target rows
+                $output .= '<tr class="jtw-results-row jtw-return-row"><td class="jtw-results-label">% Return</td><td class="jtw-bear-return">-</td><td class="jtw-base-return">' . number_format($base_return_pct, 1) . '%</td><td class="jtw-bull-return">-</td></tr>';
             } else {
                 $output .= '<tr class="jtw-results-row jtw-valuation-error-row"><td colspan="4">Valuation data is not available to create a chart.</td></tr>';
             }
@@ -1462,7 +1467,7 @@ class Journey_To_Wealth_Public {
     
         // --- SWS Style Valuation Graphic ---
         $output .= '<div id="jtw-sws-graphic-wrapper">';
-        if ($dcf_result && !is_wp_error($dcf_result) && $analyst_fcfe > 0) {
+        if ($dcf_result && !is_wp_error($dcf_result) && ($dcf_result['calculation_breakdown']['inputs']['base_cash_flow'] ?? 0) > 0) {
              $output .= $this->build_sws_graphic_html(
                 $valuation_summary['current_price'],
                 0, // Bear/Bull will be calculated by JS on interaction
@@ -1515,96 +1520,15 @@ class Journey_To_Wealth_Public {
         $projection_years = count($data['projection_table']);
         $discount_pct = ($value_per_share > 0 && $current_price > 0) ? (($value_per_share - $current_price) / $current_price) * 100 : 0;
         $total_value_label = 'Total Equity Value';
+        
         $output = '<h4>Valuation</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Source</th><th>Value</th></tr></thead><tbody>';
         $output .= '<tr><td>Valuation Model</td><td></td><td>2 Stage FCFE</td></tr>';
-        $output .= '<tr><td>Base FCFE</td><td>See Calculation Breakdown Below</td><td>' . $this->format_large_number($data['inputs']['base_cash_flow'], '$') . '</td></tr>';
         $output .= '<tr><td>Initial Growth Rate</td><td>' . esc_html($data['inputs']['growth_rate_source']) . '</td><td>' . number_format($data['inputs']['initial_growth_rate'] * 100, 1) . '%</td></tr>';
         $output .= '<tr><td>Discount Rate (Cost of Equity)</td><td>See below</td><td>' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%</td></tr>';
+        $output .= '<tr><td>Base FCFE</td><td>See Calculation Breakdown Below</td><td>' . $this->format_large_number($data['inputs']['base_cash_flow'], '$') . '</td></tr>';
         $output .= '<tr><td>Perpetual Growth Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%</td></tr>';
         $output .= '</tbody></table>';
         
-        $historical_data = $data['component_ratios'];
-        $yearly_data = $historical_data['yearly_data'] ?? [];
-        $averages = $historical_data['averages'] ?? [];
-        $years = !empty($yearly_data) ? array_keys($yearly_data) : [];
-        rsort($years);
-
-        $output .= '<h4>Historical Ratio Analysis (% of Revenue)</h4>';
-        $output .= '<table class="jtw-modal-table"><thead><tr><th>Component</th>';
-        foreach ($years as $year) {
-            $output .= '<th>' . esc_html($year) . '</th>';
-        }
-        $output .= '<th>Adjusted Average</th></tr></thead><tbody>';
-
-        $components = [
-            'net_income' => 'Net Income',
-            'depreciation' => '(+) Depreciation & Amortization',
-            'capex' => '(-) Capital Expenditures (CAPEX)',
-            'change_in_nwc' => '(-) Change in Net Working Capital',
-            'net_borrowing' => '(+) Net Borrowing'
-        ];
-
-        $average_keys = [
-            'net_income' => 'net_income_of_revenue',
-            'depreciation' => 'depreciation_of_revenue',
-            'capex' => 'capex_of_revenue',
-            'nwc_of_revenue' => 'nwc_of_revenue',
-            'net_borrowing' => 'net_borrowing_of_revenue'
-        ];
-
-        foreach ($components as $key => $label) {
-            $output .= '<tr><td>' . esc_html($label) . '</td>';
-            foreach ($years as $year) {
-                $year_data = $yearly_data[$year] ?? null;
-                $ratio = 'N/A';
-                if ($year_data && isset($year_data[$key]) && $year_data['revenue'] > 0) {
-                    $value = $year_data[$key];
-                     $ratio_val = ($value / $year_data['revenue']) * 100;
-                    $ratio = number_format(abs($ratio_val), 1) . '%';
-                }
-                $output .= '<td>' . esc_html($ratio) . '</td>';
-            }
-            $avg_key = $average_keys[$key];
-            $avg_value = 'N/A';
-            if (isset($averages[$avg_key])) {
-                $avg_value = number_format(abs($averages[$avg_key]) * 100, 1) . '%';
-            }
-            $output .= '<td><strong>' . esc_html($avg_value) . '</strong></td>';
-            $output .= '</tr>';
-        }
-        $output .= '</tbody></table>';
-        $output .= '<p class="jtw-calculator-note">' . esc_html__('Note: The Adjusted Average is calculated by removing the highest and lowest values from the historical data to provide a more stable representation of the company\'s typical performance.', 'journey-to-wealth') . '</p>';
-
-
-        if (isset($data['component_ratios'])) {
-            $ratios = $data['component_ratios']['projection_ratios'];
-            $projected_revenue_2026 = $data['base_revenue'] * (1 + $data['inputs']['initial_growth_rate']);
-            
-            $proj_net_income = $projected_revenue_2026 * $ratios['net_income_of_revenue'];
-            $proj_depreciation = $projected_revenue_2026 * $ratios['depreciation_of_revenue'];
-            $proj_capex = $projected_revenue_2026 * $ratios['capex_of_revenue'];
-            $proj_change_nwc = $projected_revenue_2026 * $ratios['nwc_of_revenue'];
-            $proj_net_borrowing = $projected_revenue_2026 * $ratios['net_borrowing_of_revenue'];
-
-            $output .= '<h4>Projected Base FCFE Calculation</h4>';
-            $output .= '<table class="jtw-modal-table"><thead><tr><th>Component</th><th>Calculation</th><th>Value</th></tr></thead><tbody>';
-            $output .= '<tr><td>Projected 2025 Revenue (Base)</td><td>Analyst Estimate or Historical</td><td>' . $this->format_large_number($data['base_revenue'], '$') . '</td></tr>';
-            $output .= '<tr><td>Projected 2026 Revenue</td><td>' . $this->format_large_number($data['base_revenue'], '$') . ' * (1 + ' . number_format($data['inputs']['initial_growth_rate'] * 100, 1) . '%)</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . '</td></tr>';
-            $output .= '<tr style="border-top: 2px solid #ccc;"><td colspan="3" style="text-align:center; font-weight:bold;">Applying Ratios to Projected 2026 Revenue</td></tr>';
-            
-            $output .= '<tr><td>Projected Net Income</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['net_income_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_net_income, '$') . '</td></tr>';
-            $output .= '<tr><td>(+) Projected Depreciation</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['depreciation_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_depreciation, '$') . '</td></tr>';
-            $output .= '<tr><td>(-) Projected CAPEX</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['capex_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_capex, '$') . '</td></tr>';
-            $output .= '<tr><td>(-) Projected Change in NWC</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['nwc_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_change_nwc, '$') . '</td></tr>';
-            $output .= '<tr><td>(+) Projected Net Borrowing</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['net_borrowing_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_net_borrowing, '$') . '</td></tr>';
-            
-            // **FIX**: Calculate the FCFE directly from the displayed components.
-            $calculated_fcfe = $proj_net_income + $proj_depreciation - $proj_capex - $proj_change_nwc + $proj_net_borrowing;
-            $output .= '<tr style="font-weight: bold;"><td>= Projected Base FCFE (Used for Forecast)</td><td></td><td>' . $this->format_large_number($calculated_fcfe, '$') . '</td></tr>';
-            $output .= '</tbody></table>';
-        }
-
-
         $output .= '<h4>Discount Rate</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
         $output .= '<tr><td>Risk-Free Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($discount_calc['risk_free_rate'] * 100, 1) . '%</td></tr>';
         $output .= '<tr><td>Equity Risk Premium</td><td>' . esc_html($discount_calc['erp_source']) . '</td><td>' . number_format($discount_calc['equity_risk_premium'] * 100, 1) . '%</td></tr>';
@@ -1617,6 +1541,61 @@ class Journey_To_Wealth_Public {
             $output .= '<tr><td>Levered Beta</td><td>' . esc_html($beta_details['beta_source']) . '</td><td>' . number_format($discount_calc['beta'], 3) . '</td></tr>';
             $output .= '</tbody></table>';
         }
+
+        $component_data = $data['component_ratios'];
+        $projection_ratios = $component_data['projection_ratios'] ?? [];
+
+        $output .= '<h4>TTM Ratios Used for Projection (% of Revenue)</h4>';
+        $output .= '<table class="jtw-modal-table"><thead><tr><th>Component</th><th>TTM Ratio</th></tr></thead><tbody>';
+
+        $components = [
+            'net_income_of_revenue' => 'Net Income',
+            'depreciation_of_revenue' => '(+) Depreciation & Amortization',
+            'capex_of_revenue' => '(-) Capital Expenditures (CAPEX)',
+            'delta_nwc_of_revenue' => '(-) Change in Net Working Capital',
+            'net_borrowing_of_revenue' => '(+) Net Borrowing'
+        ];
+
+        foreach ($components as $key => $label) {
+            $output .= '<tr><td>' . esc_html($label) . '</td>';
+            $ratio_value = 'N/A';
+            if (isset($projection_ratios[$key])) {
+                $ratio_value = number_format(abs($projection_ratios[$key]) * 100, 1) . '%';
+            }
+            $output .= '<td><strong>' . esc_html($ratio_value) . '</strong></td></tr>';
+        }
+        $output .= '</tbody></table>';
+        $output .= '<p class="jtw-calculator-note">' . esc_html__('Note: Ratios are calculated from Trailing Twelve Months (TTM) of financial data for a more current valuation baseline.', 'journey-to-wealth') . '</p>';
+
+        if (isset($data['component_ratios'])) {
+            $ratios = $data['component_ratios']['projection_ratios'];
+            $base_revenue_source = $data['base_revenue_source'] ?? 'Historical';
+            $projected_revenue_2026 = $data['base_revenue'] * (1 + $data['inputs']['initial_growth_rate']);
+
+            $proj_net_income = $projected_revenue_2026 * $ratios['net_income_of_revenue'];
+            $proj_depreciation = $projected_revenue_2026 * $ratios['depreciation_of_revenue'];
+            $proj_capex = $projected_revenue_2026 * $ratios['capex_of_revenue'];
+            $proj_change_nwc = $projected_revenue_2026 * $ratios['delta_nwc_of_revenue'];
+            $proj_net_borrowing = $projected_revenue_2026 * $ratios['net_borrowing_of_revenue'];
+
+            $output .= '<h4>Projected Base FCFE Calculation</h4>';
+            $output .= '<table class="jtw-modal-table"><thead><tr><th>Component</th><th>Calculation</th><th>Value</th></tr></thead><tbody>';
+            $output .= '<tr><td>Projected 2025 Revenue (Base)</td><td>' . esc_html($base_revenue_source) . '</td><td>' . $this->format_large_number($data['base_revenue'], '$') . '</td></tr>';
+            $output .= '<tr><td>Projected 2026 Revenue</td><td>' . $this->format_large_number($data['base_revenue'], '$') . ' * (1 + ' . number_format($data['inputs']['initial_growth_rate'] * 100, 1) . '%)</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . '</td></tr>';
+            $output .= '<tr style="border-top: 2px solid #ccc;"><td colspan="3" style="text-align:center; font-weight:bold;">Applying Ratios to Projected 2026 Revenue</td></tr>';
+            
+            $output .= '<tr><td>Projected Net Income</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['net_income_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_net_income, '$') . '</td></tr>';
+            $output .= '<tr><td>(+) Projected Depreciation</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['depreciation_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_depreciation, '$') . '</td></tr>';
+            $output .= '<tr><td>(-) Projected CAPEX</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['capex_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_capex, '$') . '</td></tr>';
+            $output .= '<tr><td>(-) Projected Change in NWC</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['delta_nwc_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_change_nwc, '$') . '</td></tr>';
+            $output .= '<tr><td>(+) Projected Net Borrowing</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['net_borrowing_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_net_borrowing, '$') . '</td></tr>';
+            
+            // FIX: Calculate the sum directly from the components to ensure consistency.
+            $calculated_fcfe_for_display = $data['inputs']['base_cash_flow'];
+            $output .= '<tr style="font-weight: bold;"><td>= Projected Base FCFE (Used for Forecast)</td><td></td><td>' . $this->format_large_number($calculated_fcfe_for_display, '$') . '</td></tr>';
+            $output .= '</tbody></table>';
+        }
+
         $output .= '<h4>FCFE Forecast</h4><table class="jtw-modal-table"><thead><tr><th></th><th>FCFE (USD)</th><th>Growth Rate</th><th>Present Value Discounted (@' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%)</th></tr></thead><tbody>';
         foreach ($data['projection_table'] as $row) {
             $output .= '<tr><td>' . esc_html($row['year']) . '</td><td>' . $this->format_large_number($row['cf'], '$') . '</td><td>' . number_format($row['growth_rate'] * 100, 1) . '%</td><td>' . $this->format_large_number($row['pv_cf'], '$') . '</td></tr>';
