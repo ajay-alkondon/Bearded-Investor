@@ -786,6 +786,7 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     z-index: 3;
     pointer-events: none;
     transition: color 0.3s ease;
+    white-space: nowrap; /* **NEW**: Prevents the label text from wrapping */
 }
 
 /* **MODIFIED**: Reduced font size */
@@ -800,7 +801,7 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     display: block;
     font-size: 1.2em; 
     font-weight: 700;
-    color: var(--jtw-text-dark);
+    color: var(--jtw-text-dark); /* Ensure this is present */
 }
 
 .jtw-sws-label-group.outside {

@@ -8,3 +8,41 @@ Template: salient
 Version: 1.0
 */
 
+/*------------------------------------------------------------------
+SWA User Account Button
+-------------------------------------------------------------------*/
+
+.swa-user-account-button .user-name {
+    display: none; /* Hidden by default, can be shown on larger screens if desired */
+}
+
+/* Style for the icon and link */
+.swa-user-account-button > a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Dropdown menu styling */
+.swa-user-account-button .sub-menu {
+    min-width: 200px; /* Set a minimum width for the dropdown */
+}
+
+/* Ensure dropdown is positioned correctly */
+#header-outer .right-aligned-menu-items .sf-menu .swa-user-account-button ul {
+    top: 100%; /* Position below the parent */
+    left: auto;
+    right: 0; /* Align to the right of the button */
+}
+
+/* Adjust mobile view if needed */
+@media only screen and (max-width: 1000px) {
+    #header-outer .right-aligned-menu-items .swa-user-account-button {
+        display: none; /* Hiding from the desktop menu area on mobile */
+    }
+
+    /* You can add a similar button to the mobile menu if desired */
+    .nectar-mobile-only.mobile-header .swa-user-account-button a {
+        padding: 10px 20px;
+    }
+}

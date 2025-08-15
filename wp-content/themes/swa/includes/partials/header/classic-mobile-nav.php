@@ -141,6 +141,37 @@ if ( $header_format === 'menu-left-aligned' ||
 
 			<?php } ?>
 
+
+            <ul class="swa-mobile-user-account-items">
+                <?php
+                if ( is_user_logged_in() ) {
+                    $current_user = wp_get_current_user();
+                    ?>
+                    <li class="menu-item-has-children">
+                        <a href="<?php echo esc_url( get_permalink( get_option('woocommerce_myaccount_page_id') ) ); ?>">
+                            <?php echo esc_html( $current_user->display_name ); ?>
+                        </a>
+                        <ul class="sub-menu">
+                            <li><a href="<?php echo esc_url( get_permalink( get_option('woocommerce_myaccount_page_id') ) ); ?>">My Profile</a></li>
+                            <li><a href="<?php echo esc_url( wc_get_account_endpoint_url('payment-methods') ); ?>">Payments</a></li>
+                            <li><a href="<?php echo esc_url( wc_get_account_endpoint_url('subscriptions') ); ?>">Subscriptions</a></li>
+                            <li><a href="<?php echo esc_url( get_permalink( get_option('woocommerce_myaccount_page_id') ) . 'courses' ); ?>">Courses</a></li>
+                            <li><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>">Logout</a></li>
+                        </ul>
+                    </li>
+                    <?php
+                } else {
+                    ?>
+                    <li>
+                        <a href="<?php echo esc_url( get_permalink( get_option('woocommerce_myaccount_page_id') ) ); ?>">
+                            Login
+                        </a>
+                    </li>
+                    <?php
+                }
+                ?>
+            </ul>
+
 		</div><!--/menu-items-wrap-->
 
 		<div class="below-menu-items-wrap">

@@ -461,19 +461,13 @@ class Journey_To_Wealth_Public {
     
                 $fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
                 
-                $buy_price = 0;
-                $desired_return = (float)($case_assumptions['desiredReturn'] ?? 10) / 100;
-                if ($fair_value > 0) {
-                    $buy_price = $fair_value * (1 - $desired_return);
-                }
-    
                 $results[$case] = [
                     'fair_value' => $fair_value,
-                    'buy_price' => $buy_price
                 ];
             }
         }
         
+        // **NEW**: Check if the client requested the graphic HTML to be regenerated.
         if (isset($_POST['needs_graphic_html']) && $_POST['needs_graphic_html'] === 'true') {
             $results['sws_graphic_html'] = $this->build_sws_graphic_html(
                 (float)($company_data['quote']['05. price'] ?? 0),
@@ -1999,7 +1993,7 @@ class Journey_To_Wealth_Public {
         $output .= '<div class="jtw-sws-header"></div>';
         $output .= '<div class="jtw-sws-chart">';
         
-        $output .= '<div class="jtw-sws-bar-row">';
+        $output .= '<div class="jtw-sws-bar-row jtw-sws-price-bar-row">';
         $output .= '<div class="jtw-sws-label-group">';
         $output .= '<span>Price</span>';
         $output .= '<strong>$' . number_format($current_price, 2) . '</strong>';

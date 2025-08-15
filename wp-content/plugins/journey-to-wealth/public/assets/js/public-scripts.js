@@ -247,11 +247,29 @@
 
     function initializeFairValueAnalysisSection($container) {
         initializeSwsValuationGraphic($container);
+
+// **MODIFIED**: Helper function now accepts the calculated pixel width to avoid timing issues.
+        function updateLabelPosition($wrapper, $label, wrapperPixelWidth) {
+            if (!$wrapper.length || !$label.length) return;
+
+            // Reset style to get the label's true natural width.
+            $label.removeClass('outside');
+            const labelWidth = $label.outerWidth(true);
+
+            // Check if the bar is too narrow for the label plus 30px of horizontal padding.
+            if (wrapperPixelWidth < (labelWidth + 30)) {
+                $label.addClass('outside');
+            } else {
+                // If it fits, ensure the 'outside' class is removed.
+                $label.removeClass('outside');
+            }
+        }
     
-        const recalculateValuation = debounce(function() {
+            const recalculateValuation = debounce(function() {
             const assumptions = { bear: {}, base: {}, bull: {} };
             let hasAllInputs = true;
-            let initialFcfeIsNegative = false;
+            // **MODIFIED**: This flag will track if ANY of the FCFE cases are positive.
+            let anyFcfeIsPositive = false;
     
             $container.find('.jtw-assumption-input[data-case]').each(function() {
                 const $input = $(this);
@@ -268,8 +286,9 @@
                     if (metric === 'initialFcfe') {
                         const multiplier = parseFloat($input.data('multiplier')) || 1;
                         value = parseFloat(value) * multiplier;
-                        if (caseType === 'base' && value < 0) {
-                            initialFcfeIsNegative = true;
+                        // **MODIFIED**: Check if this specific FCFE value is positive.
+                        if (value > 0) {
+                            anyFcfeIsPositive = true;
                         }
                     }
     
@@ -283,8 +302,9 @@
     
             const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
             const timeframe = $container.find('#jtw-projection-timeframe').val();
-            const needsGraphic = initialFcfeIsNegative && assumptions.base.initialFcfe > 0;
-    
+            
+            // **MODIFIED**: This is a more reliable way to check if the graphic is missing and needs to be fetched.
+            const needsGraphic = $('#jtw-sws-graphic-wrapper:empty').length > 0 && anyFcfeIsPositive;    
             $container.find('.jtw-assumptions-table').css('opacity', 0.5);
     
             $.ajax({
@@ -296,7 +316,7 @@
                     ticker: ticker,
                     assumptions: assumptions,
                     timeframe: timeframe,
-                    needs_graphic_html: needsGraphic
+                    needs_graphic_html: needsGraphic // Send the flag to the server
                 },
                 dataType: 'json',
                 success: function(response) {
@@ -304,23 +324,34 @@
                     if (response.success && response.data) {
                         const data = response.data;
                         const $tbody = $container.find('.jtw-assumptions-table-body');
+                        
+                        // **MODIFIED LOGIC START**
 
-                        // Update table
-                        if (assumptions.base.initialFcfe > 0) {
+                        // If the server sent back the graphic HTML, render it and initialize it.
+                        if (data.sws_graphic_html) {
+                            $('#jtw-sws-graphic-wrapper').html(data.sws_graphic_html);
+                            initializeSwsValuationGraphic($container);
+                        }
+
+                        // Update table based on whether FCFE is positive
+                        if (anyFcfeIsPositive) {
+                            // FCFE is positive, so remove the error message row.
                             $tbody.find('.jtw-valuation-error-row').remove();
-                            // **MODIFIED**: If rows are missing, recreate them with the new structure
-                            if ($tbody.find('.jtw-results-row').length === 0) {
+
+                            // If the standard result/return rows don't exist, add them now.
+                            if ($tbody.find('.jtw-return-row').length === 0) {
                                 $tbody.append(`
                                     <tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">-</td><td class="jtw-bull-fv">-</td></tr>
                                     <tr class="jtw-results-row jtw-return-row"><td class="jtw-results-label">% Return</td><td class="jtw-bear-return">-</td><td class="jtw-base-return">-</td><td class="jtw-bull-return">-</td></tr>
                                 `);
                             }
-                            // Update Fair Values
+
+                            // Update Fair Value cells
                             $tbody.find('.jtw-bear-fv').text('$' + data.bear.fair_value.toFixed(1));
                             $tbody.find('.jtw-base-fv').text('$' + data.base.fair_value.toFixed(1));
                             $tbody.find('.jtw-bull-fv').text('$' + data.bull.fair_value.toFixed(1));
 
-                            // **NEW**: Calculate and update % Return
+                            // Calculate and update % Return cells
                             const currentPrice = parseFloat($container.find('.jtw-sws-valuation-container').attr('data-current-price'));
                             if (currentPrice > 0) {
                                 const bearReturn = ((data.bear.fair_value - currentPrice) / currentPrice) * 100;
@@ -332,23 +363,22 @@
                                 $tbody.find('.jtw-bull-return').text(bullReturn.toFixed(1) + '%');
                             }
                         } else {
-                            $tbody.find('.jtw-results-row, tr:has([data-metric="desiredReturn"])').remove();
+                            // FCFE is negative, so remove result rows and ensure the error message is there.
+                            $tbody.find('.jtw-results-row:not(.jtw-valuation-error-row)').remove();
                             if ($tbody.find('.jtw-valuation-error-row').length === 0) {
                                 $tbody.append('<tr class="jtw-results-row jtw-valuation-error-row"><td colspan="4">Valuation data is not available to create a chart.</td></tr>');
                             }
                         }
+                        
+                        // **MODIFIED LOGIC END**
 
                         // Update modal content if it was sent
                         if (data.new_modal_html) {
                             $('#jtw-assumptions-modal .jtw-modal-content').html('<span class="jtw-modal-close">&times;</span>' + data.new_modal_html);
                         }
-    
-                        // Update the SWS Valuation Graphic
-                        if (data.sws_graphic_html) {
-                            $('#jtw-sws-graphic-wrapper').html(data.sws_graphic_html);
-                            initializeSwsValuationGraphic($container);
-                        }
                         
+                        // This block now correctly updates the graphic that was just added or already existed.
+                        // ... inside the recalculateValuation success callback ...
                         const $swsContainer = $container.find('.jtw-sws-valuation-container');
                         if ($swsContainer.length) {
                             const currentPrice = parseFloat($swsContainer.attr('data-current-price'));
@@ -356,42 +386,54 @@
                             const base_fv = data.base.fair_value;
                             const bull_fv = data.bull.fair_value;
         
-                            if (bull_fv > 0 && currentPrice > 0) {
-                                
-                                const rangeMax = Math.max(currentPrice, bull_fv) * 1.3;
-                                
+                            const max_positive_fv = Math.max(0, bear_fv, base_fv, bull_fv);
+                            
+                            if (currentPrice > 0 && max_positive_fv > 0) {
+                                const rangeMax = Math.max(currentPrice, max_positive_fv) * 1.3;
+                                const containerWidth = $swsContainer.find('.jtw-sws-chart').width();
+
+                                // **REWRITTEN LOGIC START**
+                                // 1. Set Bar Widths
                                 const pricePosPct = Math.min(100, (currentPrice / rangeMax) * 100);
-                                $swsContainer.find('.jtw-sws-bar-row:not(.jtw-sws-stacked-bar-row) .jtw-sws-bar-wrapper').css('width', pricePosPct + '%');
+                                $swsContainer.find('.jtw-sws-price-bar-row .jtw-sws-bar-wrapper').css('width', pricePosPct + '%');
                                 
-                                const stackedBarTotalWidthPct = (bull_fv / rangeMax) * 100;
-                                $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-bar-wrapper').css('width', (stackedBarTotalWidthPct > 0 ? stackedBarTotalWidthPct : 0) + '%');
+                                const stackedBarTotalWidthPct = (max_positive_fv / rangeMax) * 100;
+                                $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-bar-wrapper').css('width', stackedBarTotalWidthPct + '%');
 
-                                if (bull_fv > 0) {
-                                    const bearWidthPct = (bear_fv / bull_fv) * 100;
-                                    const baseWidthPct = ((base_fv - bear_fv) / bull_fv) * 100;
-                                    const bullWidthPct = ((bull_fv - base_fv) / bull_fv) * 100;
+                                const bearWidthPct = bear_fv > 0 ? (bear_fv / max_positive_fv) * 100 : 0;
+                                const baseWidthPct = base_fv > bear_fv ? ((base_fv - bear_fv) / max_positive_fv) * 100 : 0;
+                                const bullWidthPct = bull_fv > base_fv ? ((bull_fv - base_fv) / max_positive_fv) * 100 : 0;
 
-                                    $swsContainer.find('.jtw-sws-zone.bear-case').css('width', (bearWidthPct > 0 ? bearWidthPct : 0) + '%');
-                                    $swsContainer.find('.jtw-sws-zone.base-case').css('width', (baseWidthPct > 0 ? baseWidthPct : 0) + '%');
-                                    $swsContainer.find('.jtw-sws-zone.bull-case').css('width', (bullWidthPct > 0 ? bullWidthPct : 0) + '%');
-                                } else {
-                                    $swsContainer.find('.jtw-sws-zone.bear-case, .jtw-sws-zone.base-case, .jtw-sws-zone.bull-case').css('width', '0%');
-                                }
+                                $swsContainer.find('.jtw-sws-zone.bear-case').css('width', bearWidthPct + '%');
+                                $swsContainer.find('.jtw-sws-zone.base-case').css('width', baseWidthPct + '%');
+                                $swsContainer.find('.jtw-sws-zone.bull-case').css('width', bullWidthPct + '%');
 
-                                // Recalculate and update the background zone widths
-                                const undervalued_boundary = base_fv * 0.8;
-                                const overvalued_boundary = base_fv * 1.2;
+                                const base_for_zones = base_fv > 0 ? base_fv : (bear_fv > 0 ? bear_fv : bull_fv);
+                                const undervalued_boundary = base_for_zones * 0.8;
+                                const overvalued_boundary = base_for_zones * 1.2;
                                 const undervalued_width_pct = (undervalued_boundary / rangeMax) * 100;
                                 const about_right_width_pct = ((overvalued_boundary - undervalued_boundary) / rangeMax) * 100;
 
                                 $swsContainer.find('.jtw-sws-zone.undervalued').css('width', undervalued_width_pct + '%');
                                 $swsContainer.find('.jtw-sws-zone.about-right').css('width', about_right_width_pct + '%');
-
+                                
+                                // 2. Update Label Content
                                 const $stackedBarLabel = $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-label-group');
                                 $stackedBarLabel.html(`
                                     <span>Bear | Base | Bull</span>
                                     <strong>$${bear_fv.toFixed(1)} | $${base_fv.toFixed(1)} | $${bull_fv.toFixed(1)}</strong>
                                 `);
+
+                                // 3. Position Labels using calculated widths to avoid timing issues
+                                const priceBarPixelWidth = (pricePosPct / 100) * containerWidth;
+                                const $priceBarWrapper = $swsContainer.find('.jtw-sws-price-bar-row .jtw-sws-bar-wrapper');
+                                const $priceLabel = $priceBarWrapper.find('.jtw-sws-label-group');
+                                updateLabelPosition($priceBarWrapper, $priceLabel, priceBarPixelWidth);
+    
+                                const stackedBarPixelWidth = (stackedBarTotalWidthPct / 100) * containerWidth;
+                                const $stackedBarWrapper = $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-bar-wrapper');
+                                updateLabelPosition($stackedBarWrapper, $stackedBarLabel, stackedBarPixelWidth);
+                                // **REWRITTEN LOGIC END**
 
                             } else {
                                 $swsContainer.find('.jtw-sws-header').empty();
