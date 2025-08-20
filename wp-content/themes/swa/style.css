@@ -9,90 +9,216 @@ Version: 1.0
 */
 
 /*------------------------------------------------------------------
-SWA User Account Button - Final Styling v2
+SWA User Account Button & Dark Mode - v9 FINAL
 -------------------------------------------------------------------*/
 
-/* --- 1. Fix Icon Visibility --- */
-
-/* Forcefully hide the theme's default mobile-only user icon on desktop screens */
+/* --- 1. VISIBILITY: Hide duplicate icons --- */
 @media only screen and (min-width: 1001px) {
-    #header-outer a.mobile-user-account {
-        display: none !important;
-    }
-}
-
-/* The .nectar-desktop-only class added in functions.php will hide the custom button on mobile */
-
-
-/* --- 2. Fix Desktop Icon Alignment --- */
-
-/* Use Flexbox on the parent container for robust vertical alignment */
-#header-outer .right-aligned-menu-items nav > ul.buttons {
-    display: flex;
-    align-items: center;
-}
-
-/* Remove any leftover positioning adjustments */
-#header-outer .right-aligned-menu-items nav > ul > li.swa-user-account-button {
-    vertical-align: unset;
-    top: unset;
-}
-
-.sf-menu > .swa-user-account-button {
-    margin-left: 15px; 
-}
-
-/* --- 3. Fix Dropdown Styling (and Icon Link) --- */
-
-.swa-user-account-button > a {
-    display: flex;
-    align-items: center;
-    padding: 0 10px !important;
-}
-
-.swa-user-account-button > a i.icon-salient-m-user {
-    font-size: 24px;
-    height: auto;
-    line-height: 1;
-}
-
-/* Main dropdown container */
-.swa-user-account-button .sub-menu {
-    min-width: 220px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    border: 1px solid #f0f0f0;
-    padding: 10px 0;
-    margin-top: 15px;
-    right: 0; 
-    left: auto;
-}
-
-/* Dropdown list items */
-.swa-user-account-button .sub-menu li {
-    display: block;
-    width: 100%;
-}
-
-/* Dropdown links */
-.swa-user-account-button .sub-menu li a {
-    padding: 12px 20px;
-    line-height: 1.4;
-    font-size: 15px;
-    font-weight: 500;
-    color: #333 !important;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-}
-
-/* Dropdown link hover effect */
-.swa-user-account-button .sub-menu li a:hover {
-    background-color: #f5f5f5;
-    color: #000 !important;
-}
-
-/* Hide default Salient arrows in our custom dropdown */
-.swa-user-account-button .sub-menu .sf-sub-indicator {
+  body #header-outer a.mobile-user-account {
     display: none !important;
+  }
+}
+@media only screen and (max-width: 1000px) {
+  body #header-outer .swa-user-account-button {
+    display: none !important;
+  }
+}
+
+/* --- 2. DESKTOP ALIGNMENT & SIZING --- */
+body #header-outer .right-aligned-menu-items nav > ul.buttons {
+  display: flex;
+  align-items: center;
+}
+.swa-user-account-button > a i.icon-salient-m-user {
+  font-size: 26px !important;
+}
+
+/* --- 3. DROPDOWN STYLING & PADDING --- */
+.swa-user-account-button .sub-menu {
+  min-width: 220px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  padding: 10px 0;
+  margin-top: 15px;
+}
+.swa-user-account-button .sub-menu li a {
+  padding: 12px 25px !important;
+  font-size: 15px;
+}
+
+/* --- 4. DARK MODE TOGGLE STYLING --- */
+.swa-dark-mode-toggle-container {
+  padding: 12px 25px 8px 25px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 8px;
+}
+.swa-dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+}
+.swa-dark-mode-toggle .switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.swa-dark-mode-toggle .switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.swa-dark-mode-toggle .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+.swa-dark-mode-toggle .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+.swa-dark-mode-toggle input:checked + .slider {
+  background-color: #275CFF;
+}
+.swa-dark-mode-toggle input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+
+/* --- 5. DARK MODE THEME COLORS (Revised) --- */
+
+/* Main Page & Header Backgrounds */
+body.dark-mode,
+body.dark-mode #header-outer,
+body.dark-mode #page-header-bg,
+body.dark-mode .ocm-effect-wrap {
+  background-color: #17243f !important;
+}
+
+/* Content Section Backgrounds */
+body.dark-mode .container-wrap,
+body.dark-mode .jtw-content-section,
+body.dark-mode .post-area,
+body.dark-mode .jtw-initial-prompt,
+body.dark-mode #footer-outer {
+  background-color: #17243f !important;
+  border-color: #2a3b5c !important;
+}
+
+/* Text, Headings, and Navigation Links */
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode h5, body.dark-mode h6,
+body.dark-mode a,
+body.dark-mode .sf-menu > li > a,
+body.dark-mode .jtw-anchor-nav a,
+body.dark-mode .jtw-anchor-nav span,
+body.dark-mode .swa-user-account-button > a i.icon-salient-m-user {
+  color: #ffffff !important;
+}
+
+body.dark-mode p {
+  color: #b9b9b9 !important;
+}
+
+/* Specific Element Borders and Backgrounds in Dark Mode */
+body.dark-mode .jtw-anchor-nav .jtw-nav-major-section {
+  border-bottom: none !important;
+}
+body.dark-mode .jtw-anchor-nav .jtw-nav-minor-section.active {
+  background-color: #17243f !important;
+}
+
+/* --- 5. DARK MODE THEME COLORS (Revised) --- */
+
+/* Main Page Background (body and ajax wrapper) */
+body.dark-mode,
+body.dark-mode #ajax-content-wrap {
+  background-color: #17243f !important;
+}
+
+/* Header, Page Header, and Footer Backgrounds */
+body.dark-mode #header-outer,
+body.dark-mode #page-header-bg,
+body.dark-mode #footer-outer,
+body.dark-mode .ocm-effect-wrap {
+  background-color: #17243f !important;
+}
+
+/* Content Sections (Blue color as requested) */
+body.dark-mode .jtw-content-section,
+body.dark-mode .jtw-initial-prompt {
+  background-color: #17243f !important;
+  border-color: #2a3b5c !important;
+}
+
+/* --- TEXT & LINK COLORS --- */
+
+/* Force Header Navigation & User Icons to be White */
+body.dark-mode #header-outer nav .sf-menu > li > a,
+body.dark-mode #header-outer .swa-user-account-button > a {
+    color: #ffffff !important;
+}
+
+/* Left-hand Analyzer Navigation */
+body.dark-mode .jtw-anchor-nav a,
+body.dark-mode .jtw-anchor-nav span {
+    color: #d1d1d1 !important;
+}
+body.dark-mode .jtw-anchor-nav .jtw-nav-major-section {
+    color: #ffffff !important;
+    border-bottom: none !important; 
+}
+body.dark-mode .jtw-anchor-nav .jtw-nav-minor-section.active {
+    background-color: #17243f !important;
+    color: #ffffff !important;
+}
+
+/* General Headings and Important Text */
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode h5, body.dark-mode h6,
+body.dark-mode .jtw-section-header h4,
+body.dark-mode .jtw-metrics-table th,
+body.dark-mode .jtw-assumptions-table th,
+body.dark-mode .jtw-historical-table th {
+  color: #ffffff !important;
+}
+
+/* Paragraphs and less important text */
+body.dark-mode p,
+body.dark-mode span,
+body.dark-mode td,
+body.dark-mode .jtw-chart-controls button {
+	color: #b9b9b9 !important;
+}
+
+/* Dark Mode Dropdown Menu */
+body.dark-mode .swa-user-account-button .sub-menu {
+  background-color: #2c2c2c;
+  border-color: #444;
+}
+body.dark-mode .swa-user-account-button .sub-menu li a,
+body.dark-mode .swa-dark-mode-toggle span {
+   color: #e0e0e0 !important;
+}
+body.dark-mode .swa-user-account-button .sub-menu li a:hover {
+  background-color: #383838;
+}
+body.dark-mode .swa-dark-mode-toggle-container {
+  border-top-color: #444;
 }
