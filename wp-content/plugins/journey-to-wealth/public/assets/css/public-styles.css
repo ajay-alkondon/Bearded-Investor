@@ -1066,3 +1066,47 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     background-color: #cce5ff;
     font-weight: bold;
 }
+
+/* --- Yearly Input Toggles --- */
+.jtw-toggle-label {
+    cursor: pointer;
+    font-weight: 600 !important;
+    user-select: none;
+}
+.jtw-toggle-label:hover {
+    color: var(--jtw-primary-blue);
+}
+.jtw-toggle-label span {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    margin-left: 5px;
+}
+.jtw-yearly-input-row td {
+    background-color: #f8f9fa;
+}
+body.dark-mode .jtw-yearly-input-row td {
+    background-color: #223049 !important;
+}
+/* --- Disabled Main Input Styling --- */
+.jtw-assumption-input.disabled-by-toggle {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+body.dark-mode .jtw-assumption-input.disabled-by-toggle {
+    background-color: #2a3b5c !important;
+    opacity: 0.5;
+}
+
+.jtw-toggle-label .jtw-chevron {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    margin-left: 5px;
+}
+.jtw-toggle-row.active .jtw-toggle-label .jtw-chevron {
+    transform: rotate(180deg);
+}
+/* --- Indent Yearly Accordion Rows --- */
+.jtw-yearly-input-row td:first-child {
+    padding-left: 35px !important;
+}

@@ -43,7 +43,7 @@ function swa_add_memberpress_user_button() {
                 <li class="menu-item"><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>">Logout</a></li>
                 <li class="menu-item swa-dark-mode-toggle-container">
                     <div class="swa-dark-mode-toggle">
-                        <span>Dark Mode</span>
+                        <span>Light Mode</span>
                         <label class="switch"><input type="checkbox" id="swa-dark-mode-checkbox"><span class="slider"></span></label>
                     </div>
                 </li>
@@ -62,6 +62,37 @@ function swa_add_memberpress_user_button() {
 // Add the button to the desktop header's button area
 add_action( 'nectar_hook_before_button_menu_items', 'swa_add_memberpress_user_button' );
 
+/**
+ * Add Google Ads Conversion Tracking script to the MemberPress Thank You page.
+ */
+function add_google_ads_conversion_tracking_for_mep($txn) {
+    // --- START: CONFIGURE YOUR TAG HERE ---
+
+    //$conversion_id = 'AW-123456789'; // <-- REPLACE with your Conversion ID
+    //$conversion_label = 'AbC-D_efG-h12i34j5k'; // <-- REPLACE with your Conversion Label
+    //$currency = 'USD'; // <-- REPLACE with your store's currency code (e.g., 'EUR', 'GBP')
+
+    // --- END: CONFIGURATION ---
+
+    // Get dynamic data from the MemberPress transaction object
+    //$transaction_id = $txn->trans_num;
+    //$transaction_value = $txn->total;
+
+    // Output the Google Ads event snippet
+    ?>
+        <!-- Google tag (gtag.js) event -->
+        <script>
+        gtag('event', 'conversion_event_subscribe_paid', {
+            // <event_parameters>
+        });
+        </script>
+    <?php
+}
+/**
+ * Add Google Ads Conversion Tracking script to the MemberPress Thank You page.
+*/
+add_action('mepr-thank-you-page', 'add_google_ads_conversion_tracking_for_mep');
+
 
 /**
  * Add the JavaScript for the dark mode toggle functionality.
@@ -71,7 +102,12 @@ function swa_add_dark_mode_script() {
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         
-        // Use a selector that finds all toggles
+        // Only run this script on the stock analysis page
+        const analyzerWrapper = document.querySelector('.jtw-analyzer-wrapper');
+        if (!analyzerWrapper) {
+            return;
+        }
+
         const themeToggles = document.querySelectorAll('input[id^="swa-dark-mode-checkbox"]');
         const body = document.body;
         const lightMode = 'light-mode';
@@ -82,7 +118,8 @@ function swa_add_dark_mode_script() {
             body.classList.remove(lightMode, darkMode);
             body.classList.add(theme);
             if (syncToggles) {
-                const isChecked = (theme === darkMode);
+                // If the theme is light mode, the toggle should be checked.
+                const isChecked = (theme === lightMode);
                 themeToggles.forEach(toggle => {
                     if (toggle) toggle.checked = isChecked;
                 });
@@ -92,13 +129,14 @@ function swa_add_dark_mode_script() {
         // Function to handle toggle click
         function handleToggle() {
             const isChecked = this.checked;
-            const newTheme = isChecked ? darkMode : lightMode;
+            // If checked, switch to light mode. If unchecked, switch to dark mode.
+            const newTheme = isChecked ? lightMode : darkMode;
             localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme, true); // Sync all toggles when one is clicked
+            applyTheme(newTheme, true); 
         }
 
-        // Apply saved theme on page load
-        const savedTheme = localStorage.getItem('theme') || lightMode;
+        // Apply saved theme on page load, defaulting to dark mode for the analysis page.
+        const savedTheme = localStorage.getItem('theme') || darkMode;
         applyTheme(savedTheme, true);
 
         // Add event listeners to all found toggles

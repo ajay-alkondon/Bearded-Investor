@@ -55,172 +55,126 @@ class Journey_To_Wealth_DCF_Model {
         return ($beta > 0) ? $risk_free_rate + ($beta * $this->equity_risk_premium) : self::DEFAULT_COST_OF_EQUITY;
     }
 
-    public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $earnings_estimates, $current_price, $beta_details = [], $custom_assumptions = [], $projection_years = 10) {
-        $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data];
-        foreach($datasets as $dataset) {
-            if (is_wp_error($dataset) || (empty($dataset['annualReports']) && empty($dataset['annualEarnings'])) || count($dataset['annualReports'] ?? []) < self::MIN_YEARS_FOR_GROWTH_CALC) {
-                return new WP_Error('dcf_missing_financials', __('DCF Error: At least 3 years of financial statements are required.', 'journey-to-wealth'));
-            }
+public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $earnings_estimates, $current_price, $beta_details = [], $custom_assumptions = [], $projection_years = 10) {
+    $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data];
+    foreach($datasets as $dataset) {
+        if (is_wp_error($dataset) || (empty($dataset['annualReports']) && empty($dataset['annualEarnings'])) || count($dataset['annualReports'] ?? []) < self::MIN_YEARS_FOR_GROWTH_CALC) {
+            return new WP_Error('dcf_missing_financials', __('DCF Error: At least 3 years of financial statements are required.', 'journey-to-wealth'));
         }
+    }
 
-        // --- Setup initial parameters ---
-        $risk_free_rate = $this->calculate_average_risk_free_rate($treasury_yield_data);
-        $beta = $this->levered_beta ?? $beta_details['levered_beta'] ?? $this->get_av_value($overview_data, 'Beta');
-        $this->cost_of_equity = $this->calculate_cost_of_equity($beta, $risk_free_rate);
-        $this->terminal_growth_rate = $risk_free_rate;
-        $component_ratios = $this->calculate_ttm_ratios($overview_data, $income_statement_data['quarterlyReports'], $cash_flow_data['quarterlyReports'], $balance_sheet_data['quarterlyReports'], $earnings_estimates); 
+    // --- Setup initial parameters ---
+    $risk_free_rate = $this->calculate_average_risk_free_rate($treasury_yield_data);
+    $beta = $this->levered_beta ?? $beta_details['levered_beta'] ?? $this->get_av_value($overview_data, 'Beta');
+    $this->cost_of_equity = $this->calculate_cost_of_equity($beta, $risk_free_rate);
+    $this->terminal_growth_rate = $risk_free_rate;
+    $component_ratios = $this->calculate_ttm_ratios($overview_data, $income_statement_data['quarterlyReports'], $cash_flow_data['quarterlyReports'], $balance_sheet_data['quarterlyReports'], $earnings_estimates); 
+    
+    // --- Determine Base Revenue and Initial Growth Rate ---
+    $base_revenue = $this->get_av_value($income_statement_data['annualReports'][0], 'totalRevenue');
+    $base_revenue_source = 'Last Reported Annual Revenue';
 
-        // --- Determine Base Revenue and Initial Growth Rate ---
-        $last_revenue = $this->get_av_value($income_statement_data['annualReports'][0], 'totalRevenue');
-        $base_revenue = $last_revenue;
-        $base_revenue_source = 'Last Reported Annual Revenue';
+    $initial_growth_rate = $custom_assumptions['initial_growth_rate'] ?? $this->terminal_growth_rate;
+    $growth_rate_source = 'User Input';
+    
+    // --- Projection Logic ---
+    $yearly_fcfe_inputs = $custom_assumptions['yearlyFcfe'] ?? [];
+    $yearly_growth_inputs = $custom_assumptions['yearlyRevGrowth'] ?? [];
+    $initial_fcfe_override = $custom_assumptions['initial_fcfe_override'] ?? null;
+    
+    // Step 1: Establish the FCFE for Year 1 (2026).
+    $fcfe_year_1 = 0;
+    if (isset($yearly_fcfe_inputs[1]) && is_numeric($yearly_fcfe_inputs[1])) {
+        $fcfe_year_1 = (float)$yearly_fcfe_inputs[1];
+    } elseif ($initial_fcfe_override !== null) {
+        $fcfe_year_1 = $initial_fcfe_override;
+    } else {
+        $projected_revenue = $base_revenue * (1 + $initial_growth_rate);
+        $ratios = $component_ratios['projection_ratios'];
+        $fcfe_year_1 = ($projected_revenue * $ratios['net_income_of_revenue']) 
+                     + ($projected_revenue * $ratios['depreciation_of_revenue']) 
+                     - ($projected_revenue * $ratios['capex_of_revenue']) 
+                     - ($projected_revenue * $ratios['delta_nwc_of_revenue']) 
+                     + ($projected_revenue * $ratios['net_borrowing_of_revenue']);
+    }
+    
+    // Step 2: Build the full FCFE and Growth schedules.
+    $fcfe_projections = [];
+    $growth_projections = [];
+    $current_growth_rate = $initial_growth_rate;
+    $decay_is_setup = false;
+    $growth_decay_rate = 0;
 
-        if (!is_wp_error($earnings_estimates) && !empty($earnings_estimates['estimates'])) {
-            $current_year_estimate = null;
-            foreach ($earnings_estimates['estimates'] as $estimate) {
-                if (isset($estimate['horizon']) && $estimate['horizon'] === 'current fiscal year') {
-                    $current_year_estimate = $estimate;
-                    break;
-                }
-            }
-
-            if ($current_year_estimate && isset($current_year_estimate['revenue_estimate_average']) && is_numeric($current_year_estimate['revenue_estimate_average'])) {
-                $analyst_revenue = (float)$current_year_estimate['revenue_estimate_average'];
-                if ($analyst_revenue > 0) {
-                    $base_revenue = $analyst_revenue;
-                    $base_revenue_source = 'Current Year Analyst Estimate';
-                }
-            }
-        }
-
-        $initial_growth_rate = $this->terminal_growth_rate; // Fallback
-        $growth_rate_source = 'Risk-Free Rate (Fallback)';
-        if (isset($custom_assumptions['initial_growth_rate']) && is_numeric($custom_assumptions['initial_growth_rate'])) {
-            $initial_growth_rate = (float)$custom_assumptions['initial_growth_rate'];
-            $growth_rate_source = 'Beta-Based Assumption';
-        }
-        
-        // --- Projection Logic ---
-        $projection_table = [];
-        $sum_of_pv_cfs = 0;
-        $current_calendar_year = (int)date('Y');
-        $start_projection_year = $current_calendar_year + 1;
-        
-        $current_growth_rate = $initial_growth_rate; 
-        $growth_decay_rate = 0;
-        $decay_is_setup = false;
-        $first_projected_fcfe = null;
-        $last_fcfe = 0;
-        $ratios_for_projection = $component_ratios['projection_ratios'];
-
-        $last_revenue = $base_revenue;
-
-        for ($i = 1; $i <= $projection_years; $i++) {
-            $projection_year = $start_projection_year + $i - 1;
-            $projected_revenue = 0;
-            $period_growth_rate = 0;
-            
-            if ($i == 1) {
-                $period_growth_rate = $initial_growth_rate;
-            } else {
+    for ($i = 1; $i <= $projection_years; $i++) {
+        // Determine Growth Rate for the current year
+        if (!empty($yearly_growth_inputs) && isset($yearly_growth_inputs[$i]) && is_numeric($yearly_growth_inputs[$i])) {
+            $growth_projections[$i] = (float)$yearly_growth_inputs[$i] / 100;
+        } else {
+            if ($i == 1) { $growth_projections[$i] = $initial_growth_rate; } 
+            else {
                 if (!$decay_is_setup) {
-                    $remaining_years = $projection_years - 1;
-                    if ($remaining_years > 0) {
-                        $growth_decay_rate = ($current_growth_rate - $this->terminal_growth_rate) / $remaining_years;
-                    }
+                    if ($projection_years > 1) { $growth_decay_rate = ($current_growth_rate - $this->terminal_growth_rate) / ($projection_years - 1); }
                     $decay_is_setup = true;
                 }
                 $current_growth_rate -= $growth_decay_rate;
-                $period_growth_rate = $current_growth_rate;
+                $growth_projections[$i] = $current_growth_rate;
             }
-            
-            $projected_revenue = $last_revenue * (1 + $period_growth_rate);
-            
-            $projected_fcfe = 0;
-            if ($i == 1) {
-                if (isset($custom_assumptions['initial_fcfe_override']) && is_numeric($custom_assumptions['initial_fcfe_override'])) {
-                    $projected_fcfe = (float)$custom_assumptions['initial_fcfe_override'];
-                } else {
-                    $projected_net_income = $projected_revenue * $ratios_for_projection['net_income_of_revenue'];
-                    $projected_depreciation = $projected_revenue * $ratios_for_projection['depreciation_of_revenue'];
-                    $projected_capex = $projected_revenue * $ratios_for_projection['capex_of_revenue'];
-                    $projected_delta_nwc = $projected_revenue * $ratios_for_projection['delta_nwc_of_revenue'];
-                    $projected_net_borrowing = $projected_revenue * $ratios_for_projection['net_borrowing_of_revenue'];
-                    
-                    // **FIX**: Corrected FCFE formula to subtract delta NWC.
-                    $projected_fcfe = $projected_net_income + $projected_depreciation - $projected_capex - $projected_delta_nwc + $projected_net_borrowing;
-                }
-                $first_projected_fcfe = $projected_fcfe;
-            } else {
-                if ($last_fcfe < 0) {
-                    $improvement = abs($last_fcfe) * $period_growth_rate;
-                    $projected_fcfe = $last_fcfe + $improvement;
-                } else {
-                    $projected_fcfe = $last_fcfe * (1 + $period_growth_rate);
-                }
-            }
-
-            $pv_cf = $projected_fcfe / pow(1 + $this->cost_of_equity, $i);
-            $sum_of_pv_cfs += $pv_cf;
-
-            $projection_table[] = [
-                'year' => $projection_year,
-                'cf' => $projected_fcfe,
-                'growth_rate' => $period_growth_rate,
-                'pv_cf' => $pv_cf
-            ];
-
-            $last_revenue = $projected_revenue;
-            $last_fcfe = $projected_fcfe;
         }
 
-        $last_projected_fcfe = end($projection_table)['cf'];
-        $terminal_value = ($last_projected_fcfe * (1 + $this->terminal_growth_rate)) / ($this->cost_of_equity - $this->terminal_growth_rate);
-        if ($this->cost_of_equity <= $this->terminal_growth_rate) {
-            return new WP_Error('dcf_terminal_value_error', __('Terminal value cannot be calculated, cost of equity is not greater than terminal growth rate.', 'journey-to-wealth'));
+        // Determine FCFE for the current year
+        if (!empty($yearly_fcfe_inputs) && isset($yearly_fcfe_inputs[$i]) && is_numeric($yearly_fcfe_inputs[$i])) {
+            $fcfe_projections[$i] = (float)$yearly_fcfe_inputs[$i];
+        } else {
+            if ($i == 1) { $fcfe_projections[$i] = $fcfe_year_1; }
+            else { $fcfe_projections[$i] = $fcfe_projections[$i - 1] * (1 + $growth_projections[$i]); }
         }
-        
-        $pv_of_terminal_value = $terminal_value / pow(1 + $this->cost_of_equity, $projection_years);
-        $total_equity_value = $sum_of_pv_cfs + $pv_of_terminal_value;
-        $shares_outstanding = $this->get_av_value($overview_data, 'SharesOutstanding');
-        if ($shares_outstanding == 0) return new WP_Error('dcf_shares_error', __('Shares outstanding is zero, cannot calculate per-share value.', 'journey-to-wealth'));
-        
-        $intrinsic_value_per_share = $total_equity_value / $shares_outstanding;
-
-        return [
-            'intrinsic_value_per_share' => $intrinsic_value_per_share,
-            'calculation_breakdown' => [
-                'model_name' => 'DCF Model (FCFE)',
-                'current_price' => $current_price,
-                'shares_outstanding' => $shares_outstanding,
-                'sum_of_pv_cfs' => $sum_of_pv_cfs,
-                'terminal_value' => $terminal_value,
-                'pv_of_terminal_value' => $pv_of_terminal_value,
-                'total_equity_value' => $total_equity_value,
-                'projection_table' => $projection_table,
-                'inputs' => [
-                    'base_cash_flow' => $first_projected_fcfe,
-                    'base_cash_flow_source' => 'Projected from Component Ratios',
-                    'initial_growth_rate' => $initial_growth_rate,
-                    'growth_rate_source' => $growth_rate_source,
-                    'terminal_growth_rate' => $this->terminal_growth_rate,
-                    'discount_rate' => $this->cost_of_equity,
-                ],
-                'discount_rate_calc' => [
-                    'risk_free_rate' => $risk_free_rate,
-                    'risk_free_rate_source' => 'Avg 3-Month Treasury Yield (60 days)',
-                    'equity_risk_premium' => $this->equity_risk_premium,
-                    'erp_source' => 'Plugin Setting',
-                    'beta' => $beta,
-                    'beta_details' => $beta_details,
-                    'cost_of_equity_calc' => 'Risk-Free Rate + (Beta * Equity Risk Premium)',
-                ],
-                'component_ratios' => $component_ratios,
-                'base_revenue' => $base_revenue,
-                'base_revenue_source' => $base_revenue_source,
-            ]
-        ];
     }
+
+    // Step 3: Calculate Present Values and build the final table.
+    $projection_table = [];
+    $sum_of_pv_cfs = 0;
+    for ($i = 1; $i <= $projection_years; $i++) {
+        $projected_fcfe = $fcfe_projections[$i];
+        $period_growth_rate = $growth_projections[$i];
+        $pv_cf = $projected_fcfe / pow(1 + $this->cost_of_equity, $i);
+        $sum_of_pv_cfs += $pv_cf;
+        $projection_table[] = [ 'year' => date('Y') + $i, 'cf' => $projected_fcfe, 'growth_rate' => $period_growth_rate, 'pv_cf' => $pv_cf ];
+    }
+    
+    // --- Final Valuation ---
+    $last_projected_fcfe = end($projection_table)['cf'];
+    if ($this->cost_of_equity <= $this->terminal_growth_rate) {
+        return new WP_Error('dcf_terminal_value_error', __('Terminal value error.', 'journey-to-wealth'));
+    }
+    $terminal_value = ($last_projected_fcfe * (1 + $this->terminal_growth_rate)) / ($this->cost_of_equity - $this->terminal_growth_rate);
+    
+    $pv_of_terminal_value = $terminal_value / pow(1 + $this->cost_of_equity, $projection_years);
+    $total_equity_value = $sum_of_pv_cfs + $pv_of_terminal_value;
+    $shares_outstanding = $this->get_av_value($overview_data, 'SharesOutstanding');
+    if ($shares_outstanding == 0) return new WP_Error('dcf_shares_error', __('Shares outstanding is zero.', 'journey-to-wealth'));
+    
+    $intrinsic_value_per_share = $total_equity_value / $shares_outstanding;
+
+    return [
+        'intrinsic_value_per_share' => $intrinsic_value_per_share,
+        'calculation_breakdown' => [
+            'model_name' => 'DCF Model (FCFE)', 'current_price' => $current_price, 'shares_outstanding' => $shares_outstanding,
+            'sum_of_pv_cfs' => $sum_of_pv_cfs, 'terminal_value' => $terminal_value, 'pv_of_terminal_value' => $pv_of_terminal_value,
+            'total_equity_value' => $total_equity_value, 'projection_table' => $projection_table,
+            'inputs' => [
+                'base_cash_flow' => $fcfe_projections[1], 'initial_growth_rate' => $initial_growth_rate,
+                'growth_rate_source' => $growth_rate_source, 'terminal_growth_rate' => $this->terminal_growth_rate,
+                'discount_rate' => $this->cost_of_equity,
+            ],
+            'discount_rate_calc' => [
+                'risk_free_rate' => $risk_free_rate, 'risk_free_rate_source' => 'Avg 3-Month Treasury Yield (60 days)',
+                'equity_risk_premium' => $this->equity_risk_premium, 'erp_source' => 'Plugin Setting', 'beta' => $beta,
+                'beta_details' => $beta_details, 'cost_of_equity_calc' => 'Risk-Free Rate + (Beta * Equity Risk Premium)',
+            ],
+            'component_ratios' => $component_ratios, 'base_revenue' => $base_revenue, 'base_revenue_source' => $base_revenue_source,
+        ]
+    ];
+}
 
     private function calculate_ttm_ratios($overview_data, $income_quarterly, $cash_flow_quarterly, $balance_quarterly, $earnings_estimates) {
         $fallback_ratios = [

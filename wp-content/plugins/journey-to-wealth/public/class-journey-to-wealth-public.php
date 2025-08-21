@@ -384,24 +384,22 @@ class Journey_To_Wealth_Public {
 
     public function ajax_recalculate_valuation() {
         check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
-    
+
         $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
         $assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
         $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 10;
-    
+
         if (empty($ticker) || empty($assumptions)) {
             wp_send_json_error(['message' => 'Missing parameters for recalculation.']);
             return;
         }
-    
-        // Fetch the base data required for valuation
+
         $company_data = $this->get_and_prepare_company_data($ticker);
         if (is_wp_error($company_data)) {
             wp_send_json_error(['message' => $company_data->get_error_message()]);
             return;
         }
-    
-        // Ensure authoritative shares outstanding is used for recalculation
+
         $balance_sheet = $company_data['balance_sheet'];
         if (!is_wp_error($balance_sheet) && isset($balance_sheet['annualReports'][0]['commonStockSharesOutstanding'])) {
             $authoritative_shares = (float)$balance_sheet['annualReports'][0]['commonStockSharesOutstanding'];
@@ -413,21 +411,16 @@ class Journey_To_Wealth_Public {
         $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
         $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
         $beta_details = $this->calculate_levered_beta($ticker, $company_data['balance_sheet'], $company_data['overview']['MarketCapitalization'], $tax_rate_decimal);
-        $levered_beta = $beta_details['levered_beta'];
-    
-        $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $levered_beta);
-    
+        
+        $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $beta_details['levered_beta']);
+        
         $results = [];
 
-        // The modal HTML should be generated based on the user's 'base' case assumptions, not the pure analyst case.
+        // --- Base Case for Modal ---
         $base_case_assumptions = [];
         if (isset($assumptions['base'])) {
-            $base_case_assumptions = [
-                'initial_growth_rate' => (float)$assumptions['base']['revGrowth'] / 100,
-                'initial_fcfe_override' => (float)$assumptions['base']['initialFcfe']
-            ];
+            $base_case_assumptions = $assumptions['base']; // Pass the whole array
         }
-
         $base_case_full_result = $dcf_model->calculate(
             $company_data['overview'], $company_data['income_statement'], $company_data['balance_sheet'],
             $company_data['cash_flow'], $company_data['treasury_yield'], $company_data['earnings_estimates'],
@@ -436,38 +429,27 @@ class Journey_To_Wealth_Public {
             $base_case_assumptions,
             $timeframe
         );
-
         if (!is_wp_error($base_case_full_result)) {
             $results['new_modal_html'] = $this->build_dcf_modal_content($base_case_full_result, $company_data['overview'], $company_data['income_statement'], $company_data['cash_flow']);
         }
 
+        // --- Bear, Base, Bull Calculations ---
         foreach (['bear', 'base', 'bull'] as $case) {
             if (isset($assumptions[$case])) {
-                $case_assumptions = $assumptions[$case];
-                
-                $custom_assumptions = [
-                    'initial_growth_rate' => (float)$case_assumptions['revGrowth'] / 100,
-                    'initial_fcfe_override' => (float)$case_assumptions['initialFcfe']
-                ];
-    
                 $result = $dcf_model->calculate(
                     $company_data['overview'], $company_data['income_statement'], $company_data['balance_sheet'],
                     $company_data['cash_flow'], $company_data['treasury_yield'], $company_data['earnings_estimates'],
                     (float)($company_data['quote']['05. price'] ?? 0),
                     $beta_details,
-                    $custom_assumptions,
+                    $assumptions[$case], // Pass the specific case's full assumption array
                     $timeframe
                 );
-    
-                $fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
-                
                 $results[$case] = [
-                    'fair_value' => $fair_value,
+                    'fair_value' => !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0,
                 ];
             }
         }
         
-        // **NEW**: Check if the client requested the graphic HTML to be regenerated.
         if (isset($_POST['needs_graphic_html']) && $_POST['needs_graphic_html'] === 'true') {
             $results['sws_graphic_html'] = $this->build_sws_graphic_html(
                 (float)($company_data['quote']['05. price'] ?? 0),
@@ -476,7 +458,7 @@ class Journey_To_Wealth_Public {
                 $results['bull']['fair_value']
             );
         }
-    
+
         wp_send_json_success($results);
     }
 
@@ -1371,124 +1353,131 @@ class Journey_To_Wealth_Public {
         return $output;
     }
 
-    private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $income_statement, $balance_sheet, $cash_flow, $earnings_estimates, $company_data) {
-        $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section">';
-        $output .= '<div class="jtw-section-header">';
-        $output .= '<h4>' . esc_html__('Intrinsic Value Projection', 'journey-to-wealth') . '</h4>';
-        $output .= '<div class="jtw-header-controls">';
-        $output .= '<div class="jtw-timeframe-selector-container">';
-        $output .= '<label for="jtw-projection-timeframe">Projection:</label>';
-        $output .= '<select id="jtw-projection-timeframe" class="jtw-assumption-input">';
-        $output .= '<option value="5">5 Years</option>';
-        $output .= '<option value="10" selected>10 Years</option>';
-        $output .= '<option value="15">15 Years</option>';
-        $output .= '</select>';
-        $output .= '</div>';
-        $output .= '<div class="jtw-view-assumptions-container">';
-        $output .= '<button class="jtw-modal-trigger" data-modal-target="#jtw-assumptions-modal">' . esc_html__('View Assumptions', 'journey-to-wealth') . '</button>';
-        $output .= '</div>';
-        $output .= '</div>';
-        $output .= '</div>';
-    
-        // --- Assumptions Table ---
-        $dcf_result = $valuation_data['DCF Model'] ?? null;
-        if ($dcf_result && !is_wp_error($dcf_result)) {
-            $breakdown = $dcf_result['calculation_breakdown'];
-            
-            // The FCFE from the model is now the correct one because of the fix in get_valuation_results()
-            $analyst_fcfe = $breakdown['inputs']['base_cash_flow'];
-            $analyst_discount_rate = ($breakdown['inputs']['discount_rate'] ?? 0) * 100;
+private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $income_statement, $balance_sheet, $cash_flow, $earnings_estimates, $company_data) {
+    $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section">';
+    $output .= '<div class="jtw-section-header">';
+    $output .= '<h4>' . esc_html__('Intrinsic Value Projection', 'journey-to-wealth') . '</h4>';
+    $output .= '<div class="jtw-header-controls">';
+    $output .= '<div class="jtw-timeframe-selector-container">';
+    $output .= '<label for="jtw-projection-timeframe">Projection:</label>';
+    $output .= '<select id="jtw-projection-timeframe" class="jtw-assumption-input">';
+    $output .= '<option value="5" selected>5 Years</option>';
+    $output .= '<option value="10">10 Years</option>';
+    $output .= '<option value="15">15 Years</option>';
+    $output .= '</select>';
+    $output .= '</div>';
+    $output .= '<div class="jtw-view-assumptions-container">';
+    $output .= '<button class="jtw-modal-trigger" data-modal-target="#jtw-assumptions-modal">' . esc_html__('View Assumptions', 'journey-to-wealth') . '</button>';
+    $output .= '</div>';
+    $output .= '</div>';
+    $output .= '</div>';
 
-            $beta_details = $breakdown['discount_rate_calc']['beta_details'] ?? [];
-            $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
+    // --- Assumptions Table ---
+    $dcf_result = $valuation_data['DCF Model'] ?? null;
+    if ($dcf_result && !is_wp_error($dcf_result)) {
+        $breakdown = $dcf_result['calculation_breakdown'];
+        
+        $analyst_fcfe = $breakdown['inputs']['base_cash_flow'];
+        $analyst_discount_rate = ($breakdown['inputs']['discount_rate'] ?? 0) * 100;
 
-            if ($unlevered_beta < 0.95) {
-                $bear_growth = 5.0; $base_growth = 10.0; $bull_growth = 15.0;
-            } elseif ($unlevered_beta >= 0.95 && $unlevered_beta <= 1.1) {
-                $bear_growth = 15.0; $base_growth = 20.0; $bull_growth = 25.0;
-            } elseif ($unlevered_beta > 1.1 && $unlevered_beta <= 1.2) {
-                $bear_growth = 20.0; $base_growth = 25.0; $bull_growth = 30.0;
-            } else { // Greater than 1.2
-                $bear_growth = 25.0; $base_growth = 30.0; $bull_growth = 35.0;
-            }
-            
-            $fcfe_label = 'Initial FCFE';
-            $fcfe_display_value = $analyst_fcfe;
-            $fcfe_multiplier = 1;
-    
-            if (abs($analyst_fcfe) >= 1.0e+9) {
-                $fcfe_label .= ' (in Billions)';
-                $fcfe_display_value = round($analyst_fcfe / 1.0e+9, 1);
-                $fcfe_multiplier = 1.0e+9;
-            } elseif (abs($analyst_fcfe) >= 1.0e+6) {
-                $fcfe_label .= ' (in Millions)';
-                $fcfe_display_value = round($analyst_fcfe / 1.0e+6, 1);
-                $fcfe_multiplier = 1.0e+6;
-            } elseif (abs($analyst_fcfe) >= 1.0e+3) {
-                $fcfe_label .= ' (in Thousands)';
-                $fcfe_display_value = round($analyst_fcfe / 1.0e+3, 1);
-                $fcfe_multiplier = 1.0e+3;
-            }
-            
-            $fcfe_raw_value_attr = 'data-raw-value="' . esc_attr($analyst_fcfe) . '"';
+        $beta_details = $breakdown['discount_rate_calc']['beta_details'] ?? [];
+        $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
 
-            $output .= '<table class="jtw-assumptions-table">';
-            $output .= '<thead>';
-            $output .= '<tr><th class="jtw-top-header-empty"></th><th colspan="3" class="jtw-top-header-merged">Your DCF Projections</th></tr>';
-            $output .= '<tr><th>Metric</th><th>Bear Case</th><th>Base Case</th><th>Bull Case</th></tr>';
-            $output .= '</thead>';
-            $output .= '<tbody class="jtw-assumptions-table-body">';
-            $output .= '<tr><td data-label="Metric">Initial Growth Rate %</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="revGrowth" value="' . esc_attr(number_format($bear_growth, 1)) . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="revGrowth" value="' . esc_attr(number_format($base_growth, 1)) . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="revGrowth" value="' . esc_attr(number_format($bull_growth, 1)) . '"></td></tr>';
-            $output .= '<tr><td data-label="Metric">' . esc_html($fcfe_label) . '</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td></tr>';
-            $output .= '<tr><td data-label="Metric">Discount Rate %</td><td colspan="3" data-label="Analyst">' . esc_html(number_format($analyst_discount_rate, 1)) . '%</td></tr>';
-            
-            if ($analyst_fcfe > 0) {
-                // **MODIFIED**: Calculate initial return for the base case
-                $current_price = $valuation_summary['current_price'] ?? 0;
-                $base_fv = $valuation_summary['fair_value'] ?? 0;
-                $base_return_pct = ($current_price > 0 && $base_fv > 0) ? (($base_fv - $current_price) / $current_price) * 100 : 0;
+        if ($unlevered_beta < 0.95) {
+            $bear_growth = 5.0; $base_growth = 10.0; $bull_growth = 15.0;
+        } elseif ($unlevered_beta >= 0.95 && $unlevered_beta <= 1.1) {
+            $bear_growth = 15.0; $base_growth = 20.0; $bull_growth = 25.0;
+        } elseif ($unlevered_beta > 1.1 && $unlevered_beta <= 1.2) {
+            $bear_growth = 20.0; $base_growth = 25.0; $bull_growth = 30.0;
+        } else {
+            $bear_growth = 25.0; $base_growth = 30.0; $bull_growth = 35.0;
+        }
+        
+        $fcfe_label = 'Next Year FCFE'; // **LABEL CHANGE**
+        $fcfe_display_value = $analyst_fcfe;
+        $fcfe_multiplier = 1;
 
-                $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">$' . number_format($base_fv, 1) . '</td><td class="jtw-bull-fv">-</td></tr>';
-                // **NEW**: Added % Return row and removed Desired Return/Price Target rows
-                $output .= '<tr class="jtw-results-row jtw-return-row"><td class="jtw-results-label">% Return</td><td class="jtw-bear-return">-</td><td class="jtw-base-return">' . number_format($base_return_pct, 1) . '%</td><td class="jtw-bull-return">-</td></tr>';
+        if (abs($analyst_fcfe) >= 1.0e+9) {
+            $fcfe_label .= ' (in Billions)';
+            $fcfe_display_value = round($analyst_fcfe / 1.0e+9, 1);
+            $fcfe_multiplier = 1.0e+9;
+        } elseif (abs($analyst_fcfe) >= 1.0e+6) {
+            $fcfe_label .= ' (in Millions)';
+            $fcfe_display_value = round($analyst_fcfe / 1.0e+6, 1);
+            $fcfe_multiplier = 1.0e+6;
+        } elseif (abs($analyst_fcfe) >= 1.0e+3) {
+            $fcfe_label .= ' (in Thousands)';
+            $fcfe_display_value = round($analyst_fcfe / 1.0e+3, 1);
+            $fcfe_multiplier = 1.0e+3;
+        }
+        
+        $fcfe_raw_value_attr = 'data-raw-value="' . esc_attr($analyst_fcfe) . '"';
+
+        $output .= '<table class="jtw-assumptions-table">';
+        $output .= '<thead>';
+        $output .= '<tr><th class="jtw-top-header-empty"></th><th colspan="3" class="jtw-top-header-merged">Your DCF Projections</th></tr>';
+        $output .= '<tr><th>Metric</th><th>Bear Case</th><th>Base Case</th><th>Bull Case</th></tr>';
+        $output .= '</thead>';
+        $output .= '<tbody class="jtw-assumptions-table-body">';
+        
+        $output .= '<tr class="jtw-toggle-row" data-toggle-target=".jtw-yearly-growth-row"><td class="jtw-toggle-label" data-label="Metric"><span class="jtw-label-text">Revenue Growth Rate %</span> <span class="jtw-chevron">&#9662;</span></td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="revGrowth" value="' . esc_attr(number_format($bear_growth, 1)) . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="revGrowth" value="' . esc_attr(number_format($base_growth, 1)) . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="revGrowth" value="' . esc_attr(number_format($bull_growth, 1)) . '"></td></tr>';
+        
+        $current_year = (int)date('Y');
+        for ($i = 1; $i <= 15; $i++) {
+            $projection_year = $current_year + $i;
+            if ($i === 1) { // **CHANGE: Special row for the first year**
+                $output .= '<tr class="jtw-yearly-input-row jtw-yearly-growth-row" data-year="' . $i . '" style="display: none;"><td data-label="Metric">' . $projection_year . ' Growth %</td><td colspan="3" class="jtw-merged-note-cell">Growth is accounted for in the Next Year FCFE value.</td></tr>';
             } else {
-                $output .= '<tr class="jtw-results-row jtw-valuation-error-row"><td colspan="4">Valuation data is not available to create a chart.</td></tr>';
+                $output .= '<tr class="jtw-yearly-input-row jtw-yearly-growth-row" data-year="' . $i . '" style="display: none;"><td data-label="Metric">' . $projection_year . ' Growth %</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-case="bear" data-metric="yearlyRevGrowth" data-year="' . $i . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-case="base" data-metric="yearlyRevGrowth" data-year="' . $i . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-case="bull" data-metric="yearlyRevGrowth" data-year="' . $i . '"></td></tr>';
             }
-
-            $output .= '</tbody>';
-            $output .= '</table>';
-        }
-    
-        // --- SWS Style Valuation Graphic ---
-        $output .= '<div id="jtw-sws-graphic-wrapper">';
-        if ($dcf_result && !is_wp_error($dcf_result) && ($dcf_result['calculation_breakdown']['inputs']['base_cash_flow'] ?? 0) > 0) {
-             $output .= $this->build_sws_graphic_html(
-                $valuation_summary['current_price'],
-                0, // Bear/Bull will be calculated by JS on interaction
-                $valuation_summary['fair_value'],
-                0
-            );
-        }
-        $output .= '</div>';
-    
-        $has_valid_models = false;
-        foreach ($valuation_data as $result) { if (!is_wp_error($result)) { $has_valid_models = true; break; } }
-        if ($has_valid_models) {
-            $modal_id = 'jtw-assumptions-modal';
-            $output .= '<div id="' . $modal_id . '" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>';
-            foreach ($valuation_data as $model_name => $result) {
-                if (is_wp_error($result)) { 
-                    $output .= '<h4>' . esc_html($model_name) . '</h4><div class="jtw-metric-card"><p><strong>' . esc_html__('Error:', 'journey-to-wealth') . '</strong> ' . esc_html($result->get_error_message()) . '</p></div>';
-                } else { 
-                    $output .= $this->build_valuation_assumptions_modal_html($result, $details, $income_statement, $company_data['cash_flow']); 
-                }
-            }
-            $output .= '</div></div>';
         }
 
-        $output .= '<div class="jtw-modal-overlay"></div></div>';
-        return $output;
+        $output .= '<tr class="jtw-toggle-row" data-toggle-target=".jtw-yearly-fcfe-row"><td class="jtw-toggle-label" data-label="Metric"><span class="jtw-label-text">' . esc_html($fcfe_label) . '</span> <span class="jtw-chevron">&#9662;</span></td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bear" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input" data-case="base" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input" data-case="bull" data-metric="initialFcfe" value="' . esc_attr($fcfe_display_value) . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '" ' . $fcfe_raw_value_attr . '></td></tr>';
+
+        for ($i = 1; $i <= 15; $i++) {
+            $projection_year = $current_year + $i;
+            $output .= '<tr class="jtw-yearly-input-row jtw-yearly-fcfe-row" data-year="' . $i . '" style="display: none;"><td data-label="Metric">' . $projection_year . ' FCFE</td><td data-label="Bear"><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-case="bear" data-metric="yearlyFcfe" data-year="' . $i . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '"></td><td data-label="Base"><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-case="base" data-metric="yearlyFcfe" data-year="' . $i . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '"></td><td data-label="Bull"><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-case="bull" data-metric="yearlyFcfe" data-year="' . $i . '" data-multiplier="' . esc_attr($fcfe_multiplier) . '"></td></tr>';
+        }
+
+        $output .= '<tr><td data-label="Metric">Discount Rate %</td><td colspan="3" data-label="Analyst">' . esc_html(number_format($analyst_discount_rate, 1)) . '%</td></tr>';
+        
+        if ($analyst_fcfe > 0) {
+            $current_price = $valuation_summary['current_price'] ?? 0;
+            $base_fv = $valuation_summary['fair_value'] ?? 0;
+            $base_return_pct = ($current_price > 0 && $base_fv > 0) ? (($base_fv - $current_price) / $current_price) * 100 : 0;
+            $output .= '<tr class="jtw-results-row"><td class="jtw-results-label">Result</td><td class="jtw-bear-fv">-</td><td class="jtw-base-fv">$' . number_format($base_fv, 1) . '</td><td class="jtw-bull-fv">-</td></tr>';
+            $output .= '<tr class="jtw-results-row jtw-return-row"><td class="jtw-results-label">% Return</td><td class="jtw-bear-return">-</td><td class="jtw-base-return">' . number_format($base_return_pct, 1) . '%</td><td class="jtw-bull-return">-</td></tr>';
+        } else {
+            $output .= '<tr class="jtw-results-row jtw-valuation-error-row"><td colspan="4">Valuation data is not available to create a chart.</td></tr>';
+        }
+
+        $output .= '</tbody></table>';
     }
+
+    $output .= '<div id="jtw-sws-graphic-wrapper">';
+    if ($dcf_result && !is_wp_error($dcf_result) && ($dcf_result['calculation_breakdown']['inputs']['base_cash_flow'] ?? 0) > 0) {
+         $output .= $this->build_sws_graphic_html($valuation_summary['current_price'], 0, $valuation_summary['fair_value'], 0);
+    }
+    $output .= '</div>';
+
+    $has_valid_models = false;
+    foreach ($valuation_data as $result) { if (!is_wp_error($result)) { $has_valid_models = true; break; } }
+    if ($has_valid_models) {
+        $modal_id = 'jtw-assumptions-modal';
+        $output .= '<div id="' . $modal_id . '" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>';
+        foreach ($valuation_data as $model_name => $result) {
+            if (is_wp_error($result)) { 
+                $output .= '<h4>' . esc_html($model_name) . '</h4><div class="jtw-metric-card"><p><strong>' . esc_html__('Error:', 'journey-to-wealth') . '</strong> ' . esc_html($result->get_error_message()) . '</p></div>';
+            } else { 
+                $output .= $this->build_valuation_assumptions_modal_html($result, $details, $income_statement, $company_data['cash_flow']); 
+            }
+        }
+        $output .= '</div></div>';
+    }
+
+    $output .= '<div class="jtw-modal-overlay"></div></div>';
+    return $output;
+}
 
     private function build_valuation_assumptions_modal_html($result, $details, $income_statement, $cash_flow) {
         $data = $result['calculation_breakdown'];

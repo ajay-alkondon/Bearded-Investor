@@ -102,6 +102,17 @@ body #header-outer .right-aligned-menu-items nav > ul.buttons {
   transform: translateX(20px);
 }
 
+/* --- FIX: User Account Dropdown Positioning --- */
+.swa-user-account-button {
+  position: relative !important; /* Ensure a positioning context */
+}
+
+.swa-user-account-button .sub-menu {
+  right: 0 !important; /* Align to the right edge of the parent icon */
+  left: auto !important; /* Override any dynamic left positioning from the parent theme */
+  transform: none !important; /* Reset any transforms used for positioning */
+}
+
 
 /* --- 5. DARK MODE THEME COLORS (Revised) --- */
 
@@ -147,33 +158,29 @@ body.dark-mode .jtw-anchor-nav .jtw-nav-minor-section.active {
 
 /* --- 5. DARK MODE THEME COLORS (Revised) --- */
 
-/* Main Page Background (body and ajax wrapper) */
+/* Main Page & Wrapper Backgrounds */
 body.dark-mode,
-body.dark-mode #ajax-content-wrap {
-  background-color: #17243f !important;
+body.dark-mode .ocm-effect-wrap,
+body.dark-mode #ajax-content-wrap,
+body.dark-mode .container-wrap {
+    background-color: #000 !important;
 }
 
-/* Header, Page Header, and Footer Backgrounds */
+/* Header, Footer, and Content Section Backgrounds */
 body.dark-mode #header-outer,
 body.dark-mode #page-header-bg,
 body.dark-mode #footer-outer,
-body.dark-mode .ocm-effect-wrap {
-  background-color: #17243f !important;
-}
-
-/* Content Sections (Blue color as requested) */
 body.dark-mode .jtw-content-section,
+body.dark-mode .post-area,
 body.dark-mode .jtw-initial-prompt {
-  background-color: #17243f !important;
-  border-color: #2a3b5c !important;
+    background-color: #17243f !important;
 }
 
-/* --- TEXT & LINK COLORS --- */
-
-/* Force Header Navigation & User Icons to be White */
-body.dark-mode #header-outer nav .sf-menu > li > a,
-body.dark-mode #header-outer .swa-user-account-button > a {
-    color: #ffffff !important;
+/* Borders for Content Sections */
+body.dark-mode .jtw-content-section,
+body.dark-mode .post-area,
+body.dark-mode .jtw-initial-prompt {
+    border-color: #2a3b5c !important;
 }
 
 /* Left-hand Analyzer Navigation */
@@ -203,7 +210,9 @@ body.dark-mode .jtw-historical-table th {
 body.dark-mode p,
 body.dark-mode span,
 body.dark-mode td,
-body.dark-mode .jtw-chart-controls button {
+body.dark-mode .jtw-chart-controls button,
+body.dark-mode .sf-menu > li > a,
+body.dark-mode .swa-user-account-button > a i.icon-salient-m-user {
 	color: #b9b9b9 !important;
 }
 
@@ -221,4 +230,281 @@ body.dark-mode .swa-user-account-button .sub-menu li a:hover {
 }
 body.dark-mode .swa-dark-mode-toggle-container {
   border-top-color: #444;
+}
+
+/* --- 6. DARK MODE PLUGIN STYLES (Journey to Wealth) --- */
+
+/* General Text & Links */
+body.dark-mode .jtw-metric-title,
+body.dark-mode .jtw-stat-item h4,
+body.dark-mode .jtw-price-range-bar h5 {
+    color: #b9b9b9 !important;
+}
+body.dark-mode .jtw-metric-value,
+body.dark-mode .jtw-stat-value,
+body.dark-mode .jtw-price-range-bar .jtw-price-range-labels strong {
+    color: #ffffff !important;
+}
+body.dark-mode .jtw-details-grid .jtw-metric-value a {
+    color: #4da3ff !important;
+}
+body.dark-mode .jtw-company-description p {
+    color: #b9b9b9 !important;
+}
+
+/* Metric Cards & Link Cards */
+body.dark-mode .jtw-overview-header-grid .jtw-metric-card,
+body.dark-mode .jtw-details-grid .jtw-metric-card {
+    background-color: #2a3b5c !important;
+    border: none !important;
+}
+body.dark-mode .jtw-sec-filings-card {
+    background-color: #2a3b5c !important;
+    background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1554224155-1696413565d3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80');
+}
+body.dark-mode .jtw-sec-filings-card span {
+    color: #ffffff !important;
+}
+
+
+/* Tables & Inputs */
+body.dark-mode .jtw-metrics-table thead th,
+body.dark-mode .jtw-assumptions-table thead th,
+body.dark-mode .jtw-metric-group-header td,
+body.dark-mode .jtw-assumptions-table tbody td:first-child,
+body.dark-mode .jtw-historical-table th:first-child,
+body.dark-mode .jtw-historical-table td:first-child,
+body.dark-mode .jtw-historical-table th:nth-child(2n+3),
+body.dark-mode .jtw-historical-table td:nth-child(2n+3) {
+    background-color: #2a3b5c !important;
+}
+body.dark-mode .jtw-metrics-table,
+body.dark-mode .jtw-assumptions-table,
+body.dark-mode .jtw-metrics-table th, 
+body.dark-mode .jtw-metrics-table td,
+body.dark-mode .jtw-assumptions-table th, 
+body.dark-mode .jtw-assumptions-table td,
+body.dark-mode .jtw-historical-table tbody tr {
+    border-color: #2a3b5c !important;
+}
+body.dark-mode .jtw-peer-input,
+body.dark-mode .jtw-assumption-input,
+body.dark-mode #jtw-projection-timeframe {
+    background-color: #17243f !important;
+    color: #ffffff !important;
+    border-color: #4a5c80 !important;
+}
+
+/* Header Search */
+body.dark-mode .jtw-header-lookup-form .jtw-header-ticker-input {
+    background-color: #2a3b5c !important;
+    border-color: #4a5c80 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .jtw-header-search-results {
+    background-color: #17243f !important;
+    border-color: #2a3b5c !important;
+}
+body.dark-mode .jtw-header-search-results li:hover {
+    background-color: #2a3b5c !important;
+}
+body.dark-mode .jtw-result-name {
+     color: #ffffff !important;
+}
+
+/* Buttons and Toggles */
+body.dark-mode .jtw-period-button, 
+body.dark-mode .jtw-category-button {
+    background-color: #17243f !important;
+    border-color: #2a3b5c !important;
+    color: #b9b9b9 !important;
+}
+body.dark-mode .jtw-period-button.active, 
+body.dark-mode .jtw-category-button.active {
+    background-color: #007aff !important;
+    border-color: #007aff !important;
+    color: #ffffff !important;
+}
+body.dark-mode .jtw-details-button, 
+body.dark-mode .jtw-view-assumptions-container .jtw-modal-trigger {
+    background-color: transparent !important;
+    border-color: #007aff !important;
+    color: #007aff !important;
+}
+body.dark-mode .jtw-details-button:hover, 
+body.dark-mode .jtw-view-assumptions-container .jtw-modal-trigger:hover {
+    background-color: #007aff !important;
+    color: #ffffff !important;
+}
+body.dark-mode .jtw-compare-button {
+    background-color: #007aff !important;
+}
+body.dark-mode .jtw-compare-button:hover {
+    background-color: #0056b3 !important;
+}
+
+/* Chart & SWS Graphic Containers */
+body.dark-mode .jtw-chart-item {
+    background-color: #17243f !important;
+    border-color: #2a3b5c !important;
+}
+body.dark-mode .jtw-sws-valuation-container {
+    background-color: #17243f !important;
+}
+body.dark-mode .jtw-sws-label-group.outside span,
+body.dark-mode .jsw-sws-label-group.outside strong {
+    color: #ecf0f1 !important;
+}
+
+/* Progress Bars */
+body.dark-mode .jtw-progress-track,
+body.dark-mode .jtw-bar-container {
+    background-color: #2a3b5c !important;
+}
+
+/* Modals */
+body.dark-mode .jtw-modal {
+    background: #17243f !important;
+}
+body.dark-mode .jtw-modal-content h4 {
+    border-bottom-color: #2a3b5c !important;
+}
+body.dark-mode .jtw-modal-table thead th {
+    background-color: #2a3b5c !important;
+}
+
+/* --- FIX: Dark Mode for All Plugin Tables --- */
+
+/* Style for Headers (both tables) and Group Headers (metrics table) */
+body.dark-mode .jtw-assumptions-table thead th,
+body.dark-mode .jtw-metrics-table thead th,
+body.dark-mode .jtw-metric-group-header td {
+    background-color: #2a3b5c !important;
+    border-color: #4a5c80 !important;
+    color: #ffffff !important;
+}
+
+/* Style for the first column "Metric" labels in the assumptions table */
+body.dark-mode .jtw-assumptions-table tbody td:first-child {
+    color: #ffffff !important;
+}
+
+/* Style for ALL data cells in BOTH tables */
+body.dark-mode .jtw-assumptions-table tbody td,
+body.dark-mode .jtw-metrics-table tbody td {
+    background-color: #17243f !important;
+    border-color: #2a3b5c !important;
+    color: #b9b9b9 !important;
+}
+
+/* Emphasize result text in the assumptions table */
+body.dark-mode .jtw-assumptions-table .jtw-results-row td {
+    color: #ffffff !important;
+}
+
+/* --- FIX: Dark Mode for Historical Data Table --- */
+
+/* Default background for data cells */
+body.dark-mode .jtw-historical-table tbody td {
+    background-color: #17243f !important;
+    color: #b9b9b9 !important;
+    border-color: #2a3b5c !important;
+}
+
+/* Alternating vertical stripes (overriding the default light color) */
+body.dark-mode .jtw-historical-table td:nth-child(2n+3) {
+    background-color: #223049 !important; /* A slightly different dark blue for the stripe */
+}
+
+/* First column (metric names) */
+body.dark-mode .jtw-historical-table th:first-child,
+body.dark-mode .jtw-historical-table td:first-child {
+    background-color: #2a3b5c !important;
+    color: #ffffff !important;
+}
+
+/* Header row (years) */
+body.dark-mode .jtw-historical-table thead th {
+    background-color: #17243f !important;
+    color: #ffffff !important;
+    border-color: #2a3b5c !important;
+}
+
+/* Active and Hover states (must override the stripes) */
+body.dark-mode .jtw-historical-table tbody tr[data-metric-key]:hover td,
+body.dark-mode .jtw-historical-table tbody tr[data-metric-key]:hover td:nth-child(2n+3) {
+    background-color: #33486d !important;
+    color: #ffffff !important;
+}
+body.dark-mode .jtw-historical-table tbody tr[data-metric-key].active td,
+body.dark-mode .jtw-historical-table tbody tr[data-metric-key].active td:nth-child(2n+3) {
+    background-color: #cce5ff !important;
+    color: #17243f !important; /* Dark text for the light blue active background */
+    font-weight: bold;
+}
+
+/* --- FIX: Dark Mode for SWS Valuation Graphic Text --- */
+
+/* Force the text inside the bars to be dark for readability */
+body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group span,
+body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group strong {
+    color: #212529 !important;
+}
+
+/* Ensure text is light when it's pushed outside the bar onto the dark background */
+body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group.outside span,
+body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group.outside strong {
+    color: #ecf0f1 !important;
+}
+
+
+/* --- FIX: Dark Mode for Modal Tables --- */
+
+/* Style for the table headers inside the modal */
+.jtw-analyzer-wrapper.dark-mode .jtw-modal-table thead th {
+    background-color: #2a3b5c !important;
+    color: #ffffff !important;
+}
+
+/* Style for the table data cells inside the modal */
+.jtw-analyzer-wrapper.dark-mode .jtw-modal-table tbody td {
+    background-color: transparent !important; /* Inherit modal's dark background */
+    border-bottom-color: #2a3b5c !important;
+    color: #b9b9b9 !important;
+}
+
+/* Style for bold text inside the modal table */
+.jtw-analyzer-wrapper.dark-mode .jtw-modal-table strong {
+    color: #ffffff !important;
+}
+
+/* --- FIX: Dark Mode for Modal Tables (Corrected Selector) --- */
+
+/* Targets the modal's background when dark mode is active */
+body.dark-mode .jtw-modal {
+    background: #17243f !important;
+}
+
+/* Targets the table headers inside the modal */
+body.dark-mode .jtw-modal-table thead th {
+    background-color: #2a3b5c !important;
+    color: #ffffff !important;
+}
+
+/* Targets the table data cells inside the modal */
+body.dark-mode .jtw-modal-table tbody td {
+    background-color: #17243f !important;
+    border-color: #2a3b5c !important;
+    color: #b9b9b9 !important;
+}
+
+/* Targets the bold text inside the modal tables */
+body.dark-mode .jtw-modal-table strong {
+    color: #ffffff !important;
+}
+
+/* General h4 titles inside the modal */
+body.dark-mode .jtw-modal-content h4 {
+    border-bottom-color: #2a3b5c !important;
+    color: #ffffff !important;
 }
