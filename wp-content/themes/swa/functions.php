@@ -66,32 +66,34 @@ add_action( 'nectar_hook_before_button_menu_items', 'swa_add_memberpress_user_bu
  * Add Google Ads Conversion Tracking script to the MemberPress Thank You page.
  */
 function add_google_ads_conversion_tracking_for_mep($txn) {
-    // --- START: CONFIGURE YOUR TAG HERE ---
+    if( is_page ('thank-you-beard-baron') ) {
+        // --- START: CONFIGURE YOUR TAG HERE ---
 
-    //$conversion_id = 'AW-123456789'; // <-- REPLACE with your Conversion ID
-    //$conversion_label = 'AbC-D_efG-h12i34j5k'; // <-- REPLACE with your Conversion Label
-    //$currency = 'USD'; // <-- REPLACE with your store's currency code (e.g., 'EUR', 'GBP')
+        //$conversion_id = 'AW-123456789'; // <-- REPLACE with your Conversion ID
+        //$conversion_label = 'AbC-D_efG-h12i34j5k'; // <-- REPLACE with your Conversion Label
+        //$currency = 'USD'; // <-- REPLACE with your store's currency code (e.g., 'EUR', 'GBP')
 
-    // --- END: CONFIGURATION ---
+        // --- END: CONFIGURATION ---
 
-    // Get dynamic data from the MemberPress transaction object
-    //$transaction_id = $txn->trans_num;
-    //$transaction_value = $txn->total;
+        // Get dynamic data from the MemberPress transaction object
+        //$transaction_id = $txn->trans_num;
+        //$transaction_value = $txn->total;
 
-    // Output the Google Ads event snippet
-    ?>
-        <!-- Google tag (gtag.js) event -->
-        <script>
-        gtag('event', 'conversion_event_subscribe_paid', {
-            // <event_parameters>
-        });
-        </script>
-    <?php
+        // Output the Google Ads event snippet
+        ?>
+            <!-- Google tag (gtag.js) event -->
+            <script>
+                gtag('event', 'conversion_event_subscribe_paid', {
+                    // <event_parameters>
+                });
+            </script>
+        <?php
+    }
 }
 /**
  * Add Google Ads Conversion Tracking script to the MemberPress Thank You page.
 */
-add_action('mepr-thank-you-page', 'add_google_ads_conversion_tracking_for_mep');
+add_action('wp_head', 'add_google_ads_conversion_tracking_for_mep');
 
 
 /**
