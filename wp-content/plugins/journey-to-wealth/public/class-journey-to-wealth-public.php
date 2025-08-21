@@ -593,99 +593,121 @@ class Journey_To_Wealth_Public {
         return $key_metrics;
     }
 
-    private function calculate_growth_metrics($company_data, $beta_details) {
-        $growth = [
-            'ttmEpsGrowth' => 'N/A',
-            'currentYearEpsGrowth' => 'N/A',
-            'nextYearEpsGrowth' => 'N/A',
-            'ttmRevenueGrowth' => 'N/A',
-            'currentYearRevenueGrowth' => 'N/A',
-            'nextYearRevenueGrowth' => 'N/A',
-        ];
-    
-        $earnings = $company_data['earnings'];
-        $income = $company_data['income_statement']['annualReports'] ?? [];
-        $overview = $company_data['overview'];
-    
-        // **MODIFIED TTM EPS Growth Calculation**
-        if (isset($earnings['quarterlyEarnings']) && count($earnings['quarterlyEarnings']) >= 8) {
-            $quarterly_earnings = $earnings['quarterlyEarnings'];
-            
+private function calculate_growth_metrics($company_data, $beta_details) {
+    $growth = [
+        'ttmEpsGrowth' => 'N/A',
+        'currentYearEpsGrowth' => 'N/A',
+        'nextYearEpsGrowth' => 'N/A',
+        'ttmRevenueGrowth' => 'N/A',
+        'currentYearRevenueGrowth' => 'N/A',
+        'nextYearRevenueGrowth' => 'N/A',
+    ];
+
+    $earnings = $company_data['earnings'];
+    $income = $company_data['income_statement']['annualReports'] ?? [];
+    $overview = $company_data['overview'];
+
+    if (isset($earnings['quarterlyEarnings']) && !empty($earnings['quarterlyEarnings'])) {
+        $quarterly_earnings = $earnings['quarterlyEarnings'];
+
+        // TTM EPS Growth Calculation
+        if (count($quarterly_earnings) >= 8) {
             $current_ttm_eps = array_sum(array_column(array_slice($quarterly_earnings, 0, 4), 'reportedEPS'));
             $previous_ttm_eps = array_sum(array_column(array_slice($quarterly_earnings, 4, 4), 'reportedEPS'));
-    
             if (abs($previous_ttm_eps) > 0.0001) {
                 $growth['ttmEpsGrowth'] = (($current_ttm_eps - $previous_ttm_eps) / abs($previous_ttm_eps)) * 100;
             }
         }
-    
-        if (count($income) >= 2) {
-            $ttm_revenue = (float)($overview['RevenueTTM'] ?? 0);
-            $prev_revenue = (float)($income[0]['totalRevenue'] ?? 0);
-            if (abs($prev_revenue) > 0.0001) {
-                $growth['ttmRevenueGrowth'] = (($ttm_revenue - $prev_revenue) / abs($prev_revenue)) * 100;
+
+        // **NEW** Current Year EPS Growth Calculation
+        $earnings_by_fiscal_year = [];
+        $reversed_quarters = array_reverse($quarterly_earnings);
+
+        foreach ($reversed_quarters as $quarter) {
+            $fiscal_year = date('Y', strtotime($quarter['fiscalDateEnding']));
+            if (!isset($earnings_by_fiscal_year[$fiscal_year])) {
+                $earnings_by_fiscal_year[$fiscal_year] = [];
             }
+            $earnings_by_fiscal_year[$fiscal_year][] = (float)$quarter['reportedEPS'];
         }
-    
-        // Analyst Estimate Growth Calculations
-        $estimates_data = $company_data['earnings_estimates'];
-        if (!is_wp_error($estimates_data) && !empty($estimates_data['estimates'])) {
-            $estimates = $estimates_data['estimates'];
-            $annual_estimates = array_filter($estimates, function($e) {
-                return isset($e['horizon']) && ($e['horizon'] === 'current fiscal year' || $e['horizon'] === 'next fiscal year');
-            });
-    
-            usort($annual_estimates, function($a, $b) {
-                return strtotime($b['date']) - strtotime($a['date']);
-            });
-    
-            $next_year_estimate = null;
-            $current_year_estimate = null;
-    
-            foreach ($annual_estimates as $estimate) {
-                if ($next_year_estimate === null && $estimate['horizon'] === 'next fiscal year') {
-                    $next_year_estimate = $estimate;
-                }
-                if ($current_year_estimate === null && $estimate['horizon'] === 'current fiscal year') {
-                    $current_year_estimate = $estimate;
-                }
-                if ($next_year_estimate && $current_year_estimate) break;
-            }
-    
-            if ($current_year_estimate) {
-                $beta_for_growth = $beta_details['unlevered_beta_avg'] ?? 1.0;
-                $revenue_key = 'revenue_estimate_average';
-                $eps_key = 'eps_estimate_average';
 
-                if ($beta_for_growth <= 0.9) {
-                    $revenue_key = 'revenue_estimate_low';
-                    $eps_key = 'eps_estimate_low';
-                } elseif ($beta_for_growth > 1.1) {
-                    $revenue_key = 'revenue_estimate_high';
-                    $eps_key = 'eps_estimate_high';
-                }
+        $fiscal_years = array_keys($earnings_by_fiscal_year);
+        if (count($fiscal_years) >= 2) {
+            $current_fiscal_year = end($fiscal_years);
+            $previous_fiscal_year = $fiscal_years[count($fiscal_years) - 2];
 
-                $current_year_eps = (float)($current_year_estimate[$eps_key] ?? 0);
-                $current_year_revenue = (float)($current_year_estimate[$revenue_key] ?? 0);
+            $current_year_quarters = $earnings_by_fiscal_year[$current_fiscal_year];
+            $previous_year_quarters = $earnings_by_fiscal_year[$previous_fiscal_year];
 
-                $last_year_eps = (float)(($earnings['annualEarnings'][0]['reportedEPS'] ?? 0));
-                $last_year_revenue = (float)($income[0]['totalRevenue'] ?? 0);
-    
-                if (abs($last_year_eps) > 0.0001) $growth['currentYearEpsGrowth'] = (($current_year_eps - $last_year_eps) / abs($last_year_eps)) * 100;
-                if (abs($last_year_revenue) > 0.0001) $growth['currentYearRevenueGrowth'] = (($current_year_revenue - $last_year_revenue) / abs($last_year_revenue)) * 100;
-    
-                if ($next_year_estimate) {
-                    $next_year_eps = (float)($next_year_estimate[$eps_key] ?? 0);
-                    $next_year_revenue = (float)($next_year_estimate[$revenue_key] ?? 0);
-    
-                    if (abs($current_year_eps) > 0.0001) $growth['nextYearEpsGrowth'] = (($next_year_eps - $current_year_eps) / abs($current_year_eps)) * 100;
-                    if (abs($current_year_revenue) > 0.0001) $growth['nextYearRevenueGrowth'] = (($next_year_revenue - $current_year_revenue) / abs($current_year_revenue)) * 100;
+            $num_quarters_reported = count($current_year_quarters);
+
+            if ($num_quarters_reported > 0 && count($previous_year_quarters) >= $num_quarters_reported) {
+                $current_year_sum = array_sum(array_slice($current_year_quarters, 0, $num_quarters_reported));
+                $previous_year_sum = array_sum(array_slice($previous_year_quarters, 0, $num_quarters_reported));
+
+                if (abs($previous_year_sum) > 0.0001) {
+                    $growth['currentYearEpsGrowth'] = (($current_year_sum - $previous_year_sum) / abs($previous_year_sum)) * 100;
                 }
             }
         }
-    
-        return $growth;
     }
+
+    if (count($income) >= 2) {
+        $ttm_revenue = (float)($overview['RevenueTTM'] ?? 0);
+        $prev_revenue = (float)($income[0]['totalRevenue'] ?? 0);
+        if (abs($prev_revenue) > 0.0001) {
+            $growth['ttmRevenueGrowth'] = (($ttm_revenue - $prev_revenue) / abs($prev_revenue)) * 100;
+        }
+    }
+
+    // Analyst Estimate Growth Calculations (Only for Next Year and Revenue now)
+    $estimates_data = $company_data['earnings_estimates'];
+    if (!is_wp_error($estimates_data) && !empty($estimates_data['estimates'])) {
+        $estimates = $estimates_data['estimates'];
+        $annual_estimates = array_filter($estimates, function($e) {
+            return isset($e['horizon']) && ($e['horizon'] === 'current fiscal year' || $e['horizon'] === 'next fiscal year');
+        });
+
+        usort($annual_estimates, function($a, $b) {
+            return strtotime($b['date']) - strtotime($a['date']);
+        });
+
+        $next_year_estimate = null;
+        $current_year_estimate = null;
+
+        foreach ($annual_estimates as $estimate) {
+            if ($next_year_estimate === null && $estimate['horizon'] === 'next fiscal year') {
+                $next_year_estimate = $estimate;
+            }
+            if ($current_year_estimate === null && $estimate['horizon'] === 'current fiscal year') {
+                $current_year_estimate = $estimate;
+            }
+            if ($next_year_estimate && $current_year_estimate) break;
+        }
+        
+        if ($current_year_estimate) {
+            $revenue_key = 'revenue_estimate_average';
+            $eps_key = 'eps_estimate_average';
+
+            $current_year_eps_estimate = (float)($current_year_estimate[$eps_key] ?? 0);
+            $current_year_revenue_estimate = (float)($current_year_estimate[$revenue_key] ?? 0);
+
+            $last_year_revenue = (float)($income[0]['totalRevenue'] ?? 0);
+
+            if (abs($last_year_revenue) > 0.0001) $growth['currentYearRevenueGrowth'] = (($current_year_revenue_estimate - $last_year_revenue) / abs($last_year_revenue)) * 100;
+
+            if ($next_year_estimate) {
+                $next_year_eps = (float)($next_year_estimate[$eps_key] ?? 0);
+                $next_year_revenue = (float)($next_year_estimate[$revenue_key] ?? 0);
+
+                if (abs($current_year_eps_estimate) > 0.0001) $growth['nextYearEpsGrowth'] = (($next_year_eps - $current_year_eps_estimate) / abs($current_year_eps_estimate)) * 100;
+                if (abs($current_year_revenue_estimate) > 0.0001) $growth['nextYearRevenueGrowth'] = (($next_year_revenue - $current_year_revenue_estimate) / abs($current_year_revenue_estimate)) * 100;
+            }
+        }
+    }
+
+    return $growth;
+}
 
     private function get_valuation_results($company_data, $latest_price, $projection_years = 10) {
         $overview = $company_data['overview']; $income_statement = $company_data['income_statement'];

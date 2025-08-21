@@ -259,7 +259,7 @@ function initializeFairValueAnalysisSection($container) {
         }
     }
 
-    const recalculateValuation = debounce(function() {
+const recalculateValuation = debounce(function() {
         const assumptions = { bear: {}, base: {}, bull: {} };
         let hasAllInputs = true;
         let anyFcfeIsPositive = false;
@@ -277,6 +277,13 @@ function initializeFairValueAnalysisSection($container) {
                 if ($input.val() === '') hasAllInputs = false;
                 assumptions[$input.data('case')]['yearlyRevGrowth'][$input.data('year')] = $input.val();
             });
+            // Also send the initial growth rate from the main (disabled) input
+            $container.find('input[data-metric="revGrowth"]').each(function() {
+                const $input = $(this);
+                if ($input.val() === '') hasAllInputs = false;
+                assumptions[$input.data('case')]['initial_growth_rate'] = parseFloat($input.val()) / 100;
+            });
+
             $container.find('input[data-metric="initialFcfe"]').each(function() {
                 const $input = $(this);
                 const multiplier = parseFloat($input.data('multiplier')) || 1;
@@ -413,7 +420,7 @@ function initializeFairValueAnalysisSection($container) {
                             $stackedBarLabel.html(`<span>Bear | Base | Bull</span><strong>$${bear_fv.toFixed(1)} | $${base_fv.toFixed(1)} | $${bull_fv.toFixed(1)}</strong>`);
                             const priceBarPixelWidth = (pricePosPct / 100) * containerWidth;
                             const $priceBarWrapper = $swsContainer.find('.jtw-sws-price-bar-row .jtw-sws-bar-wrapper');
-                            const $priceLabel = $priceBarWrapper.find('.jtw-sws-label-group');
+                            const $priceLabel = $priceBarWrapper.find('.jtw-s-label-group');
                             updateLabelPosition($priceBarWrapper, $priceLabel, priceBarPixelWidth);
                             const stackedBarPixelWidth = (stackedBarTotalWidthPct / 100) * containerWidth;
                             const $stackedBarWrapper = $swsContainer.find('.jtw-sws-stacked-bar-row .jtw-sws-bar-wrapper');

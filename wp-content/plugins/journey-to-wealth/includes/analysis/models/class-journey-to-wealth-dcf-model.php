@@ -82,55 +82,74 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
     $yearly_growth_inputs = $custom_assumptions['yearlyRevGrowth'] ?? [];
     $initial_fcfe_override = $custom_assumptions['initial_fcfe_override'] ?? null;
     
-    // Step 1: Establish the FCFE for Year 1 (2026).
-    $fcfe_year_1 = 0;
-    if (isset($yearly_fcfe_inputs[1]) && is_numeric($yearly_fcfe_inputs[1])) {
-        $fcfe_year_1 = (float)$yearly_fcfe_inputs[1];
-    } elseif ($initial_fcfe_override !== null) {
-        $fcfe_year_1 = $initial_fcfe_override;
-    } else {
-        $projected_revenue = $base_revenue * (1 + $initial_growth_rate);
-        $ratios = $component_ratios['projection_ratios'];
-        $fcfe_year_1 = ($projected_revenue * $ratios['net_income_of_revenue']) 
-                     + ($projected_revenue * $ratios['depreciation_of_revenue']) 
-                     - ($projected_revenue * $ratios['capex_of_revenue']) 
-                     - ($projected_revenue * $ratios['delta_nwc_of_revenue']) 
-                     + ($projected_revenue * $ratios['net_borrowing_of_revenue']);
-    }
-    
-    // Step 2: Build the full FCFE and Growth schedules.
     $fcfe_projections = [];
     $growth_projections = [];
-    $current_growth_rate = $initial_growth_rate;
-    $decay_is_setup = false;
-    $growth_decay_rate = 0;
 
-    for ($i = 1; $i <= $projection_years; $i++) {
-        // Determine Growth Rate for the current year
-        if (!empty($yearly_growth_inputs) && isset($yearly_growth_inputs[$i]) && is_numeric($yearly_growth_inputs[$i])) {
-            $growth_projections[$i] = (float)$yearly_growth_inputs[$i] / 100;
-        } else {
-            if ($i == 1) { $growth_projections[$i] = $initial_growth_rate; } 
-            else {
-                if (!$decay_is_setup) {
-                    if ($projection_years > 1) { $growth_decay_rate = ($current_growth_rate - $this->terminal_growth_rate) / ($projection_years - 1); }
-                    $decay_is_setup = true;
-                }
-                $current_growth_rate -= $growth_decay_rate;
-                $growth_projections[$i] = $current_growth_rate;
+    if (!empty($yearly_fcfe_inputs)) {
+        // Manual FCFE Mode: FCFE values are provided directly. Growth rates are ignored for calculation.
+        for ($i = 1; $i <= $projection_years; $i++) {
+            $fcfe_projections[$i] = isset($yearly_fcfe_inputs[$i]) && is_numeric($yearly_fcfe_inputs[$i]) ? (float)$yearly_fcfe_inputs[$i] : 0;
+            // For display purposes, calculate the implied growth rate.
+            if ($i > 1 && isset($fcfe_projections[$i - 1]) && $fcfe_projections[$i - 1] != 0) {
+                $growth_projections[$i] = ($fcfe_projections[$i] - $fcfe_projections[$i - 1]) / $fcfe_projections[$i - 1];
+            } else {
+                $growth_projections[$i] = 0; // Growth cannot be calculated for the first year.
             }
         }
-
-        // Determine FCFE for the current year
-        if (!empty($yearly_fcfe_inputs) && isset($yearly_fcfe_inputs[$i]) && is_numeric($yearly_fcfe_inputs[$i])) {
-            $fcfe_projections[$i] = (float)$yearly_fcfe_inputs[$i];
+    } else {
+        // Growth Rate Mode: FCFE is projected based on growth rates.
+        $fcfe_year_1 = 0;
+        if ($initial_fcfe_override !== null) {
+            $fcfe_year_1 = $initial_fcfe_override;
         } else {
-            if ($i == 1) { $fcfe_projections[$i] = $fcfe_year_1; }
-            else { $fcfe_projections[$i] = $fcfe_projections[$i - 1] * (1 + $growth_projections[$i]); }
+            $projected_revenue = $base_revenue * (1 + $initial_growth_rate);
+            $ratios = $component_ratios['projection_ratios'];
+            $fcfe_year_1 = ($projected_revenue * $ratios['net_income_of_revenue'])
+                         + ($projected_revenue * $ratios['depreciation_of_revenue'])
+                         - ($projected_revenue * $ratios['capex_of_revenue'])
+                         - ($projected_revenue * $ratios['delta_nwc_of_revenue'])
+                         + ($projected_revenue * $ratios['net_borrowing_of_revenue']);
         }
-    }
+        
+        $current_growth_rate = $initial_growth_rate;
+        $decay_is_setup = false;
+        $growth_decay_rate = 0;
 
-    // Step 3: Calculate Present Values and build the final table.
+        for ($i = 1; $i <= $projection_years; $i++) {
+            // First, determine the growth rate for the current year.
+            if (!empty($yearly_growth_inputs) && isset($yearly_growth_inputs[$i]) && is_numeric($yearly_growth_inputs[$i])) {
+                $growth_projections[$i] = (float)$yearly_growth_inputs[$i] / 100;
+                // Update current growth rate to the manual input for subsequent decay calculations.
+                $current_growth_rate = $growth_projections[$i];
+                // Reset decay calculation if a new manual growth rate is entered mid-projection.
+                $decay_is_setup = false;
+            } else {
+                if ($i == 1) {
+                    $growth_projections[$i] = $initial_growth_rate;
+                } else {
+                    if (!$decay_is_setup) {
+                        if ($projection_years > ($i - 1)) {
+                             // Correctly calculate decay over remaining years
+                            $growth_decay_rate = ($current_growth_rate - $this->terminal_growth_rate) / ($projection_years - ($i - 1));
+                        } else {
+                            $growth_decay_rate = 0;
+                        }
+                        $decay_is_setup = true;
+                    }
+                    $current_growth_rate -= $growth_decay_rate;
+                    $growth_projections[$i] = max($current_growth_rate, $this->terminal_growth_rate);
+                }
+            }
+
+            // Second, determine FCFE for the current year based on the growth rate.
+            if ($i == 1) {
+                $fcfe_projections[$i] = $fcfe_year_1;
+            } else {
+                $fcfe_projections[$i] = $fcfe_projections[$i - 1] * (1 + $growth_projections[$i]);
+            }
+         }
+     }
+    
     $projection_table = [];
     $sum_of_pv_cfs = 0;
     for ($i = 1; $i <= $projection_years; $i++) {
