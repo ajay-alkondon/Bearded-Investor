@@ -71,8 +71,8 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
     $component_ratios = $this->calculate_ttm_ratios($overview_data, $income_statement_data['quarterlyReports'], $cash_flow_data['quarterlyReports'], $balance_sheet_data['quarterlyReports'], $earnings_estimates); 
     
     // --- Determine Base Revenue and Initial Growth Rate ---
-    $base_revenue = $this->get_av_value($income_statement_data['annualReports'][0], 'totalRevenue');
-    $base_revenue_source = 'Last Reported Annual Revenue';
+    $base_revenue = $component_ratios['ttm_data']['revenue'] ?? $this->get_av_value($income_statement_data['annualReports'][0], 'totalRevenue');
+    $base_revenue_source = isset($component_ratios['ttm_data']['revenue']) ? 'Current Year Analyst Estimate' : 'Last Reported Annual Revenue';
 
     $initial_growth_rate = $custom_assumptions['initial_growth_rate'] ?? $this->terminal_growth_rate;
     $growth_rate_source = 'User Input';
