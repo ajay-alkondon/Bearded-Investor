@@ -1226,117 +1226,125 @@ private function calculate_growth_metrics($company_data, $beta_details) {
         return $output;
     }
     
-    private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
-        $output = '<div id="section-key-metrics-ratios-content" class="jtw-content-section">';
-        
-        // Section Header with Toggle
-        $output .= '<div class="jtw-section-header">';
-        $output .= '<h4>' . esc_html__('Comparative Company Analysis', 'journey-to-wealth') . '</h4>';
-        $output .= '<div class="jtw-peer-controls-container">'; // New wrapper
-        $output .= '<span>' . esc_html__('Peer Comparison', 'journey-to-wealth') . '</span>';
-        $output .= '<label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>';
-        $output .= '<button id="jtw-compare-peers-btn" class="jtw-compare-button" style="display:none;">Compare</button>'; // New button
-        $output .= '</div></div>';
-        
-        $output .= '<div class="jtw-metrics-table-container">';
-        $output .= '<table class="jtw-metrics-table">';
-        
-        // Table Header
-        $output .= '<thead><tr>';
-        $output .= '<th>Metric</th>';
-        $output .= '<th class="jtw-primary-col">' . esc_html($ticker) . '</th>';
-        $output .= '<th class="jtw-peer-col" style="display:none;"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
-        $output .= '<th class="jtw-peer-col" style="display:none;"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
-        $output .= '</tr></thead>';
+private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
+    $output = '<div id="section-key-metrics-ratios-content" class="jtw-content-section">';
     
-        // Table Body
-        $output .= '<tbody>';
+    // Section Header with Toggle
+    $output .= '<div class="jtw-section-header">';
+    $output .= '<h4>' . esc_html__('Comparative Company Analysis', 'journey-to-wealth') . '</h4>';
+    $output .= '<div class="jtw-peer-controls-container">'; // New wrapper
+    $output .= '<span>' . esc_html__('Peer Comparison', 'journey-to-wealth') . '</span>';
+    $output .= '<label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>';
+    $output .= '<button id="jtw-compare-peers-btn" class="jtw-compare-button" style="display:none;">Compare</button>'; // New button
+    $output .= '</div></div>';
     
-        $metric_groups = [
-            'Relative Valuation' => [
-                'trailingPeRatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'],
-                'forwardPeRatio' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'],
-            ],
-            'Growth Analysis' => [
-                'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'],
-                'currentYearEpsGrowth' => ['label' => 'Current Year EPS Growth (Est)', 'suffix' => '%'],
-                'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'],
-            ],
-            'Margin Analysis' => [
-                'grossMargin' => ['label' => 'TTM Gross Margin', 'suffix' => '%'],
-                'netMargin' => ['label' => 'TTM Net Profit Margin', 'suffix' => '%'],
-            ],
-            'Return Ratios' => [
-                'returnOnAssetsTTM' => ['label' => 'TTM Return on Assets %', 'suffix' => '%'],
-                'returnOnCapitalTTM' => ['label' => 'TTM Return On Capital %', 'suffix' => '%'],
-                'returnOnEquityTTM' => ['label' => 'TTM Return On Equity %', 'suffix' => '%'],
-                'returnOnCommonEquity' => ['label' => 'Return On Common Equity %', 'suffix' => '%'],
-            ],
-            'Other Ratios' => [
-                'psRatio' => ['label' => 'TTM P/S Ratio', 'suffix' => 'x'],
-                'pbRatio' => ['label' => 'TTM P/B Ratio', 'suffix' => 'x'],
-                'evToRevenue' => ['label' => 'EV/Revenue', 'suffix' => 'x'],
-                'evToEbitda' => ['label' => 'EV/EBITDA', 'suffix' => 'x'],
-                'pegRatio' => ['label' => 'PEG / PEGY Ratios', 'suffix' => 'x', 'is_peg' => true],
-            ]
-        ];
+    $output .= '<div class="jtw-metrics-table-container">';
+    $output .= '<table class="jtw-metrics-table">';
     
-        foreach ($metric_groups as $group_name => $metrics) {
-            $output .= '<tr class="jtw-metric-group-header"><td colspan="4">' . esc_html($group_name) . '</td></tr>';
-            foreach ($metrics as $key => $details) {
-                $output .= '<tr>';
-                
-                // Handle the special PEG/PEGY row with the calculator link
-                if (isset($details['is_peg']) && $details['is_peg']) {
-                    $peg_val = $this->format_metric_value($primary_metrics['pegRatio'] ?? 'N/A', 'x');
+    // Table Header
+    $output .= '<thead><tr>';
+    $output .= '<th>Metric</th>';
+    $output .= '<th class="jtw-primary-col">' . esc_html($ticker) . '</th>';
+    $output .= '<th class="jtw-peer-col" style="display:none;"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
+    $output .= '<th class="jtw-peer-col" style="display:none;"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
+    $output .= '</tr></thead>';
+
+    // Table Body
+    $output .= '<tbody>';
+
+    $metric_groups = [
+        'Relative Valuation' => [
+            'trailingPeRatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'],
+            'forwardPeRatio' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'],
+        ],
+        'Growth Analysis' => [
+            'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'],
+            'currentYearEpsGrowth' => ['label' => 'Current Year EPS Growth (Est)', 'suffix' => '%'],
+            'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'],
+        ],
+        'Margin Analysis' => [
+            'grossMargin' => ['label' => 'TTM Gross Margin', 'suffix' => '%'],
+            'netMargin' => ['label' => 'TTM Net Profit Margin', 'suffix' => '%'],
+        ],
+        'Return Ratios' => [
+            'returnOnAssetsTTM' => ['label' => 'TTM Return on Assets %', 'suffix' => '%'],
+            'returnOnCapitalTTM' => ['label' => 'TTM Return On Capital %', 'suffix' => '%'],
+            'returnOnEquityTTM' => ['label' => 'TTM Return On Equity %', 'suffix' => '%'],
+            'returnOnCommonEquity' => ['label' => 'Return On Common Equity %', 'suffix' => '%'],
+        ],
+        'Other Ratios' => [
+            'psRatio' => ['label' => 'TTM P/S Ratio', 'suffix' => 'x'],
+            'pbRatio' => ['label' => 'TTM P/B Ratio', 'suffix' => 'x'],
+            'evToRevenue' => ['label' => 'EV/Revenue', 'suffix' => 'x'],
+            'evToEbitda' => ['label' => 'EV/EBITDA', 'suffix' => 'x'],
+            'pegRatio' => ['label' => 'PEG / PEGY Ratios', 'suffix' => 'x', 'is_peg' => true],
+        ]
+    ];
+
+    foreach ($metric_groups as $group_name => $metrics) {
+        $output .= '<tr class="jtw-metric-group-header"><td colspan="4">' . esc_html($group_name) . '</td></tr>';
+        foreach ($metrics as $key => $details) {
+            $output .= '<tr>';
+            
+            if (isset($details['is_peg']) && $details['is_peg']) {
+                $is_peg_available = is_numeric($primary_metrics['PEGRatio']);
+
+                if ($is_peg_available) {
+                    $peg_val = $this->format_metric_value($primary_metrics['PEGRatio'] ?? 'N/A', 'x');
                     $pegy_val = $this->format_metric_value($primary_metrics['pegyRatio'] ?? 'N/A', 'x');
                     $output .= '<td>' . esc_html($details['label']) . ' <a href="#" class="jtw-modal-trigger" data-modal-target="#jtw-peg-pegy-modal">(Calculator)</a></td>';
                     $output .= '<td class="jtw-primary-col">' . esc_html($peg_val . ' / ' . $pegy_val) . '</td>';
-                    $output .= '<td class="jtw-peer-col jtw-peer-1-value" data-metric-peg="pegRatio" data-metric-pegy="pegyRatio" style="display:none;">-</td>';
-                    $output .= '<td class="jtw-peer-col jtw-peer-2-value" data-metric-peg="pegRatio" data-metric-pegy="pegyRatio" style="display:none;">-</td>';
                 } else {
                     $output .= '<td>' . esc_html($details['label']) . '</td>';
-                    $output .= '<td class="jtw-primary-col">' . $this->format_metric_value($primary_metrics[$key] ?? 'N/A', $details['suffix']) . '</td>';
-                    $output .= '<td class="jtw-peer-col jtw-peer-1-value" data-metric="' . esc_attr($key) . '" style="display:none;">-</td>';
-                    $output .= '<td class="jtw-peer-col jtw-peer-2-value" data-metric="' . esc_attr($key) . '" style="display:none;">-</td>';
+                    $output .= '<td class="jtw-primary-col">- / -</td>';
                 }
-                $output .= '</tr>';
+                $output .= '<td class="jtw-peer-col jtw-peer-1-value" data-metric-peg="PEGRatio" data-metric-pegy="pegyRatio" style="display:none;">-</td>';
+                $output .= '<td class="jtw-peer-col jtw-peer-2-value" data-metric-peg="PEGRatio" data-metric-pegy="pegyRatio" style="display:none;">-</td>';
+            } else {
+                $output .= '<td>' . esc_html($details['label']) . '</td>';
+                $output .= '<td class="jtw-primary-col">' . $this->format_metric_value($primary_metrics[$key] ?? 'N/A', $details['suffix']) . '</td>';
+                $output .= '<td class="jtw-peer-col jtw-peer-1-value" data-metric="' . esc_attr($key) . '" style="display:none;">-</td>';
+                $output .= '<td class="jtw-peer-col jtw-peer-2-value" data-metric="' . esc_attr($key) . '" style="display:none;">-</td>';
             }
+            $output .= '</tr>';
         }
-    
-        $output .= '</tbody></table>';
-        $output .= '<div class="jtw-peer-loading-spinner" style="display:none;"><div class="jtw-loading-spinner"></div></div>';
-        $output .= '<div class="jtw-peer-error-message" style="display:none;"></div>';
-        $output .= '</div>'; // end table container
-    
-        // PEG/PEGY Calculator Modal
-        $output .= '<div id="jtw-peg-pegy-modal" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span><h4>PEG/PEGY Calculator</h4>';
-        if (!is_numeric($primary_metrics['trailingEps']) || $primary_metrics['trailingEps'] <= 0) {
-            $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('The company is not profitable yet.', 'journey-to-wealth') . '</strong></p></div>';
-        } else {
-            $growth_default = '5.0'; // Fallback default
-            if (isset($primary_metrics['pegDerivedGrowth']) && is_numeric($primary_metrics['pegDerivedGrowth'])) {
-                $growth_default = number_format((float)$primary_metrics['pegDerivedGrowth'], 1, '.', '');
-            }
-            
-            $dividend_yield_default = number_format((float)($primary_metrics['dividendYield'] ?? 0), 1, '.', '');
-            $output .= '<div class="jtw-peg-pegy-calculator"><div class="jtw-peg-pegy-inputs-grid">';
-            $output .= '<div class="jtw-form-group"><label for="jtw-sim-stock-price">Stock Price ($):</label><input type="number" step="0.01" id="jtw-sim-stock-price" class="jtw-sim-input" value="' . esc_attr($primary_metrics['stockPrice']) . '"></div>';
-            $output .= '<div class="jtw-form-group"><label for="jtw-sim-eps">Earnings per Share ($):</label><input type="number" step="0.01" id="jtw-sim-eps" class="jtw-sim-input" value="' . esc_attr($primary_metrics['trailingEps']) . '"></div>';
-            $output .= '<div class="jtw-form-group"><label for="jtw-sim-growth-rate">Est. Annual Earnings Growth (%):</label><input type="number" step="0.1" id="jtw-sim-growth-rate" class="jtw-sim-input" value="' . esc_attr($growth_default) . '"></div>';
-            $output .= '<div class="jtw-form-group"><label for="jtw-sim-dividend-yield">Est. Annual Dividend Yield (%):</label><input type="number" step="0.01" id="jtw-sim-dividend-yield" class="jtw-sim-input" value="' . esc_attr($dividend_yield_default) . '"></div>';
-            $output .= '</div>';
-            $output .= '<p class="jtw-calculator-note">' . esc_html__('Note: The earnings growth rate is a forward-looking analyst estimate for future years (typically 3-5 years) and may differ from the single next-year growth rate.', 'journey-to-wealth') . '</p>';
-            $output .= '<div class="jtw-peg-pegy-results">';
-            $output .= '<div class="jtw-bar-result"><span class="jtw-result-label">PEG Ratio</span><div class="jtw-bar-container"><div id="jtw-peg-bar" class="jtw-bar"><span id="jtw-peg-value" class="jtw-bar-value">-</span></div></div></div>';
-            $output .= '<div class="jtw-bar-result"><span class="jtw-result-label">PEGY Ratio</span><div class="jtw-bar-container"><div id="jtw-pegy-bar" class="jtw-bar"><span id="jtw-pegy-value" class="jtw-bar-value">-</span></div></div></div>';
-            $output .= '</div></div>';
-        }
-        $output .= '</div></div>'; // End modal
-    
-        $output .= '</div>'; // End section
-        return $output;
     }
+
+    $output .= '</tbody></table>';
+    $output .= '<div class="jtw-peer-loading-spinner" style="display:none;"><div class="jtw-loading-spinner"></div></div>';
+    $output .= '<div class="jtw-peer-error-message" style="display:none;"></div>';
+    $output .= '</div>'; // end table container
+
+    // PEG/PEGY Calculator Modal
+    $output .= '<div id="jtw-peg-pegy-modal" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span><h4>PEG/PEGY Calculator</h4>';
+    if (!is_numeric($primary_metrics['PEGRatio'])) {
+        $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('The PEG Ratio is unavailable for this company, so the calculator cannot be used.', 'journey-to-wealth') . '</strong></p></div>';
+    } elseif (!is_numeric($primary_metrics['trailingEps']) || $primary_metrics['trailingEps'] <= 0) {
+        $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('The company is not profitable yet.', 'journey-to-wealth') . '</strong></p></div>';
+    } else {
+        $growth_default = '5.0'; // Fallback default
+        if (isset($primary_metrics['pegDerivedGrowth']) && is_numeric($primary_metrics['pegDerivedGrowth'])) {
+            $growth_default = number_format((float)$primary_metrics['pegDerivedGrowth'], 1, '.', '');
+        }
+        
+        $dividend_yield_default = number_format((float)($primary_metrics['dividendYield'] ?? 0), 1, '.', '');
+        $output .= '<div class="jtw-peg-pegy-calculator"><div class="jtw-peg-pegy-inputs-grid">';
+        $output .= '<div class="jtw-form-group"><label for="jtw-sim-stock-price">Stock Price ($):</label><input type="number" step="0.01" id="jtw-sim-stock-price" class="jtw-sim-input" value="' . esc_attr($primary_metrics['stockPrice']) . '"></div>';
+        $output .= '<div class="jtw-form-group"><label for="jtw-sim-eps">Earnings per Share ($):</label><input type="number" step="0.01" id="jtw-sim-eps" class="jtw-sim-input" value="' . esc_attr($primary_metrics['trailingEps']) . '"></div>';
+        $output .= '<div class="jtw-form-group"><label for="jtw-sim-growth-rate">Est. Annual Earnings Growth (%):</label><input type="number" step="0.1" id="jtw-sim-growth-rate" class="jtw-sim-input" value="' . esc_attr($growth_default) . '"></div>';
+        $output .= '<div class="jtw-form-group"><label for="jtw-sim-dividend-yield">Est. Annual Dividend Yield (%):</label><input type="number" step="0.01" id="jtw-sim-dividend-yield" class="jtw-sim-input" value="' . esc_attr($dividend_yield_default) . '"></div>';
+        $output .= '</div>';
+        $output .= '<p class="jtw-calculator-note">' . esc_html__('Note: The earnings growth rate is a forward-looking analyst estimate for future years (typically 3-5 years) and may differ from the single next-year growth rate.', 'journey-to-wealth') . '</p>';
+        $output .= '<div class="jtw-peg-pegy-results">';
+        $output .= '<div class="jtw-bar-result"><span class="jtw-result-label">PEG Ratio</span><div class="jtw-bar-container"><div id="jtw-peg-bar" class="jtw-bar"><span id="jtw-peg-value" class="jtw-bar-value">-</span></div></div></div>';
+        $output .= '<div class="jtw-bar-result"><span class="jtw-result-label">PEGY Ratio</span><div class="jtw-bar-container"><div id="jtw-pegy-bar" class="jtw-bar"><span id="jtw-pegy-value" class="jtw-bar-value">-</span></div></div></div>';
+        $output .= '</div></div>';
+    }
+    $output .= '</div></div>'; // End modal
+
+    $output .= '</div>'; // End section
+    return $output;
+}
 
     private function format_metric_value($value, $suffix = '') {
         if (is_numeric($value)) {
