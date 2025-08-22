@@ -194,71 +194,72 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
         ]
     ];
 }
+private function calculate_ttm_ratios($overview_data, $income_quarterly, $cash_flow_quarterly, $balance_quarterly, $earnings_estimates) {
+    $fallback_ratios = [
+        'projection_ratios' => [
+            'net_income_of_revenue' => 0.10, 'depreciation_of_revenue' => 0.05,
+            'capex_of_revenue' => 0.05, 'delta_nwc_of_revenue' => 0.02,
+            'net_borrowing_of_revenue' => 0.01,
+        ], 'ttm_data' => []
+    ];
 
-    private function calculate_ttm_ratios($overview_data, $income_quarterly, $cash_flow_quarterly, $balance_quarterly, $earnings_estimates) {
-        $fallback_ratios = [
-            'projection_ratios' => [
-                'net_income_of_revenue' => 0.10, 'depreciation_of_revenue' => 0.05,
-                'capex_of_revenue' => 0.05, 'delta_nwc_of_revenue' => 0.02,
-                'net_borrowing_of_revenue' => 0.01,
-            ], 'ttm_data' => []
-        ];
+    if (count($income_quarterly) < 4 || count($cash_flow_quarterly) < 4 || count($balance_quarterly) < 5) {
+        return $fallback_ratios;
+    }
 
-        if (count($income_quarterly) < 4 || count($cash_flow_quarterly) < 4 || count($balance_quarterly) < 5) {
-            return $fallback_ratios;
-        }
+    $last_4_income = array_slice($income_quarterly, 0, 4);
+    $last_4_cash_flow = array_slice($cash_flow_quarterly, 0, 4);
 
-        // --- TTM Calculation from last 4 quarters ---
-        $last_4_income = array_slice($income_quarterly, 0, 4);
-        $last_4_cash_flow = array_slice($cash_flow_quarterly, 0, 4);
+    // This is the revenue base used ONLY for creating consistent TTM ratios.
+    $revenue_ttm_actuals = array_sum(array_column($last_4_income, 'totalRevenue'));
 
-        // **FIX START**: Prioritize Analyst Estimate for TTM Revenue
-        $revenue_ttm = $this->get_av_value($overview_data, 'RevenueTTM'); // Start with AV's TTM
-        if ($revenue_ttm <= 0) { $revenue_ttm = array_sum(array_column($last_4_income, 'totalRevenue')); } // Fallback to summing quarters
-
-        if (!is_wp_error($earnings_estimates) && !empty($earnings_estimates['estimates'])) {
-            foreach ($earnings_estimates['estimates'] as $estimate) {
-                if (isset($estimate['horizon']) && $estimate['horizon'] === 'current fiscal year' && isset($estimate['revenue_estimate_average']) && is_numeric($estimate['revenue_estimate_average'])) {
-                    $analyst_revenue = (float)$estimate['revenue_estimate_average'];
-                    if ($analyst_revenue > 0) {
-                        $revenue_ttm = $analyst_revenue; // Override with more current analyst estimate
-                        break;
-                    }
+    // This is the authoritative revenue base for the forward-looking projection.
+    // It starts with historical TTM but is overridden by analyst estimates if available.
+    $revenue_base_for_projection = $this->get_av_value($overview_data, 'RevenueTTM');
+    if ($revenue_base_for_projection <= 0) {
+        $revenue_base_for_projection = $revenue_ttm_actuals;
+    }
+    if (!is_wp_error($earnings_estimates) && !empty($earnings_estimates['estimates'])) {
+        foreach ($earnings_estimates['estimates'] as $estimate) {
+            if (isset($estimate['horizon']) && $estimate['horizon'] === 'current fiscal year' && isset($estimate['revenue_estimate_average']) && is_numeric($estimate['revenue_estimate_average'])) {
+                $analyst_revenue = (float)$estimate['revenue_estimate_average'];
+                if ($analyst_revenue > 0) {
+                    $revenue_base_for_projection = $analyst_revenue;
+                    break;
                 }
             }
         }
-        // **FIX END**
-        
-        $profit_margin = $this->get_av_value($overview_data, 'ProfitMargin');
-        $net_income_ttm = ($profit_margin !== 0 && $revenue_ttm > 0) ? $revenue_ttm * $profit_margin : array_sum(array_column($last_4_income, 'netIncome'));
-
-        $depreciation_ttm = array_sum(array_column($last_4_cash_flow, 'depreciationDepletionAndAmortization'));
-        $capex_ttm = abs(array_sum(array_column($last_4_cash_flow, 'capitalExpenditures')));
-        
-        $changeInInventory_ttm = array_sum(array_column($last_4_cash_flow, 'changeInInventory'));
-        $changeInReceivables_ttm = array_sum(array_column($last_4_cash_flow, 'changeInReceivables'));
-        $changeInOpLiabilities_ttm = array_sum(array_column($last_4_cash_flow, 'changeInOperatingLiabilities'));
-        $delta_nwc_ttm = $changeInReceivables_ttm + $changeInInventory_ttm - $changeInOpLiabilities_ttm;
-
-        $debt_current = $this->get_av_value($balance_quarterly[0], 'longTermDebt', 0) + $this->get_av_value($balance_quarterly[0], 'shortTermDebt', 0);
-        $debt_previous = $this->get_av_value($balance_quarterly[4], 'longTermDebt', 0) + $this->get_av_value($balance_quarterly[4], 'shortTermDebt', 0);
-        $net_borrowing_ttm = $debt_current - $debt_previous;
-        
-        if ($revenue_ttm <= 0) { return $fallback_ratios; }
-
-        return [
-            'projection_ratios' => [
-                'net_income_of_revenue' => $net_income_ttm / $revenue_ttm,
-                'depreciation_of_revenue' => $depreciation_ttm / $revenue_ttm,
-                'capex_of_revenue' => $capex_ttm / $revenue_ttm,
-                'delta_nwc_of_revenue' => $delta_nwc_ttm / $revenue_ttm,
-                'net_borrowing_of_revenue' => $net_borrowing_ttm / $revenue_ttm,
-            ],
-            'ttm_data' => [
-                'revenue' => $revenue_ttm, 'net_income' => $net_income_ttm,
-                'depreciation' => $depreciation_ttm, 'capex' => $capex_ttm,
-                'delta_nwc' => $delta_nwc_ttm, 'net_borrowing' => $net_borrowing_ttm
-            ]
-        ];
     }
+    
+    // All TTM components are calculated by summing the last 4 quarters.
+    $net_income_ttm = array_sum(array_column($last_4_income, 'netIncome'));
+    $depreciation_ttm = array_sum(array_column($last_4_cash_flow, 'depreciationDepletionAndAmortization'));
+    $capex_ttm = abs(array_sum(array_column($last_4_cash_flow, 'capitalExpenditures')));
+    $changeInInventory_ttm = array_sum(array_column($last_4_cash_flow, 'changeInInventory'));
+    $changeInReceivables_ttm = array_sum(array_column($last_4_cash_flow, 'changeInReceivables'));
+    $changeInOpLiabilities_ttm = array_sum(array_column($last_4_cash_flow, 'changeInOperatingLiabilities'));
+    $delta_nwc_ttm = $changeInReceivables_ttm + $changeInInventory_ttm - $changeInOpLiabilities_ttm;
+    $debt_current = $this->get_av_value($balance_quarterly[0], 'longTermDebt', 0) + $this->get_av_value($balance_quarterly[0], 'shortTermDebt', 0);
+    $debt_previous = $this->get_av_value($balance_quarterly[4], 'longTermDebt', 0) + $this->get_av_value($balance_quarterly[4], 'shortTermDebt', 0);
+    $net_borrowing_ttm = $debt_current - $debt_previous;
+    
+    if ($revenue_ttm_actuals <= 0) { return $fallback_ratios; }
+
+    return [
+        'projection_ratios' => [
+            'net_income_of_revenue' => $net_income_ttm / $revenue_ttm_actuals,
+            'depreciation_of_revenue' => $depreciation_ttm / $revenue_ttm_actuals,
+            'capex_of_revenue' => $capex_ttm / $revenue_ttm_actuals,
+            'delta_nwc_of_revenue' => $delta_nwc_ttm / $revenue_ttm_actuals,
+            'net_borrowing_of_revenue' => $net_borrowing_ttm / $revenue_ttm_actuals,
+        ],
+        'ttm_data' => [
+            'revenue_for_ratios' => $revenue_ttm_actuals,
+            'revenue' => $revenue_base_for_projection,
+            'net_income' => $net_income_ttm,
+            'depreciation' => $depreciation_ttm, 'capex' => $capex_ttm,
+            'delta_nwc' => $delta_nwc_ttm, 'net_borrowing' => $net_borrowing_ttm
+        ]
+    ];
+}
 }

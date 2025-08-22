@@ -1547,109 +1547,117 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
         return $output;
     }
 
-    private function build_dcf_modal_content($result, $details, $income_statement, $cash_flow) {
-        $data = $result['calculation_breakdown'];
-        $value_per_share = $result['intrinsic_value_per_share'];
-        $discount_calc = $data['discount_rate_calc'];
-        $beta_details = $discount_calc['beta_details'];
-        $current_price = $data['current_price'];
-        $projection_years = count($data['projection_table']);
-        $discount_pct = ($value_per_share > 0 && $current_price > 0) ? (($value_per_share - $current_price) / $current_price) * 100 : 0;
-        $total_value_label = 'Total Equity Value';
-        
-        $output = '<h4>Valuation</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Source</th><th>Value</th></tr></thead><tbody>';
-        $output .= '<tr><td>Valuation Model</td><td></td><td>2 Stage FCFE</td></tr>';
-        $output .= '<tr><td>Initial Growth Rate</td><td>' . esc_html($data['inputs']['growth_rate_source']) . '</td><td>' . number_format($data['inputs']['initial_growth_rate'] * 100, 1) . '%</td></tr>';
-        $output .= '<tr><td>Discount Rate (Cost of Equity)</td><td>See below</td><td>' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%</td></tr>';
-        $output .= '<tr><td>Base FCFE</td><td>See Calculation Breakdown Below</td><td>' . $this->format_large_number($data['inputs']['base_cash_flow'], '$') . '</td></tr>';
-        $output .= '<tr><td>Perpetual Growth Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%</td></tr>';
+private function build_dcf_modal_content($result, $details, $income_statement, $cash_flow) {
+    $data = $result['calculation_breakdown'];
+    $value_per_share = $result['intrinsic_value_per_share'];
+    $discount_calc = $data['discount_rate_calc'];
+    $beta_details = $discount_calc['beta_details'];
+    $current_price = $data['current_price'];
+    $projection_years = count($data['projection_table']);
+    $discount_pct = ($value_per_share > 0 && $current_price > 0) ? (($value_per_share - $current_price) / $current_price) * 100 : 0;
+    $total_value_label = 'Total Equity Value';
+    
+    // ... (Valuation, Discount Rate, Beta, and TTM Ratios tables remain the same) ...
+    $output = '<h4>Valuation</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Source</th><th>Value</th></tr></thead><tbody>';
+    $output .= '<tr><td>Valuation Model</td><td></td><td>2 Stage FCFE</td></tr>';
+    $output .= '<tr><td>Initial Growth Rate</td><td>' . esc_html($data['inputs']['growth_rate_source']) . '</td><td>' . number_format($data['inputs']['initial_growth_rate'] * 100, 1) . '%</td></tr>';
+    $output .= '<tr><td>Discount Rate (Cost of Equity)</td><td>See below</td><td>' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%</td></tr>';
+    $output .= '<tr><td>Base FCFE</td><td>See Calculation Breakdown Below</td><td>' . $this->format_large_number($data['inputs']['base_cash_flow'], '$') . '</td></tr>';
+    $output .= '<tr><td>Perpetual Growth Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%</td></tr>';
+    $output .= '</tbody></table>';
+    
+    $output .= '<h4>Discount Rate</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
+    $output .= '<tr><td>Risk-Free Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($discount_calc['risk_free_rate'] * 100, 1) . '%</td></tr>';
+    $output .= '<tr><td>Equity Risk Premium</td><td>' . esc_html($discount_calc['erp_source']) . '</td><td>' . number_format($discount_calc['equity_risk_premium'] * 100, 1) . '%</td></tr>';
+    $output .= '<tr><td><strong>Discount Rate/ Cost of Equity</strong></td><td><strong>' . esc_html($discount_calc['cost_of_equity_calc']) . '</strong></td><td><strong>' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%</strong></td></tr>';
+    $output .= '</tbody></table>';
+    if (isset($beta_details['unlevered_beta_avg'])) {
+        $output .= '<h4>Levered Beta Calculation</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
+        $output .= '<tr><td>Unlevered Beta</td><td>Damodaran Industry Average</td><td>' . number_format($beta_details['unlevered_beta_avg'], 3) . '</td></tr>';
+        if (isset($beta_details['relevered_beta_calc'])) { $output .= '<tr><td>Re-levered Beta</td><td>' . esc_html($beta_details['relevered_beta_calc']) . '</td><td>' . number_format($beta_details['unconstrained_levered_beta'], 3) . '</td></tr>'; }
+        $output .= '<tr><td>Levered Beta</td><td>' . esc_html($beta_details['beta_source']) . '</td><td>' . number_format($discount_calc['beta'], 3) . '</td></tr>';
         $output .= '</tbody></table>';
-        
-        $output .= '<h4>Discount Rate</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Risk-Free Rate</td><td>' . esc_html($discount_calc['risk_free_rate_source']) . '</td><td>' . number_format($discount_calc['risk_free_rate'] * 100, 1) . '%</td></tr>';
-        $output .= '<tr><td>Equity Risk Premium</td><td>' . esc_html($discount_calc['erp_source']) . '</td><td>' . number_format($discount_calc['equity_risk_premium'] * 100, 1) . '%</td></tr>';
-        $output .= '<tr><td><strong>Discount Rate/ Cost of Equity</strong></td><td><strong>' . esc_html($discount_calc['cost_of_equity_calc']) . '</strong></td><td><strong>' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%</strong></td></tr>';
-        $output .= '</tbody></table>';
-        if (isset($beta_details['unlevered_beta_avg'])) {
-            $output .= '<h4>Levered Beta Calculation</h4><table class="jtw-modal-table"><thead><tr><th>Data Point</th><th>Calculation/ Source</th><th>Result</th></tr></thead><tbody>';
-            $output .= '<tr><td>Unlevered Beta</td><td>Damodaran Industry Average</td><td>' . number_format($beta_details['unlevered_beta_avg'], 3) . '</td></tr>';
-            if (isset($beta_details['relevered_beta_calc'])) { $output .= '<tr><td>Re-levered Beta</td><td>' . esc_html($beta_details['relevered_beta_calc']) . '</td><td>' . number_format($beta_details['unconstrained_levered_beta'], 3) . '</td></tr>'; }
-            $output .= '<tr><td>Levered Beta</td><td>' . esc_html($beta_details['beta_source']) . '</td><td>' . number_format($discount_calc['beta'], 3) . '</td></tr>';
-            $output .= '</tbody></table>';
-        }
-
-        $component_data = $data['component_ratios'];
-        $projection_ratios = $component_data['projection_ratios'] ?? [];
-
-        $output .= '<h4>TTM Ratios Used for Projection (% of Revenue)</h4>';
-        $output .= '<table class="jtw-modal-table"><thead><tr><th>Component</th><th>TTM Ratio</th></tr></thead><tbody>';
-
-        $components = [
-            'net_income_of_revenue' => 'Net Income',
-            'depreciation_of_revenue' => '(+) Depreciation & Amortization',
-            'capex_of_revenue' => '(-) Capital Expenditures (CAPEX)',
-            'delta_nwc_of_revenue' => '(-) Change in Net Working Capital',
-            'net_borrowing_of_revenue' => '(+) Net Borrowing'
-        ];
-
-        foreach ($components as $key => $label) {
-            $output .= '<tr><td>' . esc_html($label) . '</td>';
-            $ratio_value = 'N/A';
-            if (isset($projection_ratios[$key])) {
-                $ratio_value = number_format(abs($projection_ratios[$key]) * 100, 1) . '%';
-            }
-            $output .= '<td><strong>' . esc_html($ratio_value) . '</strong></td></tr>';
-        }
-        $output .= '</tbody></table>';
-        $output .= '<p class="jtw-calculator-note">' . esc_html__('Note: Ratios are calculated from Trailing Twelve Months (TTM) of financial data for a more current valuation baseline.', 'journey-to-wealth') . '</p>';
-
-        if (isset($data['component_ratios'])) {
-            $ratios = $data['component_ratios']['projection_ratios'];
-            $base_revenue_source = $data['base_revenue_source'] ?? 'Historical';
-            $projected_revenue_2026 = $data['base_revenue'] * (1 + $data['inputs']['initial_growth_rate']);
-
-            $proj_net_income = $projected_revenue_2026 * $ratios['net_income_of_revenue'];
-            $proj_depreciation = $projected_revenue_2026 * $ratios['depreciation_of_revenue'];
-            $proj_capex = $projected_revenue_2026 * $ratios['capex_of_revenue'];
-            $proj_change_nwc = $projected_revenue_2026 * $ratios['delta_nwc_of_revenue'];
-            $proj_net_borrowing = $projected_revenue_2026 * $ratios['net_borrowing_of_revenue'];
-
-            $output .= '<h4>Projected Base FCFE Calculation</h4>';
-            $output .= '<table class="jtw-modal-table"><thead><tr><th>Component</th><th>Calculation</th><th>Value</th></tr></thead><tbody>';
-            $output .= '<tr><td>Projected 2025 Revenue (Base)</td><td>' . esc_html($base_revenue_source) . '</td><td>' . $this->format_large_number($data['base_revenue'], '$') . '</td></tr>';
-            $output .= '<tr><td>Projected 2026 Revenue</td><td>' . $this->format_large_number($data['base_revenue'], '$') . ' * (1 + ' . number_format($data['inputs']['initial_growth_rate'] * 100, 1) . '%)</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . '</td></tr>';
-            $output .= '<tr style="border-top: 2px solid #ccc;"><td colspan="3" style="text-align:center; font-weight:bold;">Applying Ratios to Projected 2026 Revenue</td></tr>';
-            
-            $output .= '<tr><td>Projected Net Income</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['net_income_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_net_income, '$') . '</td></tr>';
-            $output .= '<tr><td>(+) Projected Depreciation</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['depreciation_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_depreciation, '$') . '</td></tr>';
-            $output .= '<tr><td>(-) Projected CAPEX</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['capex_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_capex, '$') . '</td></tr>';
-            $output .= '<tr><td>(-) Projected Change in NWC</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['delta_nwc_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_change_nwc, '$') . '</td></tr>';
-            $output .= '<tr><td>(+) Projected Net Borrowing</td><td>' . $this->format_large_number($projected_revenue_2026, '$') . ' * ' . number_format($ratios['net_borrowing_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($proj_net_borrowing, '$') . '</td></tr>';
-            
-            // FIX: Calculate the sum directly from the components to ensure consistency.
-            $calculated_fcfe_for_display = $data['inputs']['base_cash_flow'];
-            $output .= '<tr style="font-weight: bold;"><td>= Projected Base FCFE (Used for Forecast)</td><td></td><td>' . $this->format_large_number($calculated_fcfe_for_display, '$') . '</td></tr>';
-            $output .= '</tbody></table>';
-        }
-
-        $output .= '<h4>FCFE Forecast</h4><table class="jtw-modal-table"><thead><tr><th></th><th>FCFE (USD)</th><th>Growth Rate</th><th>Present Value Discounted (@' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%)</th></tr></thead><tbody>';
-        foreach ($data['projection_table'] as $row) {
-            $output .= '<tr><td>' . esc_html($row['year']) . '</td><td>' . $this->format_large_number($row['cf'], '$') . '</td><td>' . number_format($row['growth_rate'] * 100, 1) . '%</td><td>' . $this->format_large_number($row['pv_cf'], '$') . '</td></tr>';
-        }
-        $output .= '<tr><td colspan="3"><strong>Present value of next ' . esc_html($projection_years) . ' years cash flows</strong></td><td><strong>' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . '</strong></td></tr>';
-        $output .= '</tbody></table>';
-        $output .= '<h4>Final Valuation</h4><table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Terminal Value</td><td>FCFE<sub>' . end($data['projection_table'])['year'] . '</sub> &times; (1 + g) &divide; (Discount Rate - g)<br>= ' . $this->format_large_number(end($data['projection_table'])['cf'], '$') . ' &times; (1 + ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%) &divide; (' . number_format($data['inputs']['discount_rate'] * 100, 1) . '% - ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%)</td><td>' . $this->format_large_number($data['terminal_value'], '$') . '</td></tr>';
-        $output .= '<tr><td>Present Value of Terminal Value</td><td>Terminal Value &divide; (1 + r)<sup>' . esc_html($projection_years) . '</sup><br>' . $this->format_large_number($data['terminal_value'], '$') . ' &divide; (1 + ' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%)<sup>' . esc_html($projection_years) . '</sup></td><td>' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td></tr>';
-        $output .= '<tr><td><strong>' . esc_html($total_value_label) . '</strong></td><td><strong>Present value of next ' . esc_html($projection_years) . ' years cash flows + PV of Terminal Value</strong><br>= ' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . ' + ' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td><td><strong>' . $this->format_large_number($data['total_equity_value'], '$') . '</strong></td></tr>';
-        $output .= '<tr><td><strong>Equity Value per Share (USD)</strong></td><td><strong>Total Equity Value / Shares Outstanding</strong><br>= ' . $this->format_large_number($data['total_equity_value'], '$') . ' / ' . number_format($data['shares_outstanding']) . '</td><td><strong>$' . number_format($value_per_share, 1) . '</strong></td></tr>';
-        $output .= '</tbody></table>';
-        $output .= '<h4>Discount to Share Price</h4><table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
-        $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 1) . '</td></tr>';
-        $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 1) . '<br>= ($' . number_format($value_per_share, 1) . ' - $' . number_format($current_price, 1) . ') / $' . number_format($current_price, 1) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
-        $output .= '</tbody></table>';
-        return $output;
     }
+
+    $component_data = $data['component_ratios'];
+    $projection_ratios = $component_data['projection_ratios'] ?? [];
+
+    $output .= '<h4>TTM Ratios Used for Projection</h4>';
+    $output .= '<table class="jtw-modal-table"><thead><tr><th>Component</th><th>Source / Value</th><th>TTM Ratio</th></tr></thead><tbody>';
+    $ttm_revenue_for_ratios = $component_data['ttm_data']['revenue_for_ratios'] ?? 0;
+    $output .= '<tr><td>Base Revenue for Ratios</td><td>Sum of Last 4 Quarters</td><td><strong>' . $this->format_large_number($ttm_revenue_for_ratios, '$') . '</strong></td></tr>';
+    $components = [
+        'net_income_of_revenue' => 'Net Income',
+        'depreciation_of_revenue' => '(+) Depreciation & Amortization',
+        'capex_of_revenue' => '(-) Capital Expenditures (CAPEX)',
+        'delta_nwc_of_revenue' => '(-) Change in Net Working Capital',
+        'net_borrowing_of_revenue' => '(+) Net Borrowing'
+    ];
+    foreach ($components as $key => $label) {
+        $output .= '<tr><td>' . esc_html($label) . '</td><td>as % of TTM Revenue</td>';
+        $ratio_value = 'N/A';
+        if (isset($projection_ratios[$key])) {
+            $ratio_value = number_format(abs($projection_ratios[$key]) * 100, 1) . '%';
+        }
+        $output .= '<td><strong>' . esc_html($ratio_value) . '</strong></td></tr>';
+    }
+    $output .= '</tbody></table>';
+    $output .= '<p class="jtw-calculator-note">' . esc_html__('Note: Ratios are calculated from Trailing Twelve Months (TTM) of financial data for a more current valuation baseline.', 'journey-to-wealth') . '</p>';
+
+    if (isset($data['component_ratios']['ttm_data'])) {
+        $ratios = $data['component_ratios']['projection_ratios'];
+        $base_revenue_source = $data['base_revenue_source'] ?? 'Historical';
+        
+        // Perform calculations with raw, un-formatted numbers first
+        $raw_base_revenue = $data['base_revenue'];
+        $raw_initial_growth = $data['inputs']['initial_growth_rate'];
+        $raw_projected_revenue = $raw_base_revenue * (1 + $raw_initial_growth);
+
+        $raw_proj_net_income = $raw_projected_revenue * $ratios['net_income_of_revenue'];
+        $raw_proj_depreciation = $raw_projected_revenue * $ratios['depreciation_of_revenue'];
+        $raw_proj_capex = $raw_projected_revenue * $ratios['capex_of_revenue'];
+        $raw_proj_change_nwc = $raw_projected_revenue * $ratios['delta_nwc_of_revenue'];
+        $raw_proj_net_borrowing = $raw_projected_revenue * $ratios['net_borrowing_of_revenue'];
+
+        // Sum the raw numbers to get the final, accurate FCFE
+        $raw_calculated_fcfe = $raw_proj_net_income + $raw_proj_depreciation - $raw_proj_capex - $raw_proj_change_nwc + $raw_proj_net_borrowing;
+
+        $output .= '<h4>Projected Base FCFE Calculation</h4>';
+        $output .= '<table class="jtw-modal-table"><thead><tr><th>Component</th><th>Source / Calculation</th><th>Value</th></tr></thead><tbody>';
+        $output .= '<tr><td>Base Revenue for Projection</td><td>' . esc_html($base_revenue_source) . '</td><td>' . $this->format_large_number($raw_base_revenue, '$') . '</td></tr>';
+        $output .= '<tr><td>Projected Revenue (Next Year)</td><td>Base Revenue for Projection * (1 + Initial Growth Rate)</td><td>' . $this->format_large_number($raw_projected_revenue, '$') . '</td></tr>';
+        $output .= '<tr style="border-top: 2px solid #ccc;"><td colspan="3" style="text-align:center; font-weight:bold;">Applying TTM Ratios to Projected Revenue</td></tr>';
+        
+        // Format the numbers for display AFTER all calculations are complete
+        $output .= '<tr><td>Projected Net Income</td><td>' . $this->format_large_number($raw_projected_revenue, '$') . ' * ' . number_format($ratios['net_income_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($raw_proj_net_income, '$') . '</td></tr>';
+        $output .= '<tr><td>(+) Projected Depreciation</td><td>' . $this->format_large_number($raw_projected_revenue, '$') . ' * ' . number_format($ratios['depreciation_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($raw_proj_depreciation, '$') . '</td></tr>';
+        $output .= '<tr><td>(-) Projected CAPEX</td><td>' . $this->format_large_number($raw_projected_revenue, '$') . ' * ' . number_format($ratios['capex_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($raw_proj_capex, '$') . '</td></tr>';
+        $output .= '<tr><td>(-) Projected Change in NWC</td><td>' . $this->format_large_number($raw_projected_revenue, '$') . ' * ' . number_format($ratios['delta_nwc_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($raw_proj_change_nwc, '$') . '</td></tr>';
+        $output .= '<tr><td>(+) Projected Net Borrowing</td><td>' . $this->format_large_number($raw_projected_revenue, '$') . ' * ' . number_format($ratios['net_borrowing_of_revenue'] * 100, 1) . '%</td><td>' . $this->format_large_number($raw_proj_net_borrowing, '$') . '</td></tr>';
+        
+        $output .= '<tr style="font-weight: bold;"><td>= Projected Base FCFE (Used for Forecast)</td><td></td><td>' . $this->format_large_number($raw_calculated_fcfe, '$') . '</td></tr>';
+        $output .= '</tbody></table>';
+    }
+
+    // ... (FCFE Forecast and Final Valuation tables remain the same) ...
+    $output .= '<h4>FCFE Forecast</h4><table class="jtw-modal-table"><thead><tr><th></th><th>FCFE (USD)</th><th>Growth Rate</th><th>Present Value Discounted (@' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%)</th></tr></thead><tbody>';
+    foreach ($data['projection_table'] as $row) {
+        $output .= '<tr><td>' . esc_html($row['year']) . '</td><td>' . $this->format_large_number($row['cf'], '$') . '</td><td>' . number_format($row['growth_rate'] * 100, 1) . '%</td><td>' . $this->format_large_number($row['pv_cf'], '$') . '</td></tr>';
+    }
+    $output .= '<tr><td colspan="3"><strong>Present value of next ' . esc_html($projection_years) . ' years cash flows</strong></td><td><strong>' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . '</strong></td></tr>';
+    $output .= '</tbody></table>';
+    $output .= '<h4>Final Valuation</h4><table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
+    $output .= '<tr><td>Terminal Value</td><td>FCFE<sub>' . end($data['projection_table'])['year'] . '</sub> &times; (1 + g) &divide; (Discount Rate - g)<br>= ' . $this->format_large_number(end($data['projection_table'])['cf'], '$') . ' &times; (1 + ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%) &divide; (' . number_format($data['inputs']['discount_rate'] * 100, 1) . '% - ' . number_format($data['inputs']['terminal_growth_rate'] * 100, 1) . '%)</td><td>' . $this->format_large_number($data['terminal_value'], '$') . '</td></tr>';
+    $output .= '<tr><td>Present Value of Terminal Value</td><td>Terminal Value &divide; (1 + r)<sup>' . esc_html($projection_years) . '</sup><br>' . $this->format_large_number($data['terminal_value'], '$') . ' &divide; (1 + ' . number_format($data['inputs']['discount_rate'] * 100, 1) . '%)<sup>' . esc_html($projection_years) . '</sup></td><td>' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td></tr>';
+    $output .= '<tr><td><strong>' . esc_html($total_value_label) . '</strong></td><td><strong>Present value of next ' . esc_html($projection_years) . ' years cash flows + PV of Terminal Value</strong><br>= ' . $this->format_large_number($data['sum_of_pv_cfs'], '$') . ' + ' . $this->format_large_number($data['pv_of_terminal_value'], '$') . '</td><td><strong>' . $this->format_large_number($data['total_equity_value'], '$') . '</strong></td></tr>';
+    $output .= '<tr><td><strong>Equity Value per Share (USD)</strong></td><td><strong>Total Equity Value / Shares Outstanding</strong><br>= ' . $this->format_large_number($data['total_equity_value'], '$') . ' / ' . number_format($data['shares_outstanding']) . '</td><td><strong>$' . number_format($value_per_share, 1) . '</strong></td></tr>';
+    $output .= '</tbody></table>';
+    $output .= '<h4>Discount to Share Price</h4><table class="jtw-modal-table"><thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead><tbody>';
+    $output .= '<tr><td>Value per share (USD)</td><td>From above.</td><td>$' . number_format($value_per_share, 1) . '</td></tr>';
+    $output .= '<tr><td>Current discount</td><td>Discount to share price of $' . number_format($current_price, 1) . '<br>= ($' . number_format($value_per_share, 1) . ' - $' . number_format($current_price, 1) . ') / $' . number_format($current_price, 1) . '</td><td>' . number_format($discount_pct, 1) . '%</td></tr>';
+    $output .= '</tbody></table>';
+    return $output;
+}
 
     private function build_ddm_modal_content($result, $details) {
         $data = $result['calculation_breakdown'];
