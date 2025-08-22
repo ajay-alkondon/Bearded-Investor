@@ -1441,18 +1441,10 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
         $analyst_fcfe = $breakdown['inputs']['base_cash_flow'];
         $analyst_discount_rate = ($breakdown['inputs']['discount_rate'] ?? 0) * 100;
 
-        $beta_details = $breakdown['discount_rate_calc']['beta_details'] ?? [];
-        $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
-
-        if ($unlevered_beta < 0.95) {
-            $bear_growth = 5.0; $base_growth = 10.0; $bull_growth = 15.0;
-        } elseif ($unlevered_beta >= 0.95 && $unlevered_beta <= 1.1) {
-            $bear_growth = 15.0; $base_growth = 20.0; $bull_growth = 25.0;
-        } elseif ($unlevered_beta > 1.1 && $unlevered_beta <= 1.2) {
-            $bear_growth = 20.0; $base_growth = 25.0; $bull_growth = 30.0;
-        } else {
-            $bear_growth = 25.0; $base_growth = 30.0; $bull_growth = 35.0;
-        }
+        // Set fixed default growth rates, removing the beta-based logic
+        $bear_growth = 15.0;
+        $base_growth = 20.0;
+        $bull_growth = 25.0;
         
         $fcfe_label = 'Next Year FCFE'; // **LABEL CHANGE**
         $fcfe_display_value = $analyst_fcfe;
