@@ -1442,9 +1442,9 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
         $analyst_discount_rate = ($breakdown['inputs']['discount_rate'] ?? 0) * 100;
 
         // Set fixed default growth rates, removing the beta-based logic
-        $bear_growth = 15.0;
-        $base_growth = 20.0;
-        $bull_growth = 25.0;
+        $bear_growth = 20.0;
+        $base_growth = 25.0;
+        $bull_growth = 30.0;
         
         $fcfe_label = 'Next Year FCFE'; // **LABEL CHANGE**
         $fcfe_display_value = $analyst_fcfe;
