@@ -74,13 +74,13 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
     $base_revenue = $component_ratios['ttm_data']['revenue'] ?? $this->get_av_value($income_statement_data['annualReports'][0], 'totalRevenue');
     $base_revenue_source = isset($component_ratios['ttm_data']['revenue']) ? 'Current Year Analyst Estimate' : 'Last Reported Annual Revenue';
 
+    // **FIX**: Directly use the initial_growth_rate passed from the AJAX handler.
     $initial_growth_rate = $custom_assumptions['initial_growth_rate'] ?? $this->terminal_growth_rate;
     $growth_rate_source = 'User Input';
     
     // --- Projection Logic ---
     $yearly_fcfe_inputs = $custom_assumptions['yearlyFcfe'] ?? [];
     $yearly_growth_inputs = $custom_assumptions['yearlyRevGrowth'] ?? [];
-    $initial_fcfe_override = $custom_assumptions['initial_fcfe_override'] ?? null;
     
     $fcfe_projections = [];
     $growth_projections = [];
@@ -97,40 +97,27 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
             }
         }
     } else {
-        // Growth Rate Mode: FCFE is projected based on growth rates.
-        $fcfe_year_1 = 0;
-        if ($initial_fcfe_override !== null) {
-            $fcfe_year_1 = $initial_fcfe_override;
-        } else {
-            $projected_revenue = $base_revenue * (1 + $initial_growth_rate);
-            $ratios = $component_ratios['projection_ratios'];
-            $fcfe_year_1 = ($projected_revenue * $ratios['net_income_of_revenue'])
-                         + ($projected_revenue * $ratios['depreciation_of_revenue'])
-                         - ($projected_revenue * $ratios['capex_of_revenue'])
-                         - ($projected_revenue * $ratios['delta_nwc_of_revenue'])
-                         + ($projected_revenue * $ratios['net_borrowing_of_revenue']);
-        }
+        // Growth Rate Mode: FCFE is projected based on revenue growth rates.
+        $ratios = $component_ratios['projection_ratios'];
         
+        // Step 1: Determine the revenue growth rate for all projection years.
         $current_growth_rate = $initial_growth_rate;
         $decay_is_setup = false;
         $growth_decay_rate = 0;
 
         for ($i = 1; $i <= $projection_years; $i++) {
-            // First, determine the growth rate for the current year.
             if (!empty($yearly_growth_inputs) && isset($yearly_growth_inputs[$i]) && is_numeric($yearly_growth_inputs[$i])) {
                 $growth_projections[$i] = (float)$yearly_growth_inputs[$i] / 100;
-                // Update current growth rate to the manual input for subsequent decay calculations.
                 $current_growth_rate = $growth_projections[$i];
-                // Reset decay calculation if a new manual growth rate is entered mid-projection.
-                $decay_is_setup = false;
+                $decay_is_setup = false; // Reset decay for the next year if it's not manually specified
             } else {
                 if ($i == 1) {
                     $growth_projections[$i] = $initial_growth_rate;
                 } else {
                     if (!$decay_is_setup) {
-                        if ($projection_years > ($i - 1)) {
-                             // Correctly calculate decay over remaining years
-                            $growth_decay_rate = ($current_growth_rate - $this->terminal_growth_rate) / ($projection_years - ($i - 1));
+                        $remaining_years = $projection_years - ($i - 1);
+                        if ($remaining_years > 0) {
+                            $growth_decay_rate = ($current_growth_rate - $this->terminal_growth_rate) / $remaining_years;
                         } else {
                             $growth_decay_rate = 0;
                         }
@@ -140,14 +127,21 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
                     $growth_projections[$i] = max($current_growth_rate, $this->terminal_growth_rate);
                 }
             }
+        }
 
-            // Second, determine FCFE for the current year based on the growth rate.
-            if ($i == 1) {
-                $fcfe_projections[$i] = $fcfe_year_1;
-            } else {
-                $fcfe_projections[$i] = $fcfe_projections[$i - 1] * (1 + $growth_projections[$i]);
-            }
-         }
+        // Step 2: Project revenue and then calculate FCFE for each year from that revenue.
+        $current_revenue = $base_revenue;
+        for ($i = 1; $i <= $projection_years; $i++) {
+            $projected_revenue = $current_revenue * (1 + $growth_projections[$i]);
+            
+            $fcfe_projections[$i] = ($projected_revenue * $ratios['net_income_of_revenue'])
+                                 + ($projected_revenue * $ratios['depreciation_of_revenue'])
+                                 - ($projected_revenue * $ratios['capex_of_revenue'])
+                                 - ($projected_revenue * $ratios['delta_nwc_of_revenue'])
+                                 + ($projected_revenue * $ratios['net_borrowing_of_revenue']);
+
+            $current_revenue = $projected_revenue; // Update revenue base for the next year's projection
+        }
      }
     
     $projection_table = [];
@@ -168,7 +162,7 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
     $terminal_value = ($last_projected_fcfe * (1 + $this->terminal_growth_rate)) / ($this->cost_of_equity - $this->terminal_growth_rate);
     
     $pv_of_terminal_value = $terminal_value / pow(1 + $this->cost_of_equity, $projection_years);
-    $total_equity_value = $sum_of_pv_cfs + $pv_of_terminal_value;
+    $total_equity_value = (float)$sum_of_pv_cfs + (float)$pv_of_terminal_value;
     $shares_outstanding = $this->get_av_value($overview_data, 'SharesOutstanding');
     if ($shares_outstanding == 0) return new WP_Error('dcf_shares_error', __('Shares outstanding is zero.', 'journey-to-wealth'));
     
@@ -194,6 +188,7 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
         ]
     ];
 }
+
 private function calculate_ttm_ratios($overview_data, $income_quarterly, $cash_flow_quarterly, $balance_quarterly, $earnings_estimates) {
     $fallback_ratios = [
         'projection_ratios' => [

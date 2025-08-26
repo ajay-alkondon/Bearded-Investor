@@ -681,6 +681,9 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
     font-weight: 500;
     background-color: var(--jtw-page-bg);
 }
+.jtw-assumptions-table td.jtw-indented-metric {
+    padding-left: 25px !important;
+}
 .jtw-assumption-input {
     width: 100%;
     max-width: 100px;
@@ -1079,7 +1082,6 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
 .jtw-toggle-label span {
     display: inline-block;
     transition: transform 0.3s ease;
-    margin-left: 5px;
 }
 .jtw-yearly-input-row td {
     background-color: #f8f9fa;
@@ -1109,4 +1111,309 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
 /* --- Indent Yearly Accordion Rows --- */
 .jtw-yearly-input-row td:first-child {
     padding-left: 35px !important;
+}
+
+/* Styles for new case tables */
+.jtw-case-table {
+    width: 100%;
+    margin-bottom: 25px;
+}
+.jtw-case-table th, .jtw-case-table td {
+    text-align: center;
+}
+
+/* --- Yearly Input Toggles --- */
+.jtw-toggle-label {
+    cursor: pointer;
+    font-weight: 600 !important;
+    user-select: none;
+    text-align: left; /* Ensure label text is aligned left */
+}
+.jtw-toggle-label:hover {
+    color: var(--jtw-primary-blue);
+}
+.jtw-toggle-label span {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.jtw-metric-group-header.jtw-result-header-row {
+    background-color: #f0f3f5;
+}
+
+.jtw-metric-group-header.jtw-result-header-row > td:first-child,
+.jtw-metric-group-header.jtw-result-header-row > td {
+    font-weight: bold;
+}
+
+.jtw-header-result {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--jtw-primary-blue);
+    margin-left: auto;
+    padding-left: 20px;
+}
+
+.jtw-fcfe-total-result {
+    text-align: center;
+}
+
+.jtw-toggle-row.jtw-metric-group-header .jtw-toggle-label {
+    text-align: left;
+    font-weight: bold;
+}
+.jtw-header-result {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--jtw-primary-blue);
+    margin-left: auto;
+    padding-left: 20px;
+}
+
+.jtw-fcfe-total-result {
+    text-align: center;
+}
+
+.jtw-toggle-row.jtw-metric-group-header .jtw-toggle-label {
+    text-align: left;
+    font-weight: bold;
+}
+
+.jtw-dcf-result-final-cell {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.jtw-yearly-input-row td {
+    background-color: #f8f9fa;
+}
+body.dark-mode .jtw-yearly-input-row td {
+    background-color: #223049 !important;
+}
+/* --- Disabled Main Input Styling --- */
+.jtw-assumption-input.disabled-by-toggle {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+body.dark-mode .jtw-assumption-input.disabled-by-toggle {
+    background-color: #2a3b5c !important;
+    opacity: 0.5;
+}
+
+.jtw-toggle-label .jtw-chevron {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    margin-left: 5px;
+}
+.jtw-toggle-row.active .jtw-toggle-label .jtw-chevron {
+    transform: rotate(180deg);
+}
+/* --- Indent Yearly Accordion Rows --- */
+.jtw-yearly-input-row td:first-child {
+    padding-left: 35px !important;
+}
+
+/* Styles for new case tables */
+.jtw-case-table {
+    width: 100%;
+    margin-bottom: 25px;
+}
+.jtw-case-table th, .jtw-case-table td {
+    text-align: center;
+}
+.jtw-case-table td:first-child {
+    text-align: left; /* Align all metric labels to the left */
+}
+
+
+/* FCFE Component Styling */
+.jtw-fcfe-component-row td {
+    background-color: #f0f8ff; /* A light blue to distinguish them */
+}
+.jtw-fcfe-component-row td:first-child {
+    padding-left: 35px !important;
+    font-style: italic;
+}
+
+/* --- In-Table Animated Bar --- */
+.jtw-terminal-value-row td:first-child {
+    vertical-align: middle;
+}
+.jtw-terminal-value-cell {
+    padding: 0 !important;
+    height: 60px; /* Explicit height for the cell */
+}
+
+.jtw-in-table-bar-container {
+    position: relative;
+    width: 100%;
+    height: 100%; /* Fill the cell height */
+    overflow: hidden;
+}
+
+.jtw-in-table-zone-bar {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+.jtw-in-table-zone {
+    height: 100%;
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.jtw-in-table-zone.undervalued { background-color: rgba(39, 174, 96, 0.7); }
+.jtw-in-table-zone.about-right { background-color: rgba(243, 156, 18, 0.7); }
+.jtw-in-table-zone.overvalued {
+    flex-grow: 1;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(192, 57, 43, 0.7),
+        rgba(192, 57, 43, 0.7) 10px,
+        rgba(231, 76, 60, 0.7) 10px,
+        rgba(231, 76, 60, 0.7) 20px
+    );
+}
+
+
+.jtw-in-table-bar-wrapper {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    z-index: 2;
+}
+
+.jtw-fair-value-bar-wrapper {
+    top: 0;
+}
+.jtw-current-price-bar-wrapper {
+    bottom: 0;
+}
+
+.jtw-in-table-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%; /* Animated by JS */
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.jtw-fair-value-bar {
+    background-color: var(--jtw-primary-blue);
+}
+.jtw-current-price-bar {
+    background-color: var(--jtw-chart-color-1); /* Yellow for current price */
+}
+
+
+.jtw-in-table-bar-label {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    z-index: 3;
+    font-size: 0.8em;
+    white-space: nowrap;
+}
+.jtw-fair-value-label {
+    color: #fff;
+}
+.jtw-current-price-label {
+    color: var(--jtw-text-dark);
+}
+
+.disabled-row input {
+    cursor: not-allowed;
+    background-color: #e9ecef !important;
+}
+
+.jtw-metric-group-header td {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    padding-left: 15px !important;
+}
+
+.jtw-metric-group-header .jtw-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.jtw-metric-group-header .jtw-header-result {
+    font-weight: normal;
+    font-size: 0.9em;
+    color: var(--jtw-text-medium);
+}
+
+.jtw-toggle-label span {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.jtw-metric-group-header.jtw-result-header-row {
+    background-color: #f0f3f5;
+}
+
+.jtw-metric-group-header.jtw-result-header-row > td:first-child,
+.jtw-metric-group-header.jtw-result-header-row > td {
+    font-weight: bold;
+}
+
+.jtw-header-result {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--jtw-primary-blue);
+    margin-left: auto;
+    padding-left: 20px;
+}
+
+.jtw-fcfe-total-result {
+    text-align: center;
+}
+
+.jtw-toggle-row.jtw-metric-group-header .jtw-toggle-label {
+    text-align: left;
+    font-weight: bold;
+}
+
+.jtw-dcf-result-final-cell {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--jtw-primary-blue);
+}
+
+/* Hide DCF component rows while allowing calculations to still work */
+.jtw-dcf-component-row {
+    display: none !important;
+}
+
+.jtw-case-header-cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.jtw-view-assumptions-btn {
+    background-color: transparent;
+    border: 1px solid var(--jtw-primary-blue);
+    color: var(--jtw-primary-blue);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 0.85em;
+}
+
+.jtw-view-assumptions-btn:hover {
+    background-color: var(--jtw-primary-blue);
+    color: white;
 }
