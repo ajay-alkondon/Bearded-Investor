@@ -280,6 +280,47 @@ function initializeFairValueAnalysisSection($container) {
         return num;
     }
 
+function updateInTableValuationGraphic($table, fairValue, currentPrice) {
+    const $barContainer = $table.find('.jtw-in-table-bar-container');
+    const $errorMessage = $table.find('.jtw-dcf-error-message');
+
+    if (typeof fairValue !== 'number' || fairValue <= 0) {
+        $barContainer.hide();
+        $errorMessage.show();
+        return;
+    }
+
+    $barContainer.show();
+    $errorMessage.hide();
+
+    const rangeMax = Math.max(currentPrice, fairValue) * 1.5;
+    if (rangeMax <= 0) return;
+
+    // Calculate widths for zones and bars
+    const undervaluedBoundary = fairValue * 0.8;
+    const overvaluedBoundary = fairValue * 1.2;
+    
+    const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
+    const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
+    
+    const fairValueWidthPct = (fairValue / rangeMax) * 100;
+    const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
+
+    // Update labels
+    $table.find('.jtw-fair-value-label').text('Fair Value: $' + fairValue.toFixed(2));
+    $table.find('.jtw-current-price-label').text('Current Price: $' + currentPrice.toFixed(2));
+
+    // Animate the widths
+    $table.find('.jtw-in-table-zone.undervalued').css('width', undervaluedWidthPct + '%');
+    $table.find('.jtw-in-table-zone.about-right').css('width', aboutRightWidthPct + '%');
+    
+    setTimeout(() => {
+        $table.find('.jtw-fair-value-bar').css('width', fairValueWidthPct + '%');
+        $table.find('.jtw-current-price-bar').css('width', currentPriceWidthPct + '%');
+    }, 100); // Small delay to ensure smooth transition
+}
+
+
 const recalculateValuation = debounce(function() {
         if (!componentRatios || $.isEmptyObject(componentRatios)) {
             console.error('Component ratios not found or are empty on the page.');
@@ -306,7 +347,7 @@ const recalculateValuation = debounce(function() {
 
             if (!isNaN(currentYearEps) && !isNaN(currentYearPe)) {
                 const currentYearValuation = currentYearEps * currentYearPe;
-                $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + currentYearValuation.toFixed(1));
+                $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + currentYearValuation.toFixed(2));
             }
 
             // Prepare revenue growth rates for the AJAX call
@@ -344,12 +385,12 @@ const recalculateValuation = debounce(function() {
                 $table.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
 
                 const eps = Number(sharesOutstanding) > 0 ? projectedNetIncome / Number(sharesOutstanding) : 0;
-                $table.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(1));
+                $table.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(2));
                 
                 if (peCell.length) {
                     const peRatio = parseFloat(peCell.val()) || 0;
                     const sharePrice = eps * peRatio;
-                    $table.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(1));
+                    $table.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
                 }
 
                 const depreciationInput = $table.find('.jtw-fcfe-component-input[data-component="depreciation"][data-year="' + i + '"]');
@@ -397,9 +438,10 @@ const recalculateValuation = debounce(function() {
                         const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
                         const fair_value = data[caseType].fair_value;
                         
-                        $table.find('.jtw-dcf-result-final-cell').text('$' + fair_value.toFixed(1));
+                        // Call the new function to handle the bar graphic
+                        updateInTableValuationGraphic($table, fair_value, currentPrice);
 
-                        // **FIX**: Update the modal content with the new calculation breakdown.
+                        // Update the modal content with the new calculation breakdown.
                         if (data[caseType].modal_html) {
                             const modal_id = '#jtw-assumptions-modal-' + caseType;
                             const $modalContent = $(modal_id).find('.jtw-modal-content');

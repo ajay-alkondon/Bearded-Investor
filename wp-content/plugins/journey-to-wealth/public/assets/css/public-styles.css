@@ -1273,6 +1273,7 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
 .jtw-terminal-value-cell {
     padding: 0 !important;
     height: 60px; /* Explicit height for the cell */
+    position: relative;
 }
 
 .jtw-in-table-bar-container {
@@ -1295,19 +1296,18 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
     height: 100%;
     transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
-.jtw-in-table-zone.undervalued { background-color: rgba(39, 174, 96, 0.7); }
-.jtw-in-table-zone.about-right { background-color: rgba(243, 156, 18, 0.7); }
+.jtw-in-table-zone.undervalued { background-color: rgba(39, 174, 96, 0.15); }
+.jtw-in-table-zone.about-right { background-color: rgba(243, 156, 18, 0.15); }
 .jtw-in-table-zone.overvalued {
     flex-grow: 1;
     background: repeating-linear-gradient(
         45deg,
-        rgba(192, 57, 43, 0.7),
-        rgba(192, 57, 43, 0.7) 10px,
-        rgba(231, 76, 60, 0.7) 10px,
-        rgba(231, 76, 60, 0.7) 20px
+        rgba(192, 57, 43, 0.15),
+        rgba(192, 57, 43, 0.15) 10px,
+        rgba(231, 76, 60, 0.15) 10px,
+        rgba(231, 76, 60, 0.15) 20px
     );
 }
-
 
 .jtw-in-table-bar-wrapper {
     position: absolute;
@@ -1339,7 +1339,6 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
     background-color: var(--jtw-chart-color-1); /* Yellow for current price */
 }
 
-
 .jtw-in-table-bar-label {
     position: absolute;
     left: 10px;
@@ -1347,14 +1346,29 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
     transform: translateY(-50%);
     font-weight: bold;
     z-index: 3;
-    font-size: 0.8em;
+    font-size: 0.9em;
     white-space: nowrap;
 }
 .jtw-fair-value-label {
-    color: #fff;
+    color: var(--jtw-text-dark) !important;
 }
 .jtw-current-price-label {
-    color: var(--jtw-text-dark);
+    color: var(--jtw-text-dark) !important;
+}
+
+/* **FIX**: Add highly specific rule to override dark mode styles */
+body.dark-mode .jtw-fair-value-label,
+body.dark-mode .jtw-current-price-label {
+    color: var(--jtw-text-dark) !important;
+}
+
+.jtw-dcf-error-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-weight: bold;
+    color: var(--jtw-red-negative);
 }
 
 .disabled-row input {
@@ -1446,4 +1460,103 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
 .jtw-view-assumptions-btn:hover {
     background-color: var(--jtw-primary-blue);
     color: white;
+}
+
+/* --- In-Table Animated Bar --- */
+.jtw-terminal-value-row td:first-child {
+    vertical-align: middle;
+}
+.jtw-terminal-value-cell {
+    padding: 0 !important;
+    height: 60px; /* Explicit height for the cell */
+    position: relative;
+}
+
+.jtw-in-table-bar-container {
+    position: relative;
+    width: 100%;
+    height: 100%; /* Fill the cell height */
+    overflow: hidden;
+}
+
+.jtw-in-table-zone-bar {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+.jtw-in-table-zone {
+    height: 100%;
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.jtw-in-table-zone.undervalued { background-color: rgba(39, 174, 96, 0.15); }
+.jtw-in-table-zone.about-right { background-color: rgba(243, 156, 18, 0.15); }
+.jtw-in-table-zone.overvalued {
+    flex-grow: 1;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(192, 57, 43, 0.15),
+        rgba(192, 57, 43, 0.15) 10px,
+        rgba(231, 76, 60, 0.15) 10px,
+        rgba(231, 76, 60, 0.15) 20px
+    );
+}
+
+.jtw-in-table-bar-wrapper {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    z-index: 2;
+}
+
+.jtw-fair-value-bar-wrapper {
+    top: 0;
+}
+.jtw-current-price-bar-wrapper {
+    bottom: 0;
+}
+
+.jtw-in-table-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%; /* Animated by JS */
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.jtw-fair-value-bar {
+    background-color: var(--jtw-primary-blue);
+}
+.jtw-current-price-bar {
+    background-color: var(--jtw-chart-color-1); /* Yellow for current price */
+}
+
+.jtw-in-table-bar-label {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    z-index: 3;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+.jtw-fair-value-label {
+    color: #fff;
+}
+.jtw-current-price-label {
+    color: var(--jtw-text-dark);
+}
+
+.jtw-dcf-error-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-weight: bold;
+    color: var(--jtw-red-negative);
 }

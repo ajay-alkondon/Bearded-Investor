@@ -1444,11 +1444,6 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             $unit = '(Thousands)';
             $divisor = 1.0e+3;
         }
-
-        // Set fixed default growth rates
-        $bear_growth = 20.0;
-        $base_growth = 25.0;
-        $bull_growth = 30.0;
         
         $fcfe_label = 'Free Cash Flow to Equity ' . $unit;
 
@@ -1467,10 +1462,12 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             $last_fiscal_year_revenue = (float)$income_statement['annualReports'][0]['totalRevenue'];
         }
         
-        $current_year_revenue_growth = null;
+        $current_year_revenue_growth = 0;
         if ($last_fiscal_year_revenue && $analyst_revenue_current_year) {
             $current_year_revenue_growth = (($analyst_revenue_current_year / $last_fiscal_year_revenue) - 1) * 100;
         }
+		$current_year_revenue_growth = is_numeric($current_year_revenue_growth) ? $current_year_revenue_growth : 0;
+
 
         $net_income_to_revenue_ratio = $component_ratios['net_income_of_revenue'] ?? 0;
         $current_year_net_income = $analyst_revenue_current_year * $net_income_to_revenue_ratio;
@@ -1481,7 +1478,6 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
 
         foreach (['bear', 'base', 'bull'] as $case) {
             $case_title = ucfirst($case) . ' Case';
-            $growth_rate = ${$case . '_growth'} / 100;
             $modal_id = 'jtw-assumptions-modal-' . $case;
 
             $output .= '<table class="jtw-assumptions-table jtw-case-table" data-case="' . $case . '">';
@@ -1501,7 +1497,13 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             $output .= '<tr class="jtw-project-5-year"><td class="jtw-indented-metric">Revenue Growth</td>';
             $output .= '<td>' . (is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-') . '</td>';
             for ($i = 1; $i < 5; $i++) {
-                $output .= '<td><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="' . $i . '" value="' . esc_attr(number_format($growth_rate * 100, 1)) . '"></td>';
+				$default_growth = $current_year_revenue_growth;
+				if ($case === 'bear') {
+					$default_growth -= $i * 1.0;
+				} elseif ($case === 'bull') {
+					$default_growth += $i * 1.0;
+				}
+                $output .= '<td><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="' . $i . '" value="' . esc_attr(number_format($default_growth, 1)) . '"></td>';
             }
             $output .= '</tr>';
             // Added jtw-project-5-year class and restored full loop
@@ -1548,9 +1550,16 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             $output .= '</tr>';
 
             // --- Discounted Cash Flow Valuation Group ---
-            $output .= '<tr class="jtw-metric-group-header jtw-result-header-row">';
+            $output .= '<tr class="jtw-metric-group-header jtw-result-header-row jtw-terminal-value-row">';
             $output .= '<td>Discounted Cash Flow Valuation</td>';
-            $output .= '<td class="jtw-dcf-result-final-cell" colspan="5">-</td>';
+            $output .= '<td class="jtw-dcf-result-final-cell jtw-terminal-value-cell" colspan="5">';
+            $output .= '<div class="jtw-in-table-bar-container">';
+            $output .= '<div class="jtw-in-table-zone-bar"><div class="jtw-in-table-zone undervalued"></div><div class="jtw-in-table-zone about-right"></div><div class="jtw-in-table-zone overvalued"></div></div>';
+            $output .= '<div class="jtw-in-table-bar-wrapper jtw-fair-value-bar-wrapper"><div class="jtw-in-table-bar jtw-fair-value-bar"><span class="jtw-in-table-bar-label jtw-fair-value-label">Fair Value: $-</span></div></div>';
+            $output .= '<div class="jtw-in-table-bar-wrapper jtw-current-price-bar-wrapper"><div class="jtw-in-table-bar jtw-current-price-bar"><span class="jtw-in-table-bar-label jtw-current-price-label">Current Price: $-</span></div></div>';
+            $output .= '</div>';
+            $output .= '<span class="jtw-dcf-error-message" style="display:none;">A DCF cannot be run.</span>';
+            $output .= '</td>';
             $output .= '</tr>';
 
             // --- FCFE Component Rows (now visible by default) ---
@@ -1568,6 +1577,14 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 $output .= '<td class="jtw-indented-metric">' . esc_html($component['label']) . '</td>';
                 $output .= '<td>-</td>';
                 for ($i = 1; $i < 5; $i++) {
+					$growth_rate = $current_year_revenue_growth;
+					if ($case === 'bear') {
+						$growth_rate -= $i * 1.0;
+					} elseif ($case === 'bull') {
+						$growth_rate += $i * 1.0;
+					}
+					$growth_rate /= 100;
+					
                     if ($is_editable) {
                         $revenue_for_calc = $analyst_revenue_current_year * pow(1 + $growth_rate, $i);
                         $default_value = 0;
