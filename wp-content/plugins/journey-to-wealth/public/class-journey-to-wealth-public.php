@@ -657,70 +657,87 @@ private function calculate_growth_metrics($company_data, $beta_details) {
     return $growth;
 }
 
-   private function get_valuation_results($company_data, $latest_price, $projection_years = 10) {
-        $overview = $company_data['overview']; $income_statement = $company_data['income_statement'];
-        $balance_sheet = $company_data['balance_sheet']; $cash_flow = $company_data['cash_flow'];
-        $earnings = $company_data['earnings']; $treasury_yield = $company_data['treasury_yield'];
-        $daily_data = $company_data['daily_data'];
-        $earnings_estimates = $company_data['earnings_estimates'];
-        $valuation_data = [];
-        $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
-        $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
-        
-        if (!is_wp_error($balance_sheet) && isset($balance_sheet['annualReports'][0]['commonStockSharesOutstanding'])) {
-            $authoritative_shares = (float)$balance_sheet['annualReports'][0]['commonStockSharesOutstanding'];
-            if ($authoritative_shares > 0) { $overview['SharesOutstanding'] = $authoritative_shares; }
-        }
-        $beta_details = $this->calculate_levered_beta($overview['Symbol'], $balance_sheet, $overview['MarketCapitalization'], $tax_rate_decimal);
-        $levered_beta = $beta_details['levered_beta'];
-        
-        $overrides = get_option('jtw_company_type_overrides', []);
-        $ticker_override = $overrides[$overview['Symbol']] ?? 'auto';
+private function get_valuation_results($company_data, $latest_price, $projection_years = 10) {
+    $overview = $company_data['overview']; $income_statement = $company_data['income_statement'];
+    $balance_sheet = $company_data['balance_sheet']; $cash_flow = $company_data['cash_flow'];
+    $earnings = $company_data['earnings']; $treasury_yield = $company_data['treasury_yield'];
+    $daily_data = $company_data['daily_data'];
+    $earnings_estimates = $company_data['earnings_estimates'];
+    $valuation_data = [];
+    $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
+    $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
+    
+    if (!is_wp_error($balance_sheet) && isset($balance_sheet['annualReports'][0]['commonStockSharesOutstanding'])) {
+        $authoritative_shares = (float)$balance_sheet['annualReports'][0]['commonStockSharesOutstanding'];
+        if ($authoritative_shares > 0) { $overview['SharesOutstanding'] = $authoritative_shares; }
+    }
+    $beta_details = $this->calculate_levered_beta($overview['Symbol'], $balance_sheet, $overview['MarketCapitalization'], $tax_rate_decimal);
+    $levered_beta = $beta_details['levered_beta'];
+    
+    // --- Corrected Model Selection Logic ---
+    $overrides = get_option('jtw_company_type_overrides', []);
+    $ticker_override = $overrides[$overview['Symbol']] ?? 'auto';
 
-        $is_reit = false;
-        $is_financial = false;
+    $is_reit = false;
+    $is_financial = false;
 
-        if ($ticker_override === 'reit') {
-            $is_reit = true;
-        } elseif ($ticker_override === 'financial') {
-            $is_financial = true;
-        } else {
-            $industry_upper = strtoupper($overview['Industry']);
-            $sector_upper = strtoupper($overview['Sector']);
-            $is_reit = strpos($industry_upper, 'REIT') !== false;
+    // 1. Prioritize manual override
+    if ($ticker_override === 'reit') {
+        $is_reit = true;
+    } elseif ($ticker_override === 'financial') {
+        $is_financial = true;
+    } else {
+        // 2. Fallback to automatic detection ONLY if no override is set
+        $industry_upper = strtoupper($overview['Industry']);
+        $sector_upper = strtoupper($overview['Sector']);
+        
+        // Use more specific REIT check first
+        $is_reit = strpos($industry_upper, 'REIT') !== false;
+
+        // Only check for financial if it's not already a REIT
+        if (!$is_reit) {
             $is_bank = strpos($industry_upper, 'BANK') !== false;
             $is_insurance = strpos($industry_upper, 'INSURANCE') !== false;
             $is_financial_services = strpos($sector_upper, 'FINANCIAL SERVICES') !== false;
             $is_financial = $is_bank || $is_insurance || $is_financial_services;
         }
-
-        if ($is_reit) {
-            $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $levered_beta);
-            $result = $model->calculate($overview, $income_statement, $cash_flow, $treasury_yield, $latest_price, $beta_details);
-            if (!is_wp_error($result)) { $valuation_data['AFFO Model'] = $result; }
-        } elseif ($is_financial) {
-            $model = new Journey_To_Wealth_Excess_Return_Model($erp_decimal, $levered_beta);
-            $result = $model->calculate($overview, $income_statement, $balance_sheet, $treasury_yield, $latest_price, $beta_details);
-            if (!is_wp_error($result)) { $valuation_data['Excess Return Model'] = $result; }
-        } else {
-            $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $levered_beta);
-            $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
-            if ($unlevered_beta < 0.95) { $base_growth = 10.0; } 
-            elseif ($unlevered_beta >= 0.95 && $unlevered_beta <= 1.1) { $base_growth = 20.0; } 
-            elseif ($unlevered_beta > 1.1 && $unlevered_beta <= 1.2) { $base_growth = 25.0; } 
-            else { $base_growth = 30.0; }
-            $custom_assumptions = ['initial_growth_rate' => $base_growth / 100];
-            $dcf_result = $dcf_model->calculate($overview, $income_statement, $balance_sheet, $cash_flow, $treasury_yield, $earnings_estimates, $latest_price, $beta_details, $custom_assumptions, $projection_years);
-            $valuation_data['DCF Model'] = $dcf_result;
-        }
-    
-        if (empty($valuation_data) && isset($overview['DividendPerShare']) && (float)$overview['DividendPerShare'] > 0) {
-            $ddm_model = new Journey_To_Wealth_DDM_Model($erp_decimal, $levered_beta);
-            $ddm_result = $ddm_model->calculate($overview, $treasury_yield, $latest_price, $daily_data, $beta_details);
-            if (!is_wp_error($ddm_result)) { $valuation_data['Dividend Discount Model'] = $ddm_result; }
-        }
-        return $valuation_data;
     }
+    // --- End of Corrected Logic ---
+
+    if ($is_reit) {
+        $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $levered_beta);
+        $result = $model->calculate($overview, $income_statement, $cash_flow, $treasury_yield, $latest_price, $beta_details);
+        if (!is_wp_error($result)) { $valuation_data['AFFO Model'] = $result; }
+    } elseif ($is_financial) {
+        $model = new Journey_To_Wealth_Excess_Return_Model($erp_decimal, $levered_beta);
+        $result = $model->calculate($overview, $income_statement, $balance_sheet, $treasury_yield, $latest_price, $beta_details);
+        if (!is_wp_error($result)) { $valuation_data['Excess Return Model'] = $result; }
+    } else {
+        $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $levered_beta);
+
+        $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
+        if ($unlevered_beta < 0.95) { $base_growth = 10.0; } 
+        elseif ($unlevered_beta >= 0.95 && $unlevered_beta <= 1.1) { $base_growth = 20.0; } 
+        elseif ($unlevered_beta > 1.1 && $unlevered_beta <= 1.2) { $base_growth = 25.0; } 
+        else { $base_growth = 30.0; }
+
+        $custom_assumptions = ['initial_growth_rate' => $base_growth / 100];
+        
+        $dcf_result = $dcf_model->calculate(
+            $overview, $income_statement, $balance_sheet, $cash_flow, 
+            $treasury_yield, $earnings_estimates, $latest_price, 
+            $beta_details, $custom_assumptions, $projection_years
+        );
+        $valuation_data['DCF Model'] = $dcf_result;
+    }
+
+    if (empty($valuation_data) && isset($overview['DividendPerShare']) && (float)$overview['DividendPerShare'] > 0) {
+        $ddm_model = new Journey_To_Wealth_DDM_Model($erp_decimal, $levered_beta);
+        $ddm_result = $ddm_model->calculate($overview, $treasury_yield, $latest_price, $daily_data, $beta_details);
+        if (!is_wp_error($ddm_result)) { $valuation_data['Dividend Discount Model'] = $ddm_result; }
+    }
+    return $valuation_data;
+}
     
     private function store_and_map_discovered_company($ticker, $industry_name, $sector_name) {
         if (empty($ticker) || empty($industry_name)) { return; }
@@ -1173,7 +1190,7 @@ private function calculate_growth_metrics($company_data, $beta_details) {
         return $output;
     }
 
-private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
+    private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
     $output = '<div id="section-key-metrics-ratios-content" class="jtw-content-section">';
     
     // Section Header with Toggle
@@ -1333,80 +1350,90 @@ private function build_key_metrics_ratios_section_html($ticker, $primary_metrics
         return $output;
     }
 
-    public function ajax_recalculate_valuation() {
-        check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
-        $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
-        $assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
-        $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 10;
-        if (empty($ticker)) { wp_send_json_error(['message' => 'Missing Ticker.']); return; }
+public function ajax_recalculate_valuation() {
+    check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
+    $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
+    $assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
+    $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 10;
+    if (empty($ticker)) { wp_send_json_error(['message' => 'Missing Ticker.']); return; }
 
-        $company_data = $this->get_and_prepare_company_data($ticker);
-        if (is_wp_error($company_data)) { wp_send_json_error(['message' => $company_data->get_error_message()]); return; }
+    $company_data = $this->get_and_prepare_company_data($ticker);
+    if (is_wp_error($company_data)) { wp_send_json_error(['message' => $company_data->get_error_message()]); return; }
 
-        $balance_sheet = $company_data['balance_sheet'];
-        if (!is_wp_error($balance_sheet) && isset($balance_sheet['annualReports'][0]['commonStockSharesOutstanding'])) {
-            $authoritative_shares = (float)$balance_sheet['annualReports'][0]['commonStockSharesOutstanding'];
-            if ($authoritative_shares > 0) { $company_data['overview']['SharesOutstanding'] = $authoritative_shares; }
-        }
+    $balance_sheet = $company_data['balance_sheet'];
+    if (!is_wp_error($balance_sheet) && isset($balance_sheet['annualReports'][0]['commonStockSharesOutstanding'])) {
+        $authoritative_shares = (float)$balance_sheet['annualReports'][0]['commonStockSharesOutstanding'];
+        if ($authoritative_shares > 0) { $company_data['overview']['SharesOutstanding'] = $authoritative_shares; }
+    }
 
-        $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
-        $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
-        $beta_details = $this->calculate_levered_beta($ticker, $company_data['balance_sheet'], $company_data['overview']['MarketCapitalization'], $tax_rate_decimal);
+    $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
+    $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
+    $beta_details = $this->calculate_levered_beta($ticker, $company_data['balance_sheet'], $company_data['overview']['MarketCapitalization'], $tax_rate_decimal);
+    
+    $results = [];
+    $overview = $company_data['overview'];
+    $latest_price = (float)($company_data['quote']['05. price'] ?? 0);
+
+    // --- Corrected Model Selection Logic ---
+    $overrides = get_option('jtw_company_type_overrides', []);
+    $ticker_override = $overrides[$ticker] ?? 'auto';
+    $is_reit = false;
+    $is_financial = false;
+
+    // 1. Prioritize manual override
+    if ($ticker_override === 'reit') {
+        $is_reit = true;
+    } elseif ($ticker_override === 'financial') {
+        $is_financial = true;
+    } else {
+        // 2. Fallback to automatic detection ONLY if no override is set
+        $industry_upper = strtoupper($overview['Industry'] ?? '');
+        $sector_upper = strtoupper($overview['Sector'] ?? '');
         
-        $results = [];
-        $overview = $company_data['overview'];
-        $latest_price = (float)($company_data['quote']['05. price'] ?? 0);
+        // Use more specific REIT check first
+        $is_reit = strpos($industry_upper, 'REIT') !== false;
 
-        $overrides = get_option('jtw_company_type_overrides', []);
-        $ticker_override = $overrides[$ticker] ?? 'auto';
-        $is_reit = false;
-        $is_financial = false;
-
-        if ($ticker_override === 'reit') {
-            $is_reit = true;
-        } elseif ($ticker_override === 'financial') {
-            $is_financial = true;
-        } else {
-            $industry_upper = strtoupper($overview['Industry'] ?? '');
-            $sector_upper = strtoupper($overview['Sector'] ?? '');
-            $is_reit = strpos($industry_upper, 'REIT') !== false;
+        // Only check for financial if it's not already a REIT
+        if (!$is_reit) {
             $is_financial = strpos($industry_upper, 'BANK') !== false || strpos($industry_upper, 'INSURANCE') !== false || strpos($sector_upper, 'FINANCIAL SERVICES') !== false;
         }
+    }
+    // --- End of Corrected Logic ---
 
-        if ($is_reit) {
-            $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $beta_details['levered_beta']);
-            $result = $model->calculate($overview, $company_data['income_statement'], $company_data['cash_flow'], $company_data['treasury_yield'], $latest_price, $beta_details);
-            $base_fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
-            $modal_html = !is_wp_error($result) ? $this->build_affo_modal_content($result, $overview) : '<p>Error generating modal content.</p>';
-            $results['base'] = ['fair_value' => $base_fair_value, 'modal_html' => $modal_html];
-            $results['bear'] = ['fair_value' => $base_fair_value * 0.8, 'modal_html' => $modal_html];
-            $results['bull'] = ['fair_value' => $base_fair_value * 1.2, 'modal_html' => $modal_html];
-        } elseif ($is_financial) {
-            $model = new Journey_To_Wealth_Excess_Return_Model($erp_decimal, $beta_details['levered_beta']);
-            $result = $model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['treasury_yield'], $latest_price, $beta_details);
-            $base_fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
-            $modal_html = !is_wp_error($result) ? $this->build_excess_return_modal_content($result, $overview) : '<p>Error generating modal content.</p>';
-            $results['base'] = ['fair_value' => $base_fair_value, 'modal_html' => $modal_html];
-            $results['bear'] = ['fair_value' => $base_fair_value * 0.8, 'modal_html' => $modal_html];
-            $results['bull'] = ['fair_value' => $base_fair_value * 1.2, 'modal_html' => $modal_html];
-        } else {
-            $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $beta_details['levered_beta']);
-            foreach (['bear', 'base', 'bull'] as $case) {
-                if (isset($assumptions[$case])) {
-                    $case_assumptions = $assumptions[$case];
-                    $default_growth = ($case === 'bear') ? 20.0 : (($case === 'base') ? 25.0 : 30.0);
-                    if (isset($case_assumptions['yearlyRevGrowth'][1]) && is_numeric($case_assumptions['yearlyRevGrowth'][1])) {
-                         $case_assumptions['initial_growth_rate'] = (float)$case_assumptions['yearlyRevGrowth'][1] / 100;
-                    } else {
-                         $case_assumptions['initial_growth_rate'] = $default_growth / 100;
-                    }
-                    $result = $dcf_model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['cash_flow'], $company_data['treasury_yield'], $company_data['earnings_estimates'], $latest_price, $beta_details, $case_assumptions, $timeframe);
-                    $results[$case] = [ 'fair_value' => !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0, 'modal_html' => !is_wp_error($result) ? $this->build_dcf_modal_content($result, $overview, $company_data['income_statement'], $company_data['cash_flow']) : '<p>Error generating modal content.</p>', ];
+    if ($is_reit) {
+        $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $beta_details['levered_beta']);
+        $result = $model->calculate($overview, $company_data['income_statement'], $company_data['cash_flow'], $company_data['treasury_yield'], $latest_price, $beta_details);
+        $base_fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
+        $modal_html = !is_wp_error($result) ? $this->build_affo_modal_content($result, $overview) : '<p>Error generating modal content.</p>';
+        $results['base'] = ['fair_value' => $base_fair_value, 'modal_html' => $modal_html];
+        $results['bear'] = ['fair_value' => $base_fair_value * 0.8, 'modal_html' => $modal_html];
+        $results['bull'] = ['fair_value' => $base_fair_value * 1.2, 'modal_html' => $modal_html];
+    } elseif ($is_financial) {
+        $model = new Journey_To_Wealth_Excess_Return_Model($erp_decimal, $beta_details['levered_beta']);
+        $result = $model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['treasury_yield'], $latest_price, $beta_details);
+        $base_fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
+        $modal_html = !is_wp_error($result) ? $this->build_excess_return_modal_content($result, $overview) : '<p>Error generating modal content.</p>';
+        $results['base'] = ['fair_value' => $base_fair_value, 'modal_html' => $modal_html];
+        $results['bear'] = ['fair_value' => $base_fair_value * 0.8, 'modal_html' => $modal_html];
+        $results['bull'] = ['fair_value' => $base_fair_value * 1.2, 'modal_html' => $modal_html];
+    } else {
+        $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $beta_details['levered_beta']);
+        foreach (['bear', 'base', 'bull'] as $case) {
+            if (isset($assumptions[$case])) {
+                $case_assumptions = $assumptions[$case];
+                $default_growth = ($case === 'bear') ? 20.0 : (($case === 'base') ? 25.0 : 30.0);
+                if (isset($case_assumptions['yearlyRevGrowth'][1]) && is_numeric($case_assumptions['yearlyRevGrowth'][1])) {
+                     $case_assumptions['initial_growth_rate'] = (float)$case_assumptions['yearlyRevGrowth'][1] / 100;
+                } else {
+                     $case_assumptions['initial_growth_rate'] = $default_growth / 100;
                 }
+                $result = $dcf_model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['cash_flow'], $company_data['treasury_yield'], $company_data['earnings_estimates'], $latest_price, $beta_details, $case_assumptions, $timeframe);
+                $results[$case] = [ 'fair_value' => !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0, 'modal_html' => !is_wp_error($result) ? $this->build_dcf_modal_content($result, $overview, $company_data['income_statement'], $company_data['cash_flow']) : '<p>Error generating modal content.</p>', ];
             }
         }
-        wp_send_json_success($results);
     }
+    wp_send_json_success($results);
+}
 
 private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $income_statement, $balance_sheet, $cash_flow, $earnings_estimates, $company_data) {
     // Always run a base DCF model calculation to get the component ratios needed to build the interactive UI.
