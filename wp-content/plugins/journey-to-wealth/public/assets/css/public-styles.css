@@ -963,7 +963,7 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
         max-height: 250px;
     }
     .jtw-header-result-item { gap: 12px; }
-    .jtw-result-name { font-size: 0.9em; }
+    .jtw-result-name { font-size: 0.8em; }
     .jtw-result-meta { font-size: 0.8em; }
     .jtw-sws-chart { padding-left: 0; padding-bottom: 40px; }
     .jtw-sws-label-group { 
@@ -977,15 +977,45 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
         color: var(--jtw-text-dark);
     }
     .jtw-sws-zone-bar-row, .jtw-sws-zone-labels { left: 0; width: 100%; }
-    .jtw-case-label { font-size: 0.9em; }
+    .jtw-case-label { font-size: 0.8em; }
     .jtw-link-cards-grid { grid-template-columns: 1fr; }
     
-    .jtw-assumption-input {
-        padding: 0px !important;
+    /* **FIX**: Force smaller font size on all table elements for mobile */
+    .jtw-metrics-table,
+    .jtw-assumptions-table,
+    .jtw-historical-table,
+    .jtw-modal-table {
+        font-size: 0.8em !important; /* Sets a smaller base font size */
     }
-    .jtw-assumptions-table th, 
-    .jtw-assumptions-table td {
-        padding: 0px !important;
+
+    .jtw-metrics-table th, .jtw-metrics-table td,
+    .jtw-assumptions-table th, .jtw-assumptions-table td,
+    .jtw-historical-table th, .jtw-historical-table td,
+    .jtw-modal-table th, .jtw-modal-table td,
+    .jtw-indented-metric th, .jtw-indented-metric td {
+        font-size: 0.8em !important; /* Ensures cell font size is consistent */
+        padding: 0px !important; /* Reduces padding for more space */
+    }
+
+    /* Target common elements inside tables to ensure they also shrink */
+    .jtw-metrics-table *,
+    .jtw-assumptions-table *,
+    .jtw-historical-table *,
+    .jtw-modal-table * {
+        font-size: inherit !important; /* Forces child elements to inherit the 13px size */
+    }
+
+    .jtw-assumption-input {
+        padding: 2px !important;
+        max-width: 60px; /* Makes input fields smaller on mobile */
+    }
+
+    .jtw-assumptions-table td.jtw-indented-metric {
+        padding-left:5px !important;
+    }
+
+    .jtw-metric-group-header td {
+        padding-left:0px !important;
     }
 }
 
@@ -1220,6 +1250,7 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
 }
 .jtw-case-table th, .jtw-case-table td {
     text-align: center;
+    vertical-align: middle;
 }
 .jtw-case-table td:first-child {
     text-align: left; /* Align all metric labels to the left */
@@ -1334,7 +1365,6 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
 .jtw-metric-group-header td {
     background-color: #f8f9fa;
     font-weight: bold;
-    padding-left: 15px !important;
 }
 
 .jtw-metric-group-header .jtw-result-header {
