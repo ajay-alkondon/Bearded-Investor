@@ -57,6 +57,72 @@
 
             displayCompanies();
 
+            // --- Override Switch Logic ---
+            $('#jtw-company-list').on('change', '.jtw-override-switch', function() {
+                const $this = $(this);
+                const $parentLi = $this.closest('.jtw-company-item');
+                const ticker = $parentLi.data('ticker');
+                const type = $this.data('type');
+                const isChecked = $this.is(':checked');
+
+                const $financialSwitch = $parentLi.find('.jtw-override-switch[data-type="financial"]');
+                const $reitSwitch = $parentLi.find('.jtw-override-switch[data-type="reit"]');
+
+                // Disable the other switch if one is turned on
+                if (isChecked) {
+                    if (type === 'financial') {
+                        $reitSwitch.prop('disabled', true);
+                    } else {
+                        $financialSwitch.prop('disabled', true);
+                    }
+                } else {
+                    // Re-enable both if a switch is turned off
+                    $financialSwitch.prop('disabled', false);
+                    $reitSwitch.prop('disabled', false);
+                }
+
+                let overrideValue = 'none';
+                if ($financialSwitch.is(':checked')) {
+                    overrideValue = 'financial';
+                } else if ($reitSwitch.is(':checked')) {
+                    overrideValue = 'reit';
+                }
+
+                saveCompanyOverride(ticker, overrideValue);
+            });
+
+            function saveCompanyOverride(ticker, overrideType) {
+                clearTimeout(saveTimer);
+                const $statusContainer = $('#jtw-ajax-save-status');
+                const $statusP = $statusContainer.find('p');
+                $statusP.text('Saving override...').removeClass('error');
+                $statusContainer.slideDown();
+
+                $.ajax({
+                    url: jtw_admin_ajax.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'jtw_save_company_override',
+                        nonce: jtw_admin_ajax.override_nonce,
+                        ticker: ticker,
+                        override_type: overrideType
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $statusP.text('Override saved!');
+                        } else {
+                            $statusP.text('Error saving override.').addClass('error');
+                        }
+                        saveTimer = setTimeout(() => $statusContainer.slideUp(), 2000);
+                    },
+                    error: function() {
+                        $statusP.text('Error saving override.').addClass('error');
+                        saveTimer = setTimeout(() => $statusContainer.slideUp(), 2000);
+                    }
+                });
+            }
+
+
             $('#jtw-company-list').on('click', '.jtw-company-item', function() {
                 if ($(this).hasClass('active')) {
                     return;
@@ -73,11 +139,10 @@
                     return;
                 }
 
-                // **FIX**: Enforce a maximum of 2 tags.
                 const assignedCount = $activeRow.find('.jtw-assigned-tag').length;
                 if (assignedCount >= 2 && !$(this).hasClass('active')) {
                     alert('You can only assign a maximum of 2 industries per company.');
-                    return; // Prevent adding more than 2 tags
+                    return; 
                 }
 
                 $(this).toggleClass('active');
@@ -149,11 +214,11 @@
                 const ticker = $activeRow.data('ticker');
 
                 $.ajax({
-                    url: jtw_mapping_ajax.ajax_url,
+                    url: jtw_admin_ajax.ajax_url,
                     type: 'POST',
                     data: {
                         action: 'jtw_save_company_mapping',
-                        nonce: jtw_mapping_ajax.nonce,
+                        nonce: jtw_admin_ajax.mapping_nonce,
                         ticker: ticker,
                         damodaran_industry_ids: damodaranIds
                     },

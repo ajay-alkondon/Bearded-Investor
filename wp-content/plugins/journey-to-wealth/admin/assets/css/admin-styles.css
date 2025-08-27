@@ -210,3 +210,87 @@
 #postbox-container-1 {
     grid-column: 2 / 3;
 }
+
+/* Company Item Layout */
+.jtw-company-item {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.jtw-company-info {
+    flex-grow: 1;
+}
+
+.jtw-assigned-tags {
+    width: 100%;
+    flex-basis: 100%;
+}
+
+/* Override Switches */
+.jtw-company-overrides {
+    display: flex;
+    gap: 15px;
+    padding: 0 10px;
+    align-items: center;
+}
+
+.jtw-override-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.jtw-override-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #50575e;
+}
+
+.jtw-switch {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+}
+.jtw-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.jtw-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 22px;
+}
+.jtw-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .jtw-slider {
+    background-color: #2271b1;
+}
+input:focus + .jtw-slider {
+    box-shadow: 0 0 1px #2271b1;
+}
+input:checked + .jtw-slider:before {
+    transform: translateX(16px);
+}
+input:disabled + .jtw-slider {
+    background-color: #ddd;
+    cursor: not-allowed;
+}

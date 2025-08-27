@@ -12,7 +12,6 @@ class Journey_To_Wealth_Admin {
     private $plugin_settings_page_slug = 'jtw-plugin-settings';
     private $plugin_pages = [];
 
-
     public function __construct( $plugin_name, $version ) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
@@ -22,6 +21,7 @@ class Journey_To_Wealth_Admin {
         add_action( 'admin_init', array( $this, 'register_settings' ) );
         add_action( 'admin_post_jtw_fetch_beta_data', array( $this, 'handle_beta_data_fetch' ) );
         add_action( 'wp_ajax_jtw_save_company_mapping', array( $this, 'ajax_save_company_mapping' ) );
+        add_action( 'wp_ajax_jtw_save_company_override', array( $this, 'ajax_save_company_override' ) );
         add_action( 'admin_post_jtw_reset_database', array( $this, 'handle_database_reset' ) );
     }
 
@@ -38,9 +38,10 @@ class Journey_To_Wealth_Admin {
             return;
         }
         wp_enqueue_script( $this->plugin_name . '-admin', plugin_dir_url( __FILE__ ) . 'assets/js/admin-scripts.js', array( 'jquery' ), $this->version, true );
-        wp_localize_script($this->plugin_name . '-admin', 'jtw_mapping_ajax', [
+        wp_localize_script($this->plugin_name . '-admin', 'jtw_admin_ajax', [
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('jtw_save_company_mapping_nonce')
+            'mapping_nonce' => wp_create_nonce('jtw_save_company_mapping_nonce'),
+            'override_nonce' => wp_create_nonce('jtw_save_company_override_nonce')
         ]);
     }
 
@@ -143,6 +144,32 @@ class Journey_To_Wealth_Admin {
         }
 
         wp_send_json_success(['message' => 'Company mapping saved.']);
+    }
+
+    public function ajax_save_company_override() {
+        check_ajax_referer('jtw_save_company_override_nonce', 'nonce');
+
+        if ( ! isset( $_POST['ticker'], $_POST['override_type'] ) ) {
+            wp_send_json_error(['message' => 'Missing parameters.']);
+        }
+
+        $ticker = sanitize_text_field( $_POST['ticker'] );
+        $override_type = sanitize_text_field( $_POST['override_type'] ); // 'reit', 'financial', or 'none'
+
+        $overrides = get_option('jtw_company_type_overrides', []);
+        if (!is_array($overrides)) {
+            $overrides = [];
+        }
+
+        if ($override_type === 'none') {
+            unset($overrides[$ticker]);
+        } else {
+            $overrides[$ticker] = $override_type;
+        }
+
+        update_option('jtw_company_type_overrides', $overrides);
+
+        wp_send_json_success(['message' => 'Override saved.']);
     }
 
     public function handle_database_reset() {

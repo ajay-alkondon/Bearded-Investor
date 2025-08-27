@@ -78,16 +78,20 @@ if (is_array($discovered_companies)) {
     $discovered_companies = array_reverse($discovered_companies, true);
 }
 
+$overrides = get_option('jtw_company_type_overrides', []);
+if (!is_array($overrides)) {
+    $overrides = [];
+}
+
 ?>
 
 <div class="wrap jtw-mapping-wrap">
     <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-    <p><?php esc_html_e( 'To fine-tune beta calculations, you can map individual companies to specific Damodaran industries. Select a company on the left, then assign one or more industries from the right. Mappings are saved automatically.', 'journey-to-wealth' ); ?></p>
+    <p><?php esc_html_e( 'To fine-tune beta calculations, you can map individual companies to specific Damodaran industries. Use the switches to manually classify a company as a Financial or REIT for valuation purposes.', 'journey-to-wealth' ); ?></p>
 
     <div id="jtw-ajax-save-status" style="display:none;" class="notice notice-success is-dismissible"><p></p></div>
 
     <div id="jtw-mapping-ui-container">
-        <!-- Left Column: Discovered Companies -->
         <div class="jtw-mapping-column" id="jtw-company-column">
             <h3><?php esc_html_e( 'Discovered Companies', 'journey-to-wealth' ); ?></h3>
             
@@ -100,10 +104,29 @@ if (is_array($discovered_companies)) {
                     <?php if ( ! empty( $discovered_companies ) ) : ?>
                         <?php foreach ( $discovered_companies as $ticker => $industry_name ) : 
                             $assigned_damodarans = $mappings_by_ticker[ $ticker ] ?? [];
+                            $override_status = $overrides[ $ticker ] ?? 'none';
                         ?>
                             <li class="jtw-company-item" data-ticker="<?php echo esc_attr($ticker); ?>">
-                                <strong class="jtw-company-name"><?php echo esc_html( $ticker ); ?></strong>
-                                <small class="jtw-company-industry"><?php echo esc_html( $industry_name ); ?></small>
+                                <div class="jtw-company-info">
+                                    <strong class="jtw-company-name"><?php echo esc_html( $ticker ); ?></strong>
+                                    <small class="jtw-company-industry"><?php echo esc_html( $industry_name ); ?></small>
+                                </div>
+                                <div class="jtw-company-overrides">
+                                    <div class="jtw-override-group">
+                                        <label for="is-financial-<?php echo esc_attr($ticker); ?>">Financial</label>
+                                        <label class="jtw-switch">
+                                            <input type="checkbox" class="jtw-override-switch" data-type="financial" id="is-financial-<?php echo esc_attr($ticker); ?>" <?php checked($override_status, 'financial'); ?> <?php disabled($override_status, 'reit'); ?>>
+                                            <span class="jtw-slider round"></span>
+                                        </label>
+                                    </div>
+                                    <div class="jtw-override-group">
+                                        <label for="is-reit-<?php echo esc_attr($ticker); ?>">REIT</label>
+                                        <label class="jtw-switch">
+                                            <input type="checkbox" class="jtw-override-switch" data-type="reit" id="is-reit-<?php echo esc_attr($ticker); ?>" <?php checked($override_status, 'reit'); ?> <?php disabled($override_status, 'financial'); ?>>
+                                            <span class="jtw-slider round"></span>
+                                        </label>
+                                    </div>
+                                </div>
                                 <div class="jtw-assigned-tags">
                                     <?php foreach ($assigned_damodarans as $dam_mapping) : ?>
                                         <span class="jtw-assigned-tag" data-damodaran-id="<?php echo esc_attr($dam_mapping['id']); ?>"><?php echo esc_html($dam_mapping['name']); ?><button type="button" class="jtw-remove-tag">&times;</button></span>
