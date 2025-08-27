@@ -122,7 +122,6 @@
                 });
             }
 
-
             $('#jtw-company-list').on('click', '.jtw-company-item', function() {
                 if ($(this).hasClass('active')) {
                     return;
@@ -142,7 +141,7 @@
                 const assignedCount = $activeRow.find('.jtw-assigned-tag').length;
                 if (assignedCount >= 2 && !$(this).hasClass('active')) {
                     alert('You can only assign a maximum of 2 industries per company.');
-                    return; 
+                    return;
                 }
 
                 $(this).toggleClass('active');
