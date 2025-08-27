@@ -1374,31 +1374,31 @@ public function ajax_recalculate_valuation() {
     $overview = $company_data['overview'];
     $latest_price = (float)($company_data['quote']['05. price'] ?? 0);
 
-    // --- Corrected Model Selection Logic ---
     $overrides = get_option('jtw_company_type_overrides', []);
     $ticker_override = $overrides[$ticker] ?? 'auto';
     $is_reit = false;
     $is_financial = false;
 
-    // 1. Prioritize manual override
     if ($ticker_override === 'reit') {
         $is_reit = true;
     } elseif ($ticker_override === 'financial') {
         $is_financial = true;
     } else {
-        // 2. Fallback to automatic detection ONLY if no override is set
         $industry_upper = strtoupper($overview['Industry'] ?? '');
         $sector_upper = strtoupper($overview['Sector'] ?? '');
-        
-        // Use more specific REIT check first
         $is_reit = strpos($industry_upper, 'REIT') !== false;
-
-        // Only check for financial if it's not already a REIT
         if (!$is_reit) {
             $is_financial = strpos($industry_upper, 'BANK') !== false || strpos($industry_upper, 'INSURANCE') !== false || strpos($sector_upper, 'FINANCIAL SERVICES') !== false;
         }
     }
-    // --- End of Corrected Logic ---
+
+    $valuation_label = 'Discounted Cash Flow Valuation';
+    if ($is_reit) {
+        $valuation_label = 'AFFO Valuation';
+    } elseif ($is_financial) {
+        $valuation_label = 'Excess Return Valuation';
+    }
+    $results['valuation_label'] = $valuation_label;
 
     if ($is_reit) {
         $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $beta_details['levered_beta']);

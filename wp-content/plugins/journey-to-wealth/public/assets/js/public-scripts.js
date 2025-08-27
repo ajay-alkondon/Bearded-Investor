@@ -246,7 +246,6 @@
     }
 
 function initializeFairValueAnalysisSection($container) {
-    // Find the actual content div which holds the data attributes, loaded via AJAX.
     const $contentDiv = $container.find('#section-intrinsic-valuation-content');
     if (!$contentDiv.length) {
         console.error("Intrinsic valuation content div not found.");
@@ -257,80 +256,64 @@ function initializeFairValueAnalysisSection($container) {
     const currentPrice = $contentDiv.data('current-price');
     const sharesOutstanding = parseFloat($contentDiv.data('shares-outstanding'));
 
-
     function formatNumberForDisplay(num, unitLabel = '', decimals = 1) {
         if (typeof num !== 'number' || isNaN(num)) return '-';
-        
         let divisor = 1;
         if (unitLabel.includes('(Billions)')) divisor = 1e9;
         else if (unitLabel.includes('(Millions)')) divisor = 1e6;
         else if (unitLabel.includes('(Thousands)')) divisor = 1e3;
-
         return (num / divisor).toFixed(decimals);
     }
 
     function parseFormattedNumber(str, unitLabel = '') {
         let num = parseFloat(str);
         if (isNaN(num)) return 0;
-        
         if (unitLabel.includes('(Billions)')) return num * 1e9;
         if (unitLabel.includes('(Millions)')) return num * 1e6;
         if (unitLabel.includes('(Thousands)')) return num * 1e3;
-        
         return num;
     }
 
-function updateInTableValuationGraphic($table, fairValue, currentPrice) {
-    const $barContainer = $table.find('.jtw-in-table-bar-container');
-    const $errorMessage = $table.find('.jtw-dcf-error-message');
+    function updateInTableValuationGraphic($table, fairValue, currentPrice) {
+        const $barContainer = $table.find('.jtw-in-table-bar-container');
+        const $errorMessage = $table.find('.jtw-dcf-error-message');
 
-    if (typeof fairValue !== 'number' || fairValue <= 0) {
-        $barContainer.hide();
-        $errorMessage.show();
-        return;
+        if (typeof fairValue !== 'number' || fairValue <= 0) {
+            $barContainer.hide();
+            $errorMessage.show();
+            return;
+        }
+
+        $barContainer.show();
+        $errorMessage.hide();
+
+        const rangeMax = Math.max(currentPrice, fairValue) * 1.5;
+        if (rangeMax <= 0) return;
+
+        const undervaluedBoundary = fairValue * 0.8;
+        const overvaluedBoundary = fairValue * 1.2;
+        
+        const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
+        const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
+        
+        const fairValueWidthPct = (fairValue / rangeMax) * 100;
+        const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
+
+        $table.find('.jtw-fair-value-label').text('Fair Value: $' + fairValue.toFixed(2));
+        $table.find('.jtw-current-price-label').text('Current Price: $' + currentPrice.toFixed(2));
+
+        $table.find('.jtw-in-table-zone.undervalued').css('width', undervaluedWidthPct + '%');
+        $table.find('.jtw-in-table-zone.about-right').css('width', aboutRightWidthPct + '%');
+        
+        setTimeout(() => {
+            $table.find('.jtw-fair-value-bar').css('width', fairValueWidthPct + '%');
+            $table.find('.jtw-current-price-bar').css('width', currentPriceWidthPct + '%');
+        }, 100);
     }
 
-    $barContainer.show();
-    $errorMessage.hide();
-
-    const rangeMax = Math.max(currentPrice, fairValue) * 1.5;
-    if (rangeMax <= 0) return;
-
-    // Calculate widths for zones and bars
-    const undervaluedBoundary = fairValue * 0.8;
-    const overvaluedBoundary = fairValue * 1.2;
-    
-    const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
-    const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
-    
-    const fairValueWidthPct = (fairValue / rangeMax) * 100;
-    const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
-
-    // Update labels
-    $table.find('.jtw-fair-value-label').text('Fair Value: $' + fairValue.toFixed(2));
-    $table.find('.jtw-current-price-label').text('Current Price: $' + currentPrice.toFixed(2));
-
-    // Animate the widths
-    $table.find('.jtw-in-table-zone.undervalued').css('width', undervaluedWidthPct + '%');
-    $table.find('.jtw-in-table-zone.about-right').css('width', aboutRightWidthPct + '%');
-    
-    setTimeout(() => {
-        $table.find('.jtw-fair-value-bar').css('width', fairValueWidthPct + '%');
-        $table.find('.jtw-current-price-bar').css('width', currentPriceWidthPct + '%');
-    }, 100); // Small delay to ensure smooth transition
-}
-
-
-const recalculateValuation = debounce(function() {
-        if (!componentRatios || $.isEmptyObject(componentRatios)) {
-            console.error('Component ratios not found or are empty on the page.');
-            return;
-        }
-
-        if (!sharesOutstanding || sharesOutstanding === 0) {
-            console.error('Shares outstanding not found or is zero.');
-            return;
-        }
+    const recalculateValuation = debounce(function() {
+        if (!componentRatios || $.isEmptyObject(componentRatios)) { return; }
+        if (!sharesOutstanding || sharesOutstanding === 0) { return; }
 
         const assumptions = { bear: {}, base: {}, bull: {} };
         let hasAllInputs = true;
@@ -339,7 +322,6 @@ const recalculateValuation = debounce(function() {
             const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
             const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
             
-            // **NEW**: Calculate and display current year valuation
             const currentYearEpsText = $table.find('.jtw-eps-result[data-year="0"]').text();
             const currentYearPeText = $table.find('.jtw-pe-result[data-year="0"]').text();
             const currentYearEps = parseFloat(currentYearEpsText);
@@ -350,7 +332,6 @@ const recalculateValuation = debounce(function() {
                 $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + currentYearValuation.toFixed(2));
             }
 
-            // Prepare revenue growth rates for the AJAX call
             assumptions[caseType].yearlyRevGrowth = {};
             $table.find('input[data-metric="yearlyRevGrowth"]').each(function() {
                 const $input = $(this);
@@ -358,23 +339,15 @@ const recalculateValuation = debounce(function() {
                 const growthRateValue = parseFloat($input.val());
                 if (!isNaN(growthRateValue)) {
                     assumptions[caseType].yearlyRevGrowth[year] = growthRateValue;
-                } else {
-                    hasAllInputs = false; // An empty input means we can't calculate
-                }
+                } else { hasAllInputs = false; }
             });
 
-            // Perform local UI updates for the 5-year table
             let previousRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="0"]').text(), revenueUnitLabel);
             
-            // Loop only for the years we have inputs for (1 to 4)
             for (let i = 1; i <= 4; i++) {
                 const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
                 const peCell = $table.find('.jtw-pe-input[data-year="' + i + '"]');
-                
-                if (!growthRateInput.length || growthRateInput.val() === '' || (peCell.length && peCell.val() === '')) {
-                    hasAllInputs = false;
-                }
-
+                if (!growthRateInput.length || growthRateInput.val() === '' || (peCell.length && peCell.val() === '')) { hasAllInputs = false; }
                 const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
                 
                 const projectedRevenue = previousRevenue * (1 + growthRate);
@@ -397,16 +370,11 @@ const recalculateValuation = debounce(function() {
                 const capexInput = $table.find('.jtw-fcfe-component-input[data-component="capex"][data-year="' + i + '"]');
                 const nwcChangeInput = $table.find('.jtw-fcfe-component-input[data-component="nwcChange"][data-year="' + i + '"]');
                 const netBorrowingInput = $table.find('.jtw-fcfe-component-input[data-component="netBorrowing"][data-year="' + i + '"]');
-
-                if (!depreciationInput.length || depreciationInput.val() === '' || !capexInput.length || capexInput.val() === '' || !nwcChangeInput.length || nwcChangeInput.val() === '' || !netBorrowingInput.length || netBorrowingInput.val() === '') {
-                    hasAllInputs = false;
-                }
-
+                if (!depreciationInput.length || depreciationInput.val() === '' || !capexInput.length || capexInput.val() === '' || !nwcChangeInput.length || nwcChangeInput.val() === '' || !netBorrowingInput.length || netBorrowingInput.val() === '') { hasAllInputs = false; }
                 const depreciation = parseFormattedNumber(depreciationInput.val(), revenueUnitLabel);
                 const capex = parseFormattedNumber(capexInput.val(), revenueUnitLabel);
                 const nwcChange = parseFormattedNumber(nwcChangeInput.val(), revenueUnitLabel);
                 const netBorrowing = parseFormattedNumber(netBorrowingInput.val(), revenueUnitLabel);
-                
                 const fcfe = projectedNetIncome + depreciation - capex - nwcChange + netBorrowing;
                 $table.find('.jtw-fcfe-total-result[data-year="' + i + '"]').text(formatNumberForDisplay(fcfe, revenueUnitLabel));
             }
@@ -434,24 +402,25 @@ const recalculateValuation = debounce(function() {
                 if (response.success && response.data) {
                     const data = response.data;
                     
+                    if (data.valuation_label) {
+                        $container.find('.jtw-terminal-value-row td:first-child').text(data.valuation_label);
+                    }
+
                     ['bear', 'base', 'bull'].forEach(function(caseType) {
                         const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
                         const fair_value = data[caseType].fair_value;
                         
-                        // Call the new function to handle the bar graphic
                         updateInTableValuationGraphic($table, fair_value, currentPrice);
 
-                        // Update the modal content with the new calculation breakdown.
                         if (data[caseType].modal_html) {
                             const modal_id = '#jtw-assumptions-modal-' + caseType;
                             const $modalContent = $(modal_id).find('.jtw-modal-content');
                             if ($modalContent.length) {
-                                const $closeButton = $modalContent.find('.jtw-modal-close').detach(); // Detach to preserve events
+                                const $closeButton = $modalContent.find('.jtw-modal-close').detach();
                                 $modalContent.html(data[caseType].modal_html).prepend($closeButton);
                             }
                         }
                     });
-
                 } else {
                     console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
                 }
@@ -464,8 +433,6 @@ const recalculateValuation = debounce(function() {
     }, 500);
 
     $container.on('input', '.jtw-assumption-input', recalculateValuation);
-    
-    // Initial setup
     recalculateValuation();
 }
 
