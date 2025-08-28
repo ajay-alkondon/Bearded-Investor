@@ -256,21 +256,55 @@ function initializeFairValueAnalysisSection($container) {
     const currentPrice = $contentDiv.data('current-price');
     const sharesOutstanding = parseFloat($contentDiv.data('shares-outstanding'));
 
+    // --- Event Listeners for Model Selector ---
+    $container.on('click', '.jtw-model-selector', function(e) {
+        e.stopPropagation();
+        const $selector = $(this);
+        // Close other selectors when one is opened
+        $('.jtw-model-selector').not($selector).removeClass('open');
+        $selector.toggleClass('open');
+    });
+
+    $container.on('click', '.jtw-model-options li', function(e) {
+        e.stopPropagation();
+        const $li = $(this);
+        const $selector = $li.closest('.jtw-model-selector');
+        const $row = $selector.closest('.jtw-terminal-value-row');
+        const modelKey = $li.data('model-key');
+        const modelLabel = $li.text();
+
+        $selector.find('.jtw-selected-model').text(modelLabel);
+        // Use an attribute to store the selected model key for the AJAX call
+        $row.attr('data-selected-model', modelKey);
+        $selector.removeClass('open');
+        recalculateValuation(); // Trigger recalculation when a new model is selected
+    });
+
+    // Close dropdowns if clicking anywhere else on the page
+    $(document).on('click', function() {
+        $('.jtw-model-selector').removeClass('open');
+    });
+    // --- End Event Listeners ---
+
     function formatNumberForDisplay(num, unitLabel = '', decimals = 1) {
         if (typeof num !== 'number' || isNaN(num)) return '-';
+        
         let divisor = 1;
         if (unitLabel.includes('(Billions)')) divisor = 1e9;
         else if (unitLabel.includes('(Millions)')) divisor = 1e6;
         else if (unitLabel.includes('(Thousands)')) divisor = 1e3;
+
         return (num / divisor).toFixed(decimals);
     }
 
     function parseFormattedNumber(str, unitLabel = '') {
         let num = parseFloat(str);
         if (isNaN(num)) return 0;
+        
         if (unitLabel.includes('(Billions)')) return num * 1e9;
         if (unitLabel.includes('(Millions)')) return num * 1e6;
         if (unitLabel.includes('(Thousands)')) return num * 1e3;
+        
         return num;
     }
 
@@ -312,8 +346,15 @@ function initializeFairValueAnalysisSection($container) {
     }
 
     const recalculateValuation = debounce(function() {
-        if (!componentRatios || $.isEmptyObject(componentRatios)) { return; }
-        if (!sharesOutstanding || sharesOutstanding === 0) { return; }
+        if (!componentRatios || $.isEmptyObject(componentRatios)) {
+            console.error('Component ratios not found or are empty on the page.');
+            return;
+        }
+
+        if (!sharesOutstanding || sharesOutstanding === 0) {
+            console.error('Shares outstanding not found or is zero.');
+            return;
+        }
 
         const assumptions = { bear: {}, base: {}, bull: {} };
         let hasAllInputs = true;
@@ -339,15 +380,24 @@ function initializeFairValueAnalysisSection($container) {
                 const growthRateValue = parseFloat($input.val());
                 if (!isNaN(growthRateValue)) {
                     assumptions[caseType].yearlyRevGrowth[year] = growthRateValue;
-                } else { hasAllInputs = false; }
+                } else {
+                    hasAllInputs = false; 
+                }
             });
+            
+            // Get the selected model for this specific case table
+            const selectedModel = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
+            assumptions[caseType].model = selectedModel;
 
             let previousRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="0"]').text(), revenueUnitLabel);
             
             for (let i = 1; i <= 4; i++) {
                 const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
                 const peCell = $table.find('.jtw-pe-input[data-year="' + i + '"]');
-                if (!growthRateInput.length || growthRateInput.val() === '' || (peCell.length && peCell.val() === '')) { hasAllInputs = false; }
+                if (!growthRateInput.length || growthRateInput.val() === '' || (peCell.length && peCell.val() === '')) {
+                    hasAllInputs = false;
+                }
+
                 const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
                 
                 const projectedRevenue = previousRevenue * (1 + growthRate);
@@ -370,11 +420,16 @@ function initializeFairValueAnalysisSection($container) {
                 const capexInput = $table.find('.jtw-fcfe-component-input[data-component="capex"][data-year="' + i + '"]');
                 const nwcChangeInput = $table.find('.jtw-fcfe-component-input[data-component="nwcChange"][data-year="' + i + '"]');
                 const netBorrowingInput = $table.find('.jtw-fcfe-component-input[data-component="netBorrowing"][data-year="' + i + '"]');
-                if (!depreciationInput.length || depreciationInput.val() === '' || !capexInput.length || capexInput.val() === '' || !nwcChangeInput.length || nwcChangeInput.val() === '' || !netBorrowingInput.length || netBorrowingInput.val() === '') { hasAllInputs = false; }
+
+                if (!depreciationInput.length || depreciationInput.val() === '' || !capexInput.length || capexInput.val() === '' || !nwcChangeInput.length || nwcChangeInput.val() === '' || !netBorrowingInput.length || netBorrowingInput.val() === '') {
+                    hasAllInputs = false;
+                }
+
                 const depreciation = parseFormattedNumber(depreciationInput.val(), revenueUnitLabel);
                 const capex = parseFormattedNumber(capexInput.val(), revenueUnitLabel);
                 const nwcChange = parseFormattedNumber(nwcChangeInput.val(), revenueUnitLabel);
                 const netBorrowing = parseFormattedNumber(netBorrowingInput.val(), revenueUnitLabel);
+                
                 const fcfe = projectedNetIncome + depreciation - capex - nwcChange + netBorrowing;
                 $table.find('.jtw-fcfe-total-result[data-year="' + i + '"]').text(formatNumberForDisplay(fcfe, revenueUnitLabel));
             }
@@ -402,22 +457,15 @@ function initializeFairValueAnalysisSection($container) {
                 if (response.success && response.data) {
                     const data = response.data;
                     
-                    if (data.valuation_label) {
-                        $container.find('.jtw-terminal-value-row td:first-child').text(data.valuation_label);
-                    }
-
                     ['bear', 'base', 'bull'].forEach(function(caseType) {
-                        const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
-                        const fair_value = data[caseType].fair_value;
-                        
-                        updateInTableValuationGraphic($table, fair_value, currentPrice);
+                        if (data[caseType]) {
+                            const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
+                            const caseData = data[caseType];
+                            
+                            updateInTableValuationGraphic($table, caseData.fair_value, currentPrice);
 
-                        if (data[caseType].modal_html) {
-                            const modal_id = '#jtw-assumptions-modal-' + caseType;
-                            const $modalContent = $(modal_id).find('.jtw-modal-content');
-                            if ($modalContent.length) {
-                                const $closeButton = $modalContent.find('.jtw-modal-close').detach();
-                                $modalContent.html(data[caseType].modal_html).prepend($closeButton);
+                            if (caseData.valuation_label) {
+                                $table.find('.jtw-selected-model').text(caseData.valuation_label);
                             }
                         }
                     });

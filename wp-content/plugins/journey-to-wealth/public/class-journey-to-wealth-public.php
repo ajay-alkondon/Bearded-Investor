@@ -1352,6 +1352,7 @@ private function get_valuation_results($company_data, $latest_price, $projection
 
 public function ajax_recalculate_valuation() {
     check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
+
     $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
     $assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
     $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 10;
@@ -1374,53 +1375,49 @@ public function ajax_recalculate_valuation() {
     $overview = $company_data['overview'];
     $latest_price = (float)($company_data['quote']['05. price'] ?? 0);
 
-    $overrides = get_option('jtw_company_type_overrides', []);
-    $ticker_override = $overrides[$ticker] ?? 'auto';
-    $is_reit = false;
-    $is_financial = false;
+    foreach (['bear', 'base', 'bull'] as $case) {
+        if (!isset($assumptions[$case])) continue;
 
-    if ($ticker_override === 'reit') {
-        $is_reit = true;
-    } elseif ($ticker_override === 'financial') {
-        $is_financial = true;
-    } else {
-        $industry_upper = strtoupper($overview['Industry'] ?? '');
-        $sector_upper = strtoupper($overview['Sector'] ?? '');
-        $is_reit = strpos($industry_upper, 'REIT') !== false;
-        if (!$is_reit) {
-            $is_financial = strpos($industry_upper, 'BANK') !== false || strpos($industry_upper, 'INSURANCE') !== false || strpos($sector_upper, 'FINANCIAL SERVICES') !== false;
+        $case_assumptions = $assumptions[$case];
+        $selected_model = $case_assumptions['model'] ?? 'auto';
+        $result = null;
+        $valuation_label = '';
+
+        $model_to_run = $selected_model;
+        if ($model_to_run === 'auto') {
+            $overrides = get_option('jtw_company_type_overrides', []);
+            $ticker_override = $overrides[$ticker] ?? 'auto';
+            if ($ticker_override === 'reit') { $model_to_run = 'affo'; }
+            elseif ($ticker_override === 'financial') { $model_to_run = 'excess_return'; }
+            else {
+                $industry_upper = strtoupper($overview['Industry'] ?? '');
+                $sector_upper = strtoupper($overview['Sector'] ?? '');
+                if (strpos($industry_upper, 'REIT') !== false) { $model_to_run = 'affo'; }
+                elseif (strpos($industry_upper, 'BANK') !== false || strpos($industry_upper, 'INSURANCE') !== false || strpos($sector_upper, 'FINANCIAL SERVICES') !== false) { $model_to_run = 'excess_return'; }
+                else { $model_to_run = 'dcf'; }
+            }
         }
-    }
 
-    $valuation_label = 'Discounted Cash Flow Valuation';
-    if ($is_reit) {
-        $valuation_label = 'AFFO Valuation';
-    } elseif ($is_financial) {
-        $valuation_label = 'Excess Return Valuation';
-    }
-    $results['valuation_label'] = $valuation_label;
-
-    if ($is_reit) {
-        $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $beta_details['levered_beta']);
-        $result = $model->calculate($overview, $company_data['income_statement'], $company_data['cash_flow'], $company_data['treasury_yield'], $latest_price, $beta_details);
-        $base_fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
-        $modal_html = !is_wp_error($result) ? $this->build_affo_modal_content($result, $overview) : '<p>Error generating modal content.</p>';
-        $results['base'] = ['fair_value' => $base_fair_value, 'modal_html' => $modal_html];
-        $results['bear'] = ['fair_value' => $base_fair_value * 0.8, 'modal_html' => $modal_html];
-        $results['bull'] = ['fair_value' => $base_fair_value * 1.2, 'modal_html' => $modal_html];
-    } elseif ($is_financial) {
-        $model = new Journey_To_Wealth_Excess_Return_Model($erp_decimal, $beta_details['levered_beta']);
-        $result = $model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['treasury_yield'], $latest_price, $beta_details);
-        $base_fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
-        $modal_html = !is_wp_error($result) ? $this->build_excess_return_modal_content($result, $overview) : '<p>Error generating modal content.</p>';
-        $results['base'] = ['fair_value' => $base_fair_value, 'modal_html' => $modal_html];
-        $results['bear'] = ['fair_value' => $base_fair_value * 0.8, 'modal_html' => $modal_html];
-        $results['bull'] = ['fair_value' => $base_fair_value * 1.2, 'modal_html' => $modal_html];
-    } else {
-        $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $beta_details['levered_beta']);
-        foreach (['bear', 'base', 'bull'] as $case) {
-            if (isset($assumptions[$case])) {
-                $case_assumptions = $assumptions[$case];
+        switch ($model_to_run) {
+            case 'affo':
+                $valuation_label = 'AFFO Valuation';
+                $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $beta_details['levered_beta']);
+                $result = $model->calculate($overview, $company_data['income_statement'], $company_data['cash_flow'], $company_data['treasury_yield'], $latest_price, $beta_details);
+                break;
+            case 'excess_return':
+                $valuation_label = 'Excess Return Valuation';
+                $model = new Journey_To_Wealth_Excess_Return_Model($erp_decimal, $beta_details['levered_beta']);
+                $result = $model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['treasury_yield'], $latest_price, $beta_details);
+                break;
+            case 'ddm':
+                $valuation_label = 'Dividend Discount Model';
+                $model = new Journey_To_Wealth_DDM_Model($erp_decimal, $beta_details['levered_beta']);
+                $result = $model->calculate($overview, $company_data['treasury_yield'], $latest_price, $company_data['daily_data'], $beta_details);
+                break;
+            case 'dcf':
+            default:
+                $valuation_label = 'Discounted Cash Flow Valuation';
+                $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $beta_details['levered_beta']);
                 $default_growth = ($case === 'bear') ? 20.0 : (($case === 'base') ? 25.0 : 30.0);
                 if (isset($case_assumptions['yearlyRevGrowth'][1]) && is_numeric($case_assumptions['yearlyRevGrowth'][1])) {
                      $case_assumptions['initial_growth_rate'] = (float)$case_assumptions['yearlyRevGrowth'][1] / 100;
@@ -1428,10 +1425,22 @@ public function ajax_recalculate_valuation() {
                      $case_assumptions['initial_growth_rate'] = $default_growth / 100;
                 }
                 $result = $dcf_model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['cash_flow'], $company_data['treasury_yield'], $company_data['earnings_estimates'], $latest_price, $beta_details, $case_assumptions, $timeframe);
-                $results[$case] = [ 'fair_value' => !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0, 'modal_html' => !is_wp_error($result) ? $this->build_dcf_modal_content($result, $overview, $company_data['income_statement'], $company_data['cash_flow']) : '<p>Error generating modal content.</p>', ];
-            }
+                break;
         }
+
+        $fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
+        
+        if ($model_to_run !== 'dcf') {
+             if ($case === 'bear') { $fair_value *= 0.8; }
+             if ($case === 'bull') { $fair_value *= 1.2; }
+        }
+
+        $results[$case] = [
+            'fair_value' => $fair_value,
+            'valuation_label' => $valuation_label
+        ];
     }
+
     wp_send_json_success($results);
 }
 
@@ -1511,17 +1520,41 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $current_year_net_income = $analyst_revenue_current_year * $net_income_to_revenue_ratio;
     $current_year_eps = ($shares_outstanding > 0) ? $current_year_net_income / $shares_outstanding : 0;
     $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
-
-    $industry_upper = strtoupper($details['Industry'] ?? '');
-    $sector_upper = strtoupper($details['Sector'] ?? '');
-    $is_reit = strpos($industry_upper, 'REIT') !== false || strpos($sector_upper, 'REAL ESTATE') !== false;
-    $is_financial = strpos($industry_upper, 'BANK') !== false || strpos($industry_upper, 'INSURANCE') !== false || strpos($sector_upper, 'FINANCIAL SERVICES') !== false;
-
+    
+    $overrides = get_option('jtw_company_type_overrides', []);
+    $ticker_override = $overrides[$details['Symbol']] ?? 'auto';
+    
+    $default_model_key = 'dcf';
     $valuation_label = 'Discounted Cash Flow Valuation';
-    if ($is_reit) {
+
+    if ($ticker_override === 'reit') {
+        $default_model_key = 'affo';
         $valuation_label = 'AFFO Valuation';
-    } elseif ($is_financial) {
+    } elseif ($ticker_override === 'financial') {
+        $default_model_key = 'excess_return';
         $valuation_label = 'Excess Return Valuation';
+    } else {
+        $industry_upper = strtoupper($details['Industry'] ?? '');
+        $sector_upper = strtoupper($details['Sector'] ?? '');
+        $is_reit = strpos($industry_upper, 'REIT') !== false;
+        $is_financial = strpos($industry_upper, 'BANK') !== false || strpos($industry_upper, 'INSURANCE') !== false || strpos($sector_upper, 'FINANCIAL SERVICES') !== false;
+
+        if ($is_reit) {
+            $default_model_key = 'affo';
+            $valuation_label = 'AFFO Valuation';
+        } elseif ($is_financial) {
+            $default_model_key = 'excess_return';
+            $valuation_label = 'Excess Return Valuation';
+        }
+    }
+
+    $available_models = [
+        'dcf' => 'Discounted Cash Flow Valuation',
+        'affo' => 'AFFO Valuation',
+        'excess_return' => 'Excess Return Valuation',
+    ];
+    if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) {
+        $available_models['ddm'] = 'Dividend Discount Model';
     }
 
     foreach (['bear', 'base', 'bull'] as $case) {
@@ -1575,8 +1608,18 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
         for ($i = 1; $i < 5; $i++) { $output .= '<td class="jtw-moe-result-cell" data-year="' . $i . '">-</td>'; }
         $output .= '</tr>';
         
-        $output .= '<tr class="jtw-metric-group-header jtw-result-header-row jtw-terminal-value-row">';
-        $output .= '<td>' . esc_html($valuation_label) . '</td>';
+        $output .= '<tr class="jtw-metric-group-header jtw-result-header-row jtw-terminal-value-row" data-selected-model="' . esc_attr($default_model_key) . '">';
+        $output .= '<td>';
+        $output .= '<div class="jtw-model-selector" tabindex="0">';
+        $output .= '<span class="jtw-selected-model">' . esc_html($valuation_label) . '</span>';
+        $output .= '<svg class="jtw-chevron-down" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+        $output .= '<ul class="jtw-model-options">';
+        foreach ($available_models as $key => $label) {
+            $output .= '<li data-model-key="' . esc_attr($key) . '">' . esc_html($label) . '</li>';
+        }
+        $output .= '</ul>';
+        $output .= '</div>';
+        $output .= '</td>';
         $output .= '<td class="jtw-dcf-result-final-cell jtw-terminal-value-cell" colspan="5">';
         $output .= '<div class="jtw-in-table-bar-container">';
         $output .= '<div class="jtw-in-table-zone-bar"><div class="jtw-in-table-zone undervalued"></div><div class="jtw-in-table-zone about-right"></div><div class="jtw-in-table-zone overvalued"></div></div>';

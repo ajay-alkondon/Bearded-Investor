@@ -1560,3 +1560,76 @@ body.dark-mode .jtw-current-price-label {
     font-weight: bold;
     color: var(--jtw-red-negative);
 }
+
+/* --- Valuation Model Selector --- */
+.jtw-terminal-value-row td:first-child {
+    vertical-align: middle;
+    position: relative;
+}
+
+.jtw-model-selector {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 10px 5px 0px; /* MODIFIED PADDING */
+    border: 1px solid transparent;
+    border-radius: 4px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    user-select: none;
+}
+
+.jtw-model-selector:hover,
+.jtw-model-selector:focus,
+.jtw-model-selector.open {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.jtw-selected-model {
+    font-weight: bold;
+}
+
+.jtw-chevron-down {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    transition: transform 0.2s ease;
+    margin-left: 8px;
+}
+
+.jtw-model-selector.open .jtw-chevron-down {
+    transform: rotate(180deg);
+}
+
+.jtw-model-options {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background-color: #34495e;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    list-style: none; /* MODIFIED LIST-STYLE */
+    margin: 0 0 5px 0;
+    padding: 5px;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.jtw-model-selector.open .jtw-model-options {
+    display: block;
+}
+
+.jtw-model-options li {
+    padding: 8px 12px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+    font-weight: normal;
+}
+
+.jtw-model-options li:hover {
+    background-color: #2c3e50;
+}
