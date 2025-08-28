@@ -35,24 +35,26 @@ class Journey_To_Wealth_Excess_Return_Model {
     }
 
     public function calculate($overview, $income_statement, $balance_sheet, $treasury_yield, $latest_price, $beta_details) {
-        if (is_wp_error($balance_sheet) || empty($balance_sheet['annualReports']) || is_wp_error($income_statement) || empty($income_statement['annualReports'])) {
-            return new WP_Error('erm_missing_financials', __('ERM Error: Financial statements missing.', 'journey-to-wealth'));
+        if (is_wp_error($income_statement) || empty($income_statement['annualReports'])) {
+            return new WP_Error('erm_missing_financials', __('ERM Error: Income statement is missing.', 'journey-to-wealth'));
         }
         
         $shares_outstanding = $this->get_av_value($overview, 'SharesOutstanding');
-        if (empty($shares_outstanding)) {
-            return new WP_Error('erm_missing_shares', __('ERM Error: Shares outstanding missing.', 'journey-to-wealth'));
+        $book_value_per_share = $this->get_av_value($overview, 'BookValue');
+
+        if (empty($shares_outstanding) || empty($book_value_per_share)) {
+            return new WP_Error('erm_missing_shares_or_bv', __('ERM Error: Shares outstanding or Book Value from API overview is missing.', 'journey-to-wealth'));
         }
 
         $risk_free_rate = (new Journey_To_Wealth_DCF_Model())->calculate_average_risk_free_rate($treasury_yield);
         $this->cost_of_equity = $risk_free_rate + ($this->levered_beta * $this->equity_risk_premium);
         $this->terminal_growth_rate = $risk_free_rate;
 
-        $latest_bs_report = $balance_sheet['annualReports'][0];
         $latest_is_report = $income_statement['annualReports'][0];
-
-        $current_book_value_equity = $this->get_av_value($latest_bs_report, 'totalShareholderEquity');
         $net_income = $this->get_av_value($latest_is_report, 'netIncome');
+        
+        // Calculate total book value to derive ROE
+        $current_book_value_equity = $book_value_per_share * $shares_outstanding;
 
         if ($current_book_value_equity === null || $net_income === null || $current_book_value_equity <= 0) {
              return new WP_Error('erm_missing_b0_or_ni', __('ERM Error: Current Book Value or Net Income is missing or invalid.', 'journey-to-wealth'));
@@ -62,9 +64,6 @@ class Journey_To_Wealth_Excess_Return_Model {
         if ($this->cost_of_equity <= $this->terminal_growth_rate) {
             $this->terminal_growth_rate = $this->cost_of_equity - 0.0025; // Ensure Cost of Equity is greater than growth
         }
-
-        // --- Per-Share Calculations ---
-        $book_value_per_share = $current_book_value_equity / $shares_outstanding;
         
         // Step 1: Calculate Excess Returns per share
         $excess_return_per_share = ($roe - $this->cost_of_equity) * $book_value_per_share;
