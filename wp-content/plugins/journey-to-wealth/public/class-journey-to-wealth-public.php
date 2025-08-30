@@ -190,13 +190,29 @@ public function render_analyzer_layout_shortcode( $atts ) {
         }
     }
 
-    private function get_and_prepare_company_data($ticker) {
+private function get_and_prepare_company_data($ticker) {
         $transient_key = 'jtw_data_' . $ticker;
         $company_data = get_transient($transient_key);
+        
+        // Check if the cached data is missing the new shares_outstanding_data key
+        if (false !== $company_data && !isset($company_data['shares_outstanding_diluted'])) {
+            // Stale cache detected. Fetch the missing data.
+            $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
+            $shares_outstanding_diluted = $av_client->get_shares_outstanding($ticker);
+            
+            if (!is_wp_error($shares_outstanding_diluted)) {
+                // Add the missing data to the array and update the cache
+                $company_data['shares_outstanding_diluted'] = $shares_outstanding_diluted;
+                set_transient($transient_key, $company_data, HOUR_IN_SECONDS);
+            }
+        }
+    
         if (false === $company_data) {
             $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
             $overview = $av_client->get_company_overview($ticker);
             if(is_wp_error($overview) || !isset($overview['Symbol'])) { return new WP_Error('api_error', 'Could not retrieve company overview.'); }
+            
+            $shares_outstanding_diluted = $av_client->get_shares_outstanding($ticker);
             $income_statement = $av_client->get_income_statement($ticker);
             $balance_sheet = $av_client->get_balance_sheet($ticker);
             $cash_flow = $av_client->get_cash_flow_statement($ticker);
@@ -226,7 +242,7 @@ public function render_analyzer_layout_shortcode( $atts ) {
                     return new WP_Error('currency_error', 'Could not retrieve currency exchange rate.');
                 }
             }
-            $company_data = compact('income_statement', 'balance_sheet', 'cash_flow', 'earnings', 'earnings_estimates', 'overview', 'quote', 'daily_data', 'treasury_yield', 'currency_notice');
+            $company_data = compact('income_statement', 'balance_sheet', 'cash_flow', 'earnings', 'earnings_estimates', 'overview', 'quote', 'daily_data', 'treasury_yield', 'currency_notice', 'shares_outstanding_diluted');
             set_transient($transient_key, $company_data, HOUR_IN_SECONDS);
         }
         return $company_data;
@@ -663,38 +679,33 @@ private function get_valuation_results($company_data, $latest_price, $projection
     $earnings = $company_data['earnings']; $treasury_yield = $company_data['treasury_yield'];
     $daily_data = $company_data['daily_data'];
     $earnings_estimates = $company_data['earnings_estimates'];
+    $shares_outstanding_diluted = $company_data['shares_outstanding_diluted']; // Get the correct numeric value
     $valuation_data = [];
     $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
     $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
     
-    if (!is_wp_error($balance_sheet) && isset($balance_sheet['annualReports'][0]['commonStockSharesOutstanding'])) {
-        $authoritative_shares = (float)$balance_sheet['annualReports'][0]['commonStockSharesOutstanding'];
-        if ($authoritative_shares > 0) { $overview['SharesOutstanding'] = $authoritative_shares; }
-    }
+    // Use diluted shares for beta calculation fallback if available
+    $overview['SharesOutstanding'] = is_numeric($shares_outstanding_diluted) && $shares_outstanding_diluted > 0
+        ? $shares_outstanding_diluted
+        : (float)($overview['SharesOutstanding'] ?? 0);
+
     $beta_details = $this->calculate_levered_beta($overview['Symbol'], $balance_sheet, $overview['MarketCapitalization'], $tax_rate_decimal);
     $levered_beta = $beta_details['levered_beta'];
     
-    // --- Corrected Model Selection Logic ---
     $overrides = get_option('jtw_company_type_overrides', []);
     $ticker_override = $overrides[$overview['Symbol']] ?? 'auto';
 
     $is_reit = false;
     $is_financial = false;
 
-    // 1. Prioritize manual override
     if ($ticker_override === 'reit') {
         $is_reit = true;
     } elseif ($ticker_override === 'financial') {
         $is_financial = true;
     } else {
-        // 2. Fallback to automatic detection ONLY if no override is set
         $industry_upper = strtoupper($overview['Industry']);
         $sector_upper = strtoupper($overview['Sector']);
-        
-        // Use more specific REIT check first
         $is_reit = strpos($industry_upper, 'REIT') !== false;
-
-        // Only check for financial if it's not already a REIT
         if (!$is_reit) {
             $is_bank = strpos($industry_upper, 'BANK') !== false;
             $is_insurance = strpos($industry_upper, 'INSURANCE') !== false;
@@ -702,32 +713,24 @@ private function get_valuation_results($company_data, $latest_price, $projection
             $is_financial = $is_bank || $is_insurance || $is_financial_services;
         }
     }
-    // --- End of Corrected Logic ---
 
     if ($is_reit) {
         $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $levered_beta);
-        $result = $model->calculate($overview, $income_statement, $cash_flow, $treasury_yield, $latest_price, $beta_details);
+        $result = $model->calculate($overview, $income_statement, $cash_flow, $treasury_yield, $latest_price, $beta_details, $shares_outstanding_diluted);
         if (!is_wp_error($result)) { $valuation_data['AFFO Model'] = $result; }
     } elseif ($is_financial) {
         $model = new Journey_To_Wealth_Excess_Return_Model($erp_decimal, $levered_beta);
-        $result = $model->calculate($overview, $income_statement, $balance_sheet, $treasury_yield, $latest_price, $beta_details);
+        $result = $model->calculate($overview, $income_statement, $balance_sheet, $treasury_yield, $latest_price, $beta_details, $shares_outstanding_diluted);
         if (!is_wp_error($result)) { $valuation_data['Excess Return Model'] = $result; }
     } else {
         $dcf_model = new Journey_To_Wealth_DCF_Model($erp_decimal, $levered_beta);
-
         $unlevered_beta = $beta_details['unlevered_beta_avg'] ?? 1.0;
         if ($unlevered_beta < 0.95) { $base_growth = 10.0; } 
         elseif ($unlevered_beta >= 0.95 && $unlevered_beta <= 1.1) { $base_growth = 20.0; } 
         elseif ($unlevered_beta > 1.1 && $unlevered_beta <= 1.2) { $base_growth = 25.0; } 
         else { $base_growth = 30.0; }
-
         $custom_assumptions = ['initial_growth_rate' => $base_growth / 100];
-        
-        $dcf_result = $dcf_model->calculate(
-            $overview, $income_statement, $balance_sheet, $cash_flow, 
-            $treasury_yield, $earnings_estimates, $latest_price, 
-            $beta_details, $custom_assumptions, $projection_years
-        );
+        $dcf_result = $dcf_model->calculate($overview, $income_statement, $balance_sheet, $cash_flow, $treasury_yield, $earnings_estimates, $latest_price, $beta_details, $custom_assumptions, $projection_years, $shares_outstanding_diluted);
         $valuation_data['DCF Model'] = $dcf_result;
     }
 
@@ -1352,7 +1355,6 @@ private function get_valuation_results($company_data, $latest_price, $projection
 
 public function ajax_recalculate_valuation() {
     check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
-
     $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
     $assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
     $timeframe = isset($_POST['timeframe']) ? intval($_POST['timeframe']) : 10;
@@ -1361,28 +1363,25 @@ public function ajax_recalculate_valuation() {
     $company_data = $this->get_and_prepare_company_data($ticker);
     if (is_wp_error($company_data)) { wp_send_json_error(['message' => $company_data->get_error_message()]); return; }
 
-    $balance_sheet = $company_data['balance_sheet'];
-    if (!is_wp_error($balance_sheet) && isset($balance_sheet['annualReports'][0]['commonStockSharesOutstanding'])) {
-        $authoritative_shares = (float)$balance_sheet['annualReports'][0]['commonStockSharesOutstanding'];
-        if ($authoritative_shares > 0) { $company_data['overview']['SharesOutstanding'] = $authoritative_shares; }
-    }
+    $shares_outstanding_diluted = $company_data['shares_outstanding_diluted']; // Get the correct numeric value
+    $overview = $company_data['overview'];
+    $overview['SharesOutstanding'] = is_numeric($shares_outstanding_diluted) && $shares_outstanding_diluted > 0
+        ? $shares_outstanding_diluted
+        : (float)($overview['SharesOutstanding'] ?? 0);
 
     $erp_decimal = (float) get_option('jtw_erp_setting', '5.0') / 100;
     $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
-    $beta_details = $this->calculate_levered_beta($ticker, $company_data['balance_sheet'], $company_data['overview']['MarketCapitalization'], $tax_rate_decimal);
+    $beta_details = $this->calculate_levered_beta($ticker, $company_data['balance_sheet'], $overview['MarketCapitalization'], $tax_rate_decimal);
     
     $results = [];
-    $overview = $company_data['overview'];
     $latest_price = (float)($company_data['quote']['05. price'] ?? 0);
 
     foreach (['bear', 'base', 'bull'] as $case) {
         if (!isset($assumptions[$case])) continue;
-
         $case_assumptions = $assumptions[$case];
         $selected_model = $case_assumptions['model'] ?? 'auto';
         $result = null;
         $valuation_label = '';
-
         $model_to_run = $selected_model;
         if ($model_to_run === 'auto') {
             $overrides = get_option('jtw_company_type_overrides', []);
@@ -1402,12 +1401,12 @@ public function ajax_recalculate_valuation() {
             case 'affo':
                 $valuation_label = 'AFFO Valuation';
                 $model = new Journey_To_Wealth_AFFO_Model($erp_decimal, $beta_details['levered_beta']);
-                $result = $model->calculate($overview, $company_data['income_statement'], $company_data['cash_flow'], $company_data['treasury_yield'], $latest_price, $beta_details);
+                $result = $model->calculate($overview, $company_data['income_statement'], $company_data['cash_flow'], $company_data['treasury_yield'], $latest_price, $beta_details, $shares_outstanding_diluted);
                 break;
             case 'excess_return':
                 $valuation_label = 'Excess Return Valuation';
                 $model = new Journey_To_Wealth_Excess_Return_Model($erp_decimal, $beta_details['levered_beta']);
-                $result = $model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['treasury_yield'], $latest_price, $beta_details);
+                $result = $model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['treasury_yield'], $latest_price, $beta_details, $shares_outstanding_diluted);
                 break;
             case 'ddm':
                 $valuation_label = 'Dividend Discount Model';
@@ -1424,23 +1423,17 @@ public function ajax_recalculate_valuation() {
                 } else {
                      $case_assumptions['initial_growth_rate'] = $default_growth / 100;
                 }
-                $result = $dcf_model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['cash_flow'], $company_data['treasury_yield'], $company_data['earnings_estimates'], $latest_price, $beta_details, $case_assumptions, $timeframe);
+                $result = $dcf_model->calculate($overview, $company_data['income_statement'], $company_data['balance_sheet'], $company_data['cash_flow'], $company_data['treasury_yield'], $company_data['earnings_estimates'], $latest_price, $beta_details, $case_assumptions, $timeframe, $shares_outstanding_diluted);
                 break;
         }
 
         $fair_value = !is_wp_error($result) ? $result['intrinsic_value_per_share'] : 0;
-        
         if ($model_to_run !== 'dcf') {
              if ($case === 'bear') { $fair_value *= 0.8; }
              if ($case === 'bull') { $fair_value *= 1.2; }
         }
-
-        $results[$case] = [
-            'fair_value' => $fair_value,
-            'valuation_label' => $valuation_label
-        ];
+        $results[$case] = [ 'fair_value' => $fair_value, 'valuation_label' => $valuation_label ];
     }
-
     wp_send_json_success($results);
 }
 
@@ -1459,9 +1452,11 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     else { $base_growth = 30.0; }
     $custom_assumptions = ['initial_growth_rate' => $base_growth / 100];
 
+    // Pass the new shares_outstanding_data to the calculate function
     $dcf_result_for_ui = $dcf_model_for_ui->calculate(
         $details, $income_statement, $balance_sheet, $cash_flow, $company_data['treasury_yield'],
-        $earnings_estimates, $valuation_summary['current_price'], $beta_details, $custom_assumptions, 10
+        $earnings_estimates, $valuation_summary['current_price'], $beta_details, $custom_assumptions, 10,
+        $company_data['shares_outstanding_diluted'] // Pass the numeric value
     );
 
     if (is_wp_error($dcf_result_for_ui)) {
@@ -1470,10 +1465,19 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
 
     $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
     $component_ratios_json = '[]';
-    $shares_outstanding = 0;
+    
+    // **FIX**: Prioritize the diluted shares from its own endpoint for the UI.
+    $shares_outstanding_diluted = $company_data['shares_outstanding_diluted'] ?? 0;
+    $shares_outstanding = is_numeric($shares_outstanding_diluted) && $shares_outstanding_diluted > 0
+        ? $shares_outstanding_diluted
+        : (float)($details['SharesOutstanding'] ?? 0);
+
     if ($dcf_result_data) {
         $component_ratios_json = esc_attr(json_encode($dcf_result_data['component_ratios']['projection_ratios']));
-        $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
+        // This ensures the correct value is passed to the frontend JS `data-shares-outstanding` attribute.
+        if ($shares_outstanding === 0) {
+            $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
+        }
     }
 
     $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios=\'' . $component_ratios_json . '\' data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-shares-outstanding="' . esc_attr($shares_outstanding) . '">';
@@ -1587,7 +1591,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
 
         $output .= '<tr class="jtw-metric-group-header"><td colspan="11">Bottom Line</td></tr>';
         $output .= '<tr class="jtw-project-5-year"><td class="jtw-indented-metric">Net Income ' . esc_html($unit) . '</td>';
-        $output .= '<td>' . number_format($current_year_net_income / $divisor, 1) . '</td>';
+        $output .= '<td class="jtw-net-income-result" data-year="0">' . number_format($current_year_net_income / $divisor, 1) . '</td>';
         for ($i = 1; $i < 5; $i++) { $output .= '<td class="jtw-net-income-result" data-year="' . $i . '">-</td>'; }
         $output .= '</tr>';
         $output .= '<tr class="jtw-project-5-year"><td class="jtw-indented-metric">EPS</td>';

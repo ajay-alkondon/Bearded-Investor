@@ -55,12 +55,21 @@ class Journey_To_Wealth_DCF_Model {
         return ($beta > 0) ? $risk_free_rate + ($beta * $this->equity_risk_premium) : self::DEFAULT_COST_OF_EQUITY;
     }
 
-public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $earnings_estimates, $current_price, $beta_details = [], $custom_assumptions = [], $projection_years = 10) {
+public function calculate($overview_data, $income_statement_data, $balance_sheet_data, $cash_flow_data, $treasury_yield_data, $earnings_estimates, $current_price, $beta_details = [], $custom_assumptions = [], $projection_years = 10, $shares_outstanding_data = []) {
     $datasets = [$income_statement_data, $balance_sheet_data, $cash_flow_data];
     foreach($datasets as $dataset) {
         if (is_wp_error($dataset) || (empty($dataset['annualReports']) && empty($dataset['annualEarnings'])) || count($dataset['annualReports'] ?? []) < self::MIN_YEARS_FOR_GROWTH_CALC) {
             return new WP_Error('dcf_missing_financials', __('DCF Error: At least 3 years of financial statements are required.', 'journey-to-wealth'));
         }
+    }
+
+    // Prioritize the new diluted shares endpoint at the beginning
+    $shares_outstanding = is_numeric($shares_outstanding_diluted) && $shares_outstanding_diluted > 0 
+        ? $shares_outstanding_diluted 
+        : $this->get_av_value($overview_data, 'SharesOutstanding');
+
+    if ($shares_outstanding == 0) {
+        return new WP_Error('dcf_shares_error', __('Shares outstanding is zero.', 'journey-to-wealth'));
     }
 
     // --- Setup initial parameters ---
@@ -74,7 +83,6 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
     $base_revenue = $component_ratios['ttm_data']['revenue'] ?? $this->get_av_value($income_statement_data['annualReports'][0], 'totalRevenue');
     $base_revenue_source = isset($component_ratios['ttm_data']['revenue']) ? 'Current Year Analyst Estimate' : 'Last Reported Annual Revenue';
 
-    // **FIX**: Directly use the initial_growth_rate passed from the AJAX handler.
     $initial_growth_rate = $custom_assumptions['initial_growth_rate'] ?? $this->terminal_growth_rate;
     $growth_rate_source = 'User Input';
     
@@ -86,21 +94,17 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
     $growth_projections = [];
 
     if (!empty($yearly_fcfe_inputs)) {
-        // Manual FCFE Mode: FCFE values are provided directly. Growth rates are ignored for calculation.
         for ($i = 1; $i <= $projection_years; $i++) {
             $fcfe_projections[$i] = isset($yearly_fcfe_inputs[$i]) && is_numeric($yearly_fcfe_inputs[$i]) ? (float)$yearly_fcfe_inputs[$i] : 0;
-            // For display purposes, calculate the implied growth rate.
             if ($i > 1 && isset($fcfe_projections[$i - 1]) && $fcfe_projections[$i - 1] != 0) {
                 $growth_projections[$i] = ($fcfe_projections[$i] - $fcfe_projections[$i - 1]) / $fcfe_projections[$i - 1];
             } else {
-                $growth_projections[$i] = 0; // Growth cannot be calculated for the first year.
+                $growth_projections[$i] = 0;
             }
         }
     } else {
-        // Growth Rate Mode: FCFE is projected based on revenue growth rates.
         $ratios = $component_ratios['projection_ratios'];
         
-        // Step 1: Determine the revenue growth rate for all projection years.
         $current_growth_rate = $initial_growth_rate;
         $decay_is_setup = false;
         $growth_decay_rate = 0;
@@ -109,7 +113,7 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
             if (!empty($yearly_growth_inputs) && isset($yearly_growth_inputs[$i]) && is_numeric($yearly_growth_inputs[$i])) {
                 $growth_projections[$i] = (float)$yearly_growth_inputs[$i] / 100;
                 $current_growth_rate = $growth_projections[$i];
-                $decay_is_setup = false; // Reset decay for the next year if it's not manually specified
+                $decay_is_setup = false;
             } else {
                 if ($i == 1) {
                     $growth_projections[$i] = $initial_growth_rate;
@@ -129,7 +133,6 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
             }
         }
 
-        // Step 2: Project revenue and then calculate FCFE for each year from that revenue.
         $current_revenue = $base_revenue;
         for ($i = 1; $i <= $projection_years; $i++) {
             $projected_revenue = $current_revenue * (1 + $growth_projections[$i]);
@@ -140,7 +143,7 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
                                  - ($projected_revenue * $ratios['delta_nwc_of_revenue'])
                                  + ($projected_revenue * $ratios['net_borrowing_of_revenue']);
 
-            $current_revenue = $projected_revenue; // Update revenue base for the next year's projection
+            $current_revenue = $projected_revenue;
         }
      }
     
@@ -163,15 +166,14 @@ public function calculate($overview_data, $income_statement_data, $balance_sheet
     
     $pv_of_terminal_value = $terminal_value / pow(1 + $this->cost_of_equity, $projection_years);
     $total_equity_value = (float)$sum_of_pv_cfs + (float)$pv_of_terminal_value;
-    $shares_outstanding = $this->get_av_value($overview_data, 'SharesOutstanding');
-    if ($shares_outstanding == 0) return new WP_Error('dcf_shares_error', __('Shares outstanding is zero.', 'journey-to-wealth'));
     
     $intrinsic_value_per_share = $total_equity_value / $shares_outstanding;
 
     return [
         'intrinsic_value_per_share' => $intrinsic_value_per_share,
         'calculation_breakdown' => [
-            'model_name' => 'DCF Model (FCFE)', 'current_price' => $current_price, 'shares_outstanding' => $shares_outstanding,
+            'model_name' => 'DCF Model (FCFE)', 'current_price' => $current_price, 
+            'shares_outstanding' => $shares_outstanding, // Ensure the correct value is returned here
             'sum_of_pv_cfs' => $sum_of_pv_cfs, 'terminal_value' => $terminal_value, 'pv_of_terminal_value' => $pv_of_terminal_value,
             'total_equity_value' => $total_equity_value, 'projection_table' => $projection_table,
             'inputs' => [

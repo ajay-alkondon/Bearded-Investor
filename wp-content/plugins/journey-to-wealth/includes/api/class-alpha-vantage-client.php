@@ -297,4 +297,41 @@ class Alpha_Vantage_Client {
         }
         return $data;
     }
+
+    public function get_shares_outstanding( $symbol ) {
+        if ( empty( $this->api_key ) ) {
+            return new WP_Error( 'api_key_missing', __( 'API Key not configured.', 'journey-to-wealth' ) );
+        }
+        $symbol = sanitize_text_field( strtoupper( $symbol ) );
+        $params = array( 
+            'function' => 'SHARES_OUTSTANDING', 
+            'symbol' => $symbol, 
+            'apikey' => $this->api_key 
+        );
+        $transient_key = 'jtw_shares_outstanding_' . md5( $symbol );
+
+        $data = $this->do_request( $params, $transient_key, $this->cache_expiration_statements );
+        if (is_wp_error($data)) {
+            return $data;
+        }
+
+        if ( empty($data) || !isset($data['data']) || !is_array($data['data']) || empty($data['data']) ) {
+            return new WP_Error( 'no_shares_outstanding_data', sprintf( __( 'No shares outstanding data found for %s.', 'journey-to-wealth' ), $symbol ) );
+        }
+
+        // Sort the data by date in descending order to get the most recent first
+        usort($data['data'], function($a, $b) {
+            return strtotime($b['date']) - strtotime($a['date']);
+        });
+
+        // Get the most recent entry
+        $latest_entry = $data['data'][0];
+
+        if (!isset($latest_entry['shares_outstanding_diluted'])) {
+            return new WP_Error( 'no_diluted_shares_key', sprintf( __( 'Diluted shares key not found for %s.', 'journey-to-wealth' ), $symbol ) );
+        }
+
+        // Return only the diluted shares value
+        return (float)$latest_entry['shares_outstanding_diluted'];
+    }
 }

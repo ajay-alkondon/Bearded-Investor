@@ -39,7 +39,11 @@ class Journey_To_Wealth_Excess_Return_Model {
             return new WP_Error('erm_missing_financials', __('ERM Error: Income statement is missing.', 'journey-to-wealth'));
         }
         
-        $shares_outstanding = $this->get_av_value($overview, 'SharesOutstanding');
+        // Prioritize the new diluted shares endpoint, fallback to overview data
+        $shares_outstanding = is_numeric($shares_outstanding_diluted) && $shares_outstanding_diluted > 0
+            ? $shares_outstanding_diluted
+            : $this->get_av_value($overview, 'SharesOutstanding');
+
         $book_value_per_share = $this->get_av_value($overview, 'BookValue');
 
         if (empty($shares_outstanding) || empty($book_value_per_share)) {

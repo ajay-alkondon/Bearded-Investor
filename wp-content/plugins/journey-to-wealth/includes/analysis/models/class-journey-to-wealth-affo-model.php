@@ -146,7 +146,11 @@ class Journey_To_Wealth_AFFO_Model {
         
         // --- Calculation Fix ---
         $total_equity_value = (float)$sum_discounted_affos + (float)$discounted_terminal_value;
-        $shares_outstanding = (float)$this->get_av_value($overview, 'SharesOutstanding');
+        
+        // Prioritize the new diluted shares endpoint, fallback to overview data
+        $shares_outstanding = is_numeric($shares_outstanding_diluted) && $shares_outstanding_diluted > 0
+            ? $shares_outstanding_diluted
+            : (float)$this->get_av_value($overview, 'SharesOutstanding');
 
         if ($shares_outstanding == 0) {
             return new WP_Error('affo_missing_shares', __('AFFO Model Error: Shares outstanding is zero.', 'journey-to-wealth'));
