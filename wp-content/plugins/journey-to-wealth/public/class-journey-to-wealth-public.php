@@ -1193,27 +1193,29 @@ private function get_valuation_results($company_data, $latest_price, $projection
         return $output;
     }
 
-    private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
+private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
     $output = '<div id="section-key-metrics-ratios-content" class="jtw-content-section">';
     
     // Section Header with Toggle
     $output .= '<div class="jtw-section-header">';
     $output .= '<h4>' . esc_html__('Comparative Company Analysis', 'journey-to-wealth') . '</h4>';
     $output .= '<div class="jtw-peer-controls-container">'; // New wrapper
-    $output .= '<span>' . esc_html__('Peer Comparison', 'journey-to-wealth') . '</span>';
+    $output .= '<span>' . esc_html__('Auto-suggest Peers', 'journey-to-wealth') . '</span>'; // Changed text for clarity
     $output .= '<label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>';
-    $output .= '<button id="jtw-compare-peers-btn" class="jtw-compare-button" style="display:none;">Compare</button>'; // New button
+    $output .= '<button id="jtw-compare-peers-btn" class="jtw-compare-button">' . esc_html__('Compare', 'journey-to-wealth') . '</button>';
     $output .= '</div></div>';
     
     $output .= '<div class="jtw-metrics-table-container">';
-    $output .= '<table class="jtw-metrics-table">';
+    // **FIX**: Added 'peer-view' class by default to make columns visible
+    $output .= '<table class="jtw-metrics-table peer-view">';
     
     // Table Header
     $output .= '<thead><tr>';
     $output .= '<th>Metric</th>';
     $output .= '<th class="jtw-primary-col">' . esc_html($ticker) . '</th>';
-    $output .= '<th class="jtw-peer-col" style="display:none;"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
-    $output .= '<th class="jtw-peer-col" style="display:none;"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
+    // **FIX**: Removed style="display:none;"
+    $output .= '<th class="jtw-peer-col"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
+    $output .= '<th class="jtw-peer-col"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>';
     $output .= '</tr></thead>';
 
     // Table Body
@@ -1257,10 +1259,10 @@ private function get_valuation_results($company_data, $latest_price, $projection
             $output .= '<tr>';
             
             if (isset($details['is_peg']) && $details['is_peg']) {
-                $is_peg_available = is_numeric($primary_metrics['PEGRatio']);
+                $is_peg_available = is_numeric($primary_metrics['pegRatio']);
 
                 if ($is_peg_available) {
-                    $peg_val = $this->format_metric_value($primary_metrics['PEGRatio'] ?? 'N/A', 'x');
+                    $peg_val = $this->format_metric_value($primary_metrics['pegRatio'] ?? 'N/A', 'x');
                     $pegy_val = $this->format_metric_value($primary_metrics['pegyRatio'] ?? 'N/A', 'x');
                     $output .= '<td>' . esc_html($details['label']) . ' <a href="#" class="jtw-modal-trigger" data-modal-target="#jtw-peg-pegy-modal">(Calculator)</a></td>';
                     $output .= '<td class="jtw-primary-col">' . esc_html($peg_val . ' / ' . $pegy_val) . '</td>';
@@ -1268,13 +1270,15 @@ private function get_valuation_results($company_data, $latest_price, $projection
                     $output .= '<td>' . esc_html($details['label']) . '</td>';
                     $output .= '<td class="jtw-primary-col">- / -</td>';
                 }
-                $output .= '<td class="jtw-peer-col jtw-peer-1-value" data-metric-peg="PEGRatio" data-metric-pegy="pegyRatio" style="display:none;">-</td>';
-                $output .= '<td class="jtw-peer-col jtw-peer-2-value" data-metric-peg="PEGRatio" data-metric-pegy="pegyRatio" style="display:none;">-</td>';
+                // **FIX**: Removed style="display:none;"
+                $output .= '<td class="jtw-peer-col jtw-peer-1-value" data-metric-peg="pegRatio" data-metric-pegy="pegyRatio">-</td>';
+                $output .= '<td class="jtw-peer-col jtw-peer-2-value" data-metric-peg="pegRatio" data-metric-pegy="pegyRatio">-</td>';
             } else {
                 $output .= '<td>' . esc_html($details['label']) . '</td>';
                 $output .= '<td class="jtw-primary-col">' . $this->format_metric_value($primary_metrics[$key] ?? 'N/A', $details['suffix']) . '</td>';
-                $output .= '<td class="jtw-peer-col jtw-peer-1-value" data-metric="' . esc_attr($key) . '" style="display:none;">-</td>';
-                $output .= '<td class="jtw-peer-col jtw-peer-2-value" data-metric="' . esc_attr($key) . '" style="display:none;">-</td>';
+                // **FIX**: Removed style="display:none;"
+                $output .= '<td class="jtw-peer-col jtw-peer-1-value" data-metric="' . esc_attr($key) . '">-</td>';
+                $output .= '<td class="jtw-peer-col jtw-peer-2-value" data-metric="' . esc_attr($key) . '">-</td>';
             }
             $output .= '</tr>';
         }
@@ -1287,7 +1291,7 @@ private function get_valuation_results($company_data, $latest_price, $projection
 
     // PEG/PEGY Calculator Modal
     $output .= '<div id="jtw-peg-pegy-modal" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span><h4>PEG/PEGY Calculator</h4>';
-    if (!is_numeric($primary_metrics['PEGRatio'])) {
+    if (!is_numeric($primary_metrics['pegRatio'])) {
         $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('The PEG Ratio is unavailable for this company, so the calculator cannot be used.', 'journey-to-wealth') . '</strong></p></div>';
     } elseif (!is_numeric($primary_metrics['trailingEps']) || $primary_metrics['trailingEps'] <= 0) {
         $output .= '<div class="jtw-metric-card"><p><strong>' . esc_html__('The company is not profitable yet.', 'journey-to-wealth') . '</strong></p></div>';
@@ -1314,7 +1318,7 @@ private function get_valuation_results($company_data, $latest_price, $projection
 
     $output .= '</div>'; // End section
     return $output;
-}    
+}
 
     private function format_metric_value($value, $suffix = '') {
         if (is_numeric($value)) {

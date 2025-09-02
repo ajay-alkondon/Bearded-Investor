@@ -82,7 +82,7 @@
         }
     }
 
-    function initializeKeyMetricsRatiosSection($container) {
+function initializeKeyMetricsRatiosSection($container) {
         // PEG/PEGY Calculator Logic
         const $calculator = $container.find('.jtw-peg-pegy-calculator');
         if ($calculator.length) {
@@ -137,7 +137,6 @@
         // Peer Comparison Logic
         let peerDataFetched = false;
         const $table = $container.find('.jtw-metrics-table');
-        const $peerCols = $table.find('.jtw-peer-col');
         const $spinner = $container.find('.jtw-peer-loading-spinner');
         const $errorMsg = $container.find('.jtw-peer-error-message');
         const $compareBtn = $container.find('#jtw-compare-peers-btn');
@@ -211,18 +210,17 @@
             });
         }
 
+        // **FIX**: Updated toggle logic
         $container.on('change', '#jtw-peer-toggle', function() {
             if ($(this).is(':checked')) {
-                $table.addClass('peer-view');
-                $peerCols.show();
-                $compareBtn.show();
-                if (!peerDataFetched) {
-                    fetchPeerData();
-                }
+                // Fetch and populate auto-suggested peers
+                fetchPeerData();
             } else {
-                $table.removeClass('peer-view');
-                $peerCols.hide();
-                $compareBtn.hide();
+                // Clear the auto-suggested peers
+                $container.find('#jtw-peer-1-input').val('');
+                $container.find('#jtw-peer-2-input').val('');
+                $table.find('.jtw-peer-1-value, .jtw-peer-2-value').text('-');
+                peerDataFetched = false; // Reset flag
             }
         });
 
@@ -241,6 +239,9 @@
             if (peer1) peersToFetch.push(peer1);
             if (peer2) peersToFetch.push(peer2);
             
+            // Uncheck the toggle if user is doing a manual search
+            $('#jtw-peer-toggle').prop('checked', false);
+
             fetchPeerData(peersToFetch);
         });
     }
