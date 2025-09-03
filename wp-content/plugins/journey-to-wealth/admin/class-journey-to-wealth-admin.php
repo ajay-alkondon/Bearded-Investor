@@ -67,8 +67,10 @@ class Journey_To_Wealth_Admin {
     public function register_settings() {
         register_setting( 'jtw_plugin_settings_group', 'jtw_av_api_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
         register_setting( 'jtw_plugin_settings_group', 'jtw_analysis_page_slug', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+        register_setting( 'jtw_plugin_settings_group', 'jtw_cloud_function_url', array( 'sanitize_callback' => 'esc_url_raw' ) );        
         add_settings_section( 'jtw_api_settings_section', __( 'Alpha Vantage API Key', 'journey-to-wealth' ), array( $this, 'jtw_api_settings_section_callback' ), $this->plugin_settings_page_slug );
         add_settings_field( 'jtw_av_api_key', __( 'API Key', 'journey-to-wealth' ), array( $this, 'jtw_api_key_render' ), $this->plugin_settings_page_slug, 'jtw_api_settings_section' );
+        add_settings_field( 'jtw_cloud_function_url', __( 'Cloud Function URL', 'journey-to-wealth' ), array( $this, 'render_cloud_function_url_field' ), $this->plugin_settings_page_slug, 'jtw_api_settings_section' );        
         add_settings_section( 'jtw_general_settings_section', __( 'General Settings', 'journey-to-wealth' ), null, $this->plugin_settings_page_slug );
         add_settings_field( 'jtw_analysis_page_slug', __( 'Analysis Page Slug', 'journey-to-wealth' ), array( $this, 'render_analysis_page_slug_field' ), $this->plugin_settings_page_slug, 'jtw_general_settings_section' );
         register_setting( 'jtw_data_settings_group', 'jtw_erp_setting', array( 'sanitize_callback' => 'floatval' ) );
@@ -87,6 +89,12 @@ class Journey_To_Wealth_Admin {
     public function render_tax_rate_field() { $tax_rate_value = get_option('jtw_tax_rate_setting', '21.0'); echo '<input type="number" step="0.1" name="jtw_tax_rate_setting" value="' . esc_attr( $tax_rate_value ) . '" class="small-text" />'; echo '<p class="description">' . esc_html__('Set the Corporate Tax Rate for levering beta. The default is the current US corporate tax rate.', 'journey-to-wealth') . '</p>'; }
     public function render_beta_data_url_field() { $beta_data_url = get_option('jtw_beta_data_url', 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/Betas.html'); echo '<input type="url" name="jtw_beta_data_url" value="' . esc_url( $beta_data_url ) . '" class="large-text">'; }
     public function render_analysis_page_slug_field() { $slug = get_option('jtw_analysis_page_slug', 'stock-valuation-analysis'); echo '<input type="text" name="jtw_analysis_page_slug" value="' . esc_attr( $slug ) . '" class="regular-text">'; echo '<p class="description">' . esc_html__('Enter the slug (e.g., "analysis-page") of the page where you have placed the `[jtw_analyzer_layout]` shortcode.', 'journey-to-wealth') . '</p>'; }
+
+    public function render_cloud_function_url_field() {
+        $url = get_option('jtw_cloud_function_url', '');
+        echo '<input type="url" name="jtw_cloud_function_url" value="' . esc_url( $url ) . '" class="large-text" placeholder="https://<region>-<project-id>.cloudfunctions.net/analyze_stock">';
+        echo '<p class="description">' . esc_html__('Enter the full trigger URL for your deployed Python Cloud Function.', 'journey-to-wealth') . '</p>';
+    }
 
     public function handle_beta_data_fetch() {
         if ( ! isset( $_POST['jtw_beta_nonce'] ) || ! wp_verify_nonce( $_POST['jtw_beta_nonce'], 'jtw_fetch_beta_data_nonce' ) ) { wp_die( 'Security check failed.' ); }

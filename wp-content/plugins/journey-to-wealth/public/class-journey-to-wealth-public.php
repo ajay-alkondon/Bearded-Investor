@@ -190,7 +190,7 @@ public function render_analyzer_layout_shortcode( $atts ) {
         }
     }
 
-private function get_and_prepare_company_data($ticker) {
+    /*private function get_and_prepare_company_data($ticker) {
         $transient_key = 'jtw_data_' . $ticker;
         $company_data = get_transient($transient_key);
         
@@ -246,9 +246,113 @@ private function get_and_prepare_company_data($ticker) {
             set_transient($transient_key, $company_data, HOUR_IN_SECONDS);
         }
         return $company_data;
-    }
+    }*/
 
     public function ajax_fetch_section_data() {
+        check_ajax_referer('jtw_fetch_section_nonce', 'nonce');
+        $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
+        $section = isset($_POST['section']) ? sanitize_key($_POST['section']) : '';
+
+        if (empty($ticker) || empty($section)) {
+            wp_send_json_error(['message' => 'Missing parameters.']);
+            return;
+        }
+
+        // --- Start of Refactored Logic ---
+        $cloud_function_url = get_option('jtw_cloud_function_url');
+        if (empty($cloud_function_url)) {
+            wp_send_json_error(['message' => 'The Cloud Function URL is not configured in plugin settings.']);
+            return;
+        }
+
+        // Step 1: Fetch minimal data needed to calculate beta in PHP.
+        $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
+        $overview = $av_client->get_company_overview($ticker);
+        $balance_sheet = $av_client->get_balance_sheet($ticker);
+
+        if (is_wp_error($overview) || is_wp_error($balance_sheet)) {
+            wp_send_json_error(['message' => 'Could not fetch initial data required for beta calculation.']);
+            return;
+        }
+        
+        // Step 2: Calculate Beta Details in PHP
+        $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
+        $market_cap = (float)($overview['MarketCapitalization'] ?? 0);
+        $beta_details = $this->calculate_levered_beta($ticker, $balance_sheet, $market_cap, $tax_rate_decimal);
+
+        // Step 3: Prepare payload for the Python Cloud Function
+        $payload = [
+            'ticker' => $ticker,
+            'erp' => (float) get_option('jtw_erp_setting', '5.0') / 100,
+            'tax_rate' => $tax_rate_decimal,
+            'beta_details' => $beta_details
+        ];
+
+        // Step 4: Make the request to the Google Cloud Function
+        $response = wp_remote_post($cloud_function_url, [
+            'method'    => 'POST',
+            'headers'   => ['Content-Type' => 'application/json; charset=utf-8'],
+            'body'      => json_encode($payload),
+            'timeout'   => 45,
+        ]);
+
+        if (is_wp_error($response)) {
+            wp_send_json_error(['message' => 'Error calling Cloud Function: ' . $response->get_error_message()]);
+            return;
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $python_data = json_decode($body, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !isset($python_data['calculated_data'])) {
+            wp_send_json_error(['message' => 'Invalid response from Cloud Function.', 'details' => $body]);
+            return;
+        }
+        // --- End of Refactored Logic ---
+        
+        $html = '';
+        $json_response = [];
+        $calculated_data = $python_data['calculated_data'];
+        $raw_data = $python_data['raw_data_subset'];
+
+        switch ($section) {
+            case 'overview':
+                $this->store_and_map_discovered_company($ticker, $raw_data['overview']['Industry'], $raw_data['overview']['Sector']);
+                $html = $this->build_overview_section_html($raw_data['overview'], $raw_data['quote']);
+                break;
+            case 'historical-data':
+                $html = $this->build_historical_data_section_html($calculated_data['historical_table_data']);
+                break;
+            case 'past-performance':
+                $html = $this->build_past_performance_section_html($calculated_data['historical_chart_data']);
+                break;
+            case 'key-metrics-ratios':
+                $html = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
+                break;
+            case 'intrinsic-valuation':
+                 $latest_price = (float)($raw_data['quote']['05. price'] ?? 0);
+                 $valuation_data = $calculated_data['valuations']; // Use directly from Python
+                 $valuation_summary = [ 'current_price' => $latest_price, 'fair_value' => 0, 'percentage_diff' => 0 ];
+                 $valid_models = [];
+                 foreach ($valuation_data as $result) { if (isset($result['intrinsic_value_per_share'])) { $valid_models[] = $result['intrinsic_value_per_share']; } }
+                 if (!empty($valid_models)) {
+                     $valuation_summary['fair_value'] = array_sum($valid_models) / count($valid_models);
+                     if ($latest_price > 0 && $valuation_summary['fair_value'] > 0) { $valuation_summary['percentage_diff'] = (($latest_price - $valuation_summary['fair_value']) / $valuation_summary['fair_value']) * 100; }
+                 }
+                // Pass the raw data from the Python function to the builder
+                $html = $this->build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $raw_data['overview'], $this->get_and_prepare_company_data($ticker));
+                break;
+        }
+
+        if (empty($html)) {
+            wp_send_json_error(['message' => 'Could not generate content for this section.']);
+        } else {
+            $json_response['html'] = $html;
+            wp_send_json_success($json_response);
+        }
+    }
+
+    /*public function ajax_fetch_section_data() {
         check_ajax_referer('jtw_fetch_section_nonce', 'nonce');
         $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
         $section = isset($_POST['section']) ? sanitize_key($_POST['section']) : '';
@@ -305,7 +409,7 @@ private function get_and_prepare_company_data($ticker) {
         }
         if (empty($html)) { wp_send_json_error(['message' => 'Could not generate content for this section.']); } 
         else { $json_response['html'] = $html; wp_send_json_success($json_response); }
-    }
+    }*/
 
     public function ajax_fetch_peer_data() {
         check_ajax_referer('jtw_fetch_peer_nonce', 'nonce');
