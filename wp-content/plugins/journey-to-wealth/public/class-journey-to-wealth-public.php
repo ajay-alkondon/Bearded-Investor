@@ -244,6 +244,18 @@ class Journey_To_Wealth_Public {
         wp_send_json_success($python_data['calculated_data']['valuations']);
     }
 
+    private function force_utf8_encode($array) {
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $array[$key] = $this->force_utf8_encode($value);
+            } elseif (is_string($value)) {
+                // mb_convert_encoding is more reliable than utf8_encode
+                $array[$key] = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+            }
+        }
+        return $array;
+    }
+
     private function call_python_calculation_engine($ticker, $custom_assumptions = []) {
         $cloud_function_url = get_option('jtw_cloud_function_url');
         if (empty($cloud_function_url)) { return new WP_Error('config_error', 'The Cloud Function URL is not configured.'); }
@@ -266,11 +278,9 @@ class Journey_To_Wealth_Public {
             'custom_assumptions' => $custom_assumptions
         ];
         
-        // **FIX START**: Sanitize the entire array for UTF-8 compatibility before encoding.
         $sanitized_payload = $this->force_utf8_encode($payload);
         $json_payload = json_encode($sanitized_payload);
-        // **FIX END**
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             return new WP_Error('json_encode_error', 'Failed to encode payload for Cloud Function.', ['error' => json_last_error_msg()]);
         }
@@ -365,8 +375,6 @@ class Journey_To_Wealth_Public {
         return '<div class="jtw-metric-card ' . esc_attr($custom_class) . '"><h3 class="jtw-metric-title">' . esc_html($title) . '</h3><p class="jtw-metric-value">' . esc_html($formatted_value) . '</p></div>';
     }
 
-    // --- HTML Building Functions ---
-
     private function build_overview_section_html($overview, $quote) {
         $ticker = $overview['Symbol'] ?? 'N/A';
         $description = $overview['Description'] ?? 'No company description available.';
@@ -391,7 +399,6 @@ class Journey_To_Wealth_Public {
                 <h4><?php echo esc_html($ticker); ?> <?php esc_html_e('Company Overview', 'journey-to-wealth'); ?></h4>
                 <button class="jtw-modal-trigger jtw-details-button" data-modal-target="#jtw-company-details-modal"><?php esc_html_e('View Full Company Details', 'journey-to-wealth'); ?></button>
             </div>
-
             <div class="jtw-price-range-bar" data-low="<?php echo esc_attr($week_low); ?>" data-high="<?php echo esc_attr($week_high); ?>" data-current="<?php echo esc_attr($stock_price); ?>">
                 <h5>52-Week Price Range</h5>
                 <div class="jtw-progress-track"><div class="jtw-progress-fill" style="width: 0%;"></div></div>
@@ -401,7 +408,6 @@ class Journey_To_Wealth_Public {
                     <span><strong>$<?php echo esc_attr(number_format($week_high, 1)); ?></strong></span>
                 </div>
             </div>
-
             <div class="jtw-overview-header-grid">
                 <?php
                 echo $this->create_metric_card('Current Price', $stock_price, '$');
@@ -409,42 +415,24 @@ class Journey_To_Wealth_Public {
                 echo $this->create_metric_card('Shares Outstanding', $overview['SharesOutstanding'] ?? 0, '', '', true);
                 ?>
             </div>
-
             <?php if (!empty($description) && strcasecmp(trim($description), 'none') !== 0) : ?>
                 <div class="jtw-company-description"><p><?php echo esc_html($description); ?></p></div>
             <?php endif; ?>
-
             <div class="jtw-link-cards-grid">
                 <?php if ($cik) : ?>
-                    <a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $cik . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer" class="jtw-sec-filings-card">
-                        <span>View All SEC Filings</span>
-                    </a>
+                    <a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $cik . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer" class="jtw-sec-filings-card"><span>View All SEC Filings</span></a>
                 <?php endif; ?>
                 <?php if ($quarter_param) : ?>
-                    <a href="#" class="jtw-sec-filings-card jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="<?php echo esc_attr($ticker); ?>" data-quarter="<?php echo esc_attr($quarter_param); ?>">
-                        <span><?php echo esc_html($quarter_param); ?> Earnings Transcript</span>
-                    </a>
+                    <a href="#" class="jtw-sec-filings-card jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="<?php echo esc_attr($ticker); ?>" data-quarter="<?php echo esc_attr($quarter_param); ?>"><span><?php echo esc_html($quarter_param); ?> Earnings Transcript</span></a>
                 <?php endif; ?>
             </div>
-
-            <div id="jtw-company-details-modal" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>
-                <h4><?php esc_html_e('Company Details', 'journey-to-wealth'); ?></h4>
-                <div class="jtw-details-grid">
-                    <?php
-                    $details_map = [ 'Exchange' => 'Exchange', 'Sector' => 'Sector', 'Industry' => 'Industry', 'FiscalYearEnd' => 'Fiscal Year End', 'LatestQuarter' => 'Latest Quarter' ];
-                    foreach ($details_map as $key => $title) {
-                        $value = $overview[$key] ?? 'N/A';
-                        if ($value !== 'N/A' && strcasecmp(trim($value), 'none') !== 0) {
-                            echo $this->create_metric_card($title, $value);
-                        }
-                    }
-                    ?>
-                </div>
-            </div></div>
-
-            <div id="jtw-transcript-modal" class="jtw-modal jtw-fullscreen-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>
-                <div id="jtw-transcript-content-target"></div>
-            </div></div>
+            <div id="jtw-company-details-modal" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span><h4><?php esc_html_e('Company Details', 'journey-to-wealth'); ?></h4><div class="jtw-details-grid">
+                <?php
+                $details_map = [ 'Exchange' => 'Exchange', 'Sector' => 'Sector', 'Industry' => 'Industry', 'FiscalYearEnd' => 'Fiscal Year End', 'LatestQuarter' => 'Latest Quarter' ];
+                foreach ($details_map as $key => $title) { echo $this->create_metric_card($title, $overview[$key] ?? 'N/A'); }
+                ?>
+            </div></div></div>
+            <div id="jtw-transcript-modal" class="jtw-modal jtw-fullscreen-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span><div id="jtw-transcript-content-target"></div></div></div>
             <div class="jtw-modal-overlay"></div>
         </div>
         <?php
