@@ -134,7 +134,6 @@
 /* --- Main Analyzer Wrapper (for the analysis page) --- */
 .jtw-analyzer-wrapper {
     width: 100%;
-    max-width: 1400px;
     margin: 20px auto;
 }
 #jtw-main-content-area {
