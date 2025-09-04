@@ -474,6 +474,51 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         return ob_get_clean();
     }
 
+    private function build_intrinsic_valuation_section_html($valuation_models, $valuation_summary, $overview_data, $dcf_result_for_ui) {
+        ob_start();
+        ?>
+        <div class="jtw-content-section" id="section-intrinsic-valuation-content" data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-shares-outstanding="<?php echo esc_attr($overview_data['SharesOutstanding'] ?? 0); ?>" data-ratios="<?php echo esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'] ?? [])); ?>">
+            <div class="jtw-section-header">
+                <h4><?php esc_html_e('Value Projections', 'journey-to-wealth'); ?></h4>
+                <div class="jtw-header-controls">
+                    <button class="jtw-view-assumptions-btn jtw-modal-trigger" data-modal-target="#jtw-assumptions-modal"><?php esc_html_e('View Assumptions', 'journey-to-wealth'); ?></button>
+                </div>
+            </div>
+
+            <div class="jtw-sws-valuation-container">
+                <div class="jtw-sws-header">
+                    <span id="jtw-valuation-status-text">Calculating...</span>
+                </div>
+                <div class="jtw-sws-chart">
+                    </div>
+            </div>
+
+        </div>
+
+        <div id="jtw-assumptions-modal" class="jtw-modal">
+            <div class="jtw-modal-content">
+                <span class="jtw-modal-close">&times;</span>
+                <h4><?php esc_html_e('Valuation Model Assumptions', 'journey-to-wealth'); ?></h4>
+                <p><?php esc_html_e('This table shows the key inputs and calculations for the valuation models.', 'journey-to-wealth'); ?></p>
+                <?php if (!empty($valuation_models)) : ?>
+                    <?php foreach ($valuation_models as $model_key => $result) : ?>
+                        <?php if (isset($result['calculation_breakdown'])) : ?>
+                            <h5><?php echo esc_html($result['calculation_breakdown']['model_name'] ?? 'Valuation Model'); ?></h5>
+                            <pre style="text-align: left; background-color: #f5f5f5; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word;"><?php
+                                echo esc_html(print_r($result['calculation_breakdown'], true));
+                            ?></pre>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p><?php esc_html_e('No valuation data is available to display assumptions.', 'journey-to-wealth'); ?></p>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="jtw-modal-overlay"></div>
+        <?php
+        return ob_get_clean();
+    }
+
     private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
         ob_start();
         ?>
