@@ -267,10 +267,11 @@ class Journey_To_Wealth_Public {
         ];
 
         $response = wp_remote_post($cloud_function_url, [
-            'method'    => 'POST',
-            'headers'   => ['Content-Type' => 'application/json; charset=utf-8'],
-            'body'      => json_encode($payload),
-            'timeout'   => 45,
+            'method'      => 'POST',
+            'headers'     => ['Content-Type' => 'application/json; charset=utf-8'],
+            'body'        => json_encode($payload),
+            'timeout'     => 45,
+            'data_format' => 'body', // **FIX**: Explicitly set the data format to prevent WordPress from altering the body.
         ]);
 
         if (is_wp_error($response)) { return new WP_Error('http_error', 'Error calling Cloud Function: ' . $response->get_error_message()); }
@@ -509,4 +510,5 @@ class Journey_To_Wealth_Public {
         return $debug_data;
     }
 }
+
 
