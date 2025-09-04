@@ -102,14 +102,6 @@ class Journey_To_Wealth_Public {
             ?>
             <div class="jtw-analyzer-wrapper">
                 <div class="jtw-content-container">
-                    <nav class="jtw-anchor-nav">
-                        <ul>
-                            <li class="jtw-nav-group jtw-nav-group-single"><a href="#section-overview" class="jtw-anchor-link jtw-nav-major-section active"><?php esc_html_e('Company Overview', 'journey-to-wealth'); ?></a></li>
-                            <li class="jtw-nav-group"><span class="jtw-nav-major-section"><?php esc_html_e('Valuation', 'journey-to-wealth'); ?></span><div class="jtw-nav-minor-group"><a href="#section-intrinsic-valuation" class="jtw-anchor-link jtw-nav-minor-section"><?php esc_html_e('Value Projections', 'journey-to-wealth'); ?></a><a href="#section-key-metrics-ratios" class="jtw-anchor-link jtw-nav-minor-section"><?php esc_html_e('Comparative Company Analysis', 'journey-to-wealth'); ?></a></div></li>
-                            <li class="jtw-nav-group"><span class="jtw-nav-major-section"><?php esc_html_e('Past Performance', 'journey-to-wealth'); ?></span><div class="jtw-nav-minor-group"><a href="#section-historical-data" class="jtw-anchor-link jtw-nav-minor-section"><?php esc_html_e('Shareholder Metrics', 'journey-to-wealth'); ?></a><a href="#section-past-performance" class="jtw-anchor-link jtw-nav-minor-section"><?php esc_html_e('Visual Data Trends', 'journey-to-wealth'); ?></a></div></li>
-                        </ul>
-                    </nav>
-                    <div class="jtw-mobile-dot-nav"></div>
                     <main class="jtw-content-main">
                         <div id="jtw-currency-notice-placeholder"></div>
                         <div class="jtw-major-content-group"><h2><?php esc_html_e('Company Overview', 'journey-to-wealth'); ?></h2><div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div></div>

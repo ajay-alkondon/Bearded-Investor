@@ -914,85 +914,6 @@ function initializeFairValueAnalysisSection($container) {
         updateChartAndTable(); 
     }
 
-    function setupSWSLayoutInteractivity($contentArea) {
-        const $dotNavContainer = $contentArea.find('.jtw-mobile-dot-nav');
-        const $majorSections = $contentArea.find('.jtw-major-content-group');
-
-        if ($dotNavContainer.length && $majorSections.length) {
-            $dotNavContainer.empty();
-            $majorSections.each(function() {
-                const $section = $(this);
-                const sectionId = $section.find('.jtw-content-section-placeholder').attr('id');
-                const sectionTitle = $section.find('h2').text();
-                if (sectionId && sectionTitle) {
-                    $dotNavContainer.append(`<a class="jtw-dot-link" href="#${sectionId}" data-tooltip="${sectionTitle}"></a>`);
-                }
-            });
-
-            $dotNavContainer.on('click', '.jtw-dot-link', function(e) {
-                e.preventDefault();
-                const targetId = $(this).attr('href');
-                const $targetSection = $(targetId);
-                if ($targetSection.length) {
-                    $('html, body').animate({ scrollTop: $targetSection.offset().top - 80 }, 500);
-                }
-            });
-        }
-        
-        const $anchorNav = $contentArea.find('.jtw-anchor-nav');
-        const $navLinks = $anchorNav.find('a.jtw-anchor-link');
-        const $contentSections = $contentArea.find('.jtw-content-section-placeholder');
-        const offsetTop = 150; 
-
-        $navLinks.off('click').on('click', function(e) {
-            e.preventDefault();
-            const targetId = $(this).attr('href');
-            const $targetSection = $(targetId);
-            if ($targetSection.length) {
-                $('html, body').animate({ scrollTop: $targetSection.offset().top - offsetTop }, 500);
-            }
-        });
-
-        function onScroll() {
-            const scrollPos = $(document).scrollTop();
-            const windowHeight = $(window).height();
-            
-            if ($(window).width() <= 1024) {
-                let activeDot = null;
-                $majorSections.each(function() {
-                    const $section = $(this);
-                    const top = $section.offset().top - 100;
-                    if (top < scrollPos + windowHeight / 2) {
-                        activeDot = $dotNavContainer.find('a[href="#' + $section.find('.jtw-content-section-placeholder').attr('id') + '"]');
-                    }
-                });
-                $dotNavContainer.find('.jtw-dot-link').removeClass('active');
-                if(activeDot) activeDot.addClass('active');
-
-            } else {
-                let activeLink = null;
-                $contentSections.each(function() {
-                    const top = $(this).offset().top;
-                    const sectionContentHeight = $(this).children().first().height() || $(this).height();
-                    if (top <= scrollPos + offsetTop + 1 && (top + sectionContentHeight) > scrollPos + offsetTop + 1) {
-                        activeLink = $navLinks.filter('[href="#' + $(this).attr('id') + '"]');
-                    }
-                });
-                
-                $navLinks.removeClass('active');
-                if (activeLink && activeLink.length > 0) {
-                    activeLink.addClass('active');
-                    $navLinks.closest('.jtw-nav-group').find('.jtw-nav-major-section').removeClass('active');
-                    activeLink.closest('.jtw-nav-group').find('.jtw-nav-major-section').addClass('active');
-                }
-            }
-        }
-        
-        $(document).off('scroll.jtw').on('scroll.jtw', debounce(onScroll, 50));
-        onScroll();
-        $(window).on('resize', debounce(onScroll, 100));
-    }
-
     function initializeHeaderSearch() {
         const $headerForms = $('.jtw-header-lookup-form');
         if (!$headerForms.length) return;
@@ -1075,8 +996,6 @@ function initializeFairValueAnalysisSection($container) {
 
         const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
         if (!ticker) return;
-
-        setupSWSLayoutInteractivity($container);
 
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
