@@ -265,13 +265,20 @@ class Journey_To_Wealth_Public {
             'beta_details' => $beta_details,
             'custom_assumptions' => $custom_assumptions
         ];
+        
+        // **FIX START**: Added robust JSON encoding check.
+        $json_payload = json_encode($payload);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return new WP_Error('json_encode_error', 'Failed to encode payload for Cloud Function.', ['error' => json_last_error_msg()]);
+        }
+        // **FIX END**
 
         $response = wp_remote_post($cloud_function_url, [
             'method'      => 'POST',
             'headers'     => ['Content-Type' => 'application/json; charset=utf-8'],
-            'body'        => json_encode($payload),
+            'body'        => $json_payload, // Use the validated JSON string
             'timeout'     => 45,
-            'data_format' => 'body', // **FIX**: Explicitly set the data format to prevent WordPress from altering the body.
+            'data_format' => 'body', 
         ]);
 
         if (is_wp_error($response)) { return new WP_Error('http_error', 'Error calling Cloud Function: ' . $response->get_error_message()); }
@@ -284,7 +291,6 @@ class Journey_To_Wealth_Public {
         return $python_data;
     }
 
-    // --- All functions below are for PRESENTATION / HTML BUILDING ONLY ---
     private function format_large_number($number, $prefix = '$', $decimals = 1) {
         if (!is_numeric($number) || $number == 0) { return $prefix === '$' ? '$0' : '0'; }
         $abs_number = abs($number); $formatted_number = '';
@@ -295,6 +301,53 @@ class Journey_To_Wealth_Public {
         else { $formatted_number = number_format($number, $decimals); }
         return $prefix . $formatted_number;
     }
+
+    private function format_metric_value($value, $suffix = '') {
+        if (is_numeric($value)) {
+            return number_format((float)$value, 1) . $suffix;
+        }
+        return 'N/A';
+    }
+    
+    private function store_and_map_discovered_company($ticker, $industry_name, $sector_name) {
+        if (empty($ticker) || empty($industry_name)) { return; }
+        $discovered = get_option('jtw_discovered_companies', []);
+        if (!is_array($discovered)) { $discovered = []; }
+        if (!array_key_exists($ticker, $discovered)) {
+            $discovered[$ticker] = $industry_name;
+            update_option('jtw_discovered_companies', $discovered);
+        }
+    }
+
+    private function calculate_levered_beta($ticker, $balance_sheet, $market_cap, $tax_rate) {
+        global $wpdb;
+        $debug_data = [ 'levered_beta' => 1.0, 'unlevered_beta_avg' => null, 'debt_to_equity' => null, 'tax_rate' => $tax_rate, 'mapped_damodaran_industries' => [], 'beta_source' => 'Default' ];
+        $mapping_table = $wpdb->prefix . 'jtw_company_mappings';
+        $beta_table = $wpdb->prefix . 'jtw_industry_betas';
+        $unlevered_betas = $wpdb->get_col($wpdb->prepare( "SELECT b.unlevered_beta FROM $mapping_table as m JOIN $beta_table as b ON m.damodaran_industry_id = b.id WHERE m.ticker = %s", $ticker ));
+        if (empty($unlevered_betas)) { return $debug_data; }
+        $debug_data['mapped_damodaran_industries'] = $wpdb->get_col($wpdb->prepare( "SELECT b.industry_name FROM $mapping_table as m JOIN $beta_table as b ON m.damodaran_industry_id = b.id WHERE m.ticker = %s", $ticker ));
+        $average_unlevered_beta = array_sum($unlevered_betas) / count($unlevered_betas);
+        $debug_data['unlevered_beta_avg'] = $average_unlevered_beta;
+        $debug_data['levered_beta'] = $average_unlevered_beta;
+        $debug_data['beta_source'] = 'Calculated from Industry Beta';
+        if (is_wp_error($balance_sheet) || empty($balance_sheet['annualReports'])) { return $debug_data; }
+        $latest_report = $balance_sheet['annualReports'][0];
+        $total_debt = (float)($latest_report['shortTermDebt'] ?? 0) + (float)($latest_report['longTermDebtNoncurrent'] ?? 0);
+        if ($market_cap > 0) {
+            $debt_to_equity = $total_debt / $market_cap;
+            $debug_data['debt_to_equity'] = $debt_to_equity;
+            $levered_beta = 0.33 + ((0.66 * $average_unlevered_beta) * (1 + (1 - $tax_rate) * $debt_to_equity));
+            $debug_data['unconstrained_levered_beta'] = $levered_beta;
+            $debug_data['relevered_beta_calc'] = '0.33 + [(0.66 * ' . number_format($average_unlevered_beta, 3) . ') * (1 + (1 - ' . number_format($tax_rate * 100, 1) . '%) * ' . number_format($debt_to_equity, 3) . ')]';
+            $levered_beta = max(0.8, min(2.0, $levered_beta));
+            $debug_data['levered_beta'] = $levered_beta;
+            $debug_data['beta_source'] = 'Re-levered from Industry Beta (capped 0.8-2.0)';
+        }
+        return $debug_data;
+    }
+
+    // --- HTML Building Functions ---
 
     private function build_overview_section_html($overview, $quote) {
         $ticker = $overview['Symbol'] ?? 'N/A';
@@ -311,9 +364,7 @@ class Journey_To_Wealth_Public {
             </div>
             <div class="jtw-price-range-bar" data-low="<?php echo esc_attr($week_low); ?>" data-high="<?php echo esc_attr($week_high); ?>" data-current="<?php echo esc_attr($stock_price); ?>">
                 <h5>52-Week Price Range</h5>
-                <div class="jtw-progress-track">
-                    <div class="jtw-progress-fill" style="width: 0%;"></div>
-                </div>
+                <div class="jtw-progress-track"><div class="jtw-progress-fill" style="width: 0%;"></div></div>
                 <div class="jtw-price-range-labels">
                     <span><strong>$<?php echo esc_attr(number_format($week_low, 1)); ?></strong></span>
                     <span><strong>Current: $<?php echo esc_attr(number_format($stock_price, 1)); ?></strong></span>
@@ -353,9 +404,9 @@ class Journey_To_Wealth_Public {
                     <tbody>
                         <?php
                         $metric_groups = [
-                            'Relative Valuation' => [ 'trailingPeRatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 'forwardPeRatio' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'] ],
+                            'Relative Valuation' => ['PERatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 'ForwardPE' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'], 'PriceToBookRatio' => ['label' => 'P/B Ratio', 'suffix' => 'x'], 'PriceToSalesRatioTTM' => ['label' => 'P/S Ratio', 'suffix' => 'x']],
                             'Growth Analysis' => [ 'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'], 'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'] ],
-                            // ... add all other metric groups and metrics as in your original file
+                            'Profitability' => ['grossMargin' => ['label' => 'Gross Margin', 'suffix' => '%'], 'netMargin' => ['label' => 'Net Margin', 'suffix' => '%'], 'returnOnEquityTTM' => ['label' => 'Return on Equity', 'suffix' => '%'], 'returnOnCapitalTTM' => ['label' => 'Return on Capital', 'suffix' => '%']],
                         ];
                         foreach ($metric_groups as $group_name => $metrics) :
                         ?>
@@ -393,9 +444,9 @@ class Journey_To_Wealth_Public {
             <div class="jtw-historical-charts-grid">
                 <?php
                 $chart_configs = [
-                    'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$'],
-                    'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$'],
-                    // ... add all other chart configs
+                    'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$'], 'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$'],
+                    'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$'], 'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$'],
+                    'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$'], 'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$'],
                 ];
                 foreach ($chart_configs as $key => $config) {
                     $annual_data = $historical_data['annual'][$key] ?? [];
@@ -414,35 +465,25 @@ class Journey_To_Wealth_Public {
     }
 
     private function build_historical_data_section_html($table_data) {
+        if (empty($table_data)) { return '<div class="jtw-content-section"><p>Historical data is not available for this company.</p></div>'; }
         ob_start();
         ?>
         <div class="jtw-content-section" id="section-historical-data-content">
             <h4><?php esc_html_e('Shareholder Metrics', 'journey-to-wealth'); ?></h4>
             <div class="jtw-historical-combined-wrapper">
-                <div class="jtw-historical-chart-container">
-                    <canvas id="jtw-historical-chart-canvas"></canvas>
-                </div>
+                <div class="jtw-historical-chart-container"><canvas id="jtw-historical-chart-canvas"></canvas></div>
                 <div class="jtw-historical-table-wrapper">
                     <table class="jtw-historical-table">
-                        <thead>
-                            <tr>
-                                <th>Metric</th>
-                                <?php foreach ($table_data as $data_point) { echo '<th>' . esc_html($data_point['year']) . '</th>'; } ?>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Metric</th><?php foreach ($table_data as $dp) { echo '<th>' . esc_html($dp['year']) . '</th>'; } ?></tr></thead>
                         <tbody>
                             <?php
-                            $metrics = [
-                                'price' => ['label' => 'Price / Share', 'prefix' => '$'],
-                                'revenue_ps' => ['label' => 'Revenue / Share', 'prefix' => '$'],
-                                // ... add all other metrics
-                            ];
+                            $metrics = [ 'price' => ['label' => 'Price / Share', 'prefix' => '$'], 'revenue_ps' => ['label' => 'Revenue / Share', 'prefix' => '$'], 'eps' => ['label' => 'EPS', 'prefix' => '$'], 'cash_flow_ps' => ['label' => 'FCF / Share', 'prefix' => '$'], 'book_value_ps' => ['label' => 'Book Value / Share', 'prefix' => '$'], 'net_profit_margin' => ['label' => 'Net Profit Margin', 'prefix' => '%'], 'return_on_equity' => ['label' => 'Return on Equity', 'prefix' => '%'], 'return_on_capital' => ['label' => 'Return on Capital', 'prefix' => '%'] ];
                             foreach ($metrics as $key => $details) : ?>
                                 <tr data-metric-key="<?php echo esc_attr($key); ?>">
                                     <td><?php echo esc_html($details['label']); ?></td>
-                                    <?php foreach ($table_data as $data_point) {
-                                        $value_key = ($key === 'price') ? 'avg_price' : $key;
-                                        echo '<td>' . $this->format_metric_value($data_point[$value_key] ?? 'N/A', $details['prefix']) . '</td>';
+                                    <?php foreach ($table_data as $dp) {
+                                        $val_key = ($key === 'price') ? 'avg_price' : $key;
+                                        echo '<td>' . $this->format_metric_value($dp[$val_key] ?? 'N/A', $details['prefix']) . '</td>';
                                     } ?>
                                 </tr>
                             <?php endforeach; ?>
@@ -460,55 +501,12 @@ class Journey_To_Wealth_Public {
         $data = $result['calculation_breakdown'] ?? [];
         if(empty($data)) return '<p>Detailed breakdown is not available.</p>';
         ob_start();
-        // ... build the full modal HTML using the $data array ...
-        echo '<h4>Valuation</h4><p>Details here...</p>'; // Placeholder for brevity
+        ?>
+        <h4>Valuation Details</h4>
+        <p>This modal provides a breakdown of the assumptions and calculations used in the valuation model.</p>
+        <pre><?php print_r($data); ?></pre>
+        <?php
         return ob_get_clean();
     }
-    
-    private function format_metric_value($value, $suffix = '') {
-        if (is_numeric($value)) {
-            return number_format((float)$value, 1) . $suffix;
-        }
-        return 'N/A';
-    }
-
-    private function store_and_map_discovered_company($ticker, $industry_name, $sector_name) {
-        if (empty($ticker) || empty($industry_name)) { return; }
-        $discovered = get_option('jtw_discovered_companies', []);
-        if (!is_array($discovered)) { $discovered = []; }
-        if (!array_key_exists($ticker, $discovered)) {
-            $discovered[$ticker] = $industry_name;
-            update_option('jtw_discovered_companies', $discovered);
-        }
-    }
-
-    private function calculate_levered_beta($ticker, $balance_sheet, $market_cap, $tax_rate) {
-        global $wpdb;
-        $debug_data = [ 'levered_beta' => 1.0, 'unlevered_beta_avg' => null, 'debt_to_equity' => null, 'tax_rate' => $tax_rate, 'mapped_damodaran_industries' => [], 'beta_source' => 'Default' ];
-        $mapping_table = $wpdb->prefix . 'jtw_company_mappings';
-        $beta_table = $wpdb->prefix . 'jtw_industry_betas';
-        $unlevered_betas = $wpdb->get_col($wpdb->prepare( "SELECT b.unlevered_beta FROM $mapping_table as m JOIN $beta_table as b ON m.damodaran_industry_id = b.id WHERE m.ticker = %s", $ticker ));
-        if (empty($unlevered_betas)) { return $debug_data; }
-        $debug_data['mapped_damodaran_industries'] = $wpdb->get_col($wpdb->prepare( "SELECT b.industry_name FROM $mapping_table as m JOIN $beta_table as b ON m.damodaran_industry_id = b.id WHERE m.ticker = %s", $ticker ));
-        $average_unlevered_beta = array_sum($unlevered_betas) / count($unlevered_betas);
-        $debug_data['unlevered_beta_avg'] = $average_unlevered_beta;
-        $debug_data['levered_beta'] = $average_unlevered_beta;
-        $debug_data['beta_source'] = 'Calculated from Industry Beta';
-        if (is_wp_error($balance_sheet) || empty($balance_sheet['annualReports'])) { return $debug_data; }
-        $latest_report = $balance_sheet['annualReports'][0];
-        $total_debt = (float)($latest_report['shortTermDebt'] ?? 0) + (float)($latest_report['longTermDebtNoncurrent'] ?? 0);
-        if ($market_cap > 0) {
-            $debt_to_equity = $total_debt / $market_cap;
-            $debug_data['debt_to_equity'] = $debt_to_equity;
-            $levered_beta = 0.33 + ((0.66 * $average_unlevered_beta) * (1 + (1 - $tax_rate) * $debt_to_equity));
-            $debug_data['unconstrained_levered_beta'] = $levered_beta;
-            $debug_data['relevered_beta_calc'] = '0.33 + [(0.66 * ' . number_format($average_unlevered_beta, 3) . ') * (1 + (1 - ' . number_format($tax_rate * 100, 1) . '%) * ' . number_format($debt_to_equity, 3) . ')]';
-            $levered_beta = max(0.8, min(2.0, $levered_beta));
-            $debug_data['levered_beta'] = $levered_beta;
-            $debug_data['beta_source'] = 'Re-levered from Industry Beta (capped 0.8-2.0)';
-        }
-        return $debug_data;
-    }
 }
-
 
