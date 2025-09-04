@@ -1695,57 +1695,103 @@ body.dark-mode .jtw-current-price-label {
     color: var(--jtw-text-light);
 }
 
+/* --- SWS Style Modal Enhancements --- */
+.jtw-modal-content h4.jtw-modal-title {
+    text-align: left;
+    font-size: 1.4em;
+    margin-bottom: 25px;
+}
+
+.jtw-modal-stage {
+    margin-bottom: 30px;
+}
+
+.jtw-modal-stage .jtw-modal-subtitle {
+    text-align: left;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--jtw-border-color-light);
+}
+
+.jtw-sws-modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.jtw-sws-modal-table th,
+.jtw-sws-modal-table td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--jtw-border-color-light);
+    vertical-align: middle;
+}
+
+.jtw-sws-modal-table thead th {
+    background-color: var(--jtw-page-bg);
+    font-weight: 600;
+}
+
+.jtw-sws-modal-table td:first-child,
+.jtw-sws-modal-table th:first-child {
+    font-weight: 500;
+    width: 25%;
+}
+
+.jtw-sws-modal-table td:last-child,
+.jtw-sws-modal-table th:last-child {
+    text-align: right;
+    font-weight: 600;
+}
+
+.jtw-sws-modal-table .jtw-formula {
+    font-size: 0.9em;
+    font-family: monospace;
+    color: var(--jtw-text-medium);
+    margin-bottom: 4px;
+}
+.jtw-sws-modal-table .jtw-formula-vals {
+    font-size: 0.85em;
+    font-family: monospace;
+    color: var(--jtw-text-light);
+}
+
 /* --- Dark Mode Overrides for SWS Modal --- */
 body.dark-mode .jtw-modal {
-    background-color: #1e293b !important; /* Dark Slate Blue */
-    color: #94a3b8; /* Slate Gray text */
+    background-color: #1e293b !important;
+    color: #94a3b8;
     border: 1px solid #334155;
 }
 
-body.dark-mode .jtw-modal-close {
-    color: #94a3b8;
-}
-body.dark-mode .jtw-modal-close:hover {
-    color: #f8fafc;
-}
+body.dark-mode .jtw-modal-close { color: #94a3b8; }
+body.dark-mode .jtw-modal-close:hover { color: #f8fafc; }
 
 body.dark-mode .jtw-modal-content h4.jtw-modal-title,
 body.dark-mode .jtw-modal-stage .jtw-modal-subtitle {
-    color: #f8fafc; /* White text for titles */
+    color: #f8fafc;
 }
 
 body.dark-mode .jtw-modal-stage .jtw-modal-subtitle {
-    border-bottom-color: #334155; /* Darker border */
+    border-bottom-color: #334155;
 }
 
-body.dark-mode .jtw-sws-modal-table {
-    color: #cbd5e0; /* Light grey text for table content */
-}
+body.dark-mode .jtw-sws-modal-table { color: #cbd5e0; }
 
 body.dark-mode .jtw-sws-modal-table th,
 body.dark-mode .jtw-sws-modal-table td {
-    border-bottom-color: #334155; /* Darker border */
+    border-bottom-color: #334155;
 }
 
 body.dark-mode .jtw-sws-modal-table thead th {
-    background-color: #334155 !important; /* Slightly lighter dark blue for header */
-    color: #f8fafc; /* White text for header */
+    background-color: #334155 !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .jtw-sws-modal-table td:last-child,
 body.dark-mode .jtw-sws-modal-table th:last-child {
-    color: #f8fafc; /* Ensure result text is white */
+    color: #f8fafc;
 }
 
-body.dark-mode .jtw-sws-modal-table .jtw-formula {
-    color: #94a3b8; /* Lighter grey for formula text */
-}
-body.dark-mode .jtw-sws-modal-table .jtw-formula-vals {
-    color: #64748b; /* Even lighter grey for formula values */
-}
-
-body.dark-mode .jtw-formula-display {
-    background-color: #334155 !important;
-    border-color: #475569;
-    color: #94a3b8;
-}
+body.dark-mode .jtw-sws-modal-table .jtw-formula { color: #94a3b8; }
+body.dark-mode .jtw-sws-modal-table .jtw-formula-vals { color: #64748b; }
