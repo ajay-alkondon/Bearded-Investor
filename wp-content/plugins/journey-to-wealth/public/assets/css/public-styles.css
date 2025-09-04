@@ -1669,7 +1669,7 @@ body.dark-mode .jtw-current-price-label {
 }
 
 .jtw-sws-modal-table thead th {
-    background-color: var(--jtw-page-bg);
+    background-color: var(--jtw-text-dark);
     font-weight: 600;
 }
 
