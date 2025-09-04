@@ -171,7 +171,8 @@ class Journey_To_Wealth_Public {
                 $html = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
                 break;
             case 'intrinsic-valuation':
-                $latest_price = (float)($raw_data['quote']['05. price'] ?? 0);
+                $quote_data = $raw_data['quote']['Global Quote'] ?? $raw_data['quote']['Global Quote - DATA DELAYED BY 15 MINUTES'] ?? [];
+                $latest_price = !empty($quote_data) ? (float)($quote_data['05. price'] ?? 0) : 0;
                 $valuation_models = $calculated_data['valuations'] ?? [];
                 $valuation_summary = [ 'current_price' => $latest_price, 'fair_value' => 0, 'percentage_diff' => 0 ];
                 $valid_models = [];
