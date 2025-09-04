@@ -1587,66 +1587,6 @@ body.dark-mode .jtw-current-price-label {
 }
 
 .jtw-sws-modal-table thead th {
-    background-color: var(--jtw-text-dark);
-    font-weight: 600;
-}
-
-.jtw-sws-modal-table td:nth-child(1) {
-    font-weight: 500;
-    width: 30%;
-}
-.jtw-sws-modal-table td:last-child,
-.jtw-sws-modal-table th:last-child {
-    text-align: right;
-    font-weight: 600;
-}
-
-.jtw-sws-modal-table .jtw-formula {
-    font-size: 0.9em;
-    font-family: monospace;
-    color: var(--jtw-text-medium);
-    margin-bottom: 4px;
-}
-.jtw-sws-modal-table .jtw-formula-vals {
-    font-size: 0.85em;
-    font-family: monospace;
-    color: var(--jtw-text-light);
-}
-
-/* --- SWS Style Modal Enhancements --- */
-.jtw-modal-content h4.jtw-modal-title {
-    text-align: left;
-    font-size: 1.4em;
-    margin-bottom: 25px;
-}
-
-.jtw-modal-stage {
-    margin-bottom: 30px;
-}
-
-.jtw-modal-stage .jtw-modal-subtitle {
-    text-align: left;
-    font-size: 1.2em;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--jtw-border-color-light);
-}
-
-.jtw-sws-modal-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9em;
-}
-
-.jtw-sws-modal-table th,
-.jtw-sws-modal-table td {
-    padding: 12px 10px;
-    text-align: left;
-    border-bottom: 1px solid var(--jtw-border-color-light);
-    vertical-align: middle;
-}
-
-.jtw-sws-modal-table thead th {
     background-color: var(--jtw-page-bg);
     font-weight: 600;
 }
@@ -1673,6 +1613,15 @@ body.dark-mode .jtw-current-price-label {
     font-size: 0.85em;
     font-family: monospace;
     color: var(--jtw-text-light);
+}
+
+.jtw-sws-modal-table .jtw-table-total-row td {
+    border-top: 2px solid var(--jtw-border-color);
+    font-size: 1.05em;
+}
+
+body.dark-mode .jtw-sws-modal-table .jtw-table-total-row td {
+    border-top-color: #475569;
 }
 
 /* --- Dark Mode Overrides for SWS Modal --- */
