@@ -741,11 +741,83 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
     private function build_dcf_modal_content($result) {
         $data = $result['calculation_breakdown'] ?? [];
         if(empty($data)) return '<p>Detailed breakdown is not available.</p>';
+
+        $intrinsic_value = $result['intrinsic_value_per_share'] ?? null;
+        $d_rate_calc = $data['discount_rate_calc'] ?? [];
+        $inputs = $data['inputs'] ?? [];
+        $ratios = $data['component_ratios']['projection_ratios'] ?? [];
+        $projection_table = $data['projection_table'] ?? [];
+
         ob_start();
         ?>
-        <h4>Valuation Details</h4>
-        <p>This modal provides a breakdown of the assumptions and calculations used in the valuation model.</p>
-        <pre><?php print_r($data); ?></pre>
+        <h4>Discounted Cash Flow (DCF) Breakdown</h4>
+        <p>This modal provides a detailed breakdown of the assumptions and calculations used in the valuation model.</p>
+
+        <h5>Core Assumptions</h5>
+        <table class="jtw-modal-table">
+            <tbody>
+                <tr><td>Discount Rate (Cost of Equity)</td><td><?php echo is_numeric($inputs['discount_rate']) ? number_format($inputs['discount_rate'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                <tr><td><strong><em>Calculation Breakdown:</em></strong></td><td></td></tr>
+                <tr><td>&nbsp;&nbsp;&nbsp;Risk-Free Rate</td><td><?php echo is_numeric($d_rate_calc['risk_free_rate']) ? number_format($d_rate_calc['risk_free_rate'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                <tr><td>&nbsp;&nbsp;&nbsp;Equity Risk Premium (ERP)</td><td><?php echo is_numeric($d_rate_calc['equity_risk_premium']) ? number_format($d_rate_calc['equity_risk_premium'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                <tr><td>&nbsp;&nbsp;&nbsp;Levered Beta</td><td><?php echo is_numeric($d_rate_calc['beta']) ? number_format($d_rate_calc['beta'], 2) : 'N/A'; ?></td></tr>
+                <tr><td>&nbsp;&nbsp;&nbsp;Beta Source</td><td><?php echo esc_html($d_rate_calc['beta_details']['beta_source'] ?? 'N/A'); ?></td></tr>
+                <tr><td>Initial Growth Rate (for projection)</td><td><?php echo is_numeric($inputs['initial_growth_rate']) ? number_format($inputs['initial_growth_rate'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                <tr><td>Terminal Growth Rate (Perpetuity)</td><td><?php echo is_numeric($inputs['terminal_growth_rate']) ? number_format($inputs['terminal_growth_rate'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+            </tbody>
+        </table>
+
+        <?php if (!empty($ratios)): ?>
+            <h5>TTM Component Ratios (as % of Revenue)</h5>
+            <p><small>These historical ratios are used to project the individual components of Free Cash Flow to Equity (FCFE).</small></p>
+            <table class="jtw-modal-table">
+                <tbody>
+                    <tr><td>Net Income / Revenue</td><td><?php echo is_numeric($ratios['net_income_of_revenue']) ? number_format($ratios['net_income_of_revenue'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                    <tr><td>Depreciation / Revenue</td><td><?php echo is_numeric($ratios['depreciation_of_revenue']) ? number_format($ratios['depreciation_of_revenue'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                    <tr><td>Capital Expenditures (CapEx) / Revenue</td><td><?php echo is_numeric($ratios['capex_of_revenue']) ? number_format($ratios['capex_of_revenue'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                    <tr><td>Change in Net Working Capital / Revenue</td><td><?php echo is_numeric($ratios['delta_nwc_of_revenue']) ? number_format($ratios['delta_nwc_of_revenue'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                    <tr><td>Net Borrowing / Revenue</td><td><?php echo is_numeric($ratios['net_borrowing_of_revenue']) ? number_format($ratios['net_borrowing_of_revenue'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <?php if (!empty($projection_table)): ?>
+            <h5>10-Year FCFE Projections</h5>
+            <table class="jtw-modal-table">
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>FCFE</th>
+                        <th>Growth Rate</th>
+                        <th>Present Value of FCFE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($projection_table as $row): ?>
+                    <tr>
+                        <td><?php echo esc_html($row['year']); ?></td>
+                        <td><?php echo $this->format_large_number($row['cf']); ?></td>
+                        <td><?php echo is_numeric($row['growth_rate']) ? number_format($row['growth_rate'] * 100, 1) . '%' : 'N/A'; ?></td>
+                        <td><?php echo $this->format_large_number($row['pv_cf']); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <h5>Final Calculation</h5>
+        <table class="jtw-modal-table">
+             <tbody>
+                <tr><td>Sum of Discounted FCFE (Stage 1)</td><td><?php echo $this->format_large_number($data['sum_of_pv_cfs'] ?? 0); ?></td></tr>
+                <tr><td>Terminal Value (Stage 2)</td><td><?php echo $this->format_large_number($data['terminal_value'] ?? 0); ?></td></tr>
+                <tr><td>Discounted Terminal Value</td><td><?php echo $this->format_large_number($data['pv_of_terminal_value'] ?? 0); ?></td></tr>
+                <tr><td>Total Equity Value</td><td><strong><?php echo $this->format_large_number($data['total_equity_value'] ?? 0); ?></strong></td></tr>
+                <tr><td>Shares Outstanding</td><td><?php echo number_format($data['shares_outstanding'] ?? 0, 0); ?></td></tr>
+                <tr><td>Intrinsic Value per Share</td><td><strong><?php echo is_numeric($intrinsic_value) ? '$' . number_format($intrinsic_value, 2) : 'N/A'; ?></strong></td></tr>
+                <tr><td>Current Price</td><td><?php echo is_numeric($data['current_price']) ? '$' . number_format($data['current_price'], 2) : 'N/A'; ?></td></tr>
+            </tbody>
+        </table>
+
         <?php
         return ob_get_clean();
     }
