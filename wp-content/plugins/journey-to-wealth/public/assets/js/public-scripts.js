@@ -747,8 +747,9 @@ function initializeFairValueAnalysisSection($container) {
     function initializeHistoricalDataSection($container) {
         const $dataScript = $container.find('#jtw-historical-data-json');
         if (!$dataScript.length) return;
+
+        const chartId = 'jtw-historical-chart-canvas';
     
-        const chartId = $dataScript.data('chart-id');
         const ctx = document.getElementById(chartId);
         const $tableWrapper = $container.find('.jtw-historical-table-wrapper');
 

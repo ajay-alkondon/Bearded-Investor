@@ -687,9 +687,13 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
             <div class="jtw-historical-charts-grid">
                 <?php
                 $chart_configs = [
-                    'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$'], 'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$'],
-                    'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$'], 'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$'],
-                    'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$'], 'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$'],
+                    'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$'], 
+                    'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$'],
+                    'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$'], 
+                    'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$'],
+                    'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$'], 
+                    'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$'],
+                    'cash-and-debt' => ['title' => 'Cash & Debt', 'type' => 'bar', 'prefix' => '$', 'colors' => '["rgba(0, 122, 255, 0.6)", "rgba(255, 99, 132, 0.6)"]']
                 ];
                 foreach ($chart_configs as $key => $config) {
                     $annual_data = $historical_data['annual'][$key] ?? [];
