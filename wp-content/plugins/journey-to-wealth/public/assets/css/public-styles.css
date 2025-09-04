@@ -1694,3 +1694,58 @@ body.dark-mode .jtw-current-price-label {
     font-family: monospace;
     color: var(--jtw-text-light);
 }
+
+/* --- Dark Mode Overrides for SWS Modal --- */
+body.dark-mode .jtw-modal {
+    background-color: #1e293b; /* Dark Slate Blue */
+    color: #94a3b8; /* Slate Gray text */
+    border: 1px solid #334155;
+}
+
+body.dark-mode .jtw-modal-close {
+    color: #94a3b8;
+}
+body.dark-mode .jtw-modal-close:hover {
+    color: #f8fafc;
+}
+
+body.dark-mode .jtw-modal-content h4.jtw-modal-title,
+body.dark-mode .jtw-modal-stage .jtw-modal-subtitle {
+    color: #f8fafc; /* White text for titles */
+}
+
+body.dark-mode .jtw-modal-stage .jtw-modal-subtitle {
+    border-bottom-color: #334155; /* Darker border */
+}
+
+body.dark-mode .jtw-sws-modal-table {
+    color: #cbd5e0; /* Light grey text for table content */
+}
+
+body.dark-mode .jtw-sws-modal-table th,
+body.dark-mode .jtw-sws-modal-table td {
+    border-bottom-color: #334155; /* Darker border */
+}
+
+body.dark-mode .jtw-sws-modal-table thead th {
+    background-color: #334155; /* Slightly lighter dark blue for header */
+    color: #f8fafc; /* White text for header */
+}
+
+body.dark-mode .jtw-sws-modal-table td:last-child,
+body.dark-mode .jtw-sws-modal-table th:last-child {
+    color: #f8fafc; /* Ensure result text is white */
+}
+
+body.dark-mode .jtw-sws-modal-table .jtw-formula {
+    color: #94a3b8; /* Lighter grey for formula text */
+}
+body.dark-mode .jtw-sws-modal-table .jtw-formula-vals {
+    color: #64748b; /* Even lighter grey for formula values */
+}
+
+body.dark-mode .jtw-formula-display {
+    background-color: #334155;
+    border-color: #475569;
+    color: #94a3b8;
+}
