@@ -586,14 +586,24 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios=\'' . $component_ratios_json . '\' data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-shares-outstanding="' . esc_attr($shares_outstanding) . '">';
         $output .= '<div class="jtw-section-header"><h4>' . esc_html__('Value Projections', 'journey-to-wealth') . '</h4></div>';
 
-        $base_revenue = $dcf_result_data['base_revenue'];
+        // <<< START MODIFICATION >>>
+        // Prioritize the new analyst revenue and calculated growth from Python for the "current year" column.
+        $analyst_revenue_current_year = $dcf_result_data['analyst_revenue_current_year'] ?? $dcf_result_data['base_revenue'] ?? 0;
+        $base_revenue = $analyst_revenue_current_year; // Use this as the starting point for display.
+
+        if (isset($dcf_result_data['current_year_revenue_growth']) && is_numeric($dcf_result_data['current_year_revenue_growth'])) {
+            $current_year_revenue_growth = $dcf_result_data['current_year_revenue_growth'] * 100;
+        } else {
+            // Fallback to the model's default initial growth rate if specific calculation isn't available
+            $current_year_revenue_growth = ($dcf_result_data['inputs']['initial_growth_rate'] ?? 0) * 100;
+        }
+        // <<< END MODIFICATION >>>
+
         $current_year = date('Y');
         $unit = ''; $divisor = 1;
         if (abs($base_revenue) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
         elseif (abs($base_revenue) >= 1.0e+6) { $unit = '(Millions)'; $divisor = 1.0e+6; }
         
-        $analyst_revenue_current_year = $dcf_result_data['base_revenue'] ?? 0;
-        $current_year_revenue_growth = ($dcf_result_data['inputs']['initial_growth_rate'] ?? 0) * 100;
         $net_income_to_revenue_ratio = $dcf_result_data['component_ratios']['projection_ratios']['net_income_of_revenue'] ?? 0;
         $current_year_net_income = $analyst_revenue_current_year * $net_income_to_revenue_ratio;
         $current_year_eps = ($shares_outstanding > 0) ? $current_year_net_income / $shares_outstanding : 0;
