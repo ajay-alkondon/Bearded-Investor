@@ -312,7 +312,7 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         'erp'                => (float) get_option('jtw_erp_setting', '5.0') / 100,
         'tax_rate'           => $tax_rate_decimal,
         'beta_details'       => $beta_details,
-        'custom_assumptions' => $custom_assumptions,
+        'custom_assumptions' => !empty($custom_assumptions) ? $custom_assumptions : new stdClass(),
     ];
 
     // Sanitize and encode the payload to JSON
