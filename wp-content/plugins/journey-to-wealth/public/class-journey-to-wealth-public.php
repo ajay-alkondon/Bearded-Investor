@@ -738,91 +738,142 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         return ob_get_clean();
     }
 
-    private function build_dcf_modal_content($result) {
+private function build_dcf_modal_content($result) {
         $data = $result['calculation_breakdown'] ?? [];
         if(empty($data)) return '<p class="jtw-left-align">Detailed breakdown is not available.</p>';
 
+        // --- Prepare all variables from the data payload ---
         $intrinsic_value = $result['intrinsic_value_per_share'] ?? null;
+        $current_price = $data['current_price'] ?? 0;
+        
         $d_rate_calc = $data['discount_rate_calc'] ?? [];
         $beta_details = $d_rate_calc['beta_details'] ?? [];
         $inputs = $data['inputs'] ?? [];
-        $ratios = $data['component_ratios']['projection_ratios'] ?? [];
+        
         $projection_table = $data['projection_table'] ?? [];
+        $last_projection = end($projection_table);
+        $last_projected_fcfe = $last_projection['cf'] ?? 0;
+        
+        $sum_of_pv_cfs = $data['sum_of_pv_cfs'] ?? 0;
+        $terminal_value = $data['terminal_value'] ?? 0;
+        $pv_of_terminal_value = $data['pv_of_terminal_value'] ?? 0;
+        $total_equity_value = $data['total_equity_value'] ?? 0;
+        $shares_outstanding = $data['shares_outstanding'] ?? 0;
+        
+        $discount_pct = 0;
+        if ($intrinsic_value > 0) {
+            $discount_pct = (($intrinsic_value - $current_price) / $intrinsic_value) * 100;
+        }
 
         ob_start();
         ?>
-        <h4 class="jtw-left-align">Discounted Cash Flow (DCF) Breakdown</h4>
-        <p class="jtw-left-align"><small>This modal provides a detailed breakdown of the assumptions and calculations used in the valuation model.</small></p>
+        <h4 class="jtw-modal-title">Intrinsic Value Calculation for <?php echo esc_html( $data['model_name'] ?? 'DCF' ); ?></h4>
 
-        <h5 class="jtw-left-align">Core Assumptions</h5>
-        <table class="jtw-modal-table three-col">
-            <thead><tr><th>Metric</th><th>Value</th><th>Source</th></tr></thead>
-            <tbody>
-                <tr><td>Risk-Free Rate</td><td><?php echo is_numeric($d_rate_calc['risk_free_rate']) ? number_format($d_rate_calc['risk_free_rate'] * 100, 2) . '%' : 'N/A'; ?></td><td><?php echo esc_html($d_rate_calc['risk_free_rate_source']); ?></td></tr>
-                <tr><td>Equity Risk Premium (ERP)</td><td><?php echo is_numeric($d_rate_calc['equity_risk_premium']) ? number_format($d_rate_calc['equity_risk_premium'] * 100, 2) . '%' : 'N/A'; ?></td><td><?php echo esc_html($d_rate_calc['erp_source']); ?></td></tr>
-                <tr><td>Initial Growth Rate</td><td><?php echo is_numeric($inputs['initial_growth_rate']) ? number_format($inputs['initial_growth_rate'] * 100, 2) . '%' : 'N/A'; ?></td><td><?php echo esc_html($inputs['growth_rate_source']); ?></td></tr>
-                <tr><td>Terminal Growth Rate</td><td><?php echo is_numeric($inputs['terminal_growth_rate']) ? number_format($inputs['terminal_growth_rate'] * 100, 2) . '%' : 'N/A'; ?></td><td>Equal to Risk-Free Rate</td></tr>
-            </tbody>
-        </table>
+        <div class="jtw-modal-stage">
+            <h5 class="jtw-modal-subtitle">Stage 1: Inputs</h5>
+            <table class="jtw-sws-modal-table">
+                <tbody>
+                    <tr><td>Valuation Model</td><td>2 Stage Free Cash Flow to Equity</td></tr>
+                    <tr><td>Levered Free Cash Flow</td><td>Analyst Estimates & Model Projections</td></tr>
+                    <tr><td>Discount Rate (Cost of Equity)</td><td><?php echo is_numeric($inputs['discount_rate']) ? number_format($inputs['discount_rate'] * 100, 1) . '%' : 'N/A'; ?></td></tr>
+                    <tr><td>Perpetual Growth Rate</td><td><?php echo is_numeric($inputs['terminal_growth_rate']) ? number_format($inputs['terminal_growth_rate'] * 100, 1) . '%' : 'N/A'; ?></td></tr>
+                </tbody>
+            </table>
+        </div>
 
-        <h5 class="jtw-left-align">Beta Calculation</h5>
-        <table class="jtw-modal-table three-col">
-            <thead><tr><th>Metric</th><th>Value</th><th>Source</th></tr></thead>
-            <tbody>
-                <tr><td>Unlevered Beta (Industry Avg)</td><td><?php echo is_numeric($beta_details['unlevered_beta_avg']) ? number_format($beta_details['unlevered_beta_avg'], 2) : 'N/A'; ?></td><td>Damodaran Data</td></tr>
-                <tr><td>Corporate Tax Rate</td><td><?php echo is_numeric($beta_details['tax_rate']) ? number_format($beta_details['tax_rate'] * 100, 1) . '%' : 'N/A'; ?></td><td>Plugin Setting</td></tr>
-                <tr><td>Debt-to-Equity Ratio</td><td><?php echo is_numeric($beta_details['debt_to_equity']) ? number_format($beta_details['debt_to_equity'], 2) : 'N/A'; ?></td><td>Company Financials</td></tr>
-                <tr><td><strong>Levered Beta (Calculated)</strong></td><td><strong><?php echo is_numeric($d_rate_calc['beta']) ? number_format($d_rate_calc['beta'], 2) : 'N/A'; ?></strong></td><td><em>See Formula Below</em></td></tr>
-            </tbody>
-        </table>
-        <p class="jtw-formula-display"><strong>Formula:</strong> Levered Beta = Unlevered Beta * (1 + (1 - Tax Rate) * D/E Ratio)</p>
+        <div class="jtw-modal-stage">
+            <h5 class="jtw-modal-subtitle">Stage 2: Discount Rate (Cost of Equity) Calculation</h5>
+            <table class="jtw-sws-modal-table">
+                <thead><tr><th>Data Point</th><th>Calculation / Source</th><th>Result</th></tr></thead>
+                <tbody>
+                    <tr><td>Risk-Free Rate</td><td><?php echo esc_html($d_rate_calc['risk_free_rate_source']); ?></td><td><?php echo number_format(($d_rate_calc['risk_free_rate'] ?? 0) * 100, 1) . '%'; ?></td></tr>
+                    <tr><td>Equity Risk Premium</td><td>Plugin Setting</td><td><?php echo number_format(($d_rate_calc['equity_risk_premium'] ?? 0) * 100, 2) . '%'; ?></td></tr>
+                    <tr><td>Unlevered Beta</td><td>Damodaran Industry Data</td><td><?php echo number_format($beta_details['unlevered_beta_avg'] ?? 0, 2); ?></td></tr>
+                    <tr>
+                        <td>Re-levered Beta</td>
+                        <td><div class="jtw-formula"><?php echo esc_html($beta_details['relevered_beta_calc'] ?? 'Unlevered Beta * (1 + (1 - Tax Rate) * D/E)'); ?></div></td>
+                        <td><?php echo number_format($beta_details['unconstrained_levered_beta'] ?? 0, 3); ?></td>
+                    </tr>
+                     <tr><td>Levered Beta</td><td>Levered Beta limited to 0.8 to 2.0</td><td><?php echo number_format($d_rate_calc['beta'] ?? 0, 3); ?></td></tr>
+                    <tr>
+                        <td>Discount Rate/ Cost of Equity</td>
+                        <td><div class="jtw-formula">= Risk Free Rate + (Levered Beta * Equity Risk Premium)</div><div class="jtw-formula-vals">= <?php echo number_format(($d_rate_calc['risk_free_rate'] ?? 0) * 100, 2) . '% + (' . number_format($d_rate_calc['beta'] ?? 0, 3) . ' * ' . number_format(($d_rate_calc['equity_risk_premium'] ?? 0) * 100, 2) . '%)'; ?></div></td>
+                        <td><?php echo number_format(($inputs['discount_rate'] ?? 0) * 100, 3) . '%'; ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-        <h5 class="jtw-left-align">Discount Rate (Cost of Equity) Calculation</h5>
-        <table class="jtw-modal-table">
-            <tbody>
-                 <tr><td>Calculated Levered Beta</td><td><?php echo is_numeric($d_rate_calc['beta']) ? number_format($d_rate_calc['beta'], 2) : 'N/A'; ?></td></tr>
-                 <tr><td>Equity Risk Premium (ERP)</td><td><?php echo is_numeric($d_rate_calc['equity_risk_premium']) ? number_format($d_rate_calc['equity_risk_premium'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
-                 <tr><td>Risk-Free Rate</td><td><?php echo is_numeric($d_rate_calc['risk_free_rate']) ? number_format($d_rate_calc['risk_free_rate'] * 100, 2) . '%' : 'N/A'; ?></td></tr>
-                 <tr><td><strong>Discount Rate (Result)</strong></td><td><strong><?php echo is_numeric($inputs['discount_rate']) ? number_format($inputs['discount_rate'] * 100, 2) . '%' : 'N/A'; ?></strong></td></tr>
-            </tbody>
-        </table>
-        <p class="jtw-formula-display"><strong>Formula:</strong> Discount Rate = Risk-Free Rate + (Levered Beta * Equity Risk Premium)</p>
+        <div class="jtw-modal-stage">
+            <h5 class="jtw-modal-subtitle">Stage 3: 10-Year Levered FCF Projections</h5>
+             <table class="jtw-sws-modal-table">
+                <thead><tr><th>Year</th><th>Levered FCF</th><th>Source</th><th>Present Value (Discounted @ <?php echo number_format(($inputs['discount_rate'] ?? 0) * 100, 2) . '%'; ?>)</th></tr></thead>
+                <tbody>
+                    <?php foreach ($projection_table as $index => $row): ?>
+                    <tr>
+                        <td><?php echo esc_html($row['year']); ?></td>
+                        <td><?php echo $this->format_large_number($row['cf'], '$', 2); ?></td>
+                        <td><?php echo ($index < 3) ? 'Analyst Growth Estimate Based' : 'Est @ ' . number_format($row['growth_rate'] * 100, 2) . '%'; ?></td>
+                        <td><?php echo $this->format_large_number($row['pv_cf'], '$', 2); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
 
-        <h5 class="jtw-left-align">TTM Component Ratios (as % of Revenue)</h5>
-        <p class="jtw-left-align"><small>These historical ratios are used to project the components of Free Cash Flow to Equity (FCFE).</small></p>
-        <p class="jtw-formula-display"><strong>FCFE Formula:</strong> Net Income + Depreciation - CapEx - Δ Net Working Capital + Net Borrowing</p>
-        
-        <h5 class="jtw-left-align">10-Year FCFE Projections</h5>
-        <p class="jtw-left-align"><small>Note: The "Present Value" decreases each year because future cash flows are discounted more heavily to reflect their value in today's money.</small></p>
-        <table class="jtw-modal-table">
-            <thead><tr><th>Year</th><th>FCFE</th><th>Growth Rate</th><th>Present Value of FCFE</th></tr></thead>
-            <tbody>
-                <?php foreach ($projection_table as $row): ?>
-                <tr>
-                    <td><?php echo esc_html($row['year']); ?></td>
-                    <td><?php echo $this->format_large_number($row['cf']); ?></td>
-                    <td><?php echo is_numeric($row['growth_rate']) ? number_format($row['growth_rate'] * 100, 1) . '%' : 'N/A'; ?></td>
-                    <td><?php echo $this->format_large_number($row['pv_cf']); ?></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+        <div class="jtw-modal-stage">
+             <h5 class="jtw-modal-subtitle">Stage 4: Terminal Value Calculation</h5>
+             <table class="jtw-sws-modal-table">
+                 <thead><tr><th>Calculation</th><th>Result</th></tr></thead>
+                 <tbody>
+                    <tr>
+                        <td>Terminal Value</td>
+                        <td><strong><?php echo $this->format_large_number($terminal_value, '$', 2); ?></strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><div class="jtw-formula">= FCF<sub><?php echo esc_html($last_projection['year']); ?></sub> &times; (1 + g) &divide; (Discount Rate - g)</div><div class="jtw-formula-vals">= <?php echo $this->format_large_number($last_projected_fcfe, '$', 0); ?> &times; (1 + <?php echo number_format(($inputs['terminal_growth_rate'] ?? 0) * 100, 2); ?>%) &divide; (<?php echo number_format(($inputs['discount_rate'] ?? 0) * 100, 2) . '% - ' . number_format(($inputs['terminal_growth_rate'] ?? 0) * 100, 2); ?>%)</div></td>
+                    </tr>
+                    <tr>
+                        <td>Present Value of Terminal Value</td>
+                        <td><strong><?php echo $this->format_large_number($pv_of_terminal_value, '$', 2); ?></strong></td>
+                    </tr>
+                     <tr>
+                        <td colspan="2"><div class="jtw-formula">= Terminal Value &divide; (1 + r)<sup>10</sup></div><div class="jtw-formula-vals">= <?php echo $this->format_large_number($terminal_value, '$', 0); ?> &divide; (1 + <?php echo number_format(($inputs['discount_rate'] ?? 0) * 100, 2); ?>%)<sup>10</sup></div></td>
+                    </tr>
+                 </tbody>
+             </table>
+        </div>
 
-        <h5 class="jtw-left-align">Final Calculation</h5>
-        <table class="jtw-modal-table">
-             <tbody>
-                <tr><td>Sum of Discounted FCFE (Stage 1)</td><td><?php echo $this->format_large_number($data['sum_of_pv_cfs'] ?? 0); ?></td></tr>
-                <tr><td>Terminal Value (Stage 2)</td><td><?php echo $this->format_large_number($data['terminal_value'] ?? 0); ?></td></tr>
-                <tr><td colspan="2"><p class="jtw-formula-display" style="margin:0;"><strong>Formula:</strong> (Final Year FCFE * (1 + Terminal Growth Rate)) / (Discount Rate - Terminal Growth Rate)</p></td></tr>
-                <tr><td>Discounted Terminal Value</td><td><?php echo $this->format_large_number($data['pv_of_terminal_value'] ?? 0); ?></td></tr>
-                <tr><td colspan="2"><p class="jtw-formula-display" style="margin:0;"><strong>Formula:</strong> Terminal Value / (1 + Discount Rate) ^ 10</p></td></tr>
-                <tr><td><strong>Total Equity Value</strong></td><td><strong><?php echo $this->format_large_number($data['total_equity_value'] ?? 0); ?></strong></td></tr>
-                <tr><td colspan="2"><p class="jtw-formula-display" style="margin:0;"><strong>Formula:</strong> Sum of Discounted FCFE + Discounted Terminal Value</p></td></tr>
-                <tr><td>Shares Outstanding</td><td><?php echo number_format($data['shares_outstanding'] ?? 0, 0); ?></td></tr>
-                <tr><td><strong>Intrinsic Value per Share</strong></td><td><strong><?php echo is_numeric($intrinsic_value) ? '$' . number_format($intrinsic_value, 2) : 'N/A'; ?></strong></td></tr>
-                 <tr><td colspan="2"><p class="jtw-formula-display" style="margin:0;"><strong>Formula:</strong> Total Equity Value / Shares Outstanding</p></td></tr>
-            </tbody>
-        </table>
+        <div class="jtw-modal-stage">
+             <h5 class="jtw-modal-subtitle">Stage 5: Equity Value & Final Result</h5>
+             <table class="jtw-sws-modal-table">
+                <thead><tr><th>Calculation</th><th>Result</th></tr></thead>
+                 <tbody>
+                    <tr>
+                        <td>Total Equity Value</td>
+                        <td><strong><?php echo $this->format_large_number($total_equity_value, '$', 2); ?></strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><div class="jtw-formula">= Present value of next 10 years cash flows + Present value of Terminal Value</div><div class="jtw-formula-vals">= <?php echo $this->format_large_number($sum_of_pv_cfs, '$', 0); ?> + <?php echo $this->format_large_number($pv_of_terminal_value, '$', 0); ?></div></td>
+                    </tr>
+                    <tr>
+                        <td>Value per Share</td>
+                        <td><strong><?php echo is_numeric($intrinsic_value) ? '$' . number_format($intrinsic_value, 2) : 'N/A'; ?></strong></td>
+                    </tr>
+                     <tr>
+                        <td colspan="2"><div class="jtw-formula">= Total Equity Value &divide; Shares Outstanding</div><div class="jtw-formula-vals">= <?php echo $this->format_large_number($total_equity_value, '$', 0); ?> &divide; <?php echo $this->format_large_number($shares_outstanding, '', 0); ?></div></td>
+                    </tr>
+                     <tr>
+                        <td>Current <?php echo $discount_pct > 0 ? 'Discount' : 'Premium'; ?></td>
+                        <td><strong><?php echo number_format(abs($discount_pct), 1) . '%'; ?></strong></td>
+                    </tr>
+                     <tr>
+                        <td colspan="2"><div class="jtw-formula">= (Value per Share - Current Price) &divide; Value per Share</div><div class="jtw-formula-vals">= ($<?php echo number_format($intrinsic_value, 2); ?> - $<?php echo number_format($current_price, 2); ?>) &divide; $<?php echo number_format($intrinsic_value, 2); ?></div></td>
+                    </tr>
+                 </tbody>
+             </table>
+        </div>
+
         <?php
         return ob_get_clean();
     }

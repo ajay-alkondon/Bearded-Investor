@@ -1635,33 +1635,62 @@ body.dark-mode .jtw-current-price-label {
     background-color: #2c3e50;
 }
 
-/* --- Modal Enhancements & Formula Display --- */
-.jtw-modal-content .jtw-left-align {
-    text-align: left !important;
-}
-
-.jtw-modal-table.three-col th:nth-child(2),
-.jtw-modal-table.three-col td:nth-child(2) {
-    text-align: center !important;
-}
-
-.jtw-modal-table.three-col th:last-child,
-.jtw-modal-table.three-col td:last-child {
-    text-align: left !important;
-    font-style: italic;
-    color: var(--jtw-text-light);
-}
-
-.jtw-formula-display {
+/* --- SWS Style Modal Enhancements --- */
+.jtw-modal-content h4.jtw-modal-title {
     text-align: left;
-    background-color: var(--jtw-page-bg);
-    padding: 8px 12px;
-    margin: 4px 0 15px 0;
-    border-radius: 4px;
-    font-size: 0.85em;
-    border: 1px solid var(--jtw-border-color-light);
+    font-size: 1.4em;
+    margin-bottom: 25px;
 }
 
-.jtw-formula-display strong {
-    color: var(--jtw-primary-blue);
+.jtw-modal-stage {
+    margin-bottom: 30px;
+}
+
+.jtw-modal-stage .jtw-modal-subtitle {
+    text-align: left;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--jtw-border-color-light);
+}
+
+.jtw-sws-modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.jtw-sws-modal-table th,
+.jtw-sws-modal-table td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--jtw-border-color-light);
+    vertical-align: middle;
+}
+
+.jtw-sws-modal-table thead th {
+    background-color: var(--jtw-page-bg);
+    font-weight: 600;
+}
+
+.jtw-sws-modal-table td:nth-child(1) {
+    font-weight: 500;
+    width: 30%;
+}
+.jtw-sws-modal-table td:last-child,
+.jtw-sws-modal-table th:last-child {
+    text-align: right;
+    font-weight: 600;
+}
+
+.jtw-sws-modal-table .jtw-formula {
+    font-size: 0.9em;
+    font-family: monospace;
+    color: var(--jtw-text-medium);
+    margin-bottom: 4px;
+}
+.jtw-sws-modal-table .jtw-formula-vals {
+    font-size: 0.85em;
+    font-family: monospace;
+    color: var(--jtw-text-light);
 }
