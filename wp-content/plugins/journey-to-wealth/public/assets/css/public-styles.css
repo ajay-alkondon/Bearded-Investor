@@ -1697,7 +1697,7 @@ body.dark-mode .jtw-current-price-label {
 
 /* --- Dark Mode Overrides for SWS Modal --- */
 body.dark-mode .jtw-modal {
-    background-color: #1e293b; /* Dark Slate Blue */
+    background-color: #1e293b !important; /* Dark Slate Blue */
     color: #94a3b8; /* Slate Gray text */
     border: 1px solid #334155;
 }
@@ -1728,7 +1728,7 @@ body.dark-mode .jtw-sws-modal-table td {
 }
 
 body.dark-mode .jtw-sws-modal-table thead th {
-    background-color: #334155; /* Slightly lighter dark blue for header */
+    background-color: #334155 !important; /* Slightly lighter dark blue for header */
     color: #f8fafc; /* White text for header */
 }
 
@@ -1745,7 +1745,7 @@ body.dark-mode .jtw-sws-modal-table .jtw-formula-vals {
 }
 
 body.dark-mode .jtw-formula-display {
-    background-color: #334155;
+    background-color: #334155 !important;
     border-color: #475569;
     color: #94a3b8;
 }
