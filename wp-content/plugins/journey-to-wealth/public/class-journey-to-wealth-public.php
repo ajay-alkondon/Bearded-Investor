@@ -336,6 +336,8 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         'data_format' => 'body', // This tells WordPress not to alter the body
     ]);
 
+    var_dump($response);
+
     // Handle the response from the Cloud Function
     if (is_wp_error($response)) {
         return new WP_Error('http_error', 'Error calling Cloud Function: ' . $response->get_error_message());
