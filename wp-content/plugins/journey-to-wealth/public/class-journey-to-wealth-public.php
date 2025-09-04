@@ -181,6 +181,12 @@ class Journey_To_Wealth_Public {
                     if ($latest_price > 0 && $valuation_summary['fair_value'] > 0) { $valuation_summary['percentage_diff'] = (($latest_price - $valuation_summary['fair_value']) / $valuation_summary['fair_value']) * 100; }
                 }
                 $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
+
+                if (isset($dcf_result_for_ui['error'])) {
+                    wp_send_json_error(['message' => 'Valuation Error: ' . esc_html($dcf_result_for_ui['error']) . ' This can happen if a company has limited historical financial data.']);
+                    return;
+                }
+
                 if (is_null($dcf_result_for_ui)) { wp_send_json_error(['message' => 'Valuation breakdown data not received from the calculation engine.']); return; }
                 $html = $this->build_intrinsic_valuation_section_html($valuation_models, $valuation_summary, $raw_data['overview'], $dcf_result_for_ui);
                 break;
@@ -427,6 +433,10 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         $ticker = $overview['Symbol'] ?? 'N/A';
         $description = $overview['Description'] ?? 'No company description available.';
         $stock_price = !is_wp_error($quote) ? (float)($quote['05. price'] ?? 0) : 0;
+
+        $quote_data = $quote['Global Quote'] ?? $quote['Global Quote - DATA DELAYED BY 15 MINUTES'] ?? [];
+        $stock_price = !empty($quote_data) ? (float)($quote_data['05. price'] ?? 0) : 0;
+
         $week_high = (float)($overview['52WeekHigh'] ?? 0);
         $week_low = (float)($overview['52WeekLow'] ?? 0);
         $cik = $overview['CIK'] ?? null;
