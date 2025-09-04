@@ -261,7 +261,9 @@ class Journey_To_Wealth_Public {
             return;
         }
         
-        wp_send_json_success($python_data['calculated_data']['valuations']);
+        // <<< MODIFICATION >>>
+        // The new python function returns the data in the exact format the JS needs.
+        wp_send_json_success($python_data);
     }
 
     private function force_utf8_encode($array) {

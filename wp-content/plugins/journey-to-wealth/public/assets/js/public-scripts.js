@@ -458,11 +458,14 @@ function initializeFairValueAnalysisSection($container) {
                 if (response.success && response.data) {
                     const data = response.data;
                     
+                    // <<< START MODIFICATION >>>
+                    // The JS now correctly handles the new response structure
                     ['bear', 'base', 'bull'].forEach(function(caseType) {
                         if (data[caseType]) {
                             const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
                             const caseData = data[caseType];
                             
+                            // Use the 'fair_value' key from the new Python response
                             updateInTableValuationGraphic($table, caseData.fair_value, currentPrice);
 
                             if (caseData.valuation_label) {
@@ -470,6 +473,8 @@ function initializeFairValueAnalysisSection($container) {
                             }
                         }
                     });
+                     // <<< END MODIFICATION >>>
+
                 } else {
                     console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
                 }
