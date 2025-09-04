@@ -256,52 +256,87 @@ class Journey_To_Wealth_Public {
         return $array;
     }
 
-    private function call_python_calculation_engine($ticker, $custom_assumptions = []) {
-        $cloud_function_url = get_option('jtw_cloud_function_url');
-        if (empty($cloud_function_url)) { return new WP_Error('config_error', 'The Cloud Function URL is not configured.'); }
+// Replace the existing call_python_calculation_engine function with this updated version.
 
-        $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
-        $overview = $av_client->get_company_overview($ticker);
-        $balance_sheet = $av_client->get_balance_sheet($ticker);
-
-        if (is_wp_error($overview) || is_wp_error($balance_sheet)) { return new WP_Error('api_error', 'Could not fetch data for beta calculation.'); }
-        
-        $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
-        $market_cap = (float)($overview['MarketCapitalization'] ?? 0);
-        $beta_details = $this->calculate_levered_beta($ticker, $balance_sheet, $market_cap, $tax_rate_decimal);
-
-        $payload = [
-            'ticker' => $ticker,
-            'erp' => (float) get_option('jtw_erp_setting', '5.0') / 100,
-            'tax_rate' => $tax_rate_decimal,
-            'beta_details' => $beta_details,
-            'custom_assumptions' => $custom_assumptions
-        ];
-        
-        $sanitized_payload = $this->force_utf8_encode($payload);
-        $json_payload = json_encode($sanitized_payload);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_encode_error', 'Failed to encode payload for Cloud Function.', ['error' => json_last_error_msg()]);
-        }
-
-        $response = wp_remote_post($cloud_function_url, [
-            'method'      => 'POST',
-            'headers'     => ['Content-Type' => 'application/json; charset=utf-8'],
-            'body'        => $json_payload,
-            'timeout'     => 45,
-            'data_format' => 'body', 
-        ]);
-
-        if (is_wp_error($response)) { return new WP_Error('http_error', 'Error calling Cloud Function: ' . $response->get_error_message()); }
-
-        $body = wp_remote_retrieve_body($response);
-        $python_data = json_decode($body, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($python_data['calculated_data'])) { return new WP_Error('response_error', 'Invalid response from Cloud Function.', ['details' => $body]); }
-        
-        return $python_data;
+private function call_python_calculation_engine($ticker, $custom_assumptions = []) {
+    $cloud_function_url = get_option('jtw_cloud_function_url');
+    if (empty($cloud_function_url)) {
+        return new WP_Error('config_error', 'The Cloud Function URL is not configured.');
     }
+
+    // It's good practice to have the Alpha_Vantage_Client instantiated here
+    // as it's needed for the data preparation before the call.
+    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/api/class-alpha-vantage-client.php';
+    $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
+
+    // Fetch necessary data for beta calculation
+    $overview = $av_client->get_company_overview($ticker);
+    $balance_sheet = $av_client->get_balance_sheet($ticker);
+
+    if (is_wp_error($overview) || is_wp_error($balance_sheet)) {
+        // You can combine the error messages for better debugging
+        $error_message = 'Could not fetch prerequisite data. ';
+        if (is_wp_error($overview)) $error_message .= 'Overview Error: ' . $overview->get_error_message() . ' ';
+        if (is_wp_error($balance_sheet)) $error_message .= 'Balance Sheet Error: ' . $balance_sheet->get_error_message();
+        return new WP_Error('api_error', $error_message);
+    }
+
+    $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
+    $market_cap = (float)($overview['MarketCapitalization'] ?? 0);
+
+    // Calculate beta details to include in the payload
+    $beta_details = $this->calculate_levered_beta($ticker, $balance_sheet, $market_cap, $tax_rate_decimal);
+
+    // Construct the payload array
+    $payload = [
+        'ticker'             => $ticker,
+        'erp'                => (float) get_option('jtw_erp_setting', '5.0') / 100,
+        'tax_rate'           => $tax_rate_decimal,
+        'beta_details'       => $beta_details,
+        'custom_assumptions' => $custom_assumptions,
+    ];
+
+    // Sanitize and encode the payload to JSON
+    // The force_utf8_encode function you have is important, so we keep it.
+    $sanitized_payload = $this->force_utf8_encode($payload);
+    $json_payload = json_encode($sanitized_payload);
+
+    // CRITICAL: Check if json_encode failed.
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return new WP_Error('json_encode_error', 'Failed to encode payload for Cloud Function.', ['error_message' => json_last_error_msg(), 'payload_data' => $sanitized_payload]);
+    }
+
+    // Make the POST request to the Python Cloud Function
+    $response = wp_remote_post($cloud_function_url, [
+        'method'      => 'POST',
+        'headers'     => [
+            'Content-Type' => 'application/json; charset=utf-8'
+        ],
+        'body'        => $json_payload, // The body must be the JSON string
+        'timeout'     => 45,
+        'data_format' => 'body', // This tells WordPress not to alter the body
+    ]);
+
+    // Handle the response from the Cloud Function
+    if (is_wp_error($response)) {
+        return new WP_Error('http_error', 'Error calling Cloud Function: ' . $response->get_error_message());
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $response_code = wp_remote_retrieve_response_code($response);
+
+    // Decode the JSON response from Python
+    $python_data = json_decode($body, true);
+
+    if ($response_code >= 400 || json_last_error() !== JSON_ERROR_NONE || !isset($python_data['calculated_data'])) {
+        return new WP_Error('response_error', 'Invalid response from Cloud Function.', [
+            'status_code' => $response_code,
+            'response_body' => $body
+        ]);
+    }
+
+    return $python_data;
+}
 
     private function format_large_number($number, $prefix = '$', $decimals = 1) {
         if (!is_numeric($number) || $number == 0) { return $prefix === '$' ? '$0' : '0'; }
