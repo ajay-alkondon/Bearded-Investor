@@ -862,7 +862,11 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                     <tr>
                         <td><?php echo esc_html($row['year']); ?></td>
                         <td>$<?php echo number_format($row['cf'], 2); ?></td>
-                        <td><?php echo ($index < 3) ? 'Analyst Growth Estimate Based' : 'Est @ ' . number_format($row['growth_rate'] * 100, 2) . '%'; ?></td>
+                        <td><?php 
+                            // --- FIX: Directly output the 'growth_rate' string from Python ---
+                            // This was the source of the fatal error.
+                            echo esc_html($row['growth_rate']); 
+                        ?></td>
                         <td>$<?php echo number_format($row['pv_cf'], 2); ?></td>
                     </tr>
                     <?php endforeach; ?>
