@@ -748,7 +748,6 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         $beta_details = $d_rate_calc['beta_details'] ?? [];
         $inputs = $data['inputs'] ?? [];
         
-        // <<< NEW: Get TTM components for the new table >>>
         $ttm_components = $data['ttm_components'] ?? [];
         
         $projection_table = $data['projection_table'] ?? [];
@@ -761,8 +760,9 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         $total_equity_value = $data['total_equity_value'] ?? 0;
         $shares_outstanding = $data['shares_outstanding'] ?? 0;
         
+        // <<< MODIFICATION: Safely calculate discount to prevent division by zero errors >>>
         $discount_pct = 0;
-        if ($intrinsic_value > 0) {
+        if (is_numeric($intrinsic_value) && $intrinsic_value > 0) {
             $discount_pct = (($intrinsic_value - $current_price) / $intrinsic_value) * 100;
         }
 
@@ -783,12 +783,12 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
             <table class="jtw-sws-modal-table">
                 <thead><tr><th>TTM Component</th><th style="text-align: right;">Value (USD, Millions)</th></tr></thead>
                 <tbody>
-                    <tr><td>Net Income</td><td><?php echo $this->format_large_number(($ttm_components['net_income'] ?? 0) / 1000000, '$', 2); ?></td></tr>
-                    <tr><td>(+) Depreciation & Amortization</td><td><?php echo $this->format_large_number(($ttm_components['depreciation'] ?? 0) / 1000000, '$', 2); ?></td></tr>
-                    <tr><td>(-) Capital Expenditures (CapEx)</td><td><?php echo $this->format_large_number(($ttm_components['capex'] ?? 0) / 1000000, '$', 2); ?></td></tr>
-                    <tr><td>(-) Change in Net Working Capital</td><td><?php echo $this->format_large_number(($ttm_components['delta_nwc'] ?? 0) / 1000000, '$', 2); ?></td></tr>
-                    <tr><td>(+) Net Borrowing</td><td><?php echo $this->format_large_number(($ttm_components['net_borrowing'] ?? 0) / 1000000, '$', 2); ?></td></tr>
-                    <tr class="jtw-table-total-row"><td><strong>= Base FCFE for Projection</strong></td><td><strong><?php echo $this->format_large_number(($inputs['base_cash_flow'] ?? 0) / 1000000, '$', 2); ?></strong></td></tr>
+                    <tr><td>Net Income</td><td>$<?php echo number_format($ttm_components['net_income'] ?? 0, 2); ?></td></tr>
+                    <tr><td>(+) Depreciation & Amortization</td><td>$<?php echo number_format($ttm_components['depreciation'] ?? 0, 2); ?></td></tr>
+                    <tr><td>(-) Capital Expenditures (CapEx)</td><td>$<?php echo number_format($ttm_components['capex'] ?? 0, 2); ?></td></tr>
+                    <tr><td>(-) Change in Net Working Capital</td><td>$<?php echo number_format($ttm_components['delta_nwc'] ?? 0, 2); ?></td></tr>
+                    <tr><td>(+) Net Borrowing</td><td>$<?php echo number_format($ttm_components['net_borrowing'] ?? 0, 2); ?></td></tr>
+                    <tr class="jtw-table-total-row"><td><strong>= Base FCFE for Projection</strong></td><td><strong>$<?php echo number_format($inputs['base_cash_flow'] ?? 0, 2); ?></strong></td></tr>
                 </tbody>
             </table>
         </div>
@@ -801,16 +801,16 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
                     <?php foreach ($projection_table as $index => $row): ?>
                     <tr>
                         <td><?php echo esc_html($row['year']); ?></td>
-                        <td><?php echo $this->format_large_number($row['cf']/1000000, '$', 2); ?></td>
+                        <td>$<?php echo number_format($row['cf'], 2); ?></td>
                         <td><?php echo ($index < 3) ? 'Analyst Growth Estimate Based' : 'Est @ ' . number_format($row['growth_rate'] * 100, 2) . '%'; ?></td>
-                        <td><?php echo $this->format_large_number($row['pv_cf']/1000000, '$', 2); ?></td>
+                        <td>$<?php echo number_format($row['pv_cf'], 2); ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
                     <tr class="jtw-table-total-row">
                         <td colspan="3"><strong>Sum of Present Values (Stage 1 Total)</strong></td>
-                        <td><strong><?php echo $this->format_large_number($sum_of_pv_cfs / 1000000, '$', 2); ?></strong></td>
+                        <td><strong>$<?php echo number_format($sum_of_pv_cfs, 2); ?></strong></td>
                     </tr>
                 </tfoot>
              </table>
@@ -818,10 +818,25 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
 
         <div class="jtw-modal-stage">
              <h5 class="jtw-modal-subtitle">Stage 5: Terminal Value Calculation</h5>
-             </div>
+             <table class="jtw-sws-modal-table">
+                 <thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead>
+                 <tbody>
+                    <tr><td>Terminal Value</td><td></td><td>$<?php echo number_format($terminal_value, 2); ?></td></tr>
+                    <tr><td>Present Value of Terminal Value</td><td></td><td>$<?php echo number_format($pv_of_terminal_value, 2); ?></td></tr>
+                 </tbody>
+             </table>
+        </div>
         <div class="jtw-modal-stage">
              <h5 class="jtw-modal-subtitle">Stage 6: Equity Value & Final Result</h5>
-             </div>
+             <table class="jtw-sws-modal-table">
+                <thead><tr><th></th><th>Calculation</th><th>Result</th></tr></thead>
+                 <tbody>
+                    <tr><td>Total Equity Value</td><td></td><td>$<?php echo number_format($total_equity_value, 2); ?></td></tr>
+                    <tr><td>Value per Share</td><td></td><td><?php echo is_numeric($intrinsic_value) ? '$' . number_format($intrinsic_value, 2) : 'N/A'; ?></td></tr>
+                     <tr><td>Current <?php echo $discount_pct > 0 ? 'Discount' : 'Premium'; ?></td><td></td><td><?php echo number_format(abs($discount_pct), 1) . '%'; ?></td></tr>
+                 </tbody>
+             </table>
+        </div>
         <?php
         return ob_get_clean();
     }
