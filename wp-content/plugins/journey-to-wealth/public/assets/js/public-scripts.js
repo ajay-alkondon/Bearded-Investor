@@ -374,6 +374,7 @@ function initializeFairValueAnalysisSection($container) {
                 $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + currentYearValuation.toFixed(2));
             }
 
+            // --- START MODIFICATION: Gather user-inputted growth rates ---
             assumptions[caseType].yearlyRevGrowth = {};
             $table.find('input[data-metric="yearlyRevGrowth"]').each(function() {
                 const $input = $(this);
@@ -385,6 +386,7 @@ function initializeFairValueAnalysisSection($container) {
                     hasAllInputs = false; 
                 }
             });
+            // --- END MODIFICATION ---
             
             // Get the selected model for this specific case table
             const selectedModel = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
@@ -458,14 +460,11 @@ function initializeFairValueAnalysisSection($container) {
                 if (response.success && response.data) {
                     const data = response.data;
                     
-                    // <<< START MODIFICATION >>>
-                    // The JS now correctly handles the new response structure
                     ['bear', 'base', 'bull'].forEach(function(caseType) {
                         if (data[caseType]) {
                             const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
                             const caseData = data[caseType];
                             
-                            // Use the 'fair_value' key from the new Python response
                             updateInTableValuationGraphic($table, caseData.fair_value, currentPrice);
 
                             if (caseData.valuation_label) {
@@ -473,7 +472,6 @@ function initializeFairValueAnalysisSection($container) {
                             }
                         }
                     });
-                     // <<< END MODIFICATION >>>
 
                 } else {
                     console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
