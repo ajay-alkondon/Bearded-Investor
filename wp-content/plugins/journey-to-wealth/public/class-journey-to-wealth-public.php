@@ -492,7 +492,7 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         return ob_get_clean();
     }
 
-    private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui) {
+    private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $default_growth_for_projections, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui) {
         $case_title = ucfirst($case) . ' Case';
         $modal_id = 'jtw-assumptions-modal-' . $case;
         ob_start();
@@ -508,10 +508,18 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
                 <tr class="jtw-metric-group-header"><td colspan="6">Top Line</td></tr>
                 <tr class="jtw-project-5-year"><td class="jtw-indented-metric">Revenue Growth</td>
                     <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
-                    <?php for ($i = 1; $i < 5; $i++) :
-                        $default_growth = $current_year_revenue_growth;
-                        if ($case === 'bear') { $default_growth -= $i * 1.0; } 
-                        elseif ($case === 'bull') { $default_growth += $i * 1.0; }
+                    <?php 
+                    // --- FIX: Use the new default growth for projections and apply case logic ---
+                    for ($i = 1; $i < 5; $i++) :
+                        // Start with the default growth rate for future years
+                        $default_growth = is_numeric($default_growth_for_projections) ? (float)$default_growth_for_projections : 5.0;
+
+                        if ($case === 'bear') {
+                            $default_growth -= $i * 1.0; 
+                        } elseif ($case === 'bull') {
+                            $default_growth += $i * 1.0;
+                        }
+                        // For 'base' case, $default_growth remains unchanged.
                     ?>
                     <td><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="<?php echo $i; ?>" value="<?php echo esc_attr(number_format($default_growth, 1)); ?>"></td>
                     <?php endfor; ?>
@@ -520,7 +528,7 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
                     <td class="jtw-revenue-result" data-year="0"><?php echo number_format($analyst_revenue_current_year / $divisor, 1); ?></td>
                     <?php for ($i = 1; $i < 5; $i++) { echo '<td class="jtw-revenue-result" data-year="' . $i . '">-</td>'; } ?>
                 </tr>
-                 <tr class="jtw-metric-group-header"><td colspan="6">Bottom Line</td></tr>
+                <tr class="jtw-metric-group-header"><td colspan="6">Bottom Line</td></tr>
                 <tr class="jtw-project-5-year"><td class="jtw-indented-metric">Net Income <?php echo esc_html($unit); ?></td>
                     <td class="jtw-net-income-result" data-year="0"><?php echo number_format($current_year_net_income / $divisor, 1); ?></td>
                     <?php for ($i = 1; $i < 5; $i++) { echo '<td class="jtw-net-income-result" data-year="' . $i . '">-</td>'; } ?>
@@ -569,6 +577,7 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         return ob_get_clean();
     }
 
+    // In journey-to-wealth/public/class-journey-to-wealth-public.php
     private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $dcf_result_for_ui) {
         // This function is now purely for presentation, using pre-calculated data.
         $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
@@ -579,22 +588,23 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
 
         $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios=\'' . $component_ratios_json . '\' data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-shares-outstanding="' . esc_attr($shares_outstanding) . '">';
         $output .= '<div class="jtw-section-header"><h4>' . esc_html__('Value Projections', 'journey-to-wealth') . '</h4></div>';
-
+        
         // <<< START MODIFICATION >>>
-        // Prioritize the new analyst revenue and calculated growth from Python for the "current year" column.
-        $analyst_revenue_current_year = $dcf_result_data['analyst_revenue_current_year'] ?? 0;
-        $growth_for_current_year_display = $dcf_result_data['current_year_revenue_growth'] ?? 0;
-        $default_growth_for_projections = $dcf_result_data['initial_projection_growth'] ?? 5.0; // Fallback to 5%
-        $base_revenue = $analyst_revenue_current_year; // Use this as the starting point for display.
-
+        // Prioritize the new analyst revenue and fetch the TWO separate growth rates.
+        $analyst_revenue_current_year = $dcf_result_data['analyst_revenue_current_year'] ?? $dcf_result_data['base_revenue'] ?? 0;
+        
+        // FIX: Get the growth rate for the current year display and multiply by 100
         if (isset($dcf_result_data['current_year_revenue_growth']) && is_numeric($dcf_result_data['current_year_revenue_growth'])) {
             $current_year_revenue_growth = $dcf_result_data['current_year_revenue_growth'] * 100;
         } else {
-            // Fallback to the model's default initial growth rate if specific calculation isn't available
-            $current_year_revenue_growth = ($dcf_result_data['inputs']['initial_growth_rate'] ?? 0) * 100;
+            $current_year_revenue_growth = 0; // Fallback
         }
+
+        // NEW: Get the separate growth rate to be used as the default for future year inputs
+        $default_growth_for_projections = $dcf_result_data['initial_projection_growth'] ?? 5.0;
         // <<< END MODIFICATION >>>
 
+        $base_revenue = $analyst_revenue_current_year;
         $current_year = date('Y');
         $unit = ''; $divisor = 1;
         if (abs($base_revenue) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
@@ -610,7 +620,8 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
 
         foreach (['bear', 'base', 'bull'] as $case) {
             // This loop builds the table structure; JS will handle the interactive recalculations.
-            $output .= $this->build_case_table_html($case, $current_year, $growth_for_current_year_display, $default_growth_for_projections, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui);
+            // MODIFIED: Pass the new projection growth rate to the table building function
+            $output .= $this->build_case_table_html($case, $current_year, $current_year_revenue_growth, $default_growth_for_projections, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui);
         }
         $output .= '<div class="jtw-modal-overlay"></div></div>';
         return $output;
