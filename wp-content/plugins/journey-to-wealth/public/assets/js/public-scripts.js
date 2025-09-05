@@ -309,55 +309,56 @@ function initializeFairValueAnalysisSection($container) {
         return num;
     }
 
-    function updateInTableValuationGraphic($table, fairValue, currentPrice) {
-        const $barContainer = $table.find('.jtw-in-table-bar-container');
-        const $errorMessage = $table.find('.jtw-dcf-error-message');
-        const $fairValueBar = $table.find('.jtw-fair-value-bar');
-        const $currentPriceBar = $table.find('.jtw-current-price-bar');
+function updateInTableValuationGraphic($table, fairValue, currentPrice) {
+    const $barContainer = $table.find('.jtw-in-table-bar-container');
+    const $errorMessage = $table.find('.jtw-dcf-error-message');
+    const $fairValueBar = $table.find('.jtw-fair-value-bar');
+    const $currentPriceBar = $table.find('.jtw-current-price-bar');
 
-        // Reset bars to 0% width immediately. This is the key to re-triggering the CSS animation on every update.
-        $fairValueBar.css('width', '0%');
-        $currentPriceBar.css('width', '0%');
-
-        // Check for a valid fair value. If not, show an error.
-        if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
-            $barContainer.hide();
-            $errorMessage.show();
-            return;
-        }
-
-        $barContainer.show();
-        $errorMessage.hide();
-
-        // Determine the maximum value for the bar's scale, giving it some padding.
-        const rangeMax = Math.max(currentPrice, fairValue) * 1.5;
-        if (rangeMax <= 0) return;
-
-        // Calculate the boundaries for the background color zones.
-        const undervaluedBoundary = fairValue * 0.8;
-        const overvaluedBoundary = fairValue * 1.2;
-        
-        const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
-        const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
-        
-        // Calculate the percentage width for the fair value and current price bars.
-        const fairValueWidthPct = (fairValue / rangeMax) * 100;
-        const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
-
-        // Update the text labels.
-        $table.find('.jtw-fair-value-label').text('Fair Value: $' + fairValue.toFixed(2));
-        $table.find('.jtw-current-price-label').text('Current Price: $' + currentPrice.toFixed(2));
-
-        // Set the width of the background zones.
-        $table.find('.jtw-in-table-zone.undervalued').css('width', undervaluedWidthPct + '%');
-        $table.find('.jtw-in-table-zone.about-right').css('width', aboutRightWidthPct + '%');
-        
-        // Use a short timeout. This allows the browser to register the width at 0% before it applies the new width, ensuring the transition animation plays.
-        setTimeout(() => {
-            $fairValueBar.css('width', fairValueWidthPct + '%');
-            $currentPriceBar.css('width', currentPriceWidthPct + '%');
-        }, 100);
+    // Check for a valid fair value. If not, show an error.
+    if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
+        $barContainer.hide();
+        $errorMessage.show();
+        // Ensure bars are hidden if there's an error.
+        $fairValueBar.css({ 'transition': 'none', 'width': '0%' });
+        $currentPriceBar.css({ 'transition': 'none', 'width': '0%' });
+        return;
     }
+
+    $barContainer.show();
+    $errorMessage.hide();
+
+    const rangeMax = Math.max(currentPrice, fairValue) * 1.5;
+    if (rangeMax <= 0) return;
+
+    // Calculate the percentage width for the bars and background zones.
+    const fairValueWidthPct = (fairValue / rangeMax) * 100;
+    const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
+    const undervaluedBoundary = fairValue * 0.8;
+    const overvaluedBoundary = fairValue * 1.2;
+    const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
+    const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
+
+    // Update text labels and background zones.
+    $table.find('.jtw-fair-value-label').text('Fair Value: $' + fairValue.toFixed(2));
+    $table.find('.jtw-current-price-label').text('Current Price: $' + currentPrice.toFixed(2));
+    $table.find('.jtw-in-table-zone.undervalued').css('width', undervaluedWidthPct + '%');
+    $table.find('.jtw-in-table-zone.about-right').css('width', aboutRightWidthPct + '%');
+
+    // --- START: ANIMATION FIX ---
+    // 1. Temporarily disable the CSS transition.
+    // 2. Set the width to 0% immediately.
+    $fairValueBar.css({ 'transition': 'none', 'width': '0%' });
+    $currentPriceBar.css({ 'transition': 'none', 'width': '0%' });
+
+    // 3. Force the browser to repaint the elements at 0% width. Accessing offsetHeight is a standard way to do this.
+    $barContainer[0].offsetHeight;
+
+    // 4. Re-enable the transition and set the final target width. The browser will now animate from 0% to the new width.
+    $fairValueBar.css({ 'transition': 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)', 'width': fairValueWidthPct + '%' });
+    $currentPriceBar.css({ 'transition': 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)', 'width': currentPriceWidthPct + '%' });
+    // --- END: ANIMATION FIX ---
+}
 
     const recalculateValuation = debounce(function() {
         if (!componentRatios || $.isEmptyObject(componentRatios)) {
