@@ -137,6 +137,48 @@ class Journey_To_Wealth_Public {
 
         if (empty($ticker) || empty($section)) { wp_send_json_error(['message' => 'Missing parameters.']); return; }
 
+        // Only handle intrinsic-valuation section differently for initial load
+        if ($section === 'intrinsic-valuation') {
+            $response_data = [];
+            $initial_python_data = null;
+
+            // Loop through each case to generate its own default modal HTML
+            foreach (['bear', 'base', 'bull'] as $case) {
+                // For the initial load, we can generate "default" assumptions to pass.
+                // Or, more efficiently, call Python once and build three identical modals initially.
+                if (is_null($initial_python_data)) {
+                    $initial_python_data = $this->call_python_calculation_engine($ticker);
+                    if (is_wp_error($initial_python_data)) {
+                        wp_send_json_error(['message' => $initial_python_data->get_error_message(), 'details' => $initial_python_data->get_error_data()]);
+                        return;
+                    }
+                }
+                
+                $dcf_result_for_ui = $initial_python_data['calculated_data']['ui_valuation_breakdown'] ?? null;
+                if (isset($dcf_result_for_ui['error'])) {
+                     wp_send_json_error(['message' => 'Valuation Error: ' . esc_html($dcf_result_for_ui['error'])]);
+                     return;
+                }
+                $response_data['modal_html'][$case] = $this->build_dcf_modal_content($dcf_result_for_ui);
+            }
+
+            // Now build the main section HTML using the same initial data
+            $raw_data = $initial_python_data['raw_data_subset'];
+            $calculated_data = $initial_python_data['calculated_data'];
+            $quote_data = $raw_data['quote']['Global Quote'] ?? $raw_data['quote']['Global Quote - DATA DELAYED BY 15 MINUTES'] ?? [];
+            $latest_price = !empty($quote_data) ? (float)($quote_data['05. price'] ?? 0) : 0;
+            $valuation_models = $calculated_data['valuations'] ?? [];
+            $valuation_summary = [ 'current_price' => $latest_price, 'fair_value' => 0, 'percentage_diff' => 0 ];
+            $valid_models = [];
+            foreach ($valuation_models as $result) { if (isset($result['intrinsic_value_per_share']) && is_numeric($result['intrinsic_value_per_share'])) { $valid_models[] = $result['intrinsic_value_per_share']; } }
+            if (!empty($valid_models)) { $valuation_summary['fair_value'] = array_sum($valid_models) / count($valid_models); }
+
+            $response_data['html'] = $this->build_intrinsic_valuation_section_html($valuation_models, $valuation_summary, $raw_data['overview'], $dcf_result_for_ui);
+            wp_send_json_success($response_data);
+            return;
+        }
+
+        // --- Original logic for all other sections ---
         $python_data = $this->call_python_calculation_engine($ticker);
         if (is_wp_error($python_data)) {
             wp_send_json_error(['message' => $python_data->get_error_message(), 'details' => $python_data->get_error_data()]);
@@ -144,7 +186,6 @@ class Journey_To_Wealth_Public {
         }
         
         $html = '';
-        $json_response = [];
         $calculated_data = $python_data['calculated_data'];
         $raw_data = $python_data['raw_data_subset'];
 
@@ -162,34 +203,12 @@ class Journey_To_Wealth_Public {
             case 'key-metrics-ratios':
                 $html = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
                 break;
-            case 'intrinsic-valuation':
-                $quote_data = $raw_data['quote']['Global Quote'] ?? $raw_data['quote']['Global Quote - DATA DELAYED BY 15 MINUTES'] ?? [];
-                $latest_price = !empty($quote_data) ? (float)($quote_data['05. price'] ?? 0) : 0;
-                $valuation_models = $calculated_data['valuations'] ?? [];
-                $valuation_summary = [ 'current_price' => $latest_price, 'fair_value' => 0, 'percentage_diff' => 0 ];
-                $valid_models = [];
-                foreach ($valuation_models as $result) { if (isset($result['intrinsic_value_per_share']) && is_numeric($result['intrinsic_value_per_share'])) { $valid_models[] = $result['intrinsic_value_per_share']; } }
-                if (!empty($valid_models)) {
-                    $valuation_summary['fair_value'] = array_sum($valid_models) / count($valid_models);
-                    if ($latest_price > 0 && $valuation_summary['fair_value'] > 0) { $valuation_summary['percentage_diff'] = (($latest_price - $valuation_summary['fair_value']) / $valuation_summary['fair_value']) * 100; }
-                }
-                $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
-
-                if (isset($dcf_result_for_ui['error'])) {
-                    wp_send_json_error(['message' => 'Valuation Error: ' . esc_html($dcf_result_for_ui['error']) . ' This can happen if a company has limited historical financial data.']);
-                    return;
-                }
-
-                if (is_null($dcf_result_for_ui)) { wp_send_json_error(['message' => 'Valuation breakdown data not received from the calculation engine.']); return; }
-                $html = $this->build_intrinsic_valuation_section_html($valuation_models, $valuation_summary, $raw_data['overview'], $dcf_result_for_ui);
-                break;
         }
 
         if (empty($html)) {
             wp_send_json_error(['message' => 'Could not generate content for this section.']);
         } else {
-            $json_response['html'] = $html;
-            wp_send_json_success($json_response);
+            wp_send_json_success(['html' => $html]);
         }
     }
 
@@ -244,18 +263,40 @@ class Journey_To_Wealth_Public {
     public function ajax_recalculate_valuation() {
         check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
         $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
-        $assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
-        if (empty($ticker)) { wp_send_json_error(['message' => 'Missing Ticker.']); return; }
+        $all_assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
+        if (empty($ticker) || empty($all_assumptions)) { wp_send_json_error(['message' => 'Missing Ticker or assumptions.']); return; }
         
-        $python_data = $this->call_python_calculation_engine($ticker, $assumptions);
-        if (is_wp_error($python_data)) {
-            wp_send_json_error(['message' => $python_data->get_error_message()]);
-            return;
+        $results = [];
+        
+        // Loop through each case (bear, base, bull), call Python for each, and store the results.
+        foreach ($all_assumptions as $case_name => $case_assumptions) {
+            if (!in_array($case_name, ['bear', 'base', 'bull'])) continue;
+
+            // Call the Python engine with the specific assumptions for this one case
+            $python_data = $this->call_python_calculation_engine($ticker, $case_assumptions);
+
+            if (is_wp_error($python_data)) {
+                $results[$case_name] = ['error' => $python_data->get_error_message()];
+                continue;
+            }
+            
+            $dcf_result = $python_data['calculated_data']['valuations']['dcf'] ?? [];
+            
+            if (isset($dcf_result['error'])) {
+                 $results[$case_name] = ['error' => $dcf_result['error']];
+                 continue;
+            }
+
+            // Store the results for this case
+            $results[$case_name] = [
+                'fair_value' => $dcf_result['intrinsic_value_per_share'] ?? null,
+                'valuation_label' => $dcf_result['calculation_breakdown']['model_name'] ?? 'N/A',
+                // Generate the unique modal HTML for this case using its specific calculation breakdown
+                'modal_html' => $this->build_dcf_modal_content($dcf_result)
+            ];
         }
         
-        // <<< MODIFICATION >>>
-        // The new python function returns the data in the exact format the JS needs.
-        wp_send_json_success($python_data);
+        wp_send_json_success($results);
     }
 
     private function force_utf8_encode($array) {

@@ -446,32 +446,43 @@ function initializeFairValueAnalysisSection($container) {
 
         $.ajax({
             url: jtw_public_params.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'jtw_recalculate_valuation',
-                nonce: jtw_public_params.recalculate_nonce,
-                ticker: ticker,
-                assumptions: assumptions,
-                timeframe: timeframe,
-            },
+            // ... (data and other params are the same) ...
             dataType: 'json',
             success: function(response) {
                 $container.find('.jtw-case-table').css('opacity', 1);
                 if (response.success && response.data) {
                     const data = response.data;
                     
-                    ['bear', 'base', 'bull'].forEach(function(caseType) {
-                        if (data[caseType]) {
-                            const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
+                    // --- START MODIFICATION: Handle new structured response ---
+                    // Loop through each case from the response (bear, base, bull)
+                    for (const caseType in data) {
+                        if (data.hasOwnProperty(caseType)) {
                             const caseData = data[caseType];
+                            const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
                             
+                            if (caseData.error) {
+                                console.error(`Error for ${caseType} case:`, caseData.error);
+                                // Optionally display an error message in the UI for that specific case
+                                updateInTableValuationGraphic($table, null, currentPrice); // Show error in bar
+                                continue;
+                            }
+                            
+                            // Update the in-table valuation bar with the new fair value
                             updateInTableValuationGraphic($table, caseData.fair_value, currentPrice);
 
+                            // Update the model label if it changed
                             if (caseData.valuation_label) {
                                 $table.find('.jtw-selected-model').text(caseData.valuation_label);
                             }
+
+                            // Replace the entire content of this case's modal with the new HTML
+                            const modalId = `#jtw-assumptions-modal-${caseType}`;
+                            if ($(modalId).length && caseData.modal_html) {
+                                $(modalId).find('.jtw-modal-content').html(caseData.modal_html);
+                            }
                         }
-                    });
+                    }
+                    // --- END MODIFICATION ---
 
                 } else {
                     console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
@@ -1015,6 +1026,17 @@ function initializeFairValueAnalysisSection($container) {
                                 if (response.data.currency_notice) $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
                                 if (response.data.html) $placeholder.html(response.data.html);
                                 
+                                // --- START MODIFICATION for initial modal content ---
+                                // If this is the valuation section, populate the modals with the pre-rendered HTML
+                                if (section === 'intrinsic-valuation' && response.data.modal_html) {
+                                    for (const caseType in response.data.modal_html) {
+                                        const modalId = `#jtw-assumptions-modal-${caseType}`;
+                                        // Target the content area within the modal to replace it
+                                        $(modalId).find('.jtw-modal-content').html(response.data.modal_html[caseType]);
+                                    }
+                                }
+                                // --- END MODIFICATION ---
+
                                 // Call the specific initializer function for the loaded section
                                 if (section === 'overview') initializeOverviewSection($placeholder);
                                 else if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
