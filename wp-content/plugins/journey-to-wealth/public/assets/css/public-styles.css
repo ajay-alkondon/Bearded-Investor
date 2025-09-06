@@ -1679,3 +1679,21 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table .jtw-formula-vals {
 body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table .jtw-table-total-row td {
     border-top-color: #475569;
 }
+
+/* --- Dark/Light Mode Logo Switching --- */
+
+/* By default, hide the dark mode logo and show the light mode one */
+#logo .dark-mode-logo {
+    display: none;
+}
+#logo .light-mode-logo {
+    display: block;
+}
+
+/* When the body has the .dark-mode class, reverse the visibility */
+body.dark-mode #logo .dark-mode-logo {
+    display: block;
+}
+body.dark-mode #logo .light-mode-logo {
+    display: none;
+}

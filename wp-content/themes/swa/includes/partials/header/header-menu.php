@@ -42,7 +42,13 @@ if( $nectar_header_format === 'centered-menu-bottom-bar' &&
 				$nectar_logo_url = apply_filters( 'nectar_logo_url', esc_url(home_url()) );
 				?>
 				<a id="logo" href="<?php echo esc_url( $nectar_logo_url ); ?>" data-supplied-ml-starting-dark="<?php echo esc_attr( $nectar_header_options['using_mobile_logo_starting_dark'] ); ?>" data-supplied-ml-starting="<?php echo esc_attr( $nectar_header_options['using_mobile_logo_starting'] ); ?>" data-supplied-ml="<?php echo esc_attr( $nectar_header_options['using_mobile_logo'] ); ?>" <?php echo wp_kses_post( $nectar_header_options['logo_class'] ); ?>>
-					<?php nectar_logo_output( $nectar_header_options['activate_transparency'], $nectar_header_options['side_widget_class'], $nectar_header_options['using_mobile_logo'] ); ?>
+					<?php
+					// Define the URLs for your logos
+					$light_logo_url = 'https://beardedinvestor.com/wp-content/uploads/2025/08/Bearded-Investor-Light-Logo.png';
+					$dark_logo_url  = 'https://beardedinvestor.com/wp-content/uploads/2025/09/Bearded-Investor-Dark-Backgrounds.png';
+					?>
+					<img class="stnd default-logo light-mode-logo" alt="<?php bloginfo( 'name' ); ?>" src="<?php echo esc_url( $light_logo_url ); ?>" />
+					<img class="stnd default-logo dark-mode-logo" alt="<?php bloginfo( 'name' ); ?>" src="<?php echo esc_url( $dark_logo_url ); ?>" />
 				</a>
 				<?php
 
