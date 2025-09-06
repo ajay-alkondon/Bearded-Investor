@@ -403,10 +403,36 @@ const recalculateValuation = debounce(function() {
         const selectedModel = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
         assumptions[caseType].model = selectedModel;
 
-        // --- REMOVED FAULTY LOGIC ---
-        // The previous code had checks here for hidden FCFE component inputs (depreciation, capex, etc.).
-        // These checks were preventing the hasAllInputs flag from ever being true.
-        // They have been removed as the backend handles these calculations.
+        // --- START: RESTORED UI CALCULATION LOGIC ---
+        const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
+        let previousRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="0"]').text(), revenueUnitLabel);
+
+        // Loop through the projection years (1 to 4) to update the UI locally.
+        for (let i = 1; i <= 4; i++) {
+            const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
+            const peInput = $table.find('.jtw-pe-input[data-year="' + i + '"]');
+            
+            if (peInput.length && peInput.val() === '') {
+                hasAllInputs = false;
+            }
+            
+            const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
+            const projectedRevenue = previousRevenue * (1 + growthRate);
+            $table.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
+            previousRevenue = projectedRevenue;
+
+            const projectedNetIncome = projectedRevenue * componentRatios.net_income_of_revenue;
+            $table.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
+
+            const eps = Number(sharesOutstanding) > 0 ? projectedNetIncome / Number(sharesOutstanding) : 0;
+            $table.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(2));
+            
+            if (peInput.length) {
+                const peRatio = parseFloat(peInput.val()) || 0;
+                const sharePrice = eps * peRatio;
+                $table.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
+            }
+        }
     });
 
     // If any of the essential inputs were missing, stop before making the AJAX call.
