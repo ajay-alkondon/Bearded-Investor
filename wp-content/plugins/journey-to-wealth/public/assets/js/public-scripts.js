@@ -368,166 +368,101 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
     // --- END ANIMATION FIX ---
 }
 
-    const recalculateValuation = debounce(function() {
-        if (!componentRatios || $.isEmptyObject(componentRatios)) {
-            console.error('Component ratios not found or are empty on the page.');
-            return;
-        }
+const recalculateValuation = debounce(function() {
+    // Check for essential data embedded in the HTML. If missing, stop.
+    if (!componentRatios || $.isEmptyObject(componentRatios)) {
+        console.error('Component ratios not found or are empty on the page. Aborting recalculation.');
+        return;
+    }
+    if (!sharesOutstanding || sharesOutstanding === 0) {
+        console.error('Shares outstanding not found or is zero. Aborting recalculation.');
+        return;
+    }
 
-        if (!sharesOutstanding || sharesOutstanding === 0) {
-            console.error('Shares outstanding not found or is zero.');
-            return;
-        }
-
-        const assumptions = { bear: {}, base: {}, bull: {} };
-        let hasAllInputs = true;
+    const assumptions = { bear: {}, base: {}, bull: {} };
+    let hasAllInputs = true;
+    
+    // Loop through each of the three cases (bear, base, bull) to gather its assumptions.
+    ['bear', 'base', 'bull'].forEach(function(caseType) {
+        const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
         
-        ['bear', 'base', 'bull'].forEach(function(caseType) {
-            const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
-            const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
-            
-            const currentYearEpsText = $table.find('.jtw-eps-result[data-year="0"]').text();
-            const currentYearPeText = $table.find('.jtw-pe-result[data-year="0"]').text();
-            const currentYearEps = parseFloat(currentYearEpsText);
-            const currentYearPe = parseFloat(currentYearPeText);
-
-            if (!isNaN(currentYearEps) && !isNaN(currentYearPe)) {
-                const currentYearValuation = currentYearEps * currentYearPe;
-                $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + currentYearValuation.toFixed(2));
-            }
-
-            // --- START MODIFICATION: Gather user-inputted growth rates ---
-            assumptions[caseType].yearlyRevGrowth = {};
-            $table.find('input[data-metric="yearlyRevGrowth"]').each(function() {
-                const $input = $(this);
-                const year = $input.data('year');
-                const growthRateValue = parseFloat($input.val());
-                if (!isNaN(growthRateValue)) {
-                    assumptions[caseType].yearlyRevGrowth[year] = growthRateValue;
-                } else {
-                    hasAllInputs = false; 
-                }
-            });
-            // --- END MODIFICATION ---
-            
-            // Get the selected model for this specific case table
-            const selectedModel = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
-            assumptions[caseType].model = selectedModel;
-
-            let previousRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="0"]').text(), revenueUnitLabel);
-            
-            for (let i = 1; i <= 4; i++) {
-                const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
-                const peCell = $table.find('.jtw-pe-input[data-year="' + i + '"]');
-                if (!growthRateInput.length || growthRateInput.val() === '' || (peCell.length && peCell.val() === '')) {
-                    hasAllInputs = false;
-                }
-
-                const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
-                
-                const projectedRevenue = previousRevenue * (1 + growthRate);
-                $table.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
-                previousRevenue = projectedRevenue;
-
-                const projectedNetIncome = projectedRevenue * componentRatios.net_income_of_revenue;
-                $table.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
-
-                const eps = Number(sharesOutstanding) > 0 ? projectedNetIncome / Number(sharesOutstanding) : 0;
-                $table.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(2));
-                
-                if (peCell.length) {
-                    const peRatio = parseFloat(peCell.val()) || 0;
-                    const sharePrice = eps * peRatio;
-                    $table.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
-                }
-
-                const depreciationInput = $table.find('.jtw-fcfe-component-input[data-component="depreciation"][data-year="' + i + '"]');
-                const capexInput = $table.find('.jtw-fcfe-component-input[data-component="capex"][data-year="' + i + '"]');
-                const nwcChangeInput = $table.find('.jtw-fcfe-component-input[data-component="nwcChange"][data-year="' + i + '"]');
-                const netBorrowingInput = $table.find('.jtw-fcfe-component-input[data-component="netBorrowing"][data-year="' + i + '"]');
-
-                if (!depreciationInput.length || depreciationInput.val() === '' || !capexInput.length || capexInput.val() === '' || !nwcChangeInput.length || nwcChangeInput.val() === '' || !netBorrowingInput.length || netBorrowingInput.val() === '') {
-                    hasAllInputs = false;
-                }
-
-                const depreciation = parseFormattedNumber(depreciationInput.val(), revenueUnitLabel);
-                const capex = parseFormattedNumber(capexInput.val(), revenueUnitLabel);
-                const nwcChange = parseFormattedNumber(nwcChangeInput.val(), revenueUnitLabel);
-                const netBorrowing = parseFormattedNumber(netBorrowingInput.val(), revenueUnitLabel);
-                
-                const fcfe = projectedNetIncome + depreciation - capex - nwcChange + netBorrowing;
-                $table.find('.jtw-fcfe-total-result[data-year="' + i + '"]').text(formatNumberForDisplay(fcfe, revenueUnitLabel));
+        // Gather the user-inputted yearly revenue growth rates for this case.
+        assumptions[caseType].yearlyRevGrowth = {};
+        $table.find('input[data-metric="yearlyRevGrowth"]').each(function() {
+            const $input = $(this);
+            const year = $input.data('year');
+            const growthRateValue = parseFloat($input.val());
+            if (!isNaN(growthRateValue)) {
+                assumptions[caseType].yearlyRevGrowth[year] = growthRateValue;
+            } else {
+                hasAllInputs = false; // If any growth input is not a valid number, flag it.
             }
         });
+        
+        // Get the selected valuation model (e.g., DCF, DDM) for this case.
+        const selectedModel = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
+        assumptions[caseType].model = selectedModel;
 
-        if (!hasAllInputs) return;
+        // --- REMOVED FAULTY LOGIC ---
+        // The previous code had checks here for hidden FCFE component inputs (depreciation, capex, etc.).
+        // These checks were preventing the hasAllInputs flag from ever being true.
+        // They have been removed as the backend handles these calculations.
+    });
 
-        const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
-        const timeframe = 10;
-        $container.find('.jtw-case-table').css('opacity', 0.5);
+    // If any of the essential inputs were missing, stop before making the AJAX call.
+    if (!hasAllInputs) {
+        console.warn("Calculation paused: Not all growth inputs have valid numbers.");
+        return;
+    }
 
-        $.ajax({
-            url: jtw_public_params.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'jtw_recalculate_valuation',
-                nonce: jtw_public_params.recalculate_nonce,
-                ticker: ticker,
-                assumptions: assumptions
-            },
-            dataType: 'json',
-            success: function(response) {
-                $container.find('.jtw-case-table').css('opacity', 1);
-                console.log(response);
-                if (response.success && response.data) {
-                    const data = response.data;
-                    
-                    // --- START MODIFICATION: Handle new structured response ---
-                    // Loop through each case from the response (bear, base, bull)
-                    for (const caseType in data) {
-                        if (data.hasOwnProperty(caseType)) {
-                            const caseData = data[caseType];
-                            const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
-                            console.log("This is case data " + caseData);
+    const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+    $container.find('.jtw-case-table').css('opacity', 0.5); // Dim the UI to indicate loading.
 
-                            if (caseData.error) {
-                                console.log("Error is case data");
-                                console.error(`Error for ${caseType} case:`, caseData.error);
-                                // Optionally display an error message in the UI for that specific case
-                                updateInTableValuationGraphic($table, null, currentPrice); // Show error in bar
-                                continue;
-                            }
-                            
-                            // Update the in-table valuation bar with the new fair value
-                            updateInTableValuationGraphic($table, caseData.fair_value, currentPrice);
-
-                            console.log("This is fair value: " + caseData.fair_value + " and this is currentPrice: " + currentPrice);
-
-
-                            // Update the model label if it changed
-                            if (caseData.valuation_label) {
-                                $table.find('.jtw-selected-model').text(caseData.valuation_label);
-                            }
-
-                            // Replace the entire content of this case's modal with the new HTML
-                            const modalId = `#jtw-assumptions-modal-${caseType}`;
-                            if ($(modalId).length && caseData.modal_html) {
-                                $(modalId).find('.jtw-modal-content').html(caseData.modal_html);
-                            }
+    // --- AJAX call to the backend ---
+    $.ajax({
+        url: jtw_public_params.ajax_url,
+        type: 'POST',
+        data: {
+            action: 'jtw_recalculate_valuation',
+            nonce: jtw_public_params.recalculate_nonce,
+            ticker: ticker,
+            assumptions: assumptions
+        },
+        dataType: 'json',
+        success: function(response) {
+            $container.find('.jtw-case-table').css('opacity', 1); // Restore UI opacity.
+            if (response.success && response.data) {
+                const data = response.data;
+                // Loop through the response and update each case's UI.
+                for (const caseType in data) {
+                    if (data.hasOwnProperty(caseType)) {
+                        const caseData = data[caseType];
+                        const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
+                        
+                        if (caseData.error) {
+                            console.error(`Error for ${caseType} case:`, caseData.error);
+                            updateInTableValuationGraphic($table, null, currentPrice); // Show error in bar.
+                            continue;
+                        }
+                        
+                        // Update the animated valuation bar and the modal content.
+                        updateInTableValuationGraphic($table, caseData.fair_value, currentPrice);
+                        const modalId = `#jtw-assumptions-modal-${caseType}`;
+                        if ($(modalId).length && caseData.modal_html) {
+                            $(modalId).find('.jtw-modal-content').html(caseData.modal_html);
                         }
                     }
-                    // --- END MODIFICATION ---
-
-                } else {
-                    console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
                 }
-            },
-            error: function() {
-                $container.find('.jtw-case-table').css('opacity', 1);
-                console.log("AJAX error during recalculation.");
+            } else {
+                console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
             }
-        });
-    }, 500);
+        },
+        error: function(jqXHR) {
+            $container.find('.jtw-case-table').css('opacity', 1);
+            console.error("AJAX error during recalculation.", jqXHR.responseText);
+        }
+    });
+}, 500);
 
     $container.on('input', '.jtw-assumption-input', recalculateValuation);
     recalculateValuation();
