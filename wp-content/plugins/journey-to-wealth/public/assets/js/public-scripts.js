@@ -253,6 +253,14 @@ function initializeFairValueAnalysisSection($container) {
         return;
     }
 
+    // --- START: LOADER LOGIC ---
+    // Hide the loader and show the tables now that the section's JS is initialized.
+    const $valuationWrapper = $contentDiv.find('.jtw-valuation-tables-wrapper');
+    const $loader = $contentDiv.find('.jtw-valuation-loader');
+    $loader.hide();
+    $valuationWrapper.show();
+    // --- END: LOADER LOGIC ---
+
     const componentRatios = $contentDiv.data('ratios');
     const currentPrice = $contentDiv.data('current-price');
     const sharesOutstanding = parseFloat($contentDiv.data('shares-outstanding'));
@@ -442,7 +450,11 @@ const recalculateValuation = debounce(function() {
     }
 
     const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
-    $container.find('.jtw-case-table').css('opacity', 0.5); // Dim the UI to indicate loading.
+    // --- START: LOADER LOGIC FOR RECALCULATION ---
+    // Hide the tables and show the loader before making the AJAX call.
+    $valuationWrapper.hide();
+    $loader.show();
+    // --- END: LOADER LOGIC FOR RECALCULATION ---
 
     // --- AJAX call to the backend ---
     $.ajax({
@@ -486,6 +498,13 @@ const recalculateValuation = debounce(function() {
         error: function(jqXHR) {
             $container.find('.jtw-case-table').css('opacity', 1);
             console.error("AJAX error during recalculation.", jqXHR.responseText);
+        },
+        complete: function() {
+            // --- START: LOADER LOGIC FOR COMPLETION ---
+            // Hide the loader and show the tables again, regardless of success or error.
+            $loader.hide();
+            $valuationWrapper.show();
+            // --- END: LOADER LOGIC FOR COMPLETION ---
         }
     });
 }, 500);
