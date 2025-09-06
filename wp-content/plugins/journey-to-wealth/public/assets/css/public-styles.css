@@ -1649,15 +1649,19 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table {
     color: #cbd5e0; 
 }
 
+/* --- START: CSS SPECIFICITY FIX --- */
+/* This more specific selector will override the theme's default table cell styles */
 body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table th,
 body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table td {
     border-bottom-color: #334155;
+    background-color: transparent !important; /* Force override of theme's cell background */
 }
 
 body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table thead th {
     background-color: #334155 !important;
     color: #f8fafc;
 }
+/* --- END: CSS SPECIFICITY FIX --- */
 
 body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table td:last-child,
 body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table th:last-child {
