@@ -315,19 +315,27 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
     const $fairValueBar = $table.find('.jtw-fair-value-bar');
     const $currentPriceBar = $table.find('.jtw-current-price-bar');
 
+    // Check if the selectors found the elements. If not, log an error.
+    if (!$fairValueBar.length || !$currentPriceBar.length) {
+        console.error("Could not find the valuation bar elements. Check your HTML selectors.");
+        return;
+    }
+
+    // Immediately hide the bars to prevent a "flash" of the old state.
+    $fairValueBar.css('transition', 'none');
+    $currentPriceBar.css('transition', 'none');
+
     // Check for a valid fair value. If not, show an error.
     if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
         $barContainer.hide();
         $errorMessage.show();
-        // Ensure bars are hidden if there's an error.
-        $fairValueBar.css({ 'transition': 'none', 'width': '0%' });
-        $currentPriceBar.css({ 'transition': 'none', 'width': '0%' });
         return;
     }
 
     $barContainer.show();
     $errorMessage.hide();
 
+    // Determine the maximum value for the bar's scale.
     const rangeMax = Math.max(currentPrice, fairValue) * 1.5;
     if (rangeMax <= 0) return;
 
@@ -345,19 +353,19 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
     $table.find('.jtw-in-table-zone.undervalued').css('width', undervaluedWidthPct + '%');
     $table.find('.jtw-in-table-zone.about-right').css('width', aboutRightWidthPct + '%');
 
-    // --- START: ANIMATION FIX ---
-    // 1. Temporarily disable the CSS transition.
-    // 2. Set the width to 0% immediately.
-    $fairValueBar.css({ 'transition': 'none', 'width': '0%' });
-    $currentPriceBar.css({ 'transition': 'none', 'width': '0%' });
-
-    // 3. Force the browser to repaint the elements at 0% width. Accessing offsetHeight is a standard way to do this.
-    $barContainer[0].offsetHeight;
-
-    // 4. Re-enable the transition and set the final target width. The browser will now animate from 0% to the new width.
-    $fairValueBar.css({ 'transition': 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)', 'width': fairValueWidthPct + '%' });
-    $currentPriceBar.css({ 'transition': 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)', 'width': currentPriceWidthPct + '%' });
-    // --- END: ANIMATION FIX ---
+    // --- ANIMATION FIX ---
+    // Use a timeout of 0 milliseconds. This pushes the next part of the code to the end of the browser's
+    // execution queue, giving it time to render the bars at 0% width before the animation starts.
+    setTimeout(function() {
+        // Re-enable the CSS transition.
+        $fairValueBar.css('transition', 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)');
+        $currentPriceBar.css('transition', 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)');
+        
+        // Set the final target width, which will now animate correctly from 0%.
+        $fairValueBar.css('width', fairValueWidthPct + '%');
+        $currentPriceBar.css('width', currentPriceWidthPct + '%');
+    }, 0);
+    // --- END ANIMATION FIX ---
 }
 
     const recalculateValuation = debounce(function() {
