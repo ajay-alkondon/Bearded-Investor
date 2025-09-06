@@ -253,13 +253,13 @@ function initializeFairValueAnalysisSection($container) {
         return;
     }
 
-    // --- START: LOADER LOGIC ---
-    // Hide the loader and show the tables now that the section's JS is initialized.
+    // --- START: INITIAL LOAD LOGIC ---
     const $valuationWrapper = $contentDiv.find('.jtw-valuation-tables-wrapper');
     const $loader = $contentDiv.find('.jtw-valuation-loader');
+    // Hide the loader and show the tables now that the section's JS is initialized.
     $loader.hide();
     $valuationWrapper.show();
-    // --- END: LOADER LOGIC ---
+    // --- END: INITIAL LOAD LOGIC ---
 
     const componentRatios = $contentDiv.data('ratios');
     const currentPrice = $contentDiv.data('current-price');
@@ -450,11 +450,11 @@ const recalculateValuation = debounce(function() {
     }
 
     const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
-    // --- START: LOADER LOGIC FOR RECALCULATION ---
-    // Hide the tables and show the loader before making the AJAX call.
-    $valuationWrapper.hide();
-    $loader.show();
-    // --- END: LOADER LOGIC FOR RECALCULATION ---
+
+    // --- START: MODIFIED RECALCULATION VISUALS ---
+    // Instead of hiding the tables, just dim them to indicate a refresh.
+    $container.find('.jtw-case-table').css('opacity', 0.5);
+    // --- END: MODIFIED RECALCULATION VISUALS ---
 
     // --- AJAX call to the backend ---
     $.ajax({
@@ -500,11 +500,10 @@ const recalculateValuation = debounce(function() {
             console.error("AJAX error during recalculation.", jqXHR.responseText);
         },
         complete: function() {
-            // --- START: LOADER LOGIC FOR COMPLETION ---
-            // Hide the loader and show the tables again, regardless of success or error.
-            $loader.hide();
-            $valuationWrapper.show();
-            // --- END: LOADER LOGIC FOR COMPLETION ---
+            // --- START: RESTORE UI ON COMPLETION ---
+            // Restore full opacity to the tables once the AJAX call is finished.
+            $container.find('.jtw-case-table').css('opacity', 1);
+            // --- END: RESTORE UI ON COMPLETION ---
         }
     });
 }, 500);

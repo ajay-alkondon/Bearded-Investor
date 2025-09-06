@@ -621,26 +621,33 @@ private function build_case_table_html($case, $current_year, $current_year_reven
 }
 
 private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $dcf_result_for_ui) {
-    // This function is now purely for presentation, using pre-calculated data.
     $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
-    if (is_null($dcf_result_data)) { return '<div class="jtw-content-section"><p>Could not generate valuation projection tables. Required data is missing.</p></div>'; }
+    // If DCF data is missing for the initial load, we can't render the UI.
+    if (is_null($dcf_result_data)) {
+        // Find the first available valuation model to display an initial value.
+        $first_model_key = key($valuation_data);
+        $first_model_result = reset($valuation_data);
+        if (!$first_model_result || isset($first_model_result['error'])) {
+             return '<div class="jtw-content-section"><p>Could not generate valuation projection tables. Required data is missing or contains an error.</p></div>';
+        }
+        $dcf_result_data = $first_model_result['calculation_breakdown']; // Use this as a fallback for shares outstanding, etc.
+    }
     
-    $component_ratios_json = isset($dcf_result_data['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_data['component_ratios']['projection_ratios'])) : '[]';
+    $component_ratios_json = isset($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'])) : '[]';
     $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
 
     $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios=\'' . $component_ratios_json . '\' data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-shares-outstanding="' . esc_attr($shares_outstanding) . '">';
     $output .= '<div class="jtw-section-header"><h4>' . esc_html__('Value Projections', 'journey-to-wealth') . '</h4></div>';
 
     // --- START: ADDED WRAPPER AND LOADER ---
-    // The tables are now wrapped and initially hidden.
+    // The tables are now wrapped and initially hidden via inline style.
     $output .= '<div class="jtw-valuation-tables-wrapper" style="display: none;">';
 
-    $analyst_revenue_current_year = $dcf_result_data['analyst_revenue_current_year'] ?? 0;
+    $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
     
-    if (isset($dcf_result_data['current_year_revenue_growth']) && is_numeric($dcf_result_data['current_year_revenue_growth'])) {
-        $current_year_revenue_growth = $dcf_result_data['current_year_revenue_growth'] * 100;
-    } else {
-        $current_year_revenue_growth = 0;
+    $current_year_revenue_growth = 0;
+    if (isset($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth']) && is_numeric($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'])) {
+        $current_year_revenue_growth = $dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] * 100;
     }
 
     $base_revenue = $analyst_revenue_current_year;
@@ -649,12 +656,12 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     if (abs($base_revenue) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
     elseif (abs($base_revenue) >= 1.0e+6) { $unit = '(Millions)'; $divisor = 1.0e+6; }
     
-    $net_income_to_revenue_ratio = $dcf_result_data['component_ratios']['projection_ratios']['net_income_of_revenue'] ?? 0;
+    $net_income_to_revenue_ratio = $dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']['net_income_of_revenue'] ?? 0;
     $current_year_net_income = $analyst_revenue_current_year * $net_income_to_revenue_ratio;
     $current_year_eps = ($shares_outstanding > 0) ? $current_year_net_income / $shares_outstanding : 0;
     $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
     
-    $available_models = [ 'dcf' => 'Discounted Cash Flow Valuation', 'affo' => 'AFFO Valuation', 'excess_return' => 'Excess Return Valuation' ];
+    $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
     if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
 
     foreach (['bear', 'base', 'bull'] as $case) {
