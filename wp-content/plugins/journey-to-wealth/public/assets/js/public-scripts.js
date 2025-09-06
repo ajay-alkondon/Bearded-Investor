@@ -468,7 +468,13 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
 
         $.ajax({
             url: jtw_public_params.ajax_url,
-            // ... (data and other params are the same) ...
+            type: 'POST',
+            data: {
+                action: 'jtw_recalculate_valuation',
+                nonce: jtw_public_params.recalculate_nonce,
+                ticker: ticker,
+                assumptions: assumptions
+            },
             dataType: 'json',
             success: function(response) {
                 $container.find('.jtw-case-table').css('opacity', 1);
