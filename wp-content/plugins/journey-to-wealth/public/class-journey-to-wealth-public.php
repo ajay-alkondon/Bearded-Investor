@@ -654,73 +654,75 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     return $output;
 }
 
-    private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
-        ob_start();
-        ?>
-        <div id="section-key-metrics-ratios-content" class="jtw-content-section">
-            <div class="jtw-section-header">
-                <h4><?php esc_html_e('Comparative Company Analysis', 'journey-to-wealth'); ?></h4>
-                <div class="jtw-peer-controls-container">
-                    <span><?php esc_html_e('Auto-suggest Peers', 'journey-to-wealth'); ?></span>
-                    <label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>
-                    <button id="jtw-compare-peers-btn" class="jtw-compare-button"><?php esc_html_e('Compare', 'journey-to-wealth'); ?></button>
-                </div>
-            </div>
-            <div class="jtw-metrics-table-container">
-                <table class="jtw-metrics-table peer-view">
-                    <thead>
-                        <tr>
-                            <th>Metric</th>
-                            <th class="jtw-primary-col"><?php echo esc_html($ticker); ?></th>
-                            <th class="jtw-peer-col"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>
-                            <th class="jtw-peer-col"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        // --- START: UPDATED METRIC GROUPS ---
-                        $metric_groups = [
-                            'Relative Valuation' => [
-                                'PERatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 
-                                'ForwardPE' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'], 
-                                'PriceToBookRatio' => ['label' => 'P/B Ratio', 'suffix' => 'x'], 
-                                'PriceToSalesRatioTTM' => ['label' => 'P/S Ratio', 'suffix' => 'x']
-                            ],
-                            'Growth Analysis' => [ 
-                                'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'], 
-                                'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'],
-                                'ttmRevenueGrowth' => ['label' => 'TTM Revenue Growth', 'suffix' => '%'],
-                                'nextYearRevenueGrowth' => ['label' => 'Next Year Revenue Growth (Est)', 'suffix' => '%']
-                            ],
-                            'Profitability' => [
-                                'grossMargin' => ['label' => 'Gross Margin', 'suffix' => '%'], 
-                                'netMargin' => ['label' => 'Net Margin', 'suffix' => '%'], 
-                                'returnOnEquityTTM' => ['label' => 'Return on Equity', 'suffix' => '%'], 
-                                'returnOnCapitalTTM' => ['label' => 'Return on Capital', 'suffix' => '%']
-                            ],
-                        ];
-                        // --- END: UPDATED METRIC GROUPS ---
-                        foreach ($metric_groups as $group_name => $metrics) :
-                        ?>
-                            <tr class="jtw-metric-group-header"><td colspan="4"><?php echo esc_html($group_name); ?></td></tr>
-                            <?php foreach ($metrics as $key => $details) : ?>
-                                <tr>
-                                    <td><?php echo esc_html($details['label']); ?></td>
-                                    <td class="jtw-primary-col"><?php echo $this->format_metric_value($primary_metrics[$key] ?? 'N/A', $details['suffix']); ?></td>
-                                    <td class="jtw-peer-col jtw-peer-1-value" data-metric="<?php echo esc_attr($key); ?>">-</td>
-                                    <td class="jtw-peer-col jtw-peer-2-value" data-metric="<?php echo esc_attr($key); ?>">-</td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <div class="jtw-peer-loading-spinner" style="display:none;"><div class="jtw-loading-spinner"></div></div>
-                <div class="jtw-peer-error-message" style="display:none;"></div>
+private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
+    ob_start();
+    ?>
+    <div id="section-key-metrics-ratios-content" class="jtw-content-section">
+        <div class="jtw-section-header">
+            <h4><?php esc_html_e('Comparative Company Analysis', 'journey-to-wealth'); ?></h4>
+            <div class="jtw-peer-controls-container">
+                <span><?php esc_html_e('Auto-suggest Peers', 'journey-to-wealth'); ?></span>
+                <label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>
+                <button id="jtw-compare-peers-btn" class="jtw-compare-button"><?php esc_html_e('Compare', 'journey-to-wealth'); ?></button>
             </div>
         </div>
-        <?php
-        return ob_get_clean();
-    }
+        <div class="jtw-metrics-table-container">
+            <table class="jtw-metrics-table peer-view">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th class="jtw-primary-col"><?php echo esc_html($ticker); ?></th>
+                        <th class="jtw-peer-col"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>
+                        <th class="jtw-peer-col"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    // --- START: UPDATED METRIC GROUPS ---
+                    $metric_groups = [
+                        'Relative Valuation' => [
+                            'PERatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 
+                            'ForwardPE' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'], 
+                            'PriceToBookRatio' => ['label' => 'P/B Ratio', 'suffix' => 'x'], 
+                            'PriceToSalesRatioTTM' => ['label' => 'P/S Ratio', 'suffix' => 'x'],
+                            'pegRatio' => ['label' => 'PEG Ratio', 'suffix' => 'x'],
+                            'pegyRatio' => ['label' => 'PEGY Ratio', 'suffix' => 'x']
+                        ],
+                        'Growth Analysis' => [ 
+                            'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'], 
+                            'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'],
+                            'ttmRevenueGrowth' => ['label' => 'TTM Revenue Growth', 'suffix' => '%'],
+                            'nextYearRevenueGrowth' => ['label' => 'Next Year Revenue Growth (Est)', 'suffix' => '%']
+                        ],
+                        'Profitability' => [
+                            'grossMargin' => ['label' => 'Gross Margin', 'suffix' => '%'], 
+                            'netMargin' => ['label' => 'Net Margin', 'suffix' => '%'], 
+                            'returnOnEquityTTM' => ['label' => 'Return on Equity', 'suffix' => '%'], 
+                            'returnOnCapitalTTM' => ['label' => 'Return on Capital', 'suffix' => '%']
+                        ],
+                    ];
+                    // --- END: UPDATED METRIC GROUPS ---
+                    foreach ($metric_groups as $group_name => $metrics) :
+                    ?>
+                        <tr class="jtw-metric-group-header"><td colspan="4"><?php echo esc_html($group_name); ?></td></tr>
+                        <?php foreach ($metrics as $key => $details) : ?>
+                            <tr>
+                                <td><?php echo esc_html($details['label']); ?></td>
+                                <td class="jtw-primary-col"><?php echo $this->format_metric_value($primary_metrics[$key] ?? 'N/A', $details['suffix']); ?></td>
+                                <td class="jtw-peer-col jtw-peer-1-value" data-metric="<?php echo esc_attr($key); ?>">-</td>
+                                <td class="jtw-peer-col jtw-peer-2-value" data-metric="<?php echo esc_attr($key); ?>">-</td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <div class="jtw-peer-loading-spinner" style="display:none;"><div class="jtw-loading-spinner"></div></div>
+            <div class="jtw-peer-error-message" style="display:none;"></div>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
 
 private function build_past_performance_section_html($historical_data) {
     ob_start();
