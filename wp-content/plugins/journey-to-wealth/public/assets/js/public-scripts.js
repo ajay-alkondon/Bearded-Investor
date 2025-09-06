@@ -478,6 +478,7 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
             dataType: 'json',
             success: function(response) {
                 $container.find('.jtw-case-table').css('opacity', 1);
+                console.log(response);
                 if (response.success && response.data) {
                     const data = response.data;
                     
@@ -523,7 +524,7 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
             },
             error: function() {
                 $container.find('.jtw-case-table').css('opacity', 1);
-                console.error("AJAX error during recalculation.");
+                console.log("AJAX error during recalculation.");
             }
         });
     }, 500);
