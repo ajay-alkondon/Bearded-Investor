@@ -702,11 +702,28 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                     </thead>
                     <tbody>
                         <?php
+                        // --- START: UPDATED METRIC GROUPS ---
                         $metric_groups = [
-                            'Relative Valuation' => ['PERatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 'ForwardPE' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'], 'PriceToBookRatio' => ['label' => 'P/B Ratio', 'suffix' => 'x'], 'PriceToSalesRatioTTM' => ['label' => 'P/S Ratio', 'suffix' => 'x']],
-                            'Growth Analysis' => [ 'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'], 'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'] ],
-                            'Profitability' => ['grossMargin' => ['label' => 'Gross Margin', 'suffix' => '%'], 'netMargin' => ['label' => 'Net Margin', 'suffix' => '%'], 'returnOnEquityTTM' => ['label' => 'Return on Equity', 'suffix' => '%'], 'returnOnCapitalTTM' => ['label' => 'Return on Capital', 'suffix' => '%']],
+                            'Relative Valuation' => [
+                                'PERatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 
+                                'ForwardPE' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'], 
+                                'PriceToBookRatio' => ['label' => 'P/B Ratio', 'suffix' => 'x'], 
+                                'PriceToSalesRatioTTM' => ['label' => 'P/S Ratio', 'suffix' => 'x']
+                            ],
+                            'Growth Analysis' => [ 
+                                'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'], 
+                                'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'],
+                                'ttmRevenueGrowth' => ['label' => 'TTM Revenue Growth', 'suffix' => '%'],
+                                'nextYearRevenueGrowth' => ['label' => 'Next Year Revenue Growth (Est)', 'suffix' => '%']
+                            ],
+                            'Profitability' => [
+                                'grossMargin' => ['label' => 'Gross Margin', 'suffix' => '%'], 
+                                'netMargin' => ['label' => 'Net Margin', 'suffix' => '%'], 
+                                'returnOnEquityTTM' => ['label' => 'Return on Equity', 'suffix' => '%'], 
+                                'returnOnCapitalTTM' => ['label' => 'Return on Capital', 'suffix' => '%']
+                            ],
                         ];
+                        // --- END: UPDATED METRIC GROUPS ---
                         foreach ($metric_groups as $group_name => $metrics) :
                         ?>
                             <tr class="jtw-metric-group-header"><td colspan="4"><?php echo esc_html($group_name); ?></td></tr>
