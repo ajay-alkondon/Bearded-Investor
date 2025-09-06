@@ -602,20 +602,12 @@ const recalculateValuation = debounce(function() {
             const chartId = $script.data('chart-id');
             const chartType = $script.data('chart-type');
             const prefix = $script.data('prefix');
-            let annualData;
+            // --- START: STACKED BAR LOGIC ---
+            const isStacked = $script.data('stacked') === true;
+            // --- END: STACKED BAR LOGIC ---
 
-            let colors = ['rgba(0, 122, 255, 0.6)', 'rgba(0, 122, 255, 1)'];
-            const colorsAttr = $script.attr('data-colors');
-            if (colorsAttr) {
-                try {
-                    const parsedColors = JSON.parse(colorsAttr);
-                    if(Array.isArray(parsedColors) && parsedColors.length > 0) {
-                        colors = parsedColors;
-                    }
-                } catch (e) {
-                    console.error("Failed to parse colors JSON for chart:", chartId, e);
-                }
-            }
+            let annualData;
+            let colors = $script.data('colors'); // Get colors from data attribute
 
             try {
                 annualData = JSON.parse($script.attr('data-annual'));
@@ -659,44 +651,34 @@ const recalculateValuation = debounce(function() {
                     }
                 },
                 scales: {
+                    // --- START: STACKED BAR LOGIC ---
                     x: {
-                        stacked: false,
+                        stacked: isStacked,
                         ticks: { autoSkip: true, maxRotation: 0, font: { size: 10 } },
-                        grid: {
-                            display: false
-                        }
+                        grid: { display: false }
                     },
                     y: {
-                        stacked: false,
+                        stacked: isStacked,
                         ticks: {
                             maxTicksLimit: 5, 
                             callback: function(value) { return prefix + formatLargeNumber(value).replace('.00',''); },
                             font: { size: 10 }
                         }
                     }
+                    // --- END: STACKED BAR LOGIC ---
                 }
             };
             
-            if (chartId.includes('price')) {
-                options.elements = { point: { radius: 0, hoverRadius: 4 }, line: { tension: 0.1 } };
-                options.scales.x.type = 'time';
-                options.scales.x.time = { unit: 'year' };
-                options.scales.x.grid = { display: false };
-            } else if (chartId.includes('cash-and-debt') || chartId.includes('expenses')) {
-                options.scales.x.stacked = true;
-                options.scales.y.stacked = true;
-            }
-            
             if (annualData.datasets) {
-                 datasets = annualData.datasets.map((dataset, index) => ({
+                datasets = annualData.datasets.map((dataset, index) => ({
                     label: dataset.label, data: dataset.data,
-                    backgroundColor: colors[index] || 'rgba(0, 122, 255, 0.6)',
+                    backgroundColor: colors && colors[index] ? colors[index] : 'rgba(0, 122, 255, 0.6)',
                 }));
             } else { 
                 datasets = [{
                     label: 'Value', data: annualData.data,
-                    borderColor: colors[0],
-                    backgroundColor: chartType === 'line' ? colors[1] : colors[0],
+                    borderColor: colors && colors[0] ? colors[0] : 'rgba(0, 122, 255, 1)',
+                    backgroundColor: colors && colors[0] ? colors[0] : 'rgba(0, 122, 255, 0.6)',
                     fill: chartType === 'line',
                 }];
             }

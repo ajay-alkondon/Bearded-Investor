@@ -759,19 +759,23 @@ private function build_past_performance_section_html($historical_data) {
         </div>
         <div class="jtw-historical-charts-grid">
             <?php
-            // --- START: ADDED NEW CHART CONFIGS ---
             $chart_configs = [
-                'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$'], 
-                'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$'],
-                'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$'], 
-                'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$'],
-                'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$'], 
-                'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$'],
-                'cash-and-debt' => ['title' => 'Cash & Debt', 'type' => 'bar', 'prefix' => '$', 'colors' => '["rgba(0, 122, 255, 0.6)", "rgba(255, 99, 132, 0.6)"]'],
-                'expenses' => ['title' => 'Key Expenses', 'type' => 'bar', 'prefix' => '$', 'colors' => '["rgba(255, 159, 64, 0.6)", "rgba(75, 192, 192, 0.6)", "rgba(153, 102, 255, 0.6)"]'],
-                'shares_outstanding' => ['title' => 'Shares Outstanding', 'type' => 'bar', 'prefix' => '']
+                'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'], // Example color added for consistency
+                'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'], // Example color added for consistency
+                'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#7ed321"]'], // Example color added for consistency
+                'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#4a90e2"]'], // Example color added for consistency
+                'cash-and-debt' => ['title' => 'Cash & Debt', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#f5a623", "#d0021b"]'], // Updated colors for Cash & Debt
+                'expenses' => [
+                    'title' => 'Expenses', 
+                    'type' => 'bar', 
+                    'prefix' => '$', 
+                    'stacked' => true, // <-- NEW: This makes it a stacked bar chart
+                    'colors' => '["#f5a623", "#f8e71c", "#d0021b"]' // <-- NEW: Specific colors from the image (orange, yellow, red)
+                ],
+                'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#bd10e0"]'], // Example color added for consistency
+                'shares_outstanding' => ['title' => 'Shares Outstanding', 'type' => 'bar', 'prefix' => '', 'colors' => '["#50e3c2"]'], // Example color added for consistency
+                'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'] // Example color added for consistency
             ];
-            // --- END: ADDED NEW CHART CONFIGS ---
             foreach ($chart_configs as $key => $config) {
                 $annual_data = $historical_data['annual'][$key] ?? [];
                 $quarterly_data = $historical_data['quarterly'][$key] ?? [];
@@ -779,10 +783,11 @@ private function build_past_performance_section_html($historical_data) {
                 
                 // Set colors attribute if it exists in the config
                 $colors_attr = isset($config['colors']) ? "data-colors='" . esc_attr($config['colors']) . "'" : '';
-                
+                $stacked_attr = isset($config['stacked']) && $config['stacked'] ? "data-stacked='true'" : ''; // <-- NEW: Add stacked attribute
+
                 echo '<div class="jtw-chart-item">';
                 echo '<h5>' . esc_html($config['title']) . '</h5><div class="jtw-chart-wrapper"><canvas id="' . esc_attr($chart_id) . '"></canvas></div>';
-                echo "<script type='application/json' class='jtw-chart-data' data-chart-id='" . esc_attr($chart_id) . "' data-chart-type='" . esc_attr($config['type']) . "' data-prefix='" . esc_attr($config['prefix']) . "' " . $colors_attr . " data-annual='" . esc_attr(json_encode($annual_data)) . "' data-quarterly='" . esc_attr(json_encode($quarterly_data)) . "'></script>";
+                echo "<script type='application/json' class='jtw-chart-data' data-chart-id='" . esc_attr($chart_id) . "' data-chart-type='" . esc_attr($config['type']) . "' data-prefix='" . esc_attr($config['prefix']) . "' " . $colors_attr . " " . $stacked_attr . " data-annual='" . esc_attr(json_encode($annual_data)) . "' data-quarterly='" . esc_attr(json_encode($quarterly_data)) . "'></script>";
                 echo '</div>';
             }
             ?>
