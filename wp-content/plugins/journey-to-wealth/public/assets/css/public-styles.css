@@ -1630,19 +1630,23 @@ body.dark-mode .jtw-modal {
     border: 1px solid #334155;
 }
 
-body.dark-mode .jtw-modal-close { color: #94a3b8; }
-body.dark-mode .jtw-modal-close:hover { color: #f8fafc; }
+body.dark-mode .jtw-modal-close { 
+    color: #94a3b8; 
+}
+
+body.dark-mode .jtw-modal-close:hover { 
+    color: #f8fafc; 
+}
 
 body.dark-mode .jtw-modal-content h4.jtw-modal-title,
 body.dark-mode .jtw-modal-stage .jtw-modal-subtitle {
     color: #f8fafc;
-}
-
-body.dark-mode .jtw-modal-stage .jtw-modal-subtitle {
     border-bottom-color: #334155;
 }
 
-body.dark-mode .jtw-sws-modal-table { color: #cbd5e0; }
+body.dark-mode .jtw-sws-modal-table { 
+    color: #cbd5e0; 
+}
 
 body.dark-mode .jtw-sws-modal-table th,
 body.dark-mode .jtw-sws-modal-table td {
@@ -1659,5 +1663,14 @@ body.dark-mode .jtw-sws-modal-table th:last-child {
     color: #f8fafc;
 }
 
-body.dark-mode .jtw-sws-modal-table .jtw-formula { color: #94a3b8; }
-body.dark-mode .jtw-sws-modal-table .jtw-formula-vals { color: #64748b; }
+body.dark-mode .jtw-sws-modal-table .jtw-formula { 
+    color: #94a3b8; 
+}
+
+body.dark-mode .jtw-sws-modal-table .jtw-formula-vals { 
+    color: #64748b; 
+}
+
+body.dark-mode .jtw-sws-modal-table .jtw-table-total-row td {
+    border-top-color: #475569;
+}
