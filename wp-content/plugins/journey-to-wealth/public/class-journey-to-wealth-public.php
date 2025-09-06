@@ -746,43 +746,51 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
         return ob_get_clean();
     }
 
-    private function build_past_performance_section_html($historical_data) {
-        ob_start();
-        ?>
-        <div id="section-past-performance-content" class="jtw-content-section">
-            <h4><?php esc_html_e('Visual Data Trends', 'journey-to-wealth'); ?></h4>
-            <div class="jtw-chart-controls">
-                <div class="jtw-period-toggle">
-                    <button class="jtw-period-button active" data-period="annual">Annual</button>
-                    <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
-                </div>
-            </div>
-            <div class="jtw-historical-charts-grid">
-                <?php
-                $chart_configs = [
-                    'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$'], 
-                    'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$'],
-                    'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$'], 
-                    'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$'],
-                    'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$'], 
-                    'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$'],
-                    'cash-and-debt' => ['title' => 'Cash & Debt', 'type' => 'bar', 'prefix' => '$', 'colors' => '["rgba(0, 122, 255, 0.6)", "rgba(255, 99, 132, 0.6)"]']
-                ];
-                foreach ($chart_configs as $key => $config) {
-                    $annual_data = $historical_data['annual'][$key] ?? [];
-                    $quarterly_data = $historical_data['quarterly'][$key] ?? [];
-                    $chart_id = 'chart-' . uniqid();
-                    echo '<div class="jtw-chart-item">';
-                    echo '<h5>' . esc_html($config['title']) . '</h5><div class="jtw-chart-wrapper"><canvas id="' . esc_attr($chart_id) . '"></canvas></div>';
-                    echo "<script type='application/json' class='jtw-chart-data' data-chart-id='" . esc_attr($chart_id) . "' data-chart-type='" . esc_attr($config['type']) . "' data-prefix='" . esc_attr($config['prefix']) . "' data-annual='" . esc_attr(json_encode($annual_data)) . "' data-quarterly='" . esc_attr(json_encode($quarterly_data)) . "'></script>";
-                    echo '</div>';
-                }
-                ?>
+private function build_past_performance_section_html($historical_data) {
+    ob_start();
+    ?>
+    <div id="section-past-performance-content" class="jtw-content-section">
+        <h4><?php esc_html_e('Visual Data Trends', 'journey-to-wealth'); ?></h4>
+        <div class="jtw-chart-controls">
+            <div class="jtw-period-toggle">
+                <button class="jtw-period-button active" data-period="annual">Annual</button>
+                <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
             </div>
         </div>
-        <?php
-        return ob_get_clean();
-    }
+        <div class="jtw-historical-charts-grid">
+            <?php
+            // --- START: ADDED NEW CHART CONFIGS ---
+            $chart_configs = [
+                'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$'], 
+                'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$'],
+                'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$'], 
+                'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$'],
+                'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$'], 
+                'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$'],
+                'cash-and-debt' => ['title' => 'Cash & Debt', 'type' => 'bar', 'prefix' => '$', 'colors' => '["rgba(0, 122, 255, 0.6)", "rgba(255, 99, 132, 0.6)"]'],
+                'expenses' => ['title' => 'Key Expenses', 'type' => 'bar', 'prefix' => '$', 'colors' => '["rgba(255, 159, 64, 0.6)", "rgba(75, 192, 192, 0.6)", "rgba(153, 102, 255, 0.6)"]'],
+                'shares_outstanding' => ['title' => 'Shares Outstanding', 'type' => 'bar', 'prefix' => '']
+            ];
+            // --- END: ADDED NEW CHART CONFIGS ---
+            foreach ($chart_configs as $key => $config) {
+                $annual_data = $historical_data['annual'][$key] ?? [];
+                $quarterly_data = $historical_data['quarterly'][$key] ?? [];
+                $chart_id = 'chart-' . uniqid();
+                
+                // Set colors attribute if it exists in the config
+                $colors_attr = isset($config['colors']) ? "data-colors='" . esc_attr($config['colors']) . "'" : '';
+                
+                echo '<div class="jtw-chart-item">';
+                echo '<h5>' . esc_html($config['title']) . '</h5><div class="jtw-chart-wrapper"><canvas id="' . esc_attr($chart_id) . '"></canvas></div>';
+                echo "<script type='application/json' class='jtw-chart-data' data-chart-id='" . esc_attr($chart_id) . "' data-chart-type='" . esc_attr($config['type']) . "' data-prefix='" . esc_attr($config['prefix']) . "' " . $colors_attr . " data-annual='" . esc_attr(json_encode($annual_data)) . "' data-quarterly='" . esc_attr(json_encode($quarterly_data)) . "'></script>";
+                echo '</div>';
+            }
+            ?>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
 
     private function build_historical_data_section_html($table_data) {
         if (empty($table_data)) { return '<div class="jtw-content-section"><p>Historical data is not available for this company.</p></div>'; }
