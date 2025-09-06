@@ -1012,66 +1012,68 @@ const recalculateValuation = debounce(function() {
         });
     }
 
-    function initializeAnalyzerPage() {
-        const $container = $('.jtw-analyzer-wrapper').first();
-        if (!$container.length) return;
+function initializeAnalyzerPage() {
+    const $container = $('.jtw-analyzer-wrapper').first();
+    if (!$container.length) return;
 
-        const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
-        if (!ticker) return;
+    const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+    if (!ticker) return;
 
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const $placeholder = $(entry.target);
-                    const section = $placeholder.data('section');
-                    if ($placeholder.data('loaded')) {
-                        observer.unobserve(entry.target);
-                        return;
-                    }
-                    $placeholder.data('loaded', true).html('<div class="jtw-loading-spinner"></div>');
-                    $.ajax({
-                        url: jtw_public_params.ajax_url,
-                        type: 'POST',
-                        data: { action: 'jtw_fetch_section_data', nonce: jtw_public_params.section_nonce, ticker: ticker.toUpperCase(), section: section },
-                        dataType: 'json',
-                        success: function(response) {
-                            if (response.success && response.data) {
-                                if (response.data.currency_notice) $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
-                                if (response.data.html) $placeholder.html(response.data.html);
-                                
-                                // --- START MODIFICATION for initial modal content ---
-                                // If this is the valuation section, populate the modals with the pre-rendered HTML
-                                if (section === 'intrinsic-valuation' && response.data.modal_html) {
-                                    for (const caseType in response.data.modal_html) {
-                                        const modalId = `#jtw-assumptions-modal-${caseType}`;
-                                        // Target the content area within the modal to replace it
-                                        $(modalId).find('.jtw-modal-content').html(response.data.modal_html[caseType]);
-                                    }
-                                }
-                                // --- END MODIFICATION ---
-
-                                // Call the specific initializer function for the loaded section
-                                if (section === 'overview') initializeOverviewSection($placeholder);
-                                else if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
-                                else if (section === 'past-performance') initializeHistoricalCharts($placeholder);
-                                else if (section === 'intrinsic-valuation') initializeFairValueAnalysisSection($placeholder);
-                                else if (section === 'key-metrics-ratios') initializeKeyMetricsRatiosSection($placeholder);
-
-                            } else {
-                                $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data.message || getLocalizedText('text_error')) + '</p></div>');
-                            }
-                        },
-                        error: function(jqXHR) {
-                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>AJAX request failed. Server responded: <br><small><code>' + (jqXHR.responseText || getLocalizedText('text_error')) + '</code></small></p></div>');
-                        }
-                    });
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const $placeholder = $(entry.target);
+                const section = $placeholder.data('section');
+                if ($placeholder.data('loaded')) {
                     observer.unobserve(entry.target);
+                    return;
                 }
-            });
-        }, { rootMargin: "200px" });
+                $placeholder.data('loaded', true).html('<div class="jtw-loading-spinner"></div>');
+                $.ajax({
+                    url: jtw_public_params.ajax_url,
+                    type: 'POST',
+                    data: { action: 'jtw_fetch_section_data', nonce: jtw_public_params.section_nonce, ticker: ticker.toUpperCase(), section: section },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success && response.data) {
+                            // --- START: CURRENCY NOTICE DISPLAY ---
+                            // If the response includes a currency notice, display it in the placeholder div.
+                            if (response.data.currency_notice) {
+                                $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
+                            }
+                            // --- END: CURRENCY NOTICE DISPLAY ---
 
-        document.querySelectorAll('.jtw-content-section-placeholder').forEach(p => observer.observe(p));
-    }
+                            if (response.data.html) $placeholder.html(response.data.html);
+                            
+                            if (section === 'intrinsic-valuation' && response.data.modal_html) {
+                                for (const caseType in response.data.modal_html) {
+                                    const modalId = `#jtw-assumptions-modal-${caseType}`;
+                                    $(modalId).find('.jtw-modal-content').html(response.data.modal_html[caseType]);
+                                }
+                            }
+
+                            // Call the specific initializer function for the loaded section
+                            if (section === 'overview') initializeOverviewSection($placeholder);
+                            else if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
+                            else if (section === 'past-performance') initializeHistoricalCharts($placeholder);
+                            else if (section === 'intrinsic-valuation') initializeFairValueAnalysisSection($placeholder);
+                            else if (section === 'key-metrics-ratios') initializeKeyMetricsRatiosSection($placeholder);
+
+                        } else {
+                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data.message || getLocalizedText('text_error')) + '</p></div>');
+                        }
+                    },
+                    error: function(jqXHR) {
+                        $placeholder.html('<div class="jtw-error notice notice-error inline"><p>AJAX request failed. Server responded: <br><small><code>' + (jqXHR.responseText || getLocalizedText('text_error')) + '</code></small></p></div>');
+                    }
+                });
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { rootMargin: "200px" });
+
+    document.querySelectorAll('.jtw-content-section-placeholder').forEach(p => observer.observe(p));
+}
 
     $(document).ready(function() {
         initializeHeaderSearch();
