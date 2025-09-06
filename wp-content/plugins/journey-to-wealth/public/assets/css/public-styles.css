@@ -1624,53 +1624,54 @@ body.dark-mode .jtw-sws-modal-table .jtw-table-total-row td {
 }
 
 /* --- Dark Mode Overrides for SWS Modal --- */
-body.dark-mode .jtw-modal {
+/* By adding .jtw-analyzer-wrapper, we increase the specificity to override theme styles */
+body.dark-mode .jtw-analyzer-wrapper .jtw-modal {
     background-color: #1e293b !important;
     color: #94a3b8;
     border: 1px solid #334155;
 }
 
-body.dark-mode .jtw-modal-close { 
+body.dark-mode .jtw-analyzer-wrapper .jtw-modal-close { 
     color: #94a3b8; 
 }
 
-body.dark-mode .jtw-modal-close:hover { 
+body.dark-mode .jtw-analyzer-wrapper .jtw-modal-close:hover { 
     color: #f8fafc; 
 }
 
-body.dark-mode .jtw-modal-content h4.jtw-modal-title,
-body.dark-mode .jtw-modal-stage .jtw-modal-subtitle {
+body.dark-mode .jtw-analyzer-wrapper .jtw-modal-content h4.jtw-modal-title,
+body.dark-mode .jtw-analyzer-wrapper .jtw-modal-stage .jtw-modal-subtitle {
     color: #f8fafc;
     border-bottom-color: #334155;
 }
 
-body.dark-mode .jtw-sws-modal-table { 
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table { 
     color: #cbd5e0; 
 }
 
-body.dark-mode .jtw-sws-modal-table th,
-body.dark-mode .jtw-sws-modal-table td {
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table th,
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table td {
     border-bottom-color: #334155;
 }
 
-body.dark-mode .jtw-sws-modal-table thead th {
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table thead th {
     background-color: #334155 !important;
     color: #f8fafc;
 }
 
-body.dark-mode .jtw-sws-modal-table td:last-child,
-body.dark-mode .jtw-sws-modal-table th:last-child {
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table td:last-child,
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table th:last-child {
     color: #f8fafc;
 }
 
-body.dark-mode .jtw-sws-modal-table .jtw-formula { 
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table .jtw-formula { 
     color: #94a3b8; 
 }
 
-body.dark-mode .jtw-sws-modal-table .jtw-formula-vals { 
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table .jtw-formula-vals { 
     color: #64748b; 
 }
 
-body.dark-mode .jtw-sws-modal-table .jtw-table-total-row td {
+body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table .jtw-table-total-row td {
     border-top-color: #475569;
 }
