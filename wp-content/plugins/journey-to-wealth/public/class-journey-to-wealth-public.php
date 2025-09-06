@@ -260,60 +260,53 @@ public function ajax_fetch_section_data() {
         wp_send_json_success($peer_metrics_data);
     }
 
-    public function ajax_recalculate_valuation() {
-        check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
-        $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
-        $all_assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
-        if (empty($ticker) || empty($all_assumptions)) {
-            wp_send_json_error(['message' => 'Missing Ticker or assumptions.']);
-            return;
-        }
-        
-        $results = [];
-        
-        foreach ($all_assumptions as $case_name => $case_assumptions) {
-            if (!in_array($case_name, ['bear', 'base', 'bull'])) continue;
-
-            // The selected model key (e.g., 'dcf', 'ddm')
-            $model_key = $case_assumptions['model'] ?? 'dcf';
-
-            // Call the Python engine with the specific assumptions for this one case
-            $python_data = $this->call_python_calculation_engine($ticker, $case_assumptions);
-
-            if (is_wp_error($python_data)) {
-                $results[$case_name] = ['error' => $python_data->get_error_message()];
-                continue;
-            }
-            
-            // --- START: DYNAMIC MODEL SELECTION ---
-            // Select the correct valuation result from the Python response based on the model key.
-            $valuation_result = $python_data['calculated_data']['valuations'][$model_key] ?? [];
-            
-            if (isset($valuation_result['error'])) {
-                $results[$case_name] = ['error' => $valuation_result['error']];
-                continue;
-            }
-
-            // Generate the modal HTML based on which model was selected.
-            $modal_html = '';
-            if ($model_key === 'dcf') {
-                $modal_html = $this->build_dcf_modal_content($valuation_result);
-            } else {
-                // Use the new function for simpler models (DDM, AFFO, etc.)
-                $modal_html = $this->build_simple_valuation_modal_content($valuation_result);
-            }
-
-            // Store the results for this case
-            $results[$case_name] = [
-                'fair_value' => $valuation_result['intrinsic_value_per_share'] ?? null,
-                'valuation_label' => $valuation_result['calculation_breakdown']['model_name'] ?? 'N/A',
-                'modal_html' => $modal_html
-            ];
-            // --- END: DYNAMIC MODEL SELECTION ---
-        }
-        
-        wp_send_json_success($results);
+public function ajax_recalculate_valuation() {
+    check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
+    $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
+    $all_assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
+    if (empty($ticker)) {
+        wp_send_json_error(['message' => 'Missing Ticker.']);
+        return;
     }
+    
+    // --- START: SIMPLIFIED RECALCULATION ---
+    // Make a single call to the Python backend with all three assumption sets.
+    $python_data = $this->call_python_calculation_engine($ticker, $all_assumptions);
+
+    if (is_wp_error($python_data)) {
+        wp_send_json_error(['message' => $python_data->get_error_message()]);
+        return;
+    }
+
+    $results = [];
+    $all_valuations = $python_data['calculated_data']['valuations'] ?? [];
+
+    // Loop through the results returned from Python and build the response.
+    foreach ($all_valuations as $case_name => $valuation_result) {
+        
+        if (isset($valuation_result['error'])) {
+             $results[$case_name] = ['error' => $valuation_result['error']];
+             continue;
+        }
+
+        $model_key = $all_assumptions[$case_name]['model'] ?? 'dcf';
+        $modal_html = '';
+        if ($model_key === 'dcf') {
+            $modal_html = $this->build_dcf_modal_content($valuation_result);
+        } else {
+            $modal_html = $this->build_simple_valuation_modal_content($valuation_result);
+        }
+
+        $results[$case_name] = [
+            'fair_value' => $valuation_result['intrinsic_value_per_share'] ?? null,
+            'valuation_label' => $valuation_result['calculation_breakdown']['model_name'] ?? 'N/A',
+            'modal_html' => $modal_html
+        ];
+    }
+    
+    wp_send_json_success($results);
+    // --- END: SIMPLIFIED RECALCULATION ---
+}
 
     private function force_utf8_encode($array) {
         foreach ($array as $key => $value) {
@@ -327,53 +320,41 @@ public function ajax_fetch_section_data() {
         return $array;
     }
 
-private function call_python_calculation_engine($ticker, $custom_assumptions = []) {
+private function call_python_calculation_engine($ticker, $all_assumptions = []) {
     $cloud_function_url = get_option('jtw_cloud_function_url');
     if (empty($cloud_function_url)) {
         return new WP_Error('config_error', 'The Cloud Function URL is not configured.');
     }
 
-    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/api/class-alpha-vantage-client.php';
+    // This function now only prepares and sends the request.
+    // It's much simpler as it doesn't need to do its own data fetching anymore.
+    
+    $overrides = get_option('jtw_company_type_overrides', []);
+    $company_type = $overrides[$ticker] ?? null;
+    
+    // The beta calculation still needs to happen in PHP before the call.
     $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
-
     $overview = $av_client->get_company_overview($ticker);
     $balance_sheet = $av_client->get_balance_sheet($ticker);
-
-    if (is_wp_error($overview) || is_wp_error($balance_sheet)) {
-        $error_message = 'Could not fetch prerequisite data. ';
-        if (is_wp_error($overview)) $error_message .= 'Overview Error: ' . $overview->get_error_message() . ' ';
-        if (is_wp_error($balance_sheet)) $error_message .= 'Balance Sheet Error: ' . $balance_sheet->get_error_message();
-        return new WP_Error('api_error', $error_message);
+    if(is_wp_error($overview) || is_wp_error($balance_sheet)) {
+        return new WP_Error('api_error', 'Could not fetch prerequisite data for beta calculation.');
     }
-
     $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
     $market_cap = (float)($overview['MarketCapitalization'] ?? 0);
     $beta_details = $this->calculate_levered_beta($ticker, $balance_sheet, $market_cap, $tax_rate_decimal);
-
-    // --- START: ADD COMPANY TYPE OVERRIDE ---
-    // Get the saved overrides from WordPress options.
-    $overrides = get_option('jtw_company_type_overrides', []);
-    if (!is_array($overrides)) {
-        $overrides = [];
-    }
-    // Check if there is a specific override for the current ticker.
-    $company_type = $overrides[$ticker] ?? null;
-    // --- END: ADD COMPANY TYPE OVERRIDE ---
 
     $payload = [
         'ticker'                => $ticker,
         'erp'                   => (float) get_option('jtw_erp_setting', '5.0') / 100,
         'tax_rate'              => $tax_rate_decimal,
         'beta_details'          => $beta_details,
-        'custom_assumptions'    => !empty($custom_assumptions) ? $custom_assumptions : new stdClass(),
-        'company_type_override' => $company_type, // Add the override to the payload
+        'all_assumptions'       => !empty($all_assumptions) ? $all_assumptions : new stdClass(),
+        'company_type_override' => $company_type,
     ];
 
-    $sanitized_payload = $this->force_utf8_encode($payload);
-    $json_payload = json_encode($sanitized_payload);
-
+    $json_payload = json_encode($this->force_utf8_encode($payload));
     if (json_last_error() !== JSON_ERROR_NONE) {
-        return new WP_Error('json_encode_error', 'Failed to encode payload for Cloud Function.', ['error_message' => json_last_error_msg(), 'payload_data' => $sanitized_payload]);
+        return new WP_Error('json_encode_error', 'Failed to encode payload for Cloud Function.');
     }
 
     $response = wp_remote_post($cloud_function_url, [
@@ -381,7 +362,6 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
         'headers'     => ['Content-Type' => 'application/json; charset=utf-8'],
         'body'        => $json_payload,
         'timeout'     => 45,
-        'data_format' => 'body',
     ]);
 
     if (is_wp_error($response)) {
@@ -389,14 +369,10 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
     }
 
     $body = wp_remote_retrieve_body($response);
-    $response_code = wp_remote_retrieve_response_code($response);
     $python_data = json_decode($body, true);
 
-    if ($response_code >= 400 || json_last_error() !== JSON_ERROR_NONE || !isset($python_data['calculated_data'])) {
-        return new WP_Error('response_error', 'Invalid response from Cloud Function.', [
-            'status_code' => $response_code,
-            'response_body' => $body
-        ]);
+    if (wp_remote_retrieve_response_code($response) >= 400 || json_last_error() !== JSON_ERROR_NONE) {
+        return new WP_Error('response_error', 'Invalid response from Cloud Function.', ['response_body' => $body]);
     }
 
     return $python_data;
