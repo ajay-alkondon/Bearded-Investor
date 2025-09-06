@@ -1680,20 +1680,23 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-sws-modal-table .jtw-table-total-row t
     border-top-color: #475569;
 }
 
-/* --- Dark/Light Mode Logo Switching --- */
+/* --- Dark/Light Mode Logo Switching (Corrected) --- */
 
-/* By default, hide the dark mode logo and show the light mode one */
-#logo .dark-mode-logo {
-    display: none;
-}
-#logo .light-mode-logo {
-    display: block;
+/* By default, forcefully hide the dark mode logo */
+#header-outer #logo img.dark-mode-logo {
+    display: none !important;
 }
 
-/* When the body has the .dark-mode class, reverse the visibility */
-body.dark-mode #logo .dark-mode-logo {
-    display: block;
+/* By default, forcefully show the light mode logo */
+#header-outer #logo img.light-mode-logo {
+    display: block !important;
 }
-body.dark-mode #logo .light-mode-logo {
-    display: none;
+
+/* When the body has the .dark-mode class... */
+body.dark-mode #header-outer #logo img.dark-mode-logo {
+    display: block !important; /* Show the dark mode logo */
+}
+
+body.dark-mode #header-outer #logo img.light-mode-logo {
+    display: none !important; /* Hide the light mode logo */
 }
