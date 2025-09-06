@@ -481,8 +481,10 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
                         if (data.hasOwnProperty(caseType)) {
                             const caseData = data[caseType];
                             const $table = $container.find('.jtw-case-table[data-case="' + caseType + '"]');
-                            
+                            console.log("This is case data " + caseData);
+
                             if (caseData.error) {
+                                console.log("Error is case data");
                                 console.error(`Error for ${caseType} case:`, caseData.error);
                                 // Optionally display an error message in the UI for that specific case
                                 updateInTableValuationGraphic($table, null, currentPrice); // Show error in bar
@@ -491,6 +493,9 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
                             
                             // Update the in-table valuation bar with the new fair value
                             updateInTableValuationGraphic($table, caseData.fair_value, currentPrice);
+
+                            console.log("This is fair value: " + caseData.fair_value + " and this is currentPrice: " + currentPrice);
+
 
                             // Update the model label if it changed
                             if (caseData.valuation_label) {
