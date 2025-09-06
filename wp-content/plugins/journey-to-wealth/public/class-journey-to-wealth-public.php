@@ -264,13 +264,18 @@ class Journey_To_Wealth_Public {
         check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
         $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
         $all_assumptions = isset($_POST['assumptions']) ? $_POST['assumptions'] : [];
-        if (empty($ticker) || empty($all_assumptions)) { wp_send_json_error(['message' => 'Missing Ticker or assumptions.']); return; }
+        if (empty($ticker) || empty($all_assumptions)) {
+            wp_send_json_error(['message' => 'Missing Ticker or assumptions.']);
+            return;
+        }
         
         $results = [];
         
-        // Loop through each case (bear, base, bull), call Python for each, and store the results.
         foreach ($all_assumptions as $case_name => $case_assumptions) {
             if (!in_array($case_name, ['bear', 'base', 'bull'])) continue;
+
+            // The selected model key (e.g., 'dcf', 'ddm')
+            $model_key = $case_assumptions['model'] ?? 'dcf';
 
             // Call the Python engine with the specific assumptions for this one case
             $python_data = $this->call_python_calculation_engine($ticker, $case_assumptions);
@@ -280,20 +285,31 @@ class Journey_To_Wealth_Public {
                 continue;
             }
             
-            $dcf_result = $python_data['calculated_data']['valuations']['dcf'] ?? [];
+            // --- START: DYNAMIC MODEL SELECTION ---
+            // Select the correct valuation result from the Python response based on the model key.
+            $valuation_result = $python_data['calculated_data']['valuations'][$model_key] ?? [];
             
-            if (isset($dcf_result['error'])) {
-                 $results[$case_name] = ['error' => $dcf_result['error']];
-                 continue;
+            if (isset($valuation_result['error'])) {
+                $results[$case_name] = ['error' => $valuation_result['error']];
+                continue;
+            }
+
+            // Generate the modal HTML based on which model was selected.
+            $modal_html = '';
+            if ($model_key === 'dcf') {
+                $modal_html = $this->build_dcf_modal_content($valuation_result);
+            } else {
+                // Use the new function for simpler models (DDM, AFFO, etc.)
+                $modal_html = $this->build_simple_valuation_modal_content($valuation_result);
             }
 
             // Store the results for this case
             $results[$case_name] = [
-                'fair_value' => $dcf_result['intrinsic_value_per_share'] ?? null,
-                'valuation_label' => $dcf_result['calculation_breakdown']['model_name'] ?? 'N/A',
-                // Generate the unique modal HTML for this case using its specific calculation breakdown
-                'modal_html' => $this->build_dcf_modal_content($dcf_result)
+                'fair_value' => $valuation_result['intrinsic_value_per_share'] ?? null,
+                'valuation_label' => $valuation_result['calculation_breakdown']['model_name'] ?? 'N/A',
+                'modal_html' => $modal_html
             ];
+            // --- END: DYNAMIC MODEL SELECTION ---
         }
         
         wp_send_json_success($results);
@@ -311,25 +327,19 @@ class Journey_To_Wealth_Public {
         return $array;
     }
 
-// Replace the existing call_python_calculation_engine function with this updated version.
-
 private function call_python_calculation_engine($ticker, $custom_assumptions = []) {
     $cloud_function_url = get_option('jtw_cloud_function_url');
     if (empty($cloud_function_url)) {
         return new WP_Error('config_error', 'The Cloud Function URL is not configured.');
     }
 
-    // It's good practice to have the Alpha_Vantage_Client instantiated here
-    // as it's needed for the data preparation before the call.
     require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/api/class-alpha-vantage-client.php';
     $av_client = new Alpha_Vantage_Client(get_option('jtw_av_api_key'));
 
-    // Fetch necessary data for beta calculation
     $overview = $av_client->get_company_overview($ticker);
     $balance_sheet = $av_client->get_balance_sheet($ticker);
 
     if (is_wp_error($overview) || is_wp_error($balance_sheet)) {
-        // You can combine the error messages for better debugging
         $error_message = 'Could not fetch prerequisite data. ';
         if (is_wp_error($overview)) $error_message .= 'Overview Error: ' . $overview->get_error_message() . ' ';
         if (is_wp_error($balance_sheet)) $error_message .= 'Balance Sheet Error: ' . $balance_sheet->get_error_message();
@@ -338,49 +348,48 @@ private function call_python_calculation_engine($ticker, $custom_assumptions = [
 
     $tax_rate_decimal = (float) get_option('jtw_tax_rate_setting', '21.0') / 100;
     $market_cap = (float)($overview['MarketCapitalization'] ?? 0);
-
-    // Calculate beta details to include in the payload
     $beta_details = $this->calculate_levered_beta($ticker, $balance_sheet, $market_cap, $tax_rate_decimal);
 
-    // Construct the payload array
+    // --- START: ADD COMPANY TYPE OVERRIDE ---
+    // Get the saved overrides from WordPress options.
+    $overrides = get_option('jtw_company_type_overrides', []);
+    if (!is_array($overrides)) {
+        $overrides = [];
+    }
+    // Check if there is a specific override for the current ticker.
+    $company_type = $overrides[$ticker] ?? null;
+    // --- END: ADD COMPANY TYPE OVERRIDE ---
+
     $payload = [
-        'ticker'             => $ticker,
-        'erp'                => (float) get_option('jtw_erp_setting', '5.0') / 100,
-        'tax_rate'           => $tax_rate_decimal,
-        'beta_details'       => $beta_details,
-        'custom_assumptions' => !empty($custom_assumptions) ? $custom_assumptions : new stdClass(),
+        'ticker'                => $ticker,
+        'erp'                   => (float) get_option('jtw_erp_setting', '5.0') / 100,
+        'tax_rate'              => $tax_rate_decimal,
+        'beta_details'          => $beta_details,
+        'custom_assumptions'    => !empty($custom_assumptions) ? $custom_assumptions : new stdClass(),
+        'company_type_override' => $company_type, // Add the override to the payload
     ];
 
-    // Sanitize and encode the payload to JSON
-    // The force_utf8_encode function you have is important, so we keep it.
     $sanitized_payload = $this->force_utf8_encode($payload);
     $json_payload = json_encode($sanitized_payload);
 
-    // CRITICAL: Check if json_encode failed.
     if (json_last_error() !== JSON_ERROR_NONE) {
         return new WP_Error('json_encode_error', 'Failed to encode payload for Cloud Function.', ['error_message' => json_last_error_msg(), 'payload_data' => $sanitized_payload]);
     }
 
-    // Make the POST request to the Python Cloud Function
     $response = wp_remote_post($cloud_function_url, [
         'method'      => 'POST',
-        'headers'     => [
-            'Content-Type' => 'application/json; charset=utf-8'
-        ],
-        'body'        => $json_payload, // The body must be the JSON string
+        'headers'     => ['Content-Type' => 'application/json; charset=utf-8'],
+        'body'        => $json_payload,
         'timeout'     => 45,
-        'data_format' => 'body', // This tells WordPress not to alter the body
+        'data_format' => 'body',
     ]);
 
-    // Handle the response from the Cloud Function
     if (is_wp_error($response)) {
         return new WP_Error('http_error', 'Error calling Cloud Function: ' . $response->get_error_message());
     }
 
     $body = wp_remote_retrieve_body($response);
     $response_code = wp_remote_retrieve_response_code($response);
-
-    // Decode the JSON response from Python
     $python_data = json_decode($body, true);
 
     if ($response_code >= 400 || json_last_error() !== JSON_ERROR_NONE || !isset($python_data['calculated_data'])) {
@@ -933,6 +942,57 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                     </tr>
                  </tbody>
              </table>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function build_simple_valuation_modal_content($result) {
+        $data = $result['calculation_breakdown'] ?? [];
+        if (empty($data)) return '<p class="jtw-left-align">Detailed breakdown is not available for this model.</p>';
+
+        $model_name = $data['model_name'] ?? 'Valuation Model';
+        $intrinsic_value = $result['intrinsic_value_per_share'] ?? 'N/A';
+
+        ob_start();
+        ?>
+        <h4 class="jtw-modal-title">Calculation for <?php echo esc_html($model_name); ?></h4>
+        <div class="jtw-modal-stage">
+            <h5 class="jtw-modal-subtitle">Summary</h5>
+            <table class="jtw-sws-modal-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th style="text-align: right;">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($data as $key => $value) :
+                        if ($key === 'model_name') continue;
+                        $label = ucwords(str_replace('_', ' ', $key));
+                    ?>
+                        <tr>
+                            <td><?php echo esc_html($label); ?></td>
+                            <td><?php
+                                if (is_float($value)) {
+                                    // Format percentages for rates, otherwise format as a number
+                                    if (strpos($key, 'rate') !== false || strpos($key, 'premium') !== false) {
+                                        echo number_format($value * 100, 2) . '%';
+                                    } else {
+                                        echo number_format($value, 2);
+                                    }
+                                } else {
+                                    echo esc_html($value);
+                                }
+                            ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <tr class="jtw-table-total-row">
+                        <td><strong>Intrinsic Value per Share</strong></td>
+                        <td><strong>$<?php echo esc_html($intrinsic_value); ?></strong></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <?php
         return ob_get_clean();
