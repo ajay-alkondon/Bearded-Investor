@@ -536,7 +536,6 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             </tr>
         </thead>
         <tbody class="jtw-assumptions-table-body">
-            
             <tr class="jtw-project-5-year">
                 <td>Revenue Growth</td>
                 <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
@@ -545,7 +544,9 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                     if ($case === 'bear') { $default_growth -= $i * 1.0; } 
                     elseif ($case === 'bull') { $default_growth += $i * 1.0; }
                 ?>
-                <td><input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="<?php echo esc_attr($i + 1); ?>" value="<?php echo esc_attr(number_format($default_growth, 1)); ?>"></td>
+                <td>
+                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(number_format($default_growth, 1)); ?>">
+                    </td>
                 <?php endfor; ?>
             </tr>
             <tr class="jtw-project-5-year">
@@ -553,7 +554,6 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <td class="jtw-revenue-result" data-year="0"><?php echo number_format($analyst_revenue_current_year / $divisor, 1); ?></td>
                 <?php for ($i = 1; $i < 5; $i++) { echo '<td class="jtw-revenue-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
             </tr>
-            
             <tr class="jtw-project-5-year">
                 <td>Net Income <?php echo esc_html($unit); ?></td>
                 <td class="jtw-net-income-result" data-year="0"><?php echo number_format($current_year_net_income / $divisor, 1); ?></td>
