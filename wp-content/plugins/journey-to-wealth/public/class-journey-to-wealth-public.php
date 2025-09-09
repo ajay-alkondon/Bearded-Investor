@@ -456,6 +456,10 @@ private function build_overview_section_html($overview, $quote) {
     $company_name = $overview['Name'] ?? 'Unknown Company';
     $description = $overview['Description'] ?? 'No company description available.';
     $exchange = $overview['Exchange'] ?? '';
+    $website = $overview['Website'] ?? '';
+    if ($website && strpos($website, 'http') !== 0) {
+        $website = 'http://' . $website;
+    }
     
     $quote_data = $quote['Global Quote'] ?? $quote['Global Quote - DATA DELAYED BY 15 MINUTES'] ?? [];
     $stock_price = !empty($quote_data['05. price']) ? (float)$quote_data['05. price'] : 0;
@@ -471,15 +475,19 @@ private function build_overview_section_html($overview, $quote) {
         'Volume' => !empty($quote_data['06. volume']) ? number_format((float)$quote_data['06. volume']) : 'N/A',
     ];
     
+    // --- START: ADDED NEW METRICS ---
     $details_col_2 = [
         'Market Cap' => !empty($overview['MarketCapitalization']) ? $this->format_large_number((float)$overview['MarketCapitalization'], '', 2) : 'N/A',
         'Beta (5Y Monthly)' => !empty($overview['Beta']) ? number_format((float)$overview['Beta'], 2) : 'N/A',
         'PE Ratio (TTM)' => !empty($overview['PERatio']) ? number_format((float)$overview['PERatio'], 2) : 'N/A',
         'EPS (TTM)' => !empty($overview['EPS']) ? number_format((float)$overview['EPS'], 2) : 'N/A',
+        'Shares Outstanding' => !empty($overview['SharesOutstanding']) ? $this->format_large_number((float)$overview['SharesOutstanding'], '', 2) : 'N/A',
+        'Forward P/E Ratio' => !empty($overview['ForwardPE']) ? number_format((float)$overview['ForwardPE'], 2) : 'N/A',
         'Forward Dividend & Yield' => (!empty($overview['DividendPerShare']) && !empty($overview['DividendYield'])) ? '$' . number_format((float)$overview['DividendPerShare'], 2) . ' (' . number_format((float)$overview['DividendYield'] * 100, 2) . '%)' : 'N/A',
         'Ex-Dividend Date' => $overview['ExDividendDate'] ?? 'N/A',
         '1y Target Est' => !empty($overview['AnalystTargetPrice']) ? '$' . number_format((float)$overview['AnalystTargetPrice'], 2) : 'N/A',
     ];
+    // --- END: ADDED NEW METRICS ---
 
     ob_start();
     ?>
@@ -494,6 +502,7 @@ private function build_overview_section_html($overview, $quote) {
                 <span class="jtw-change"><?php echo esc_html(sprintf('%+0.2f', $price_change)); ?> (<?php echo esc_html(sprintf('%+0.2f', $change_percent)); ?>%)</span>
             </div>
         </div>
+
         <div class="jtw-overview-main-grid">
             <div class="jtw-key-details-grid">
                 <div class="jtw-key-details-col">
@@ -513,16 +522,61 @@ private function build_overview_section_html($overview, $quote) {
                     <?php endforeach; ?>
                 </div>
             </div>
-
             <div class="jtw-ad-placeholder">
                 <span>Ad Placeholder</span>
             </div>
         </div>
+
         <div class="jtw-company-description-wrapper">
              <h4><?php echo esc_html($ticker); ?> Company Overview</h4>
-            <?php if (!empty($description) && strcasecmp(trim($description), 'none') !== 0) : ?>
-                <div class="jtw-company-description"><p><?php echo esc_html($description); ?></p></div>
-            <?php endif; ?>
+             <div class="jtw-overview-footer-grid">
+                <div class="jtw-overview-description-text">
+                    <?php if (!empty($description) && strcasecmp(trim($description), 'none') !== 0) : ?>
+                        <p><?php echo esc_html($description); ?></p>
+                    <?php endif; ?>
+                    <?php if ($website): ?>
+                        <a href="<?php echo esc_url($website); ?>" target="_blank" rel="noopener noreferrer" class="jtw-website-link"><?php echo esc_url($website); ?></a>
+                    <?php endif; ?>
+                </div>
+                <div class="jtw-overview-footer-details">
+                    <div class="jtw-footer-detail-item">
+                        <span class="jtw-detail-label">Sector</span>
+                        <span class="jtw-detail-value"><?php echo esc_html($overview['Sector'] ?? 'N/A'); ?></span>
+                    </div>
+                    <div class="jtw-footer-detail-item">
+                        <span class="jtw-detail-label">Industry</span>
+                        <span class="jtw-detail-value"><?php echo esc_html($overview['Industry'] ?? 'N/A'); ?></span>
+                    </div>
+                    <div class="jtw-footer-detail-item">
+                        <span class="jtw-detail-label">Full Time Employees</span>
+                        <span class="jtw-detail-value"><?php echo is_numeric($overview['FullTimeEmployees']) ? number_format((int)$overview['FullTimeEmployees']) : 'N/A'; ?></span>
+                    </div>
+                    <div class="jtw-footer-detail-item">
+                        <span class="jtw-detail-label">Fiscal Year Ends</span>
+                        <span class="jtw-detail-value"><?php echo esc_html($overview['FiscalYearEnd'] ?? 'N/A'); ?></span>
+                    </div>
+                    <?php if (!empty($overview['CIK'])): ?>
+                    <div class="jtw-footer-detail-item">
+                        <span class="jtw-detail-label">Corporate Filings</span>
+                        <span class="jtw-detail-value"><a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $overview['CIK'] . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer">View SEC Filings</a></span>
+                    </div>
+                    <?php endif; ?>
+                    <?php 
+                        $latest_quarter_date = $overview['LatestQuarter'] ?? null;
+                        if ($latest_quarter_date):
+                            $date = new DateTime($latest_quarter_date);
+                            $year = $date->format('Y');
+                            $month = (int)$date->format('m');
+                            $quarter_num = ceil($month / 3);
+                            $quarter_param = $year . 'Q' . $quarter_num;
+                    ?>
+                    <div class="jtw-footer-detail-item">
+                        <span class="jtw-detail-label">Earnings Call</span>
+                        <span class="jtw-detail-value"><a href="#" class="jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="<?php echo esc_attr($ticker); ?>" data-quarter="<?php echo esc_attr($quarter_param); ?>">Latest Transcript</a></span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+             </div>
         </div>
         </div>
     <?php
