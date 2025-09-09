@@ -470,8 +470,6 @@ private function build_overview_section_html($overview, $quote) {
     $change_percent = !empty($quote_data['10. change percent']) ? rtrim($quote_data['10. change percent'], '%') : 0;
     $change_class = ($price_change >= 0) ? 'positive' : 'negative';
 
-    // --- START: BALANCED COLUMNS ---
-    // Metrics have been redistributed to be 7 items per column.
     $details_col_1 = [
         'Previous Close' => !empty($quote_data['08. previous close']) ? number_format((float)$quote_data['08. previous close'], 2) : 'N/A',
         'Open' => !empty($quote_data['02. open']) ? number_format((float)$quote_data['02. open'], 2) : 'N/A',
@@ -491,7 +489,6 @@ private function build_overview_section_html($overview, $quote) {
         'Ex-Dividend Date' => $overview['ExDividendDate'] ?? 'N/A',
         '1y Target Est' => !empty($overview['AnalystTargetPrice']) ? '$' . number_format((float)$overview['AnalystTargetPrice'], 2) : 'N/A',
     ];
-    // --- END: BALANCED COLUMNS ---
 
     ob_start();
     ?>
@@ -579,7 +576,15 @@ private function build_overview_section_html($overview, $quote) {
                 </div>
              </div>
         </div>
-    </div>
+        
+        <div id="jtw-transcript-modal" class="jtw-modal jtw-fullscreen-modal">
+            <div class="jtw-modal-content">
+                <span class="jtw-modal-close">&times;</span>
+                <div id="jtw-transcript-content-target"></div>
+            </div>
+        </div>
+        <div class="jtw-modal-overlay"></div>
+        </div>
     <?php
     return ob_get_clean();
 }
