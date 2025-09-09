@@ -90,30 +90,33 @@ class Journey_To_Wealth_Public {
         return ob_get_clean();
     }
     
-    public function render_analyzer_layout_shortcode( $atts ) {
-        if (!is_user_logged_in()) {
-            return '<p>' . esc_html__('You must be logged in to use the stock analyzer.', 'journey-to-wealth') . '</p>';
-        }
-
-        ob_start();
-        if ( !isset($_GET['jtw_selected_symbol']) || empty($_GET['jtw_selected_symbol']) ) {
-            echo '<p class="jtw-initial-prompt">' . esc_html__('Please use the search bar in the header to analyze a stock.', 'journey-to-wealth') . '</p>';
-        } else {
-            ?>
-            <div class="jtw-analyzer-wrapper">
-                <div class="jtw-content-container">
-                    <main class="jtw-content-main">
-                        <div id="jtw-currency-notice-placeholder"></div>
-                        <div class="jtw-major-content-group"><h2><?php esc_html_e('Company Overview', 'journey-to-wealth'); ?></h2><div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div></div>
-                        <div class="jtw-major-content-group"><h2><?php esc_html_e('Valuation', 'journey-to-wealth'); ?></h2><div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div><div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div></div>
-                        <div class="jtw-major-content-group"><h2><?php esc_html_e('Past Performance', 'journey-to-wealth'); ?></h2><div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div><div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div></div>
-                    </main>
-                </div>
-            </div>
-            <?php
-        }
-        return ob_get_clean();
+public function render_analyzer_layout_shortcode( $atts ) {
+    if (!is_user_logged_in()) {
+        return '<p>' . esc_html__('You must be logged in to use the stock analyzer.', 'journey-to-wealth') . '</p>';
     }
+
+    ob_start();
+    if ( !isset($_GET['jtw_selected_symbol']) || empty($_GET['jtw_selected_symbol']) ) {
+        echo '<p class="jtw-initial-prompt">' . esc_html__('Please use the search bar in the header to analyze a stock.', 'journey-to-wealth') . '</p>';
+    } else {
+        ?>
+        <div class="jtw-analyzer-wrapper">
+            <div class="jtw-content-container">
+                <main class="jtw-content-main">
+                    <div id="jtw-currency-notice-placeholder"></div>
+                    
+                    <div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div>
+                    <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
+                    <div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div>
+                    <div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div>
+                    <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
+                    </main>
+            </div>
+        </div>
+        <?php
+    }
+    return ob_get_clean();
+}
 
     public function ajax_symbol_search() {
         check_ajax_referer('jtw_symbol_search_nonce_action', 'jtw_symbol_search_nonce');
@@ -467,18 +470,19 @@ private function build_overview_section_html($overview, $quote) {
     $change_percent = !empty($quote_data['10. change percent']) ? rtrim($quote_data['10. change percent'], '%') : 0;
     $change_class = ($price_change >= 0) ? 'positive' : 'negative';
 
+    // --- START: BALANCED COLUMNS ---
+    // Metrics have been redistributed to be 7 items per column.
     $details_col_1 = [
         'Previous Close' => !empty($quote_data['08. previous close']) ? number_format((float)$quote_data['08. previous close'], 2) : 'N/A',
         'Open' => !empty($quote_data['02. open']) ? number_format((float)$quote_data['02. open'], 2) : 'N/A',
         'Day\'s Range' => (!empty($quote_data['04. low']) && !empty($quote_data['03. high'])) ? number_format((float)$quote_data['04. low'], 2) . ' - ' . number_format((float)$quote_data['03. high'], 2) : 'N/A',
         '52 Week Range' => (!empty($overview['52WeekLow']) && !empty($overview['52WeekHigh'])) ? number_format((float)$overview['52WeekLow'], 2) . ' - ' . number_format((float)$overview['52WeekHigh'], 2) : 'N/A',
         'Volume' => !empty($quote_data['06. volume']) ? number_format((float)$quote_data['06. volume']) : 'N/A',
-    ];
-    
-    // --- START: ADDED NEW METRICS ---
-    $details_col_2 = [
         'Market Cap' => !empty($overview['MarketCapitalization']) ? $this->format_large_number((float)$overview['MarketCapitalization'], '', 2) : 'N/A',
         'Beta (5Y Monthly)' => !empty($overview['Beta']) ? number_format((float)$overview['Beta'], 2) : 'N/A',
+    ];
+    
+    $details_col_2 = [
         'PE Ratio (TTM)' => !empty($overview['PERatio']) ? number_format((float)$overview['PERatio'], 2) : 'N/A',
         'EPS (TTM)' => !empty($overview['EPS']) ? number_format((float)$overview['EPS'], 2) : 'N/A',
         'Shares Outstanding' => !empty($overview['SharesOutstanding']) ? $this->format_large_number((float)$overview['SharesOutstanding'], '', 2) : 'N/A',
@@ -487,7 +491,7 @@ private function build_overview_section_html($overview, $quote) {
         'Ex-Dividend Date' => $overview['ExDividendDate'] ?? 'N/A',
         '1y Target Est' => !empty($overview['AnalystTargetPrice']) ? '$' . number_format((float)$overview['AnalystTargetPrice'], 2) : 'N/A',
     ];
-    // --- END: ADDED NEW METRICS ---
+    // --- END: BALANCED COLUMNS ---
 
     ob_start();
     ?>
@@ -537,6 +541,23 @@ private function build_overview_section_html($overview, $quote) {
                     <?php if ($website): ?>
                         <a href="<?php echo esc_url($website); ?>" target="_blank" rel="noopener noreferrer" class="jtw-website-link"><?php echo esc_url($website); ?></a>
                     <?php endif; ?>
+
+                    <div class="jtw-footer-links">
+                        <?php if (!empty($overview['CIK'])): ?>
+                            <a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $overview['CIK'] . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer">Corporate Filings</a>
+                        <?php endif; ?>
+                        <?php 
+                            $latest_quarter_date = $overview['LatestQuarter'] ?? null;
+                            if ($latest_quarter_date):
+                                $date = new DateTime($latest_quarter_date);
+                                $year = $date->format('Y');
+                                $month = (int)$date->format('m');
+                                $quarter_num = ceil($month / 3);
+                                $quarter_param = $year . 'Q' . $quarter_num;
+                        ?>
+                            <a href="#" class="jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="<?php echo esc_attr($ticker); ?>" data-quarter="<?php echo esc_attr($quarter_param); ?>">Latest Earnings Call</a>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <div class="jtw-overview-footer-details">
                     <div class="jtw-footer-detail-item">
@@ -555,30 +576,10 @@ private function build_overview_section_html($overview, $quote) {
                         <span class="jtw-detail-label">Fiscal Year Ends</span>
                         <span class="jtw-detail-value"><?php echo esc_html($overview['FiscalYearEnd'] ?? 'N/A'); ?></span>
                     </div>
-                    <?php if (!empty($overview['CIK'])): ?>
-                    <div class="jtw-footer-detail-item">
-                        <span class="jtw-detail-label">Corporate Filings</span>
-                        <span class="jtw-detail-value"><a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $overview['CIK'] . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer">View SEC Filings</a></span>
-                    </div>
-                    <?php endif; ?>
-                    <?php 
-                        $latest_quarter_date = $overview['LatestQuarter'] ?? null;
-                        if ($latest_quarter_date):
-                            $date = new DateTime($latest_quarter_date);
-                            $year = $date->format('Y');
-                            $month = (int)$date->format('m');
-                            $quarter_num = ceil($month / 3);
-                            $quarter_param = $year . 'Q' . $quarter_num;
-                    ?>
-                    <div class="jtw-footer-detail-item">
-                        <span class="jtw-detail-label">Earnings Call</span>
-                        <span class="jtw-detail-value"><a href="#" class="jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="<?php echo esc_attr($ticker); ?>" data-quarter="<?php echo esc_attr($quarter_param); ?>">Latest Transcript</a></span>
-                    </div>
-                    <?php endif; ?>
                 </div>
              </div>
         </div>
-        </div>
+    </div>
     <?php
     return ob_get_clean();
 }
