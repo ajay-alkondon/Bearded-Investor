@@ -450,73 +450,84 @@ private function call_python_calculation_engine($ticker, $all_assumptions = []) 
         return '<div class="jtw-metric-card ' . esc_attr($custom_class) . '"><h3 class="jtw-metric-title">' . esc_html($title) . '</h3><p class="jtw-metric-value">' . esc_html($formatted_value) . '</p></div>';
     }
 
-    private function build_overview_section_html($overview, $quote) {
-        $ticker = $overview['Symbol'] ?? 'N/A';
-        $description = $overview['Description'] ?? 'No company description available.';
-        $stock_price = !is_wp_error($quote) ? (float)($quote['05. price'] ?? 0) : 0;
+private function build_overview_section_html($overview, $quote) {
+    // Extract and format data for the new layout
+    $ticker = $overview['Symbol'] ?? 'N/A';
+    $company_name = $overview['Name'] ?? 'Unknown Company';
+    $description = $overview['Description'] ?? 'No company description available.';
+    $exchange = $overview['Exchange'] ?? '';
+    
+    $quote_data = $quote['Global Quote'] ?? $quote['Global Quote - DATA DELAYED BY 15 MINUTES'] ?? [];
+    $stock_price = !empty($quote_data['05. price']) ? (float)$quote_data['05. price'] : 0;
+    $price_change = !empty($quote_data['09. change']) ? (float)$quote_data['09. change'] : 0;
+    $change_percent = !empty($quote_data['10. change percent']) ? rtrim($quote_data['10. change percent'], '%') : 0;
+    $change_class = ($price_change >= 0) ? 'positive' : 'negative';
 
-        $quote_data = $quote['Global Quote'] ?? $quote['Global Quote - DATA DELAYED BY 15 MINUTES'] ?? [];
-        $stock_price = !empty($quote_data) ? (float)($quote_data['05. price'] ?? 0) : 0;
+    $details_col_1 = [
+        'Previous Close' => !empty($quote_data['08. previous close']) ? number_format((float)$quote_data['08. previous close'], 2) : 'N/A',
+        'Open' => !empty($quote_data['02. open']) ? number_format((float)$quote_data['02. open'], 2) : 'N/A',
+        'Day\'s Range' => (!empty($quote_data['04. low']) && !empty($quote_data['03. high'])) ? number_format((float)$quote_data['04. low'], 2) . ' - ' . number_format((float)$quote_data['03. high'], 2) : 'N/A',
+        '52 Week Range' => (!empty($overview['52WeekLow']) && !empty($overview['52WeekHigh'])) ? number_format((float)$overview['52WeekLow'], 2) . ' - ' . number_format((float)$overview['52WeekHigh'], 2) : 'N/A',
+        'Volume' => !empty($quote_data['06. volume']) ? number_format((float)$quote_data['06. volume']) : 'N/A',
+    ];
+    
+    $details_col_2 = [
+        'Market Cap' => !empty($overview['MarketCapitalization']) ? $this->format_large_number((float)$overview['MarketCapitalization'], '', 2) : 'N/A',
+        'Beta (5Y Monthly)' => !empty($overview['Beta']) ? number_format((float)$overview['Beta'], 2) : 'N/A',
+        'PE Ratio (TTM)' => !empty($overview['PERatio']) ? number_format((float)$overview['PERatio'], 2) : 'N/A',
+        'EPS (TTM)' => !empty($overview['EPS']) ? number_format((float)$overview['EPS'], 2) : 'N/A',
+        'Forward Dividend & Yield' => (!empty($overview['DividendPerShare']) && !empty($overview['DividendYield'])) ? '$' . number_format((float)$overview['DividendPerShare'], 2) . ' (' . number_format((float)$overview['DividendYield'] * 100, 2) . '%)' : 'N/A',
+        'Ex-Dividend Date' => $overview['ExDividendDate'] ?? 'N/A',
+        '1y Target Est' => !empty($overview['AnalystTargetPrice']) ? '$' . number_format((float)$overview['AnalystTargetPrice'], 2) : 'N/A',
+    ];
 
-        $week_high = (float)($overview['52WeekHigh'] ?? 0);
-        $week_low = (float)($overview['52WeekLow'] ?? 0);
-        $cik = $overview['CIK'] ?? null;
-        $latest_quarter_date = $overview['LatestQuarter'] ?? null;
-        $quarter_param = '';
-        if ($latest_quarter_date) {
-            $date = new DateTime($latest_quarter_date);
-            $year = $date->format('Y');
-            $month = (int)$date->format('m');
-            $quarter_num = ceil($month / 3);
-            $quarter_param = $year . 'Q' . $quarter_num;
-        }
-
-        ob_start();
-        ?>
-        <div class="jtw-content-section" id="section-overview-content">
-            <div class="jtw-section-header">
-                <h4><?php echo esc_html($ticker); ?> <?php esc_html_e('Company Overview', 'journey-to-wealth'); ?></h4>
-                <button class="jtw-modal-trigger jtw-details-button" data-modal-target="#jtw-company-details-modal"><?php esc_html_e('View Full Company Details', 'journey-to-wealth'); ?></button>
+    ob_start();
+    ?>
+    <div class="jtw-content-section" id="section-overview-content">
+        
+        <div class="jtw-overview-header">
+            <div class="jtw-overview-title">
+                <h1><?php echo esc_html($company_name); ?> (<?php echo esc_html($exchange . ': ' . $ticker); ?>)</h1>
             </div>
-            <div class="jtw-price-range-bar" data-low="<?php echo esc_attr($week_low); ?>" data-high="<?php echo esc_attr($week_high); ?>" data-current="<?php echo esc_attr($stock_price); ?>">
-                <h5>52-Week Price Range</h5>
-                <div class="jtw-progress-track"><div class="jtw-progress-fill" style="width: 0%;"></div></div>
-                <div class="jtw-price-range-labels">
-                    <span><strong>$<?php echo esc_attr(number_format($week_low, 1)); ?></strong></span>
-                    <span><strong>Current: $<?php echo esc_attr(number_format($stock_price, 1)); ?></strong></span>
-                    <span><strong>$<?php echo esc_attr(number_format($week_high, 1)); ?></strong></span>
+            <div class="jtw-price-info <?php echo esc_attr($change_class); ?>">
+                <span class="jtw-price"><?php echo esc_html(number_format($stock_price, 2)); ?></span>
+                <span class="jtw-change"><?php echo esc_html(sprintf('%+0.2f', $price_change)); ?> (<?php echo esc_html(sprintf('%+0.2f', $change_percent)); ?>%)</span>
+            </div>
+        </div>
+        <div class="jtw-overview-main-grid">
+            <div class="jtw-key-details-grid">
+                <div class="jtw-key-details-col">
+                    <?php foreach ($details_col_1 as $label => $value): ?>
+                        <div class="jtw-detail-item">
+                            <span class="jtw-detail-label"><?php echo esc_html($label); ?></span>
+                            <span class="jtw-detail-value"><?php echo esc_html($value); ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="jtw-key-details-col">
+                    <?php foreach ($details_col_2 as $label => $value): ?>
+                        <div class="jtw-detail-item">
+                            <span class="jtw-detail-label"><?php echo esc_html($label); ?></span>
+                            <span class="jtw-detail-value"><?php echo esc_html($value); ?></span>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
-            <div class="jtw-overview-header-grid">
-                <?php
-                echo $this->create_metric_card('Current Price', $stock_price, '$');
-                echo $this->create_metric_card('Market Capitalization', $overview['MarketCapitalization'] ?? 0, '$', '', true);
-                echo $this->create_metric_card('Shares Outstanding', $overview['SharesOutstanding'] ?? 0, '', '', true);
-                ?>
+
+            <div class="jtw-ad-placeholder">
+                <span>Ad Placeholder</span>
             </div>
+        </div>
+        <div class="jtw-company-description-wrapper">
+             <h4><?php echo esc_html($ticker); ?> Company Overview</h4>
             <?php if (!empty($description) && strcasecmp(trim($description), 'none') !== 0) : ?>
                 <div class="jtw-company-description"><p><?php echo esc_html($description); ?></p></div>
             <?php endif; ?>
-            <div class="jtw-link-cards-grid">
-                <?php if ($cik) : ?>
-                    <a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $cik . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer" class="jtw-sec-filings-card"><span>View All SEC Filings</span></a>
-                <?php endif; ?>
-                <?php if ($quarter_param) : ?>
-                    <a href="#" class="jtw-sec-filings-card jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="<?php echo esc_attr($ticker); ?>" data-quarter="<?php echo esc_attr($quarter_param); ?>"><span><?php echo esc_html($quarter_param); ?> Earnings Transcript</span></a>
-                <?php endif; ?>
-            </div>
-            <div id="jtw-company-details-modal" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span><h4><?php esc_html_e('Company Details', 'journey-to-wealth'); ?></h4><div class="jtw-details-grid">
-                <?php
-                $details_map = [ 'Exchange' => 'Exchange', 'Sector' => 'Sector', 'Industry' => 'Industry', 'FiscalYearEnd' => 'Fiscal Year End', 'LatestQuarter' => 'Latest Quarter' ];
-                foreach ($details_map as $key => $title) { echo $this->create_metric_card($title, $overview[$key] ?? 'N/A'); }
-                ?>
-            </div></div></div>
-            <div id="jtw-transcript-modal" class="jtw-modal jtw-fullscreen-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span><div id="jtw-transcript-content-target"></div></div></div>
-            <div class="jtw-modal-overlay"></div>
         </div>
-        <?php
-        return ob_get_clean();
-    }
+        </div>
+    <?php
+    return ob_get_clean();
+}
 
 private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui) {
     $case_title = ucfirst($case) . ' Case';

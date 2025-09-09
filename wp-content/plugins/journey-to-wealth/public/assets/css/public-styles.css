@@ -1700,3 +1700,134 @@ body.dark-mode #header-outer #logo img.dark-mode-logo {
 body.dark-mode #header-outer #logo img.light-mode-logo {
     display: none !important; /* Hide the light mode logo */
 }
+
+/* --- START: NEW Yahoo Finance Style Overview --- */
+
+/* Header */
+.jtw-overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--jtw-border-color);
+    margin-bottom: 25px;
+}
+.jtw-overview-title h1 {
+    font-size: 2em;
+    margin: 0;
+    line-height: 1.2;
+}
+.jtw-price-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.jtw-price {
+    font-size: 2.2em;
+    font-weight: 700;
+}
+.jtw-change {
+    font-size: 1.2em;
+    font-weight: 600;
+}
+.jtw-price-info.positive {
+    color: var(--jtw-green-positive);
+}
+.jtw-price-info.negative {
+    color: var(--jtw-red-negative);
+}
+
+/* Main Grid */
+.jtw-overview-main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+.jtw-key-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 30px;
+}
+.jtw-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--jtw-border-color-light);
+    font-size: 0.9em;
+}
+.jtw-detail-label {
+    color: var(--jtw-text-medium);
+}
+.jtw-detail-value {
+    font-weight: 600;
+    color: var(--jtw-text-dark);
+}
+
+/* Ad Placeholder */
+.jtw-ad-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--jtw-page-bg);
+    border: 1px dashed var(--jtw-border-color);
+    border-radius: 4px;
+    min-height: 250px;
+}
+.jtw-ad-placeholder span {
+    color: var(--jtw-text-light);
+    font-style: italic;
+}
+
+/* Description Section */
+.jtw-company-description-wrapper {
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid var(--jtw-border-color);
+}
+.jtw-company-description-wrapper h4 {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 900px) {
+    .jtw-overview-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 600px) {
+    .jtw-key-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Dark Mode for New Overview --- */
+body.dark-mode .jtw-overview-header,
+body.dark-mode .jtw-company-description-wrapper {
+    border-color: #2a3b5c;
+}
+
+body.dark-mode .jtw-overview-title h1 {
+    color: #ffffff;
+}
+body.dark-mode .jtw-detail-label {
+    color: #b9b9b9;
+}
+body.dark-mode .jtw-detail-value {
+    color: #ffffff;
+}
+body.dark-mode .jtw-detail-item {
+    border-bottom-color: #2a3b5c;
+}
+body.dark-mode .jtw-ad-placeholder {
+    background-color: #2a3b5c;
+    border-color: #4a5c80;
+}
+body.dark-mode .jtw-ad-placeholder span {
+    color: #6e7f9b;
+}
+
+/* --- END: NEW Yahoo Finance Style Overview --- */
