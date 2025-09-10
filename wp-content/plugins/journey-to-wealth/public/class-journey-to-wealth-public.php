@@ -608,13 +608,15 @@ private function build_overview_section_html($overview, $quote) {
 }
 
 private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui) {
-    $case_title = ucfirst($case) . ' Case';
-    $modal_id = 'jtw-assumptions-modal-' . $case;
+    // --- START: SIMPLIFICATION ---
+    // The title logic is removed, and the modal ID is simplified.
+    $modal_id = 'jtw-assumptions-modal';
+    // --- END: SIMPLIFICATION ---
     ob_start();
     ?>
     <table class="jtw-assumptions-table jtw-case-table" data-case="<?php echo esc_attr($case); ?>">
         <thead>
-            <tr><th colspan="6"><div class="jtw-case-header-cell"><span><?php echo esc_html($case_title); ?></span><button class="jtw-modal-trigger jtw-view-assumptions-btn" data-modal-target="#<?php echo esc_attr($modal_id); ?>">View Assumptions</button></div></th></tr>
+            <tr><th colspan="6"><div class="jtw-case-header-cell"><span>Valuation Assumptions</span><button class="jtw-modal-trigger jtw-view-assumptions-btn" data-modal-target="#<?php echo esc_attr($modal_id); ?>">View Assumptions</button></div></th></tr>
             <tr>
                 <th>Metric</th>
                 <th><?php echo esc_html($current_year); ?></th>
@@ -625,17 +627,16 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             </tr>
         </thead>
         <tbody class="jtw-assumptions-table-body">
+            
             <tr class="jtw-project-5-year">
                 <td>Revenue Growth</td>
                 <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
                 <?php for ($i = 1; $i < 5; $i++) :
                     $default_growth = is_numeric($current_year_revenue_growth) ? (float)$current_year_revenue_growth : 0;
-                    if ($case === 'bear') { $default_growth -= $i * 1.0; } 
-                    elseif ($case === 'bull') { $default_growth += $i * 1.0; }
                 ?>
                 <td>
                     <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(number_format($default_growth, 1)); ?>">
-                    </td>
+                </td>
                 <?php endfor; ?>
             </tr>
             <tr class="jtw-project-5-year">
@@ -695,15 +696,13 @@ private function build_case_table_html($case, $current_year, $current_year_reven
 
 private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $dcf_result_for_ui) {
     $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
-    // If DCF data is missing for the initial load, we can't render the UI.
     if (is_null($dcf_result_data)) {
-        // Find the first available valuation model to display an initial value.
         $first_model_key = key($valuation_data);
         $first_model_result = reset($valuation_data);
         if (!$first_model_result || isset($first_model_result['error'])) {
              return '<div class="jtw-content-section"><p>Could not generate valuation projection tables. Required data is missing or contains an error.</p></div>';
         }
-        $dcf_result_data = $first_model_result['calculation_breakdown']; // Use this as a fallback for shares outstanding, etc.
+        $dcf_result_data = $first_model_result['calculation_breakdown'];
     }
     
     $component_ratios_json = isset($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'])) : '[]';
@@ -711,9 +710,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
 
     $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios=\'' . $component_ratios_json . '\' data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-shares-outstanding="' . esc_attr($shares_outstanding) . '">';
     $output .= '<div class="jtw-section-header"><h4>' . esc_html__('Value Projections', 'journey-to-wealth') . '</h4></div>';
-
-    // --- START: ADDED WRAPPER AND LOADER ---
-    // The tables are now wrapped and initially hidden via inline style.
+    
     $output .= '<div class="jtw-valuation-tables-wrapper" style="display: none;">';
 
     $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
@@ -737,16 +734,13 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
     if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
 
-    foreach (['bear', 'base', 'bull'] as $case) {
-        $output .= $this->build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui);
-    }
+    // --- START: SIMPLIFICATION ---
+    // The loop has been removed. We now only call the function once for the single "base" case.
+    $output .= $this->build_case_table_html('base', $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui);
+    // --- END: SIMPLIFICATION ---
     
-    $output .= '</div>'; // This closes jtw-valuation-tables-wrapper
-
-    // This is the loading spinner, which is visible by default.
+    $output .= '</div>';
     $output .= '<div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>';
-    // --- END: ADDED WRAPPER AND LOADER ---
-
     $output .= '<div class="jtw-modal-overlay"></div></div>';
     return $output;
 }
