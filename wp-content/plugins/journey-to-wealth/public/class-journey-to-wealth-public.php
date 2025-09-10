@@ -184,7 +184,9 @@ public function ajax_fetch_section_data() {
         foreach ($valuation_models as $result) { if (isset($result['intrinsic_value_per_share']) && is_numeric($result['intrinsic_value_per_share'])) { $valid_models[] = $result['intrinsic_value_per_share']; } }
         if (!empty($valid_models)) { $valuation_summary['fair_value'] = array_sum($valid_models) / count($valid_models); }
 
-        $response_data['html'] = $this->build_intrinsic_valuation_section_html($valuation_models, $valuation_summary, $raw_data['overview'], $calculated_data['ui_valuation_breakdown']);
+        // --- START: PASS ENTIRE CALCULATED DATA OBJECT ---
+        $response_data['html'] = $this->build_intrinsic_valuation_section_html($valuation_models, $valuation_summary, $raw_data['overview'], $calculated_data);
+        // --- END: PASS ENTIRE CALCULATED DATA OBJECT ---
         wp_send_json_success($response_data);
         return;
     }
@@ -607,11 +609,8 @@ private function build_overview_section_html($overview, $quote) {
     return ob_get_clean();
 }
 
-private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui) {
-    // --- START: SIMPLIFICATION ---
-    // The title logic is removed, and the modal ID is simplified.
+private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $ttm_net_income_growth) {
     $modal_id = 'jtw-assumptions-modal';
-    // --- END: SIMPLIFICATION ---
     ob_start();
     ?>
     <table class="jtw-assumptions-table jtw-case-table" data-case="<?php echo esc_attr($case); ?>">
@@ -645,57 +644,48 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <?php for ($i = 1; $i < 5; $i++) { echo '<td class="jtw-revenue-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
             </tr>
             <tr class="jtw-project-5-year">
+                <td>Net Income Growth</td>
+                <td><?php echo is_numeric($ttm_net_income_growth) ? number_format($ttm_net_income_growth, 1) . '%' : '-'; ?></td>
+                 <?php for ($i = 1; $i < 5; $i++) :
+                    $default_ni_growth = is_numeric($ttm_net_income_growth) ? (float)$ttm_net_income_growth : 0;
+                ?>
+                <td>
+                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(number_format($default_ni_growth, 1)); ?>">
+                </td>
+                <?php endfor; ?>
+            </tr>
+            <tr class="jtw-project-5-year">
                 <td>Net Income <?php echo esc_html($unit); ?></td>
                 <td class="jtw-net-income-result" data-year="0"><?php echo number_format($current_year_net_income / $divisor, 1); ?></td>
                 <?php for ($i = 1; $i < 5; $i++) { echo '<td class="jtw-net-income-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
+            </tr>
+            <tr class="jtw-project-5-year">
+                <td>Net Income Margin</td>
+                <td class="jtw-net-income-margin-result" data-year="0">
+                    <?php 
+                    $base_margin = ($analyst_revenue_current_year > 0) ? ($current_year_net_income / $analyst_revenue_current_year) * 100 : 0;
+                    echo number_format($base_margin, 1) . '%';
+                    ?>
+                </td>
+                 <?php for ($i = 1; $i < 5; $i++) { echo '<td class="jtw-net-income-margin-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
             </tr>
             <tr class="jtw-project-5-year">
                 <td>EPS</td>
                 <td class="jtw-eps-result" data-year="0"><?php echo number_format($current_year_eps, 2); ?></td>
                 <?php for ($i = 1; $i < 5; $i++) { echo '<td class="jtw-eps-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
             </tr>
-            <tr class="jtw-project-5-year">
-                <td>P/E</td>
-                <td class="jtw-pe-result" data-year="0"><?php echo is_numeric($current_year_pe) ? number_format($current_year_pe, 1) : 'N/A'; ?></td>
-                <?php 
-                $default_pe = is_numeric($current_year_pe) ? number_format($current_year_pe, 1, '.', '') : '20.0';
-                for ($i = 1; $i < 5; $i++) { echo '<td><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="' . esc_attr($i) . '" value="' . esc_attr($default_pe) . '"></td>'; }
-                ?>
-            </tr>
-            <tr class="jtw-metric-group-header jtw-result-header-row jtw-project-5-year">
-                <td>Multiple of Earnings Valuation</td>
-                <td class="jtw-moe-result-cell" data-year="0">-</td>
-                <?php for ($i = 1; $i < 5; $i++) { echo '<td class="jtw-moe-result-cell" data-year="' . esc_attr($i) . '">-</td>'; } ?>
-            </tr>
-            <tr class="jtw-metric-group-header jtw-result-header-row jtw-terminal-value-row" data-selected-model="dcf">
-                <td>
-                    <div class="jtw-model-selector" tabindex="0">
-                        <span class="jtw-selected-model">Discounted Cash Flow</span>
-                        <svg class="jtw-chevron-down" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        <ul class="jtw-model-options">
-                        <?php foreach ($available_models as $key => $label) { echo '<li data-model-key="' . esc_attr($key) . '">' . esc_html($label) . '</li>'; } ?>
-                        </ul>
-                    </div>
-                </td>
-                <td class="jtw-dcf-result-final-cell jtw-terminal-value-cell" colspan="5">
-                    <div class="jtw-in-table-bar-container">
-                        <div class="jtw-in-table-zone-bar"><div class="jtw-in-table-zone undervalued"></div><div class="jtw-in-table-zone about-right"></div><div class="jtw-in-table-zone overvalued"></div></div>
-                        <div class="jtw-in-table-bar-wrapper jtw-fair-value-bar-wrapper"><div class="jtw-in-table-bar jtw-fair-value-bar"><span class="jtw-in-table-bar-label jtw-fair-value-label">Fair Value: $-</span></div></div>
-                        <div class="jtw-in-table-bar-wrapper jtw-current-price-bar-wrapper"><div class="jtw-in-table-bar jtw-current-price-bar"><span class="jtw-in-table-bar-label jtw-current-price-label">Current Price: $-</span></div></div>
-                    </div>
-                    <span class="jtw-dcf-error-message" style="display:none;">Valuation could not be run.</span>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <div id="<?php echo esc_attr($modal_id); ?>" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>
-        </div></div>
-    <?php
+            <?php
     return ob_get_clean();
 }
 
-private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $dcf_result_for_ui) {
+private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $calculated_data) {
+    // --- START: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
+    $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
+    $key_metrics = $calculated_data['key_metrics'] ?? [];
+    // --- END: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
+
     $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
+
     if (is_null($dcf_result_data)) {
         $first_model_key = key($valuation_data);
         $first_model_result = reset($valuation_data);
@@ -720,6 +710,10 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
         $current_year_revenue_growth = $dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] * 100;
     }
 
+    // --- START: GET TTM NET INCOME GROWTH ---
+    $ttm_net_income_growth = $key_metrics['ttmNetIncomeGrowth'] ?? $current_year_revenue_growth;
+    // --- END: GET TTM NET INCOME GROWTH ---
+
     $base_revenue = $analyst_revenue_current_year;
     $current_year = date('Y');
     $unit = ''; $divisor = 1;
@@ -734,10 +728,9 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
     if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
 
-    // --- START: SIMPLIFICATION ---
-    // The loop has been removed. We now only call the function once for the single "base" case.
-    $output .= $this->build_case_table_html('base', $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui);
-    // --- END: SIMPLIFICATION ---
+    // --- START: PASS NEW METRIC TO TABLE BUILDER ---
+    $output .= $this->build_case_table_html('base', $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $ttm_net_income_growth);
+    // --- END: PASS NEW METRIC TO TABLE BUILDER ---
     
     $output .= '</div>';
     $output .= '<div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>';

@@ -388,7 +388,10 @@ const recalculateValuation = debounce(function() {
 
     // --- START: SIMPLIFICATION ---
     // The main assumptions object is now a single object, not a dictionary of cases.
-    const assumptions = { yearlyRevGrowth: {} };
+    const assumptions = { 
+        yearlyRevGrowth: {},
+        yearlyNIGrowth: {} // <-- Add new object for NI growth
+    };
     let hasAllInputs = true;
     const $table = $container.find('.jtw-case-table[data-case="base"]');
     
@@ -402,14 +405,33 @@ const recalculateValuation = debounce(function() {
             hasAllInputs = false;
         }
     });
+
+    // --- START: READ NEW NET INCOME GROWTH INPUTS ---
+    $table.find('input[data-metric="yearlyNIGrowth"]').each(function() {
+        const $input = $(this);
+        const year = $input.data('year');
+        const growthRateValue = parseFloat($input.val());
+        if (!isNaN(growthRateValue)) {
+            assumptions.yearlyNIGrowth[year] = growthRateValue;
+        } else {
+            hasAllInputs = false;
+        }
+    });
+    // --- END: READ NEW NET INCOME GROWTH INPUTS ---
     
     assumptions.model = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
 
     const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
     let previousRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="0"]').text(), revenueUnitLabel);
+    // --- START: INITIALIZE PREVIOUS NET INCOME ---
+    let previousNetIncome = parseFormattedNumber($table.find('.jtw-net-income-result[data-year="0"]').text(), revenueUnitLabel);
+    // --- END: INITIALIZE PREVIOUS NET INCOME ---
 
     for (let i = 1; i <= 4; i++) {
         const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
+        // --- START: GET NI GROWTH INPUT ---
+        const niGrowthRateInput = $table.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
+        // --- END: GET NI GROWTH INPUT ---
         const peInput = $table.find('.jtw-pe-input[data-year="' + i + '"]');
         
         if (peInput.length && peInput.val() === '') {
@@ -421,8 +443,15 @@ const recalculateValuation = debounce(function() {
         $table.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
         previousRevenue = projectedRevenue;
 
-        const projectedNetIncome = projectedRevenue * componentRatios.net_income_of_revenue;
+        // --- START: CALCULATE PROJECTED NET INCOME AND MARGIN ---
+        const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
+        const projectedNetIncome = previousNetIncome * (1 + niGrowthRate);
         $table.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
+        previousNetIncome = projectedNetIncome;
+
+        const netIncomeMargin = (projectedRevenue > 0) ? (projectedNetIncome / projectedRevenue) * 100 : 0;
+        $table.find('.jtw-net-income-margin-result[data-year="' + i + '"]').text(netIncomeMargin.toFixed(1) + '%');
+        // --- END: CALCULATE PROJECTED NET INCOME AND MARGIN ---
 
         const eps = Number(sharesOutstanding) > 0 ? projectedNetIncome / Number(sharesOutstanding) : 0;
         $table.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(2));
