@@ -411,29 +411,47 @@ private function call_python_calculation_engine($ticker, $all_assumptions = []) 
 
     private function calculate_levered_beta($ticker, $balance_sheet, $market_cap, $tax_rate) {
         global $wpdb;
-        $debug_data = [ 'levered_beta' => 1.0, 'unlevered_beta_avg' => null, 'debt_to_equity' => null, 'tax_rate' => $tax_rate, 'mapped_damodaran_industries' => [], 'beta_source' => 'Default' ];
+        
+        // --- START: ROBUST DEFAULTS FOR NEW COMPANIES ---
+        // For new companies without a mapping, default to a beta of 1.0 and D/E of 0.0.
+        $debug_data = [ 
+            'levered_beta' => 1.0, 
+            'unlevered_beta_avg' => 1.0, // Default unlevered beta
+            'debt_to_equity' => 0.0,   // Default D/E ratio
+            'tax_rate' => $tax_rate, 
+            'mapped_damodaran_industries' => [], 
+            'beta_source' => 'Default (Unmapped Company)' 
+        ];
+        // --- END: ROBUST DEFAULTS FOR NEW COMPANIES ---
+
         $mapping_table = $wpdb->prefix . 'jtw_company_mappings';
         $beta_table = $wpdb->prefix . 'jtw_industry_betas';
+        
         $unlevered_betas = $wpdb->get_col($wpdb->prepare( "SELECT b.unlevered_beta FROM $mapping_table as m JOIN $beta_table as b ON m.damodaran_industry_id = b.id WHERE m.ticker = %s", $ticker ));
-        if (empty($unlevered_betas)) { return $debug_data; }
-        $debug_data['mapped_damodaran_industries'] = $wpdb->get_col($wpdb->prepare( "SELECT b.industry_name FROM $mapping_table as m JOIN $beta_table as b ON m.damodaran_industry_id = b.id WHERE m.ticker = %s", $ticker ));
-        $average_unlevered_beta = array_sum($unlevered_betas) / count($unlevered_betas);
-        $debug_data['unlevered_beta_avg'] = $average_unlevered_beta;
-        $debug_data['levered_beta'] = $average_unlevered_beta;
-        $debug_data['beta_source'] = 'Calculated from Industry Beta';
-        if (is_wp_error($balance_sheet) || empty($balance_sheet['annualReports'])) { return $debug_data; }
-        $latest_report = $balance_sheet['annualReports'][0];
-        $total_debt = (float)($latest_report['shortTermDebt'] ?? 0) + (float)($latest_report['longTermDebtNoncurrent'] ?? 0);
-        if ($market_cap > 0) {
-            $debt_to_equity = $total_debt / $market_cap;
-            $debug_data['debt_to_equity'] = $debt_to_equity;
-            $levered_beta = 0.33 + ((0.66 * $average_unlevered_beta) * (1 + (1 - $tax_rate) * $debt_to_equity));
-            $debug_data['unconstrained_levered_beta'] = $levered_beta;
-            $debug_data['relevered_beta_calc'] = '0.33 + [(0.66 * ' . number_format($average_unlevered_beta, 3) . ') * (1 + (1 - ' . number_format($tax_rate * 100, 1) . '%) * ' . number_format($debt_to_equity, 3) . ')]';
-            $levered_beta = max(0.8, min(2.0, $levered_beta));
-            $debug_data['levered_beta'] = $levered_beta;
-            $debug_data['beta_source'] = 'Re-levered from Industry Beta (capped 0.8-2.0)';
+        
+        // If a mapping exists, proceed with the detailed calculation.
+        if (!empty($unlevered_betas)) {
+            $debug_data['mapped_damodaran_industries'] = $wpdb->get_col($wpdb->prepare( "SELECT b.industry_name FROM $mapping_table as m JOIN $beta_table as b ON m.damodaran_industry_id = b.id WHERE m.ticker = %s", $ticker ));
+            $average_unlevered_beta = array_sum($unlevered_betas) / count($unlevered_betas);
+            $debug_data['unlevered_beta_avg'] = $average_unlevered_beta;
+            
+            if (!is_wp_error($balance_sheet) && !empty($balance_sheet['annualReports'])) {
+                $latest_report = $balance_sheet['annualReports'][0];
+                $total_debt = (float)($latest_report['shortTermDebt'] ?? 0) + (float)($latest_report['longTermDebtNoncurrent'] ?? 0);
+                if ($market_cap > 0) {
+                    $debt_to_equity = $total_debt / $market_cap;
+                    $debug_data['debt_to_equity'] = $debt_to_equity;
+                    
+                    $levered_beta = 0.33 + ((0.66 * $average_unlevered_beta) * (1 + (1 - $tax_rate) * $debt_to_equity));
+                    $debug_data['unconstrained_levered_beta'] = $levered_beta;
+                    $debug_data['relevered_beta_calc'] = '0.33 + [(0.66 * ' . number_format($average_unlevered_beta, 3) . ') * (1 + (1 - ' . number_format($tax_rate * 100, 1) . '%) * ' . number_format($debt_to_equity, 3) . ')]';
+                    $levered_beta = max(0.8, min(2.0, $levered_beta));
+                    $debug_data['levered_beta'] = $levered_beta;
+                    $debug_data['beta_source'] = 'Re-levered from Industry Beta (capped 0.8-2.0)';
+                }
+            }
         }
+        
         return $debug_data;
     }
 
