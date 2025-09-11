@@ -979,8 +979,7 @@ private function build_past_performance_section_html($historical_data) {
         $d_rate_calc = $data['discount_rate_calc'] ?? [];
         $beta_details = $d_rate_calc['beta_details'] ?? [];
         $inputs = $data['inputs'] ?? [];
-        $ttm_components = $data['ttm_components'] ?? [];
-        $ttm_ratios = $data['component_ratios']['ttm_ratios'] ?? []; // Get the TTM ratios
+        $ttm_components = $data['ttm_components'] ?? []; // This now contains the new structure
         $projection_table = $data['projection_table'] ?? [];
         $last_projection = !empty($projection_table) ? end($projection_table) : [];
         $last_projected_fcfe = $last_projection['cf'] ?? 0;
@@ -1038,36 +1037,32 @@ private function build_past_performance_section_html($historical_data) {
                 <thead>
                     <tr>
                         <th>Projected Component</th>
-                        <th style="text-align: right;">TTM Ratio</th>
+                        <th style="text-align: right;">Source / TTM Ratio</th>
                         <th style="text-align: right;">Value (USD, Millions)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Net Income</td>
-                        <td><?php echo number_format(($ttm_ratios['net_income_of_revenue'] ?? 0) * 100, 1); ?>%</td>
-                        <td>$<?php echo number_format($ttm_components['net_income'] ?? 0, 2); ?></td>
-                    </tr>
-                    <tr>
-                        <td>(+) Depreciation & Amortization</td>
-                        <td><?php echo number_format(($ttm_ratios['depreciation_of_revenue'] ?? 0) * 100, 1); ?>%</td>
-                        <td>$<?php echo number_format($ttm_components['depreciation'] ?? 0, 2); ?></td>
-                    </tr>
-                    <tr>
-                        <td>(-) Capital Expenditures (CapEx)</td>
-                        <td><?php echo number_format(($ttm_ratios['capex_of_revenue'] ?? 0) * 100, 1); ?>%</td>
-                        <td>$<?php echo number_format($ttm_components['capex'] ?? 0, 2); ?></td>
-                    </tr>
-                    <tr>
-                        <td>(-) Change in Net Working Capital</td>
-                        <td><?php echo number_format(($ttm_ratios['delta_nwc_of_revenue'] ?? 0) * 100, 1); ?>%</td>
-                        <td>$<?php echo number_format($ttm_components['delta_nwc'] ?? 0, 2); ?></td>
-                    </tr>
-                    <tr>
-                        <td>(+) Net Borrowing</td>
-                        <td><?php echo number_format(($ttm_ratios['net_borrowing_of_revenue'] ?? 0) * 100, 1); ?>%</td>
-                        <td>$<?php echo number_format($ttm_components['net_borrowing'] ?? 0, 2); ?></td>
-                    </tr>
+                    <?php
+                    $component_map = [
+                        'net_income' => 'Net Income',
+                        'depreciation' => '(+) Depreciation & Amortization',
+                        'capex' => '(-) Capital Expenditures (CapEx)',
+                        'delta_nwc' => '(-) Change in Net Working Capital',
+                        'net_borrowing' => '(+) Net Borrowing'
+                    ];
+
+                    foreach ($component_map as $key => $label) {
+                        $component_data = $ttm_components[$key] ?? ['value' => 0, 'source' => 'N/A'];
+                        $source_display = is_numeric($component_data['source']) ? number_format($component_data['source'] * 100, 1) . '%' : esc_html($component_data['source']);
+                        ?>
+                        <tr>
+                            <td><?php echo esc_html($label); ?></td>
+                            <td><?php echo $source_display; ?></td>
+                            <td>$<?php echo number_format($component_data['value'] ?? 0, 2); ?></td>
+                        </tr>
+                        <?php
+                    }
+                    ?>
                     <tr class="jtw-table-total-row">
                         <td colspan="2"><strong>= Base FCFE for Projection</strong></td>
                         <td><strong>$<?php echo number_format($inputs['base_cash_flow'] ?? 0, 2); ?></strong></td>
@@ -1077,19 +1072,15 @@ private function build_past_performance_section_html($historical_data) {
         </div>
 
         <div class="jtw-modal-stage">
-            <h5 class="jtw-modal-subtitle">Stage 4: 10-Year Levered FCF Projections</h5>
-            <table class="jtw-sws-modal-table">
+             <h5 class="jtw-modal-subtitle">Stage 4: 10-Year Levered FCF Projections</h5>
+             <table class="jtw-sws-modal-table">
                 <thead><tr><th>Year</th><th>Levered FCF (USD, Millions)</th><th>Source</th><th>Present Value (Discounted @ <?php echo number_format(($inputs['discount_rate'] ?? 0) * 100, 2) . '%'; ?>)</th></tr></thead>
                 <tbody>
                     <?php foreach ($projection_table as $index => $row): ?>
                     <tr>
                         <td><?php echo esc_html($row['year']); ?></td>
                         <td>$<?php echo number_format($row['cf'], 2); ?></td>
-                        <td><?php 
-                            // --- FIX: Directly output the 'growth_rate' string from Python ---
-                            // This was the source of the fatal error.
-                            echo esc_html($row['growth_rate']); 
-                        ?></td>
+                        <td><?php echo esc_html($row['growth_rate']); ?></td>
                         <td>$<?php echo number_format($row['pv_cf'], 2); ?></td>
                     </tr>
                     <?php endforeach; ?>
