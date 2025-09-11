@@ -58,6 +58,17 @@
         return 'N/A';
     }
 
+    function parseFormattedNumber(str, unitLabel = '') {
+        let num = parseFloat(str);
+        if (isNaN(num)) return 0;
+        
+        if (unitLabel.includes('(Billions)')) return num * 1e9;
+        if (unitLabel.includes('(Millions)')) return num * 1e6;
+        if (unitLabel.includes('(Thousands)')) return num * 1e3;
+        
+        return num;
+    }
+
     /**
      * Initializes the interactive elements in the Company Overview section.
      * Specifically handles the animation for all progress bars.
@@ -210,17 +221,14 @@ function initializeKeyMetricsRatiosSection($container) {
             });
         }
 
-        // **FIX**: Updated toggle logic
         $container.on('change', '#jtw-peer-toggle', function() {
             if ($(this).is(':checked')) {
-                // Fetch and populate auto-suggested peers
                 fetchPeerData();
             } else {
-                // Clear the auto-suggested peers
                 $container.find('#jtw-peer-1-input').val('');
                 $container.find('#jtw-peer-2-input').val('');
                 $table.find('.jtw-peer-1-value, .jtw-peer-2-value').text('-');
-                peerDataFetched = false; // Reset flag
+                peerDataFetched = false;
             }
         });
 
@@ -239,7 +247,6 @@ function initializeKeyMetricsRatiosSection($container) {
             if (peer1) peersToFetch.push(peer1);
             if (peer2) peersToFetch.push(peer2);
             
-            // Uncheck the toggle if user is doing a manual search
             $('#jtw-peer-toggle').prop('checked', false);
 
             fetchPeerData(peersToFetch);
@@ -253,23 +260,18 @@ function initializeFairValueAnalysisSection($container) {
         return;
     }
 
-    // --- START: INITIAL LOAD LOGIC ---
     const $valuationWrapper = $contentDiv.find('.jtw-valuation-tables-wrapper');
     const $loader = $contentDiv.find('.jtw-valuation-loader');
-    // Hide the loader and show the tables now that the section's JS is initialized.
     $loader.hide();
     $valuationWrapper.show();
-    // --- END: INITIAL LOAD LOGIC ---
 
     const componentRatios = $contentDiv.data('ratios');
     const currentPrice = $contentDiv.data('current-price');
     const sharesOutstanding = parseFloat($contentDiv.data('shares-outstanding'));
 
-    // --- Event Listeners for Model Selector ---
     $container.on('click', '.jtw-model-selector', function(e) {
         e.stopPropagation();
         const $selector = $(this);
-        // Close other selectors when one is opened
         $('.jtw-model-selector').not($selector).removeClass('open');
         $selector.toggleClass('open');
     });
@@ -281,19 +283,15 @@ function initializeFairValueAnalysisSection($container) {
         const $row = $selector.closest('.jtw-terminal-value-row');
         const modelKey = $li.data('model-key');
         const modelLabel = $li.text();
-
         $selector.find('.jtw-selected-model').text(modelLabel);
-        // Use an attribute to store the selected model key for the AJAX call
         $row.attr('data-selected-model', modelKey);
         $selector.removeClass('open');
-        recalculateValuation(); // Trigger recalculation when a new model is selected
+        recalculateValuation();
     });
 
-    // Close dropdowns if clicking anywhere else on the page
     $(document).on('click', function() {
         $('.jtw-model-selector').removeClass('open');
     });
-    // --- End Event Listeners ---
 
     function formatNumberForDisplay(num, unitLabel = '', decimals = 1) {
         if (typeof num !== 'number' || isNaN(num)) return '-';
@@ -323,17 +321,14 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
     const $fairValueBar = $table.find('.jtw-fair-value-bar');
     const $currentPriceBar = $table.find('.jtw-current-price-bar');
 
-    // Check if the selectors found the elements. If not, log an error.
     if (!$fairValueBar.length || !$currentPriceBar.length) {
         console.error("Could not find the valuation bar elements. Check your HTML selectors.");
         return;
     }
 
-    // Immediately hide the bars to prevent a "flash" of the old state.
     $fairValueBar.css('transition', 'none');
     $currentPriceBar.css('transition', 'none');
 
-    // Check for a valid fair value. If not, show an error.
     if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
         $barContainer.hide();
         $errorMessage.show();
@@ -343,11 +338,9 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
     $barContainer.show();
     $errorMessage.hide();
 
-    // Determine the maximum value for the bar's scale.
     const rangeMax = Math.max(currentPrice, fairValue) * 1.5;
     if (rangeMax <= 0) return;
 
-    // Calculate the percentage width for the bars and background zones.
     const fairValueWidthPct = (fairValue / rangeMax) * 100;
     const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
     const undervaluedBoundary = fairValue * 0.8;
@@ -355,28 +348,21 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
     const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
     const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
 
-    // Update text labels and background zones.
     $table.find('.jtw-fair-value-label').text('Fair Value: $' + fairValue.toFixed(2));
     $table.find('.jtw-current-price-label').text('Current Price: $' + currentPrice.toFixed(2));
     $table.find('.jtw-in-table-zone.undervalued').css('width', undervaluedWidthPct + '%');
     $table.find('.jtw-in-table-zone.about-right').css('width', aboutRightWidthPct + '%');
 
-    // --- ANIMATION FIX ---
-    // Use a timeout of 0 milliseconds. This pushes the next part of the code to the end of the browser's
-    // execution queue, giving it time to render the bars at 0% width before the animation starts.
     setTimeout(function() {
-        // Re-enable the CSS transition.
         $fairValueBar.css('transition', 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)');
         $currentPriceBar.css('transition', 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)');
         
-        // Set the final target width, which will now animate correctly from 0%.
         $fairValueBar.css('width', fairValueWidthPct + '%');
         $currentPriceBar.css('width', currentPriceWidthPct + '%');
     }, 0);
-    // --- END ANIMATION FIX ---
 }
 
-const recalculateValuation = debounce(function() {
+const recalculateValuation = debounce(function(isUserTriggered = false) {
     if (!componentRatios || $.isEmptyObject(componentRatios)) {
         console.error('Component ratios not found or are empty on the page. Aborting recalculation.');
         return;
@@ -419,22 +405,37 @@ const recalculateValuation = debounce(function() {
 
     const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
     
-    // --- START: FIX ---
-    // Read the unformatted raw values from the data attributes to avoid rounding errors.
-    let previousRevenue = parseFloat($table.find('.jtw-revenue-result[data-year="0"]').data('raw-value'));
-    let previousNetIncome = parseFloat($table.find('.jtw-net-income-result[data-year="0"]').data('raw-value'));
-    // --- END: FIX ---
+    // --- START: REVISED LOGIC ---
+    let loopStart = isUserTriggered ? 1 : 2;
+    let previousRevenue, previousNetIncome;
 
-    // Calculate MOE for current year (Year 0)
+    if (isUserTriggered) {
+        // When user makes a change, start all calculations from the static base year.
+        previousRevenue = parseFloat($table.find('.jtw-revenue-result[data-year="0"]').data('raw-value'));
+        previousNetIncome = parseFloat($table.find('.jtw-net-income-result[data-year="0"]').data('raw-value'));
+    } else {
+        // On initial load, start calculations for Year 2 based on the static Year 1 analyst data.
+        previousRevenue = parseFloat($table.find('.jtw-revenue-result[data-year="1"]').data('raw-value'));
+        previousNetIncome = parseFloat($table.find('.jtw-net-income-result[data-year="1"]').data('raw-value'));
+    }
+
+    // Always calculate MOE for static years outside the loop.
     const epsYear0 = parseFloat($table.find('.jtw-eps-result[data-year="0"]').text());
     const peYear0 = parseFloat($table.find('.jtw-pe-result[data-year="0"]').text());
     if (!isNaN(epsYear0) && !isNaN(peYear0)) {
-        const sharePrice = epsYear0 * peYear0;
-        $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + sharePrice.toFixed(2));
+        $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + (epsYear0 * peYear0).toFixed(2));
     }
+    
+    const epsYear1 = parseFloat($table.find('.jtw-eps-result[data-year="1"]').text());
+    const peYear1 = parseFloat($table.find('.jtw-pe-input[data-year="1"]').val());
+    if (!isNaN(epsYear1) && !isNaN(peYear1)) {
+        $table.find('.jtw-moe-result-cell[data-year="1"]').text('$' + (epsYear1 * peYear1).toFixed(2));
+    }
+    
+    // The main loop calculates all dependent values.
+    for (let i = loopStart; i <= 4; i++) {
+    // --- END: REVISED LOGIC ---
 
-    // This loop now correctly starts from year 1 and handles all calculations.
-    for (let i = 1; i <= 4; i++) {
         const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
         const niGrowthRateInput = $table.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
         const peInput = $table.find('.jtw-pe-input[data-year="' + i + '"]');
@@ -451,7 +452,6 @@ const recalculateValuation = debounce(function() {
         const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
         let projectedNetIncome = previousNetIncome * (1 + niGrowthRate);
 
-        // Enforce the cap: Net Income cannot exceed Revenue
         if (projectedNetIncome > projectedRevenue) {
             projectedNetIncome = projectedRevenue;
         }
@@ -515,8 +515,37 @@ const recalculateValuation = debounce(function() {
     });
 }, 500);
 
-    $container.on('input', '.jtw-assumption-input', recalculateValuation);
-    recalculateValuation();
+    // This is a new, safe function to call on page load.
+    // It only calculates the MOE from static values and does not overwrite anything.
+    function runInitialCalculations() {
+        const $table = $container.find('.jtw-case-table[data-case="base"]');
+        if (!$table.length) return;
+
+        // Calculate MOE for current year (Year 0)
+        const epsYear0 = parseFloat($table.find('.jtw-eps-result[data-year="0"]').text());
+        const peYear0 = parseFloat($table.find('.jtw-pe-result[data-year="0"]').text());
+        if (!isNaN(epsYear0) && !isNaN(peYear0)) {
+            $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + (epsYear0 * peYear0).toFixed(2));
+        }
+    
+        // Calculate MOE for next year (Year 1)
+        const epsYear1 = parseFloat($table.find('.jtw-eps-result[data-year="1"]').text());
+        const peYear1 = parseFloat($table.find('.jtw-pe-input[data-year="1"]').val());
+        if (!isNaN(epsYear1) && !isNaN(peYear1)) {
+            $table.find('.jtw-moe-result-cell[data-year="1"]').text('$' + (epsYear1 * peYear1).toFixed(2));
+        }
+        
+        // Trigger the DCF calculation once based on the initial state of the inputs.
+        recalculateValuation(false); // Pass false for initial load
+    }
+
+    // On page load, run the safe initial calculations.
+    runInitialCalculations();
+    
+    // The main recalculation function is ONLY bound to the user input event.
+    $container.on('input', '.jtw-assumption-input', function() {
+        recalculateValuation(true); // Pass true for user-triggered event
+    });
 }
 
     function initializeSwsValuationGraphic($container) {
@@ -558,35 +587,6 @@ const recalculateValuation = debounce(function() {
                 });
             }, 50);
         }
-    
-        // **NEW**: Hide labels initially and add hover/click functionality
-        $barWrappers.each(function() {
-            const $wrapper = $(this);
-            const $label = $wrapper.find('.jtw-sws-label-group');
-            //$label.hide(); // Hide initially
-    
-            /*$wrapper.on('mouseenter', function() {
-                const $currentWrapper = $(this);
-                const $currentLabel = $currentWrapper.find('.jtw-sws-label-group');
-                
-                // Check position before fading in to prevent flash of misplaced content
-                const wrapperWidth = $currentWrapper.width();
-                // Temporarily show to get width, then hide again before fade
-                const labelWidth = $currentLabel.show().width(); 
-                $currentLabel.hide();
-    
-                if (wrapperWidth < (labelWidth + 30)) { // 30px is for padding
-                    $currentLabel.addClass('outside');
-                } else {
-                    $currentLabel.removeClass('outside');
-                }
-                
-                $currentLabel.stop(true, true).fadeIn(150);
-    
-            }).on('mouseleave', function() {
-                $(this).find('.jtw-sws-label-group').stop(true, true).fadeOut(150);
-            });*/
-        });
     }
 
     function initializeHistoricalCharts($container) {
@@ -609,12 +609,10 @@ const recalculateValuation = debounce(function() {
             const chartId = $script.data('chart-id');
             const chartType = $script.data('chart-type');
             const prefix = $script.data('prefix');
-            // --- START: STACKED BAR LOGIC ---
             const isStacked = $script.data('stacked') === true;
-            // --- END: STACKED BAR LOGIC ---
 
             let annualData;
-            let colors = $script.data('colors'); // Get colors from data attribute
+            let colors = $script.data('colors');
 
             try {
                 annualData = JSON.parse($script.attr('data-annual'));
@@ -658,7 +656,6 @@ const recalculateValuation = debounce(function() {
                     }
                 },
                 scales: {
-                    // --- START: STACKED BAR LOGIC ---
                     x: {
                         stacked: isStacked,
                         ticks: { autoSkip: true, maxRotation: 0, font: { size: 10 } },
@@ -672,7 +669,6 @@ const recalculateValuation = debounce(function() {
                             font: { size: 10 }
                         }
                     }
-                    // --- END: STACKED BAR LOGIC ---
                 }
             };
             
@@ -782,8 +778,8 @@ const recalculateValuation = debounce(function() {
             return;
         }
 
-        let chart; // Keep a reference to the chart instance
-        let activeMetricKey = 'price'; // Default to price chart
+        let chart;
+        let activeMetricKey = 'price';
 
         const yAxisAlignPlugin = {
             id: 'yAxisAlignPlugin',
@@ -1025,12 +1021,9 @@ function initializeAnalyzerPage() {
                     dataType: 'json',
                     success: function(response) {
                         if (response.success && response.data) {
-                            // --- START: CURRENCY NOTICE DISPLAY ---
-                            // If the response includes a currency notice, display it in the placeholder div.
                             if (response.data.currency_notice) {
                                 $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
                             }
-                            // --- END: CURRENCY NOTICE DISPLAY ---
 
                             if (response.data.html) $placeholder.html(response.data.html);
                             
@@ -1041,7 +1034,6 @@ function initializeAnalyzerPage() {
                                 }
                             }
 
-                            // Call the specific initializer function for the loaded section
                             if (section === 'overview') initializeOverviewSection($placeholder);
                             else if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
                             else if (section === 'past-performance') initializeHistoricalCharts($placeholder);
@@ -1076,13 +1068,11 @@ function initializeAnalyzerPage() {
             $('.jtw-modal-overlay').fadeIn(200);
             $(targetModal).fadeIn(200);
 
-            // Check if this is the transcript trigger
             if ($button.hasClass('jtw-transcript-trigger')) {
                 const ticker = $button.data('ticker');
                 const quarter = $button.data('quarter');
                 const $modalContent = $('#jtw-transcript-content-target');
 
-                // Show loading spinner
                 $modalContent.html('<div class="jtw-loading-spinner"></div>');
 
                 $.ajax({
