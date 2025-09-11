@@ -418,9 +418,11 @@ const recalculateValuation = debounce(function() {
     assumptions.model = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
 
     const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
-    // START FIX: Set the base for projections to be the "next year" (year 1) values, which are from analyst estimates.
-    let previousRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="1"]').text(), revenueUnitLabel);
-    let previousNetIncome = parseFormattedNumber($table.find('.jtw-net-income-result[data-year="1"]').text(), revenueUnitLabel);
+    
+    // --- START: FIX ---
+    // Always start calculations from the static "current year" (Year 0) values.
+    let baseRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="0"]').text(), revenueUnitLabel);
+    let baseNetIncome = parseFormattedNumber($table.find('.jtw-net-income-result[data-year="0"]').text(), revenueUnitLabel);
 
     // Calculate MOE for current year (Year 0)
     const epsYear0 = parseFloat($table.find('.jtw-eps-result[data-year="0"]').text());
@@ -430,16 +432,12 @@ const recalculateValuation = debounce(function() {
         $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + sharePrice.toFixed(2));
     }
 
-    // Also, ensure the "Multiple of Earnings" for year 1 is calculated correctly on input change.
-    const epsYear1 = parseFloat($table.find('.jtw-eps-result[data-year="1"]').text());
-    const peYear1 = parseFloat($table.find('.jtw-pe-input[data-year="1"]').val());
-    if (!isNaN(epsYear1) && !isNaN(peYear1)) {
-        const sharePrice = epsYear1 * peYear1;
-        $table.find('.jtw-moe-result-cell[data-year="1"]').text('$' + sharePrice.toFixed(2));
-    }
+    // This loop now correctly starts from year 1 and handles all calculations,
+    // including the previously unresponsive "next year" inputs.
+    let previousRevenue = baseRevenue;
+    let previousNetIncome = baseNetIncome;
 
-    // The calculation loop should now start from year 2, leaving the analyst data in year 1 untouched.
-    for (let i = 2; i <= 4; i++) {
+    for (let i = 1; i <= 4; i++) {
         const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
         const niGrowthRateInput = $table.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
         const peInput = $table.find('.jtw-pe-input[data-year="' + i + '"]');
@@ -476,6 +474,7 @@ const recalculateValuation = debounce(function() {
             $table.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
         }
     }
+    // --- END: FIX ---
 
     if (!hasAllInputs) {
         return;
