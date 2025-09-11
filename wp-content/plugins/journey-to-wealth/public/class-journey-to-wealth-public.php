@@ -980,6 +980,7 @@ private function build_past_performance_section_html($historical_data) {
         $beta_details = $d_rate_calc['beta_details'] ?? [];
         $inputs = $data['inputs'] ?? [];
         $ttm_components = $data['ttm_components'] ?? [];
+        $ttm_ratios = $data['component_ratios']['ttm_ratios'] ?? []; // Get the TTM ratios
         $projection_table = $data['projection_table'] ?? [];
         $last_projection = !empty($projection_table) ? end($projection_table) : [];
         $last_projected_fcfe = $last_projection['cf'] ?? 0;
@@ -1031,17 +1032,46 @@ private function build_past_performance_section_html($historical_data) {
         </div>
 
         <div class="jtw-modal-stage">
-            <h5 class="jtw-modal-subtitle">Stage 3: Base FCFE Calculation (TTM)</h5>
+            <h5 class="jtw-modal-subtitle">Stage 3: Base FCFE Calculation (Next Year Projection)</h5>
             <p class="jtw-formula-display"><strong>Formula:</strong> FCFE = Net Income + D&A - CapEx - Δ NWC + Net Borrowing</p>
             <table class="jtw-sws-modal-table">
-                <thead><tr><th>TTM Component</th><th style="text-align: right;">Value (USD, Millions)</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Projected Component</th>
+                        <th style="text-align: right;">TTM Ratio</th>
+                        <th style="text-align: right;">Value (USD, Millions)</th>
+                    </tr>
+                </thead>
                 <tbody>
-                    <tr><td>Net Income</td><td>$<?php echo number_format($ttm_components['net_income'] ?? 0, 2); ?></td></tr>
-                    <tr><td>(+) Depreciation & Amortization</td><td>$<?php echo number_format($ttm_components['depreciation'] ?? 0, 2); ?></td></tr>
-                    <tr><td>(-) Capital Expenditures (CapEx)</td><td>$<?php echo number_format($ttm_components['capex'] ?? 0, 2); ?></td></tr>
-                    <tr><td>(-) Change in Net Working Capital</td><td>$<?php echo number_format($ttm_components['delta_nwc'] ?? 0, 2); ?></td></tr>
-                    <tr><td>(+) Net Borrowing</td><td>$<?php echo number_format($ttm_components['net_borrowing'] ?? 0, 2); ?></td></tr>
-                    <tr class="jtw-table-total-row"><td><strong>= Base FCFE for Projection</strong></td><td><strong>$<?php echo number_format($inputs['base_cash_flow'] ?? 0, 2); ?></strong></td></tr>
+                    <tr>
+                        <td>Net Income</td>
+                        <td><?php echo number_format(($ttm_ratios['net_income_of_revenue'] ?? 0) * 100, 1); ?>%</td>
+                        <td>$<?php echo number_format($ttm_components['net_income'] ?? 0, 2); ?></td>
+                    </tr>
+                    <tr>
+                        <td>(+) Depreciation & Amortization</td>
+                        <td><?php echo number_format(($ttm_ratios['depreciation_of_revenue'] ?? 0) * 100, 1); ?>%</td>
+                        <td>$<?php echo number_format($ttm_components['depreciation'] ?? 0, 2); ?></td>
+                    </tr>
+                    <tr>
+                        <td>(-) Capital Expenditures (CapEx)</td>
+                        <td><?php echo number_format(($ttm_ratios['capex_of_revenue'] ?? 0) * 100, 1); ?>%</td>
+                        <td>$<?php echo number_format($ttm_components['capex'] ?? 0, 2); ?></td>
+                    </tr>
+                    <tr>
+                        <td>(-) Change in Net Working Capital</td>
+                        <td><?php echo number_format(($ttm_ratios['delta_nwc_of_revenue'] ?? 0) * 100, 1); ?>%</td>
+                        <td>$<?php echo number_format($ttm_components['delta_nwc'] ?? 0, 2); ?></td>
+                    </tr>
+                    <tr>
+                        <td>(+) Net Borrowing</td>
+                        <td><?php echo number_format(($ttm_ratios['net_borrowing_of_revenue'] ?? 0) * 100, 1); ?>%</td>
+                        <td>$<?php echo number_format($ttm_components['net_borrowing'] ?? 0, 2); ?></td>
+                    </tr>
+                    <tr class="jtw-table-total-row">
+                        <td colspan="2"><strong>= Base FCFE for Projection</strong></td>
+                        <td><strong>$<?php echo number_format($inputs['base_cash_flow'] ?? 0, 2); ?></strong></td>
+                    </tr>
                 </tbody>
             </table>
         </div>
