@@ -620,10 +620,6 @@ private function build_overview_section_html($overview, $quote) {
     return ob_get_clean();
 }
 
-// In journey-to-wealth/public/class-journey-to-wealth-public.php
-
-// In journey-to-wealth/public/class-journey-to-wealth-public.php
-
 private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $ttm_net_income_growth, $analyst_revenue_next_year = 0, $revenue_growth_next_year = 0, $net_income_next_year = 0, $net_income_growth_next_year = 0, $analyst_eps_next_year = 0, $next_year_pe = 'N/A') {
     // --- START: SIMPLIFICATION ---
     // The title logic is removed, and the modal ID is simplified.
@@ -648,7 +644,9 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             <tr class="jtw-project-5-year">
                 <td>Revenue Growth</td>
                 <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
-                <td><?php echo is_numeric($revenue_growth_next_year) ? number_format($revenue_growth_next_year, 1) . '%' : '-'; ?></td>
+                <td>
+                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($revenue_growth_next_year) ? number_format($revenue_growth_next_year, 1) : '0.0'); ?>">
+                </td>
                 <?php for ($i = 2; $i < 5; $i++) :
                     $default_growth = is_numeric($revenue_growth_next_year) && $revenue_growth_next_year != 0 ? (float)$revenue_growth_next_year : (is_numeric($current_year_revenue_growth) ? (float)$current_year_revenue_growth : 0);
                 ?>
@@ -666,7 +664,9 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             <tr class="jtw-project-5-year">
                 <td>Net Income Growth</td>
                 <td><?php echo is_numeric($ttm_net_income_growth) ? number_format($ttm_net_income_growth, 1) . '%' : '-'; ?></td>
-                <td><?php echo is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) . '%' : '-'; ?></td>
+                <td>
+                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) : '0.0'); ?>">
+                </td>
                  <?php for ($i = 2; $i < 5; $i++) :
                     $default_ni_growth = is_numeric($net_income_growth_next_year) && $net_income_growth_next_year != 0 ? (float)$net_income_growth_next_year : (is_numeric($ttm_net_income_growth) ? (float)$ttm_net_income_growth : 0);
                 ?>
