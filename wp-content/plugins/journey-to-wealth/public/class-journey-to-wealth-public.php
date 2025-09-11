@@ -654,8 +654,8 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             </tr>
             <tr class="jtw-project-5-year">
                 <td class="jtw-revenue-label">Revenue <?php echo esc_html($unit); ?></td>
-                <td class="jtw-revenue-result" data-year="0"><?php echo number_format($analyst_revenue_current_year / $divisor, 1); ?></td>
-                <td class="jtw-revenue-result" data-year="1"><?php echo number_format($analyst_revenue_next_year / $divisor, 1); ?></td>
+                <td class="jtw-revenue-result" data-year="0" data-raw-value="<?php echo esc_attr($analyst_revenue_current_year); ?>"><?php echo number_format($analyst_revenue_current_year / $divisor, 1); ?></td>
+                <td class="jtw-revenue-result" data-year="1" data-raw-value="<?php echo esc_attr($analyst_revenue_next_year); ?>"><?php echo number_format($analyst_revenue_next_year / $divisor, 1); ?></td>
                 <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-revenue-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
             </tr>
             <tr class="jtw-project-5-year">
@@ -672,8 +672,8 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             </tr>
             <tr class="jtw-project-5-year">
                 <td>Net Income <?php echo esc_html($unit); ?></td>
-                <td class="jtw-net-income-result" data-year="0"><?php echo number_format($current_year_net_income / $divisor, 1); ?></td>
-                <td class="jtw-net-income-result" data-year="1"><?php echo number_format($net_income_next_year / $divisor, 1); ?></td>
+                <td class="jtw-net-income-result" data-year="0" data-raw-value="<?php echo esc_attr($current_year_net_income); ?>"><?php echo number_format($current_year_net_income / $divisor, 1); ?></td>
+                <td class="jtw-net-income-result" data-year="1" data-raw-value="<?php echo esc_attr($net_income_next_year); ?>"><?php echo number_format($net_income_next_year / $divisor, 1); ?></td>
                 <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-net-income-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
             </tr>
             <tr class="jtw-project-5-year">

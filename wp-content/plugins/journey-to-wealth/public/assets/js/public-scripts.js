@@ -420,9 +420,10 @@ const recalculateValuation = debounce(function() {
     const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
     
     // --- START: FIX ---
-    // Always start calculations from the static "current year" (Year 0) values.
-    let baseRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="0"]').text(), revenueUnitLabel);
-    let baseNetIncome = parseFormattedNumber($table.find('.jtw-net-income-result[data-year="0"]').text(), revenueUnitLabel);
+    // Read the unformatted raw values from the data attributes to avoid rounding errors.
+    let previousRevenue = parseFloat($table.find('.jtw-revenue-result[data-year="0"]').data('raw-value'));
+    let previousNetIncome = parseFloat($table.find('.jtw-net-income-result[data-year="0"]').data('raw-value'));
+    // --- END: FIX ---
 
     // Calculate MOE for current year (Year 0)
     const epsYear0 = parseFloat($table.find('.jtw-eps-result[data-year="0"]').text());
@@ -432,11 +433,7 @@ const recalculateValuation = debounce(function() {
         $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + sharePrice.toFixed(2));
     }
 
-    // This loop now correctly starts from year 1 and handles all calculations,
-    // including the previously unresponsive "next year" inputs.
-    let previousRevenue = baseRevenue;
-    let previousNetIncome = baseNetIncome;
-
+    // This loop now correctly starts from year 1 and handles all calculations.
     for (let i = 1; i <= 4; i++) {
         const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
         const niGrowthRateInput = $table.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
@@ -474,7 +471,6 @@ const recalculateValuation = debounce(function() {
             $table.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
         }
     }
-    // --- END: FIX ---
 
     if (!hasAllInputs) {
         return;
