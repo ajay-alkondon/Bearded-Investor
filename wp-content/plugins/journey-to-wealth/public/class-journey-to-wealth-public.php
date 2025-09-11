@@ -642,13 +642,13 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <td>Revenue Growth</td>
                 <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
                 <td>
-                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($revenue_growth_next_year) ? number_format($revenue_growth_next_year, 1) : '0.0'); ?>">
+                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($revenue_growth_next_year) ? number_format($revenue_growth_next_year, 1, '.', '') : '0.0'); ?>">
                 </td>
                 <?php for ($i = 2; $i < 5; $i++) :
                     $default_growth = is_numeric($revenue_growth_next_year) && $revenue_growth_next_year != 0 ? (float)$revenue_growth_next_year : (is_numeric($current_year_revenue_growth) ? (float)$current_year_revenue_growth : 0);
                 ?>
                 <td>
-                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(number_format($default_growth, 1)); ?>">
+                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(number_format($default_growth, 1, '.', '')); ?>">
                 </td>
                 <?php endfor; ?>
             </tr>
@@ -662,7 +662,7 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <td>Net Income Growth</td>
                 <td><?php echo is_numeric($ttm_net_income_growth) ? number_format($ttm_net_income_growth, 1) . '%' : '-'; ?></td>
                 <td>
-                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) : '0.0'); ?>">
+                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1, '.', '') : '0.0'); ?>">
                 </td>
                  <?php for ($i = 2; $i < 5; $i++) : ?>
                 <td>
@@ -701,7 +701,7 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             <tr class="jtw-project-5-year">
                 <td>P/E</td>
                 <td class="jtw-pe-result" data-year="0"><?php echo is_numeric($current_year_pe) ? number_format($current_year_pe, 1) : 'N/A'; ?></td>
-                <td class="jtw-pe-input-cell" data-year="1"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="1" value="<?php echo esc_attr(is_numeric($next_year_pe) ? number_format($next_year_pe, 1) : '20.0'); ?>"></td>
+                <td class="jtw-pe-input-cell" data-year="1"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="1" value="<?php echo esc_attr(is_numeric($next_year_pe) ? number_format($next_year_pe, 1, '.', '') : '20.0'); ?>"></td>
                 <?php 
                 $default_pe = is_numeric($next_year_pe) ? number_format($next_year_pe, 1, '.', '') : '20.0';
                 for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-pe-input-cell" data-year="' . esc_attr($i) . '"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="' . esc_attr($i) . '" value="' . esc_attr($default_pe) . '"></td>'; }
