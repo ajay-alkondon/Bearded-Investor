@@ -386,11 +386,9 @@ const recalculateValuation = debounce(function() {
         return;
     }
 
-    // --- START: SIMPLIFICATION ---
-    // The main assumptions object is now a single object, not a dictionary of cases.
     const assumptions = { 
         yearlyRevGrowth: {},
-        yearlyNIGrowth: {} // <-- Add new object for NI growth
+        yearlyNIGrowth: {}
     };
     let hasAllInputs = true;
     const $table = $container.find('.jtw-case-table[data-case="base"]');
@@ -406,7 +404,6 @@ const recalculateValuation = debounce(function() {
         }
     });
 
-    // --- START: READ NEW NET INCOME GROWTH INPUTS ---
     $table.find('input[data-metric="yearlyNIGrowth"]').each(function() {
         const $input = $(this);
         const year = $input.data('year');
@@ -417,25 +414,21 @@ const recalculateValuation = debounce(function() {
             hasAllInputs = false;
         }
     });
-    // --- END: READ NEW NET INCOME GROWTH INPUTS ---
     
     assumptions.model = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
 
     const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
-    // Start the projection from the analyst estimate for Year 1
     let previousRevenue = parseFormattedNumber($table.find('.jtw-revenue-result[data-year="1"]').text(), revenueUnitLabel);
     let previousNetIncome = parseFormattedNumber($table.find('.jtw-net-income-result[data-year="1"]').text(), revenueUnitLabel);
 
-    // --- START: UPDATE MOE for YEAR 1 ---
     const epsYear1 = parseFloat($table.find('.jtw-eps-result[data-year="1"]').text());
     const peYear1 = parseFloat($table.find('.jtw-pe-input[data-year="1"]').val());
     if (!isNaN(epsYear1) && !isNaN(peYear1)) {
         const sharePrice = epsYear1 * peYear1;
         $table.find('.jtw-moe-result-cell[data-year="1"]').text('$' + sharePrice.toFixed(2));
     }
-    // --- END: UPDATE MOE for YEAR 1 ---
 
-    for (let i = 2; i <= 4; i++) { // <-- FIX: Loop now starts from year 2
+    for (let i = 2; i <= 4; i++) {
         const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
         const niGrowthRateInput = $table.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
         const peInput = $table.find('.jtw-pe-input[data-year="' + i + '"]');
@@ -444,15 +437,23 @@ const recalculateValuation = debounce(function() {
             hasAllInputs = false;
         }
         
-        const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
-        const projectedRevenue = previousRevenue * (1 + growthRate);
+        // --- START: REVENUE & NET INCOME CAPPING LOGIC ---
+        const revGrowthRate = parseFloat(growthRateInput.val()) / 100 || 0;
+        const projectedRevenue = previousRevenue * (1 + revGrowthRate);
         $table.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
         previousRevenue = projectedRevenue;
 
         const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
-        const projectedNetIncome = previousNetIncome * (1 + niGrowthRate);
+        let projectedNetIncome = previousNetIncome * (1 + niGrowthRate);
+
+        // Enforce the cap: Net Income cannot exceed Revenue
+        if (projectedNetIncome > projectedRevenue) {
+            projectedNetIncome = projectedRevenue;
+        }
+        
         $table.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
         previousNetIncome = projectedNetIncome;
+        // --- END: REVENUE & NET INCOME CAPPING LOGIC ---
 
         const netIncomeMargin = (projectedRevenue > 0) ? (projectedNetIncome / projectedRevenue) * 100 : 0;
         $table.find('.jtw-net-income-margin-result[data-year="' + i + '"]').text(netIncomeMargin.toFixed(1) + '%');
@@ -466,7 +467,6 @@ const recalculateValuation = debounce(function() {
             $table.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
         }
     }
-    // --- END: SIMPLIFICATION ---
 
     if (!hasAllInputs) {
         return;
@@ -482,13 +482,11 @@ const recalculateValuation = debounce(function() {
             action: 'jtw_recalculate_valuation',
             nonce: jtw_public_params.recalculate_nonce,
             ticker: ticker,
-            // Pass a single object now, not a dictionary of cases
             assumptions: { base: assumptions } 
         },
         dataType: 'json',
         success: function(response) {
             if (response.success && response.data) {
-                // The response is now simpler, directly containing the 'base' case result.
                 const caseData = response.data.base;
                 if (caseData.error) {
                     console.error('Error for base case:', caseData.error);
