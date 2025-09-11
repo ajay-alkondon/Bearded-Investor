@@ -641,9 +641,7 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             <tr class="jtw-project-5-year">
                 <td>Revenue Growth</td>
                 <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
-                <td>
-                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($revenue_growth_next_year) ? number_format($revenue_growth_next_year, 1, '.', '') : '0.0'); ?>">
-                </td>
+                <td><?php echo is_numeric($revenue_growth_next_year) ? number_format($revenue_growth_next_year, 1) . '%' : '-'; ?></td>
                 <?php for ($i = 2; $i < 5; $i++) :
                     $default_growth = is_numeric($revenue_growth_next_year) && $revenue_growth_next_year != 0 ? (float)$revenue_growth_next_year : (is_numeric($current_year_revenue_growth) ? (float)$current_year_revenue_growth : 0);
                 ?>
@@ -661,9 +659,7 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             <tr class="jtw-project-5-year">
                 <td>Net Income Growth</td>
                 <td><?php echo is_numeric($ttm_net_income_growth) ? number_format($ttm_net_income_growth, 1) . '%' : '-'; ?></td>
-                <td>
-                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1, '.', '') : '0.0'); ?>">
-                </td>
+                <td><?php echo is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) . '%' : '-'; ?></td>
                  <?php for ($i = 2; $i < 5; $i++) : ?>
                 <td>
                     <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="<?php echo esc_attr($i); ?>" value="0.0">
@@ -725,7 +721,7 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <td>
                     <div class="jtw-model-selector" tabindex="0">
                         <span class="jtw-selected-model">Discounted Cash Flow</span>
-                        <svg class="jtw-chevron-down" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        <svg class="jtw-chevron-down" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                         <ul class="jtw-model-options">
                         <?php foreach ($available_models as $key => $label) { echo '<li data-model-key="' . esc_attr($key) . '">' . esc_html($label) . '</li>'; } ?>
                         </ul>

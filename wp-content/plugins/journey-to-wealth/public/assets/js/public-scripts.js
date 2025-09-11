@@ -362,7 +362,7 @@ function updateInTableValuationGraphic($table, fairValue, currentPrice) {
     }, 0);
 }
 
-const recalculateValuation = debounce(function(isUserTriggered = false) {
+const recalculateValuation = debounce(function() {
     if (!componentRatios || $.isEmptyObject(componentRatios)) {
         console.error('Component ratios not found or are empty on the page. Aborting recalculation.');
         return;
@@ -379,63 +379,56 @@ const recalculateValuation = debounce(function(isUserTriggered = false) {
     let hasAllInputs = true;
     const $table = $container.find('.jtw-case-table[data-case="base"]');
     
+    // This now correctly reads only from year 2 onwards, as year 1 is static
     $table.find('input[data-metric="yearlyRevGrowth"]').each(function() {
         const $input = $(this);
         const year = $input.data('year');
-        const growthRateValue = parseFloat($input.val());
-        if (!isNaN(growthRateValue)) {
-            assumptions.yearlyRevGrowth[year] = growthRateValue;
-        } else {
-            hasAllInputs = false;
+        if (year > 1) { // Only read user-editable inputs
+            const growthRateValue = parseFloat($input.val());
+            if (!isNaN(growthRateValue)) {
+                assumptions.yearlyRevGrowth[year] = growthRateValue;
+            } else {
+                hasAllInputs = false;
+            }
         }
     });
 
+    // This now correctly reads only from year 2 onwards
     $table.find('input[data-metric="yearlyNIGrowth"]').each(function() {
         const $input = $(this);
         const year = $input.data('year');
-        const growthRateValue = parseFloat($input.val());
-        if (!isNaN(growthRateValue)) {
-            assumptions.yearlyNIGrowth[year] = growthRateValue;
-        } else {
-            hasAllInputs = false;
+         if (year > 1) { // Only read user-editable inputs
+            const growthRateValue = parseFloat($input.val());
+            if (!isNaN(growthRateValue)) {
+                assumptions.yearlyNIGrowth[year] = growthRateValue;
+            } else {
+                hasAllInputs = false;
+            }
         }
     });
     
     assumptions.model = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
 
     const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
-    
-    // --- START: REVISED LOGIC ---
-    let loopStart = isUserTriggered ? 1 : 2;
-    let previousRevenue, previousNetIncome;
+    let previousRevenue = parseFloat($table.find('.jtw-revenue-result[data-year="1"]').data('raw-value'));
+    let previousNetIncome = parseFloat($table.find('.jtw-net-income-result[data-year="1"]').data('raw-value'));
 
-    if (isUserTriggered) {
-        // When user makes a change, start all calculations from the static base year.
-        previousRevenue = parseFloat($table.find('.jtw-revenue-result[data-year="0"]').data('raw-value'));
-        previousNetIncome = parseFloat($table.find('.jtw-net-income-result[data-year="0"]').data('raw-value'));
-    } else {
-        // On initial load, start calculations for Year 2 based on the static Year 1 analyst data.
-        previousRevenue = parseFloat($table.find('.jtw-revenue-result[data-year="1"]').data('raw-value'));
-        previousNetIncome = parseFloat($table.find('.jtw-net-income-result[data-year="1"]').data('raw-value'));
-    }
-
-    // Always calculate MOE for static years outside the loop.
+    // Calculate MOE for current year (Year 0)
     const epsYear0 = parseFloat($table.find('.jtw-eps-result[data-year="0"]').text());
     const peYear0 = parseFloat($table.find('.jtw-pe-result[data-year="0"]').text());
     if (!isNaN(epsYear0) && !isNaN(peYear0)) {
         $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + (epsYear0 * peYear0).toFixed(2));
     }
-    
+
+    // Calculate MOE for next year (Year 1)
     const epsYear1 = parseFloat($table.find('.jtw-eps-result[data-year="1"]').text());
     const peYear1 = parseFloat($table.find('.jtw-pe-input[data-year="1"]').val());
     if (!isNaN(epsYear1) && !isNaN(peYear1)) {
         $table.find('.jtw-moe-result-cell[data-year="1"]').text('$' + (epsYear1 * peYear1).toFixed(2));
     }
-    
-    // The main loop calculates all dependent values.
-    for (let i = loopStart; i <= 4; i++) {
-    // --- END: REVISED LOGIC ---
 
+    // The calculation loop now correctly starts from year 2
+    for (let i = 2; i <= 4; i++) {
         const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
         const niGrowthRateInput = $table.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
         const peInput = $table.find('.jtw-pe-input[data-year="' + i + '"]');
