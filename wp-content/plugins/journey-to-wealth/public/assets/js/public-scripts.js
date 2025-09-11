@@ -442,11 +442,6 @@ const recalculateValuation = debounce(function() {
         if (projectedNetIncome > projectedRevenue) {
             projectedNetIncome = projectedRevenue;
         }
-
-        // Zero out NI for years 2 and beyond (e.g., 2027, 2028, 2029)
-        if (i >= 2) {
-            projectedNetIncome = 0;
-        }
         
         $table.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
         previousNetIncome = projectedNetIncome;

@@ -621,10 +621,7 @@ private function build_overview_section_html($overview, $quote) {
 }
 
 private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $ttm_net_income_growth, $analyst_revenue_next_year = 0, $revenue_growth_next_year = 0, $net_income_next_year = 0, $net_income_growth_next_year = 0, $analyst_eps_next_year = 0, $next_year_pe = 'N/A') {
-    // --- START: SIMPLIFICATION ---
-    // The title logic is removed, and the modal ID is simplified.
     $modal_id = 'jtw-assumptions-modal';
-    // --- END: SIMPLIFICATION ---
     ob_start();
     ?>
     <table class="jtw-assumptions-table jtw-case-table" data-case="<?php echo esc_attr($case); ?>">
@@ -667,11 +664,9 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <td>
                     <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="1" value="<?php echo esc_attr(is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) : '0.0'); ?>">
                 </td>
-                 <?php for ($i = 2; $i < 5; $i++) :
-                    $default_ni_growth = is_numeric($net_income_growth_next_year) && $net_income_growth_next_year != 0 ? (float)$net_income_growth_next_year : (is_numeric($ttm_net_income_growth) ? (float)$ttm_net_income_growth : 0);
-                ?>
+                 <?php for ($i = 2; $i < 5; $i++) : ?>
                 <td>
-                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(number_format($default_ni_growth, 1)); ?>">
+                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="<?php echo esc_attr($i); ?>" value="0.0">
                 </td>
                 <?php endfor; ?>
             </tr>
