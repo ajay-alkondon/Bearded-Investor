@@ -709,7 +709,15 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             </tr>
             <tr class="jtw-metric-group-header jtw-result-header-row jtw-project-5-year">
                 <td>Multiple of Earnings Valuation</td>
-                <td class="jtw-moe-result-cell" data-year="0">-</td>
+                <td class="jtw-moe-result-cell" data-year="0">
+                    <?php
+                        if (is_numeric($current_year_eps) && is_numeric($current_year_pe)) {
+                            echo '$' . number_format($current_year_eps * $current_year_pe, 2);
+                        } else {
+                            echo '-';
+                        }
+                    ?>
+                </td>
                 <td class="jtw-moe-result-cell" data-year="1">-</td>
                 <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-moe-result-cell" data-year="' . esc_attr($i) . '">-</td>'; } ?>
             </tr>
