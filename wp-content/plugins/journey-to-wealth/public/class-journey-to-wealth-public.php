@@ -622,6 +622,8 @@ private function build_overview_section_html($overview, $quote) {
 
 // In journey-to-wealth/public/class-journey-to-wealth-public.php
 
+// In journey-to-wealth/public/class-journey-to-wealth-public.php
+
 private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $ttm_net_income_growth, $analyst_revenue_next_year = 0, $revenue_growth_next_year = 0, $net_income_next_year = 0, $net_income_growth_next_year = 0, $analyst_eps_next_year = 0, $next_year_pe = 'N/A') {
     // --- START: SIMPLIFICATION ---
     // The title logic is removed, and the modal ID is simplified.
@@ -704,10 +706,10 @@ private function build_case_table_html($case, $current_year, $current_year_reven
             <tr class="jtw-project-5-year">
                 <td>P/E</td>
                 <td class="jtw-pe-result" data-year="0"><?php echo is_numeric($current_year_pe) ? number_format($current_year_pe, 1) : 'N/A'; ?></td>
-                <td><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="1" value="<?php echo esc_attr(is_numeric($next_year_pe) ? number_format($next_year_pe, 1) : '20.0'); ?>"></td>
+                <td class="jtw-pe-input-cell" data-year="1"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="1" value="<?php echo esc_attr(is_numeric($next_year_pe) ? number_format($next_year_pe, 1) : '20.0'); ?>"></td>
                 <?php 
                 $default_pe = is_numeric($next_year_pe) ? number_format($next_year_pe, 1, '.', '') : '20.0';
-                for ($i = 2; $i < 5; $i++) { echo '<td><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="' . esc_attr($i) . '" value="' . esc_attr($default_pe) . '"></td>'; }
+                for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-pe-input-cell" data-year="' . esc_attr($i) . '"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="' . esc_attr($i) . '" value="' . esc_attr($default_pe) . '"></td>'; }
                 ?>
             </tr>
             <tr class="jtw-metric-group-header jtw-result-header-row jtw-project-5-year">
