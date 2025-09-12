@@ -1774,7 +1774,6 @@ body.dark-mode #header-outer #logo img.light-mode-logo {
     background-color: var(--jtw-page-bg);
     border: 1px dashed var(--jtw-border-color);
     border-radius: 4px;
-    min-height: 250px;
     width:100%;
 }
 .jtw-ad-placeholder span {
