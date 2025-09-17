@@ -1829,6 +1829,10 @@ body.dark-mode .jtw-ad-placeholder span {
 
 /* --- END: NEW Yahoo Finance Style Overview --- */
 
+body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group span, body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group strong {
+    color: #fff !important;
+}
+
 /* --- START: NEW Overview Description Section --- */
 
 .jtw-overview-footer-grid {
@@ -1931,8 +1935,8 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 }
 .jtw-sws-header {
     text-align: left;
-    margin-bottom: 25px; /* Final margin adjustment */
-    padding: 0 25px; /* Maintain horizontal padding */
+    margin-bottom: 50px;
+    padding: 0px;
 }
 .jtw-sws-header h2 {
     font-size: 1.1em;
@@ -1954,11 +1958,11 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-main-metric {
     position: absolute;
     top: 5px;
-    right: 10px;
+    right: 0px;
     text-align: right;
     z-index: 3;
     margin: 0;
-    padding: 0 15px;
+    padding: 15px 0 15px 0px;
 }
 .jtw-sws-percentage {
     font-size: 1.8em;
