@@ -1931,7 +1931,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 }
 .jtw-sws-header {
     text-align: left;
-    margin-bottom: 25px; /* Add more space below header */
+    margin-bottom: 25px;
 }
 .jtw-sws-header h2 {
     font-size: 1.1em;
@@ -1948,7 +1948,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-chart {
     position: relative;
     width: 100%;
-    height: 120px;
+    height: 150px; /* Increased height for more vertical space */
 }
 .jtw-sws-main-metric {
     position: absolute;
@@ -1959,13 +1959,13 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     margin: 0;
 }
 .jtw-sws-percentage {
-    font-size: 1.8em; /* Adjusted size for top-right */
+    font-size: 1.8em;
     font-weight: 700;
     line-height: 1;
     margin-bottom: 2px;
 }
 .jtw-sws-status {
-    font-size: 0.9em; /* Adjusted size for top-right */
+    font-size: 0.9em;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1988,7 +1988,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     transform: translateY(-50%);
     left: 0;
     right: 0;
-    height: 70px; /* Increased height for background */
+    height: 100px; /* Much larger height for the background zone */
     z-index: 1;
 }
 .jtw-sws-zone-bar {
@@ -2001,15 +2001,15 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-zone {
     height: 100%;
     display: flex;
-    align-items: flex-end; /* Align labels to the bottom */
+    align-items: flex-end;
     justify-content: center;
-    padding: 0 5px 5px 5px; /* Add padding to bottom */
+    padding: 0 5px 8px 5px; /* Adjust padding for bottom labels */
     box-sizing: border-box;
 }
-.jtw-sws-zone.undervalued { background-color: #27ae60; }
-.jtw-sws-zone.about-right { background-color: #f39c12; }
+.jtw-sws-zone.undervalued { background-color: rgba(39, 174, 96, 0.7); }
+.jtw-sws-zone.about-right { background-color: rgba(243, 156, 18, 0.7); }
 .jtw-sws-zone.overvalued {
-    background: repeating-linear-gradient( -45deg, #c0392b, #c0392b 10px, #e74c3c 10px, #e74c3c 20px );
+    background: repeating-linear-gradient( -45deg, rgba(192, 57, 43, 0.7), rgba(192, 57, 43, 0.7) 10px, rgba(231, 76, 60, 0.7) 10px, rgba(231, 76, 60, 0.7) 20px );
 }
 .jtw-zone-label {
     font-size: 0.8em;
@@ -2019,26 +2019,23 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     text-shadow: 0 0 3px rgba(0,0,0,0.5);
 }
 
-/* Remove old price bar styles */
-.jtw-sws-price-bar-wrapper { display: none; } 
-
-/* New horizontal bar styles */
+/* --- START: UPDATED PRICE BAR STYLES --- */
 .jtw-sws-bar-row {
     position: absolute;
     left: 0;
-    height: 30px; /* Thicker bars */
+    height: 35px; /* Thicker bars */
     z-index: 2;
 }
 .jtw-sws-bar-row.current-price-row {
-    top: 20px; /* Position first bar from top */
+    top: 25px; /* Position first bar from top */
 }
 .jtw-sws-bar-row.fair-value-row {
-    bottom: 20px; /* Position second bar from bottom */
+    bottom: 25px; /* Position second bar from bottom */
 }
 .jtw-sws-bar-wrapper {
-    width: 0%; /* Controlled by JS */
+    width: 0%; /* This is animated by JavaScript */
     height: 100%;
-    background-color: #212529; /* Black bar background */
+    background-color: var(--jtw-text-dark, #212529); /* Black bar background */
     transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
     border-radius: 4px;
 }
@@ -2059,6 +2056,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     font-size: 1.1em;
     font-weight: 700;
 }
+/* --- END: UPDATED PRICE BAR STYLES --- */
 
 /* Dark mode adjustments for the valuation graphic */
 body.dark-mode .jtw-sws-valuation-container {
@@ -2068,3 +2066,8 @@ body.dark-mode .jtw-sws-header h2,
 body.dark-mode .jtw-sws-header p {
     color: #a0aec0;
 }
+body.dark-mode .jtw-sws-bar-wrapper {
+    background-color: #1a202c; /* Match dark background for black bars */
+    border: 1px solid #4a5568; /* Add subtle border in dark mode */
+}
+/* --- END: New SWS Valuation Graphic --- */
