@@ -1904,3 +1904,22 @@ body.dark-mode .jtw-footer-detail-item .jtw-detail-value a {
     font-weight: 600;
 }
 /* --- END: Spacing for Footer Links --- */
+
+/* --- START: Dark Mode for Transcript --- */
+/* By adding .jtw-analyzer-wrapper, we increase specificity to override theme styles */
+body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-entry {
+    border-bottom-color: #334155; /* Use a darker border for dark mode */
+}
+
+body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-speaker {
+    color: #cbd5e0; /* Set speaker name to main text color for dark mode */
+}
+
+body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-title {
+    color: #94a3b8; /* A slightly dimmer color for the speaker's title */
+}
+
+body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
+    color: #cbd5e0; /* Set content to main text color for dark mode */
+}
+/* --- END: Dark Mode for Transcript --- */

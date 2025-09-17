@@ -291,8 +291,11 @@ public function ajax_fetch_transcript() {
     }
 
     ob_start();
+    
+    // Add a space between the year and the quarter for display
+    $quarter_display = str_replace('Q', ' Q', $quarter);
     ?>
-    <h4 class="jtw-modal-title">Earnings Call Transcript: <?php echo esc_html($ticker); ?> - <?php echo esc_html($quarter); ?></h4>
+    <h4 class="jtw-modal-title">Earnings Call Transcript: <?php echo esc_html($ticker); ?> - <?php echo esc_html($quarter_display); ?></h4>
     <?php
     if (isset($transcript_data['transcript']) && is_array($transcript_data['transcript'])) {
         foreach ($transcript_data['transcript'] as $entry) {
