@@ -1742,7 +1742,7 @@ body.dark-mode #header-outer #logo img.light-mode-logo {
 /* Main Grid */
 .jtw-overview-main-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(250px, 1fr);
     gap: 30px;
 }
 .jtw-key-details-grid {
@@ -1768,13 +1768,10 @@ body.dark-mode #header-outer #logo img.light-mode-logo {
 
 /* Ad Placeholder */
 .jtw-ad-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--jtw-page-bg);
-    border: 1px dashed var(--jtw-border-color);
     border-radius: 4px;
-    width:100%;
+    min-height: 250px;
+    width: 100%;
+    overflow: hidden;
 }
 .jtw-ad-placeholder span {
     color: var(--jtw-text-light);
