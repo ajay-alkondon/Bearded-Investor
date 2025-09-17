@@ -1923,7 +1923,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 
 /* --- START: New SWS Valuation Graphic --- */
 .jtw-sws-valuation-container {
-    padding: 25px;
+    padding: 25px 0px; /* Updated padding */
     background-color: #2c3e50;
     border-radius: 8px;
     color: #ecf0f1;
@@ -1932,6 +1932,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-header {
     text-align: left;
     margin-bottom: 25px;
+    padding: 0 25px; /* Add horizontal padding back to the header */
 }
 .jtw-sws-header h2 {
     font-size: 1.1em;
@@ -1948,7 +1949,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-chart {
     position: relative;
     width: 100%;
-    height: 180px; /* Increased overall height */
+    height: 220px; /* Increased height to accommodate larger zone */
 }
 .jtw-sws-main-metric {
     position: absolute;
@@ -1957,6 +1958,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     text-align: right;
     z-index: 3;
     margin: 0;
+    padding: 0 15px; /* Add horizontal padding */
 }
 .jtw-sws-percentage {
     font-size: 1.8em;
@@ -1988,7 +1990,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     transform: translateY(-50%);
     left: 0;
     right: 0;
-    height: 120px; /* Increased height for background */
+    height: 200px; /* Final height adjustment */
     z-index: 1;
 }
 .jtw-sws-zone-bar {
@@ -2023,14 +2025,14 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     position: absolute;
     left: 0;
     width: 100%;
-    height: 45px; /* Thicker bars */
+    height: 45px;
     z-index: 2;
 }
 .jtw-sws-bar-row.current-price-row {
-    top: 15px; /* Adjusted position for new height */
+    top: 30px; /* Adjusted position for new height */
 }
 .jtw-sws-bar-row.fair-value-row {
-    bottom: 15px; /* Adjusted position for new height */
+    bottom: 30px; /* Adjusted position for new height */
 }
 .jtw-sws-bar-wrapper {
     width: 0%;
@@ -2047,15 +2049,11 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     padding: 0 15px;
     white-space: nowrap;
 }
-/* --- START: TEXT COLOR FIX --- */
-/* Use !important to override conflicting theme styles and ensure text is white */
 .jtw-sws-label-group,
 .jtw-sws-label-group span,
 .jtw-sws-label-group strong {
     color: #ffffff !important;
 }
-/* --- END: TEXT COLOR FIX --- */
-
 .jtw-sws-label-group span {
     font-size: 0.9em;
     font-weight: 500;
@@ -2077,4 +2075,11 @@ body.dark-mode .jtw-sws-bar-wrapper {
     background-color: #1a202c;
     border: 1px solid #4a5568;
 }
+
+/* --- START: TEXT COLOR FIX FOR DARK MODE --- */
+/* This highly specific rule overrides the theme's default color for strong tags */
+body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group strong {
+    color: #ffffff !important;
+}
+/* --- END: TEXT COLOR FIX FOR DARK MODE --- */
 /* --- END: New SWS Valuation Graphic --- */
