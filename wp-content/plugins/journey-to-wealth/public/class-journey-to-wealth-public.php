@@ -831,26 +831,28 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 <div class="jtw-sws-status">Calculating...</div>
             </div>
             <div class="jtw-sws-chart">
-                <div class="jtw-sws-zone-bar-row">
+                 <div class="jtw-sws-zone-bar-row">
                     <div class="jtw-sws-zone-bar">
                         <div class="jtw-sws-zone undervalued"><span class="jtw-zone-label">20% Undervalued</span></div>
                         <div class="jtw-sws-zone about-right"><span class="jtw-zone-label">About Right</span></div>
                         <div class="jtw-sws-zone overvalued"><span class="jtw-zone-label">20% Overvalued</span></div>
                     </div>
                 </div>
-                <div class="jtw-sws-price-bar-wrapper current-price-wrapper">
-                    <div class="jtw-sws-price-bar-label">
-                        <span>Current Price</span>
-                        <strong>US$0.00</strong>
+                <div class="jtw-sws-bar-row current-price-row">
+                    <div class="jtw-sws-bar-wrapper">
+                        <div class="jtw-sws-label-group">
+                            <span>Current Price</span>
+                            <strong>US$0.00</strong>
+                        </div>
                     </div>
-                    <div class="jtw-sws-price-bar"></div>
                 </div>
-                <div class="jtw-sws-price-bar-wrapper fair-value-wrapper">
-                    <div class="jtw-sws-price-bar-label">
-                        <span>Fair Value</span>
-                        <strong>US$0.00</strong>
+                <div class="jtw-sws-bar-row fair-value-row">
+                     <div class="jtw-sws-bar-wrapper">
+                        <div class="jtw-sws-label-group">
+                            <span>Fair Value</span>
+                            <strong>US$0.00</strong>
+                        </div>
                     </div>
-                    <div class="jtw-sws-price-bar"></div>
                 </div>
             </div>
         </div>

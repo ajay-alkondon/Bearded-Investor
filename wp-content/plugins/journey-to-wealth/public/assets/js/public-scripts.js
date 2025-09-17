@@ -280,7 +280,6 @@ function initializeFairValueAnalysisSection($container) {
     const sharesOutstanding = parseFloat($contentDiv.data('shares-outstanding'));
     const ticker = $contentDiv.data('ticker');
 
-    // New graphic elements
     const $swsContainer = $contentDiv.find('.jtw-sws-valuation-container');
     $swsContainer.find('.jtw-sws-ticker').text(ticker);
 
@@ -326,7 +325,6 @@ function initializeFairValueAnalysisSection($container) {
         return num;
     }
 
-    // This new function controls the large valuation graphic
     function updateSwsValuationGraphic(fairValue, currentPrice, modelName) {
         if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
             $swsContainer.hide();
@@ -359,24 +357,24 @@ function initializeFairValueAnalysisSection($container) {
         const undervaluedBoundary = fairValue * 0.8;
         const overvaluedBoundary = fairValue * 1.2;
         const rangeMax = Math.max(currentPrice, overvaluedBoundary) * 1.2;
-
+        
         const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
         const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
         
         $swsContainer.find('.jtw-sws-zone.undervalued').css('width', undervaluedWidthPct + '%');
         $swsContainer.find('.jtw-sws-zone.about-right').css('width', aboutRightWidthPct + '%');
         
-        const currentPricePosPct = (currentPrice / rangeMax) * 100;
-        const fairValuePosPct = (fairValue / rangeMax) * 100;
+        const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
+        const fairValueWidthPct = (fairValue / rangeMax) * 100;
 
-        const $currentPriceWrapper = $swsContainer.find('.current-price-wrapper');
-        const $fairValueWrapper = $swsContainer.find('.fair-value-wrapper');
+        const $currentPriceRow = $swsContainer.find('.current-price-row');
+        const $fairValueRow = $swsContainer.find('.fair-value-row');
 
-        $currentPriceWrapper.find('strong').text('US$' + currentPrice.toFixed(2));
-        $fairValueWrapper.find('strong').text('US$' + fairValue.toFixed(2));
+        $currentPriceRow.find('strong').text('US$' + currentPrice.toFixed(2));
+        $fairValueRow.find('strong').text('US$' + fairValue.toFixed(2));
         
-        $currentPriceWrapper.css('left', currentPricePosPct + '%');
-        $fairValueWrapper.css('left', fairValuePosPct + '%');
+        $currentPriceRow.find('.jtw-sws-bar-wrapper').css('width', currentPriceWidthPct + '%');
+        $fairValueRow.find('.jtw-sws-bar-wrapper').css('width', fairValueWidthPct + '%');
     }
 
     const recalculateValuation = debounce(function() {
@@ -394,14 +392,7 @@ function initializeFairValueAnalysisSection($container) {
         let hasAllInputs = true;
         const $table = $container.find('.jtw-case-table[data-case="base"]');
         
-        $table.find('input[data-metric="yearlyRevGrowth"][data-year="1"]').each(function() {
-             assumptions.yearlyRevGrowth[1] = parseFloat($(this).val());
-        });
-        $table.find('input[data-metric="yearlyNIGrowth"][data-year="1"]').each(function() {
-             assumptions.yearlyNIGrowth[1] = parseFloat($(this).val());
-        });
-
-        $table.find('input[data-metric="yearlyRevGrowth"][data-year!="1"]').each(function() {
+        $table.find('input[data-metric="yearlyRevGrowth"]').each(function() {
             const $input = $(this);
             const year = $input.data('year');
             const growthRateValue = parseFloat($input.val());
@@ -412,7 +403,7 @@ function initializeFairValueAnalysisSection($container) {
             }
         });
 
-        $table.find('input[data-metric="yearlyNIGrowth"][data-year!="1"]').each(function() {
+        $table.find('input[data-metric="yearlyNIGrowth"]').each(function() {
             const $input = $(this);
             const year = $input.data('year');
             const growthRateValue = parseFloat($input.val());

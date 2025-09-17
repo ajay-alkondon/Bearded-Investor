@@ -1924,164 +1924,137 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 /* --- START: New SWS Valuation Graphic --- */
 .jtw-sws-valuation-container {
     padding: 25px;
-    background-color: #2c3e50; /* Dark background */
+    background-color: #2c3e50;
     border-radius: 8px;
-    color: #ecf0f1; /* Light text */
+    color: #ecf0f1;
     margin-bottom: 25px;
 }
 .jtw-sws-header {
-    text-align: center; /* Center align header text */
+    text-align: left; /* Left align header text */
     margin-bottom: 20px;
 }
 .jtw-sws-header h2 {
-    font-size: 1.1em; /* Slightly larger heading */
+    font-size: 1.1em;
     font-weight: 500;
     color: #bdc3c7;
-    margin: 0 0 8px 0; /* Adjusted margin */
+    margin: 0 0 8px 0;
 }
 .jtw-sws-header p {
     font-size: 0.9em;
     color: #95a5a6;
-    margin: 0 auto; /* Center align paragraph */
-    max-width: 80%; /* Constrain width for better readability */
+    margin: 0;
+    max-width: 100%;
 }
 .jtw-sws-main-metric {
-    margin: 20px 0 30px 0; /* Adjusted margin */
+    margin: 20px 0 30px 0;
     text-align: center;
 }
 .jtw-sws-percentage {
-    font-size: 2.8em; /* Larger percentage */
+    font-size: 2.8em;
     font-weight: 700;
-    line-height: 1; /* Tighter line height */
-    margin-bottom: 5px; /* Space between percentage and status */
+    line-height: 1;
+    margin-bottom: 5px;
 }
 .jtw-sws-status {
-    font-size: 1.2em; /* Larger status text */
+    font-size: 1.2em;
     font-weight: 500;
-    text-transform: uppercase; /* Uppercase for status */
-    letter-spacing: 0.05em; /* Slight letter spacing */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 .jtw-sws-status-positive .jtw-sws-percentage,
 .jtw-sws-status-positive .jtw-sws-status {
-    color: #2ecc71; /* Green */
+    color: #2ecc71;
 }
 .jtw-sws-status-negative .jtw-sws-percentage,
 .jtw-sws-status-negative .jtw-sws-status {
-    color: #e74c3c; /* Red */
+    color: #e74c3c;
 }
 .jtw-sws-status-neutral .jtw-sws-percentage,
 .jtw-sws-status-neutral .jtw-sws-status {
-    color: #f1c40f; /* Yellow */
+    color: #f1c40f;
 }
 .jtw-sws-chart {
     position: relative;
     width: 100%;
-    height: 120px; /* Increased height for better spacing */
+    height: 120px;
 }
 .jtw-sws-zone-bar-row {
     position: absolute;
-    top: 50%; /* Center vertically */
-    transform: translateY(-50%); /* Adjust for vertical centering */
+    top: 50%;
+    transform: translateY(-50%);
     left: 0;
     right: 0;
-    height: 40px; /* Fixed height for the zone bar */
+    height: 40px;
     z-index: 1;
 }
 .jtw-sws-zone-bar {
     display: flex;
     height: 100%;
     width: 100%;
-    border-radius: 4px; /* Rounded corners for the main bar */
-    overflow: hidden; /* Ensures rounded corners are visible */
+    border-radius: 4px;
+    overflow: hidden;
 }
 .jtw-sws-zone {
     height: 100%;
     display: flex;
-    align-items: center; /* Center labels vertically */
-    justify-content: center; /* Center labels horizontally */
-    padding: 0 5px; /* Padding for labels inside zones */
-    box-sizing: border-box; /* Include padding in width */
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    box-sizing: border-box;
 }
 .jtw-sws-zone.undervalued { background-color: #27ae60; }
 .jtw-sws-zone.about-right { background-color: #f39c12; }
 .jtw-sws-zone.overvalued {
-    background: repeating-linear-gradient(
-        -45deg,
-        #c0392b,
-        #c0392b 10px,
-        #e74c3c 10px,
-        #e74c3c 20px
-    );
+    background: repeating-linear-gradient( -45deg, #c0392b, #c0392b 10px, #e74c3c 10px, #e74c3c 20px );
 }
 .jtw-zone-label {
-    font-size: 0.8em; /* Slightly larger zone labels */
+    font-size: 0.8em;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9); /* Brighter labels */
-    white-space: nowrap; /* Prevent labels from wrapping */
-    text-shadow: 0 0 3px rgba(0,0,0,0.5); /* Add subtle shadow for readability */
-}
-.jtw-sws-price-bar-wrapper {
-    position: absolute;
-    top: 0;
-    height: 100%;
-    width: 2px; /* Width of the indicator line */
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transition: left 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-.jtw-sws-price-bar {
-    width: 100%;
-    flex-grow: 1;
-    background-color: #34495e; /* Darker line color */
-}
-.jtw-sws-price-bar-label {
-    background-color: #34495e;
-    color: #ecf0f1;
-    padding: 6px 12px; /* Increased padding */
-    border-radius: 4px;
-    font-size: 0.9em;
-    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
     white-space: nowrap;
-    position: absolute; /* Absolute positioning for better control */
-    transform: translateX(-50%); /* Center horizontally relative to parent */
+    text-shadow: 0 0 3px rgba(0,0,0,0.5);
 }
-.jtw-sws-price-bar-label span {
-    display: block;
-    font-size: 0.7em; /* Slightly smaller for context text */
-    color: #bdc3c7;
-    margin-bottom: 2px; /* Space between label and value */
+
+/* Remove old price bar styles */
+.jtw-sws-price-bar-wrapper { display: none; } 
+
+/* New horizontal bar styles */
+.jtw-sws-bar-row {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    z-index: 2;
 }
-.jtw-sws-price-bar-label strong {
+.jtw-sws-bar-row.current-price-row {
+    top: 0;
+}
+.jtw-sws-bar-row.fair-value-row {
+    bottom: 0;
+}
+.jtw-sws-bar-wrapper {
+    width: 0%; /* Controlled by JS */
+    height: 100%;
+    background-color: #1f6342; /* Darker green for the bars */
+    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    border-radius: 4px;
+}
+.jtw-sws-label-group {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    color: #fff;
+    white-space: nowrap;
+}
+.jtw-sws-label-group span {
+    font-size: 0.9em;
+    font-weight: 500;
+}
+.jtw-sws-label-group strong {
+    font-size: 1.1em;
     font-weight: 700;
-    font-size: 1.1em; /* Larger for the actual price */
 }
 
-/* Specific positioning for Current Price and Fair Value labels */
-.current-price-wrapper .jtw-sws-price-bar-label {
-    top: 0; /* Position at the top */
-    margin-top: -3px; /* Adjust slightly for visual spacing */
-}
-.fair-value-wrapper .jtw-sws-price-bar-label {
-    bottom: 0; /* Position at the bottom */
-    margin-bottom: -3px; /* Adjust slightly for visual spacing */
-}
-
-/* Dark mode adjustments for the valuation graphic */
-body.dark-mode .jtw-sws-valuation-container {
-    background-color: #1a202c; /* Darker background in dark mode */
-}
-body.dark-mode .jtw-sws-header h2,
-body.dark-mode .jtw-sws-header p,
-body.dark-mode .jtw-sws-price-bar-label span {
-    color: #a0aec0; /* Lighter grey for text in dark mode */
-}
-body.dark-mode .jtw-sws-price-bar-label {
-    background-color: #2d3748; /* Darker label background in dark mode */
-    color: #e2e8f0;
-}
-body.dark-mode .jtw-sws-price-bar {
-    background-color: #4a5568; /* Darker line in dark mode */
-}
 /* --- END: New SWS Valuation Graphic --- */
