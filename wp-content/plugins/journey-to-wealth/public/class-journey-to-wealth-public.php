@@ -608,10 +608,7 @@ private function build_overview_section_html($overview, $quote) {
                     data-ad-slot="7297578388"
                     data-ad-format="auto"
                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
+                </div>
         </div>
 
         <div class="jtw-company-description-wrapper">

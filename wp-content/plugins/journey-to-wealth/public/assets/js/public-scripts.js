@@ -69,29 +69,39 @@
         return num;
     }
 
-    /**
-     * Initializes the interactive elements in the Company Overview section.
-     * Specifically handles the animation for all progress bars.
-     * @param {jQuery} $container The jQuery object for the section's container.
-     */
-    function initializeOverviewSection($container) {
-        // Animate the 52-Week Price Range indicator and fill
-        const $priceRangeBar = $container.find('.jtw-price-range-bar');
-        if ($priceRangeBar.length) {
-            const low = parseFloat($priceRangeBar.data('low'));
-            const high = parseFloat($priceRangeBar.data('high'));
-            const current = parseFloat($priceRangeBar.data('current'));
+function initializeOverviewSection($container) {
+    // Animate the 52-Week Price Range indicator and fill
+    const $priceRangeBar = $container.find('.jtw-price-range-bar');
+    if ($priceRangeBar.length) {
+        const low = parseFloat($priceRangeBar.data('low'));
+        const high = parseFloat($priceRangeBar.data('high'));
+        const current = parseFloat($priceRangeBar.data('current'));
 
-            if (!isNaN(low) && !isNaN(high) && !isNaN(current) && high > low) {
-                const percentage = Math.max(0, Math.min(100, ((current - low) / (high - low)) * 100));
-                const $fill = $priceRangeBar.find('.jtw-progress-fill');
-                
-                setTimeout(() => {
-                    $fill.css('width', `${percentage}%`);
-                }, 100);
-            }
+        if (!isNaN(low) && !isNaN(high) && !isNaN(current) && high > low) {
+            const percentage = Math.max(0, Math.min(100, ((current - low) / (high - low)) * 100));
+            const $fill = $priceRangeBar.find('.jtw-progress-fill');
+            
+            setTimeout(() => {
+                $fill.css('width', `${percentage}%`);
+            }, 100);
         }
     }
+
+    // --- START: AD FIX ---
+    // Manually push the ad after a short delay. This gives the browser's
+    // rendering engine time to calculate the container's width.
+    const $adPlaceholder = $container.find('.jtw-ad-placeholder .adsbygoogle');
+    if ($adPlaceholder.length) {
+        setTimeout(function() {
+            try {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            } catch (e) {
+                console.error("Adsbygoogle push error:", e);
+            }
+        }, 150); // A 150ms delay is usually sufficient
+    }
+    // --- END: AD FIX ---
+}
 
 function initializeKeyMetricsRatiosSection($container) {
         // PEG/PEGY Calculator Logic
