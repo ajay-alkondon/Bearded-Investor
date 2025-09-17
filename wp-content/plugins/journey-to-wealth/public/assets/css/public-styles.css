@@ -1948,7 +1948,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-chart {
     position: relative;
     width: 100%;
-    height: 150px;
+    height: 180px; /* Increased overall height */
 }
 .jtw-sws-main-metric {
     position: absolute;
@@ -1988,7 +1988,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     transform: translateY(-50%);
     left: 0;
     right: 0;
-    height: 100px;
+    height: 120px; /* Increased height for background */
     z-index: 1;
 }
 .jtw-sws-zone-bar {
@@ -2022,15 +2022,15 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-bar-row {
     position: absolute;
     left: 0;
-    width: 100%; /* <-- This was the missing critical property */
-    height: 35px;
+    width: 100%;
+    height: 45px; /* Thicker bars */
     z-index: 2;
 }
 .jtw-sws-bar-row.current-price-row {
-    top: 20px;
+    top: 15px; /* Adjusted position for new height */
 }
 .jtw-sws-bar-row.fair-value-row {
-    bottom: 20px;
+    bottom: 15px; /* Adjusted position for new height */
 }
 .jtw-sws-bar-wrapper {
     width: 0%;
@@ -2045,9 +2045,17 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     align-items: center;
     justify-content: space-between;
     padding: 0 15px;
-    color: #ffffff;
     white-space: nowrap;
 }
+/* --- START: TEXT COLOR FIX --- */
+/* Use !important to override conflicting theme styles and ensure text is white */
+.jtw-sws-label-group,
+.jtw-sws-label-group span,
+.jtw-sws-label-group strong {
+    color: #ffffff !important;
+}
+/* --- END: TEXT COLOR FIX --- */
+
 .jtw-sws-label-group span {
     font-size: 0.9em;
     font-weight: 500;
