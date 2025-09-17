@@ -1930,8 +1930,8 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     margin-bottom: 25px;
 }
 .jtw-sws-header {
-    text-align: left; /* Left align header text */
-    margin-bottom: 20px;
+    text-align: left;
+    margin-bottom: 25px; /* Add more space below header */
 }
 .jtw-sws-header h2 {
     font-size: 1.1em;
@@ -1945,18 +1945,27 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     margin: 0;
     max-width: 100%;
 }
+.jtw-sws-chart {
+    position: relative;
+    width: 100%;
+    height: 120px;
+}
 .jtw-sws-main-metric {
-    margin: 20px 0 30px 0;
-    text-align: center;
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    text-align: right;
+    z-index: 3;
+    margin: 0;
 }
 .jtw-sws-percentage {
-    font-size: 2.8em;
+    font-size: 1.8em; /* Adjusted size for top-right */
     font-weight: 700;
     line-height: 1;
-    margin-bottom: 5px;
+    margin-bottom: 2px;
 }
 .jtw-sws-status {
-    font-size: 1.2em;
+    font-size: 0.9em; /* Adjusted size for top-right */
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1973,18 +1982,13 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-status-neutral .jtw-sws-status {
     color: #f1c40f;
 }
-.jtw-sws-chart {
-    position: relative;
-    width: 100%;
-    height: 120px;
-}
 .jtw-sws-zone-bar-row {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     left: 0;
     right: 0;
-    height: 40px;
+    height: 70px; /* Increased height for background */
     z-index: 1;
 }
 .jtw-sws-zone-bar {
@@ -1997,9 +2001,9 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-zone {
     height: 100%;
     display: flex;
-    align-items: center;
+    align-items: flex-end; /* Align labels to the bottom */
     justify-content: center;
-    padding: 0 5px;
+    padding: 0 5px 5px 5px; /* Add padding to bottom */
     box-sizing: border-box;
 }
 .jtw-sws-zone.undervalued { background-color: #27ae60; }
@@ -2022,20 +2026,19 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 .jtw-sws-bar-row {
     position: absolute;
     left: 0;
-    width: 100%;
-    height: 40px;
+    height: 30px; /* Thicker bars */
     z-index: 2;
 }
 .jtw-sws-bar-row.current-price-row {
-    top: 0;
+    top: 20px; /* Position first bar from top */
 }
 .jtw-sws-bar-row.fair-value-row {
-    bottom: 0;
+    bottom: 20px; /* Position second bar from bottom */
 }
 .jtw-sws-bar-wrapper {
     width: 0%; /* Controlled by JS */
     height: 100%;
-    background-color: #1f6342; /* Darker green for the bars */
+    background-color: #212529; /* Black bar background */
     transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
     border-radius: 4px;
 }
@@ -2045,7 +2048,7 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     align-items: center;
     justify-content: space-between;
     padding: 0 15px;
-    color: #fff;
+    color: #ffffff; /* White text */
     white-space: nowrap;
 }
 .jtw-sws-label-group span {
@@ -2057,4 +2060,12 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     font-weight: 700;
 }
 
+/* Dark mode adjustments for the valuation graphic */
+body.dark-mode .jtw-sws-valuation-container {
+    background-color: #1a202c; /* Darker background in dark mode */
+}
+body.dark-mode .jtw-sws-header h2,
+body.dark-mode .jtw-sws-header p {
+    color: #a0aec0;
+}
 /* --- END: New SWS Valuation Graphic --- */
