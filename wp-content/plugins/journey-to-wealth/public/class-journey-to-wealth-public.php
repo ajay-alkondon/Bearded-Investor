@@ -776,18 +776,14 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <td>
                     <div class="jtw-model-selector" tabindex="0">
                         <span class="jtw-selected-model">Discounted Cash Flow</span>
-                        <svg class="jtw-chevron-down" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        <svg class="jtw-chevron-down" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                         <ul class="jtw-model-options">
                         <?php foreach ($available_models as $key => $label) { echo '<li data-model-key="' . esc_attr($key) . '">' . esc_html($label) . '</li>'; } ?>
                         </ul>
                     </div>
                 </td>
                 <td class="jtw-dcf-result-final-cell jtw-terminal-value-cell" colspan="5">
-                    <div class="jtw-in-table-bar-container">
-                        <div class="jtw-in-table-zone-bar"><div class="jtw-in-table-zone undervalued"></div><div class="jtw-in-table-zone about-right"></div><div class="jtw-in-table-zone overvalued"></div></div>
-                        <div class="jtw-in-table-bar-wrapper jtw-fair-value-bar-wrapper"><div class="jtw-in-table-bar jtw-fair-value-bar"><span class="jtw-in-table-bar-label jtw-fair-value-label">Fair Value: $-</span></div></div>
-                        <div class="jtw-in-table-bar-wrapper jtw-current-price-bar-wrapper"><div class="jtw-in-table-bar jtw-current-price-bar"><span class="jtw-in-table-bar-label jtw-current-price-label">Current Price: $-</span></div></div>
-                    </div>
+                    <span class="jtw-final-fair-value-text"></span>
                     <span class="jtw-dcf-error-message" style="display:none;">Valuation could not be run.</span>
                 </td>
             </tr>
@@ -819,54 +815,89 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $component_ratios_json = isset($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'])) : '[]';
     $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
 
-    $output = '<div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios=\'' . $component_ratios_json . '\' data-current-price="' . esc_attr($valuation_summary['current_price']) . '" data-shares-outstanding="' . esc_attr($shares_outstanding) . '">';
-    $output .= '<div class="jtw-section-header"><h4>' . esc_html__('Value Projections', 'journey-to-wealth') . '</h4></div>';
-    
-    $output .= '<div class="jtw-valuation-tables-wrapper" style="display: none;">';
+    ob_start();
+    ?>
+    <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios='<?php echo $component_ratios_json; ?>' data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>">
+        
+        <div class="jtw-section-header"><h4><?php esc_html_e('Value Projections', 'journey-to-wealth'); ?></h4></div>
 
-    $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
-    
-    $current_year_revenue_growth = 0;
-    if (isset($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth']) && is_numeric($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'])) {
-        $current_year_revenue_growth = $dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] * 100;
-    }
+        <div class="jtw-sws-valuation-container" style="display: none;">
+            <div class="jtw-sws-header">
+                <h2>1.1 Share Price vs Fair Value</h2>
+                <p>What is the Fair Price of <span class="jtw-sws-ticker"></span> when looking at its future cash flows? For this estimate we use a <span class="jtw-sws-model-name">Discounted Cash Flow</span> model.</p>
+            </div>
+            <div class="jtw-sws-main-metric">
+                <div class="jtw-sws-percentage">-%</div>
+                <div class="jtw-sws-status">Calculating...</div>
+            </div>
+            <div class="jtw-sws-chart">
+                <div class="jtw-sws-zone-bar-row">
+                    <div class="jtw-sws-zone-bar">
+                        <div class="jtw-sws-zone undervalued"><span class="jtw-zone-label">20% Undervalued</span></div>
+                        <div class="jtw-sws-zone about-right"><span class="jtw-zone-label">About Right</span></div>
+                        <div class="jtw-sws-zone overvalued"><span class="jtw-zone-label">20% Overvalued</span></div>
+                    </div>
+                </div>
+                <div class="jtw-sws-price-bar-wrapper current-price-wrapper">
+                    <div class="jtw-sws-price-bar-label">
+                        <span>Current Price</span>
+                        <strong>US$0.00</strong>
+                    </div>
+                    <div class="jtw-sws-price-bar"></div>
+                </div>
+                <div class="jtw-sws-price-bar-wrapper fair-value-wrapper">
+                    <div class="jtw-sws-price-bar-label">
+                        <span>Fair Value</span>
+                        <strong>US$0.00</strong>
+                    </div>
+                    <div class="jtw-sws-price-bar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="jtw-valuation-tables-wrapper" style="display: none;">
 
-    // --- START: USE NEW DATA FROM PYTHON BACKEND ---
-    $net_income_growth_current_year = 0;
-    if (isset($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year']) && is_numeric($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'])) {
-        $net_income_growth_current_year = $dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'] * 100;
-    }
-    
-    $analyst_revenue_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_next_year'] ?? 0;
-    $revenue_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['revenue_growth_next_year'] ?? 0) * 100;
-    $net_income_next_year = $dcf_result_for_ui['calculation_breakdown']['net_income_next_year'] ?? 0;
-    $net_income_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_next_year'] ?? 0) * 100;
-    $analyst_eps_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_next_year'] ?? 0;
+            <?php
+            $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
+            
+            $current_year_revenue_growth = 0;
+            if (isset($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth']) && is_numeric($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'])) {
+                $current_year_revenue_growth = $dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] * 100;
+            }
 
-    $current_year_net_income = $dcf_result_for_ui['calculation_breakdown']['net_income_current_year'] ?? 0;
-    $current_year_eps = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_current_year'] ?? 0;
-    // --- END: USE NEW DATA FROM PYTHON BACKEND ---
+            $net_income_growth_current_year = 0;
+            if (isset($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year']) && is_numeric($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'])) {
+                $net_income_growth_current_year = $dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'] * 100;
+            }
+            
+            $analyst_revenue_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_next_year'] ?? 0;
+            $revenue_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['revenue_growth_next_year'] ?? 0) * 100;
+            $net_income_next_year = $dcf_result_for_ui['calculation_breakdown']['net_income_next_year'] ?? 0;
+            $net_income_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_next_year'] ?? 0) * 100;
+            $analyst_eps_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_next_year'] ?? 0;
 
-    $base_revenue = $analyst_revenue_current_year;
-    $current_year = date('Y');
-    $unit = ''; $divisor = 1;
-    if (abs($base_revenue) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
-    elseif (abs($base_revenue) >= 1.0e+6) { $unit = '(Millions)'; $divisor = 1.0e+6; }
-    
-    $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
-    $next_year_pe = ($analyst_eps_next_year > 0) ? $valuation_summary['current_price'] / $analyst_eps_next_year : 'N/A';
-    
-    $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
-    if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
+            $current_year_net_income = $dcf_result_for_ui['calculation_breakdown']['net_income_current_year'] ?? 0;
+            $current_year_eps = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_current_year'] ?? 0;
 
-    // --- START: PASS NEW METRICS TO TABLE BUILDER ---
-    $output .= $this->build_case_table_html('base', $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $net_income_growth_current_year, $analyst_revenue_next_year, $revenue_growth_next_year, $net_income_next_year, $net_income_growth_next_year, $analyst_eps_next_year, $next_year_pe);
-    // --- END: PASS NEW METRICS TO TABLE BUILDER ---
-    
-    $output .= '</div>';
-    $output .= '<div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>';
-    $output .= '<div class="jtw-modal-overlay"></div></div>';
-    return $output;
+            $base_revenue = $analyst_revenue_current_year;
+            $current_year = date('Y');
+            $unit = ''; $divisor = 1;
+            if (abs($base_revenue) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
+            elseif (abs($base_revenue) >= 1.0e+6) { $unit = '(Millions)'; $divisor = 1.0e+6; }
+            
+            $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
+            $next_year_pe = ($analyst_eps_next_year > 0) ? $valuation_summary['current_price'] / $analyst_eps_next_year : 'N/A';
+            
+            $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
+            if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
+
+            echo $this->build_case_table_html('base', $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $net_income_growth_current_year, $analyst_revenue_next_year, $revenue_growth_next_year, $net_income_next_year, $net_income_growth_next_year, $analyst_eps_next_year, $next_year_pe);
+            ?>
+        </div>
+        <div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>
+        <div class="jtw-modal-overlay"></div>
+    </div>
+    <?php
+    return ob_get_clean();
 }
 
 private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {

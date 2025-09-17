@@ -1920,3 +1920,132 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     color: #cbd5e0; /* Set content to main text color for dark mode */
 }
 /* --- END: Dark Mode for Transcript --- */
+
+/* --- START: New SWS Valuation Graphic --- */
+.jtw-sws-valuation-container {
+    padding: 25px;
+    background-color: #2c3e50; /* Dark background */
+    border-radius: 8px;
+    color: #ecf0f1; /* Light text */
+    margin-bottom: 25px;
+}
+.jtw-sws-header h2 {
+    font-size: 1em;
+    font-weight: 500;
+    color: #bdc3c7;
+    margin: 0 0 5px 0;
+}
+.jtw-sws-header p {
+    font-size: 0.9em;
+    color: #95a5a6;
+    margin: 0;
+}
+.jtw-sws-main-metric {
+    margin: 20px 0;
+    text-align: center;
+}
+.jtw-sws-percentage {
+    font-size: 2.5em;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.jtw-sws-status {
+    font-size: 1.1em;
+    font-weight: 500;
+}
+.jtw-sws-status-positive .jtw-sws-percentage,
+.jtw-sws-status-positive .jtw-sws-status {
+    color: #2ecc71; /* Green */
+}
+.jtw-sws-status-negative .jtw-sws-percentage,
+.jtw-sws-status-negative .jtw-sws-status {
+    color: #e74c3c; /* Red */
+}
+.jtw-sws-status-neutral .jtw-sws-percentage,
+.jtw-sws-status-neutral .jtw-sws-status {
+    color: #f1c40f; /* Yellow */
+}
+.jtw-sws-chart {
+    position: relative;
+    width: 100%;
+    height: 100px; /* Adjust height as needed */
+}
+.jtw-sws-zone-bar-row {
+    position: absolute;
+    top: 25px; /* Position the main bar */
+    bottom: 25px;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+.jtw-sws-zone-bar {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
+.jtw-sws-zone {
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 5px;
+    justify-content: center;
+}
+.jtw-sws-zone.undervalued { background-color: #27ae60; }
+.jtw-sws-zone.about-right { background-color: #f39c12; }
+.jtw-sws-zone.overvalued {
+    background: repeating-linear-gradient(
+        -45deg,
+        #c0392b,
+        #c0392b 10px,
+        #e74c3c 10px,
+        #e74c3c 20px
+    );
+}
+.jtw-zone-label {
+    font-size: 0.7em;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+.jtw-sws-price-bar-wrapper {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 2px; /* Width of the indicator line */
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: left 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.jtw-sws-price-bar {
+    width: 100%;
+    flex-grow: 1;
+    background-color: #34495e; /* Darker line color */
+}
+.jtw-sws-price-bar-label {
+    background-color: #34495e;
+    color: #ecf0f1;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    text-align: center;
+    white-space: nowrap;
+}
+.jtw-sws-price-bar-label span {
+    display: block;
+    font-size: 0.8em;
+    color: #bdc3c7;
+}
+.jtw-sws-price-bar-label strong {
+    font-weight: 700;
+}
+.current-price-wrapper {
+    justify-content: flex-start; /* Label at top */
+}
+.fair-value-wrapper {
+    justify-content: flex-end; /* Label at bottom */
+}
+.fair-value-wrapper .jtw-sws-price-bar-label {
+    transform: translateY(100%);
+}
+/* --- END: New SWS Valuation Graphic --- */
