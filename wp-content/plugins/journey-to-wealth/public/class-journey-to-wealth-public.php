@@ -265,6 +265,59 @@ public function ajax_fetch_section_data() {
         wp_send_json_success($peer_metrics_data);
     }
 
+public function ajax_fetch_transcript() {
+    check_ajax_referer('jtw_fetch_transcript_nonce', 'nonce');
+
+    $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
+    $quarter = isset($_POST['quarter']) ? sanitize_text_field($_POST['quarter']) : '';
+
+    if (empty($ticker) || empty($quarter)) {
+        wp_send_json_error(['message' => 'Missing parameters.']);
+        return;
+    }
+
+    $api_key = get_option('jtw_av_api_key');
+    if (empty($api_key)) {
+        wp_send_json_error(['message' => 'API Key is not configured.']);
+        return;
+    }
+
+    $av_client = new Alpha_Vantage_Client($api_key);
+    $transcript_data = $av_client->get_earnings_transcript($ticker, $quarter);
+
+    if (is_wp_error($transcript_data)) {
+        wp_send_json_error(['message' => $transcript_data->get_error_message()]);
+        return;
+    }
+
+    ob_start();
+    ?>
+    <h4 class="jtw-modal-title">Earnings Call Transcript: <?php echo esc_html($ticker); ?> - <?php echo esc_html($quarter); ?></h4>
+    <?php
+    if (isset($transcript_data['transcript']) && is_array($transcript_data['transcript'])) {
+        foreach ($transcript_data['transcript'] as $entry) {
+            ?>
+            <div class="jtw-transcript-entry">
+                <div class="jtw-transcript-speaker">
+                    <?php echo esc_html($entry['speaker']); ?>
+                    <?php if (!empty($entry['title'])) : ?>
+                        <span class="jtw-transcript-title"><?php echo esc_html($entry['title']); ?></span>
+                    <?php endif; ?>
+                </div>
+                <div class="jtw-transcript-content">
+                    <?php echo wp_kses_post(wpautop($entry['content'])); ?>
+                </div>
+            </div>
+            <?php
+        }
+    } else {
+        echo '<p>No transcript content available.</p>';
+    }
+
+    $html = ob_get_clean();
+    wp_send_json_success(['html' => $html]);
+}
+
 public function ajax_recalculate_valuation() {
     check_ajax_referer('jtw_recalculate_valuation_nonce', 'nonce');
     $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
@@ -546,7 +599,6 @@ private function build_overview_section_html($overview, $quote) {
             <div class="jtw-ad-placeholder">
                 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9774689649229443"
                     crossorigin="anonymous"></script>
-                <!-- Valuation Tool Ad Unit -->
                 <ins class="adsbygoogle"
                     style="display:block"
                     data-ad-client="ca-pub-9774689649229443"
@@ -574,17 +626,6 @@ private function build_overview_section_html($overview, $quote) {
                         <?php if (!empty($overview['CIK'])): ?>
                             <a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $overview['CIK'] . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer">Corporate Filings</a>
                         <?php endif; ?>
-                        <?php 
-                            $latest_quarter_date = $overview['LatestQuarter'] ?? null;
-                            if ($latest_quarter_date):
-                                $date = new DateTime($latest_quarter_date);
-                                $year = $date->format('Y');
-                                $month = (int)$date->format('m');
-                                $quarter_num = ceil($month / 3);
-                                $quarter_param = $year . 'Q' . $quarter_num;
-                        ?>
-                            <a href="#" class="jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="<?php echo esc_attr($ticker); ?>" data-quarter="<?php echo esc_attr($quarter_param); ?>">Latest Earnings Call</a>
-                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="jtw-overview-footer-details">
@@ -597,8 +638,22 @@ private function build_overview_section_html($overview, $quote) {
                         <span class="jtw-detail-value"><?php echo esc_html($overview['Industry'] ?? 'N/A'); ?></span>
                     </div>
                     <div class="jtw-footer-detail-item">
-                        <span class="jtw-detail-label">Full Time Employees</span>
-                        <span class="jtw-detail-value"><?php echo is_numeric($overview['FullTimeEmployees']) ? number_format((int)$overview['FullTimeEmployees']) : 'N/A'; ?></span>
+                        <span class="jtw-detail-label">Latest Earnings Call</span>
+                        <span class="jtw-detail-value">
+                            <?php 
+                                $latest_quarter_date = $overview['LatestQuarter'] ?? null;
+                                if ($latest_quarter_date):
+                                    $date = new DateTime($latest_quarter_date);
+                                    $year = $date->format('Y');
+                                    $month = (int)$date->format('m');
+                                    $quarter_num = ceil($month / 3);
+                                    $quarter_param = $year . 'Q' . $quarter_num;
+                            ?>
+                                <a href="#" class="jtw-modal-trigger jtw-transcript-trigger" data-modal-target="#jtw-transcript-modal" data-ticker="<?php echo esc_attr($ticker); ?>" data-quarter="<?php echo esc_attr($quarter_param); ?>">View Transcript</a>
+                            <?php else: ?>
+                                N/A
+                            <?php endif; ?>
+                        </span>
                     </div>
                     <div class="jtw-footer-detail-item">
                         <span class="jtw-detail-label">Fiscal Year Ends</span>
