@@ -1951,8 +1951,8 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 }
 .jtw-sws-main-metric {
     position: absolute;
-    top: 5px;
-    right: 0px;
+    top: 50px;
+    right: 10px;
     text-align: right;
     z-index: 3;
     margin: 0;
