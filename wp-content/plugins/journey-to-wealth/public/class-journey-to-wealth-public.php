@@ -682,6 +682,7 @@ private function build_case_table_html($group, $args) {
     ob_start();
     ?>
     <table class="jtw-assumptions-table jtw-case-table jtw-assumptions-group-<?php echo esc_attr($group); ?>">
+        <?php if ($group !== 'valuation'): // Only show the header for non-valuation tables ?>
         <thead>
             <tr>
                 <th>Metric</th>
@@ -692,6 +693,7 @@ private function build_case_table_html($group, $args) {
                 <th><?php echo esc_html($current_year + 4); ?></th>
             </tr>
         </thead>
+        <?php endif; ?>
         <tbody>
             <?php if ($group === 'revenue'): ?>
                 <tr class="jtw-project-5-year">
@@ -804,8 +806,12 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             </div>
         </div>
 
-        <div class="jtw-valuation-tables-wrapper" style="display: none;">
+        <div class="jtw-sws-header">
+            <h2>1.1 Share Price vs Fair Value</h2>
+            <p>What is the Fair Price of <span class="jtw-sws-ticker"></span> when looking at its future cash flows? For this estimate we use a <span class="jtw-sws-model-name">Discounted Cash Flow</span> model.</p>
+        </div>
 
+        <div class="jtw-valuation-tables-wrapper" style="display: none;">
             <?php
             // Create an arguments array to pass to the table builder
             $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
@@ -827,18 +833,12 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
             if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
             $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'current_year_eps', 'current_year_pe', 'ttm_net_income_growth', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
-
-            // --- START: Reordered Content ---
-            // 1. Render the Revenue table first.
+            
             echo $this->build_case_table_html('revenue', $table_args);
             ?>
         </div>
 
         <div class="jtw-sws-valuation-container" style="display: none;">
-            <div class="jtw-sws-header">
-                <h2>1.1 Share Price vs Fair Value</h2>
-                <p>What is the Fair Price of <span class="jtw-sws-ticker"></span> when looking at its future cash flows? For this estimate we use a <span class="jtw-sws-model-name">Discounted Cash Flow</span> model.</p>
-            </div>
             <div class="jtw-sws-main-metric">
                 <div class="jtw-sws-percentage">-%</div>
                 <div class="jtw-sws-status">Calculating...</div>
@@ -871,11 +871,12 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
         </div>
         
         <div class="jtw-valuation-tables-wrapper" style="display: none;">
+            <div class="jtw-sws-header">
+                <h2>1.2 Multiple of Earnings</h2>
+            </div>
             <?php
-            // 2. Render the remaining tables after the graphic.
             echo $this->build_case_table_html('earnings', $table_args);
             echo $this->build_case_table_html('valuation', $table_args);
-            // --- END: Reordered Content ---
             ?>
         </div>
         
