@@ -208,16 +208,6 @@ public function ajax_fetch_section_data() {
         case 'key-metrics-ratios':
             $response_data['html'] = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
             break;
-        case 'intrinsic-valuation':
-            $response_data['html'] = $this->build_intrinsic_valuation_section_html(
-                $calculated_data['valuations'],
-                $valuation_summary,
-                $raw_data['overview'],
-                $calculated_data, // Pass the entire object
-                $calculated_data['historical_ratios_data'] // Pass the new historical ratios data specifically
-            );
-            wp_send_json_success($response_data);
-            break;
     }
 
     if (empty($response_data['html'])) {
