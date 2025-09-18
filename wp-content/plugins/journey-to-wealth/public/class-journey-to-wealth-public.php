@@ -784,7 +784,7 @@ private function build_case_table_html($group, $args) {
     return ob_get_clean();
 }
 
-private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $calculated_data, $historical_ratios_data) {
+private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $calculated_data) {
     // --- START: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
     $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
     $key_metrics = $calculated_data['key_metrics'] ?? [];
