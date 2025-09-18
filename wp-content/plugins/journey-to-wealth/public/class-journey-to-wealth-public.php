@@ -208,6 +208,16 @@ public function ajax_fetch_section_data() {
         case 'key-metrics-ratios':
             $response_data['html'] = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
             break;
+        case 'intrinsic-valuation':
+            $response_data['html'] = $this->build_intrinsic_valuation_section_html(
+                $calculated_data['valuations'],
+                $valuation_summary,
+                $raw_data['overview'],
+                $calculated_data, // Pass the entire object
+                $calculated_data['historical_ratios_data'] // Pass the new historical ratios data specifically
+            );
+            wp_send_json_success($response_data);
+            break;
     }
 
     if (empty($response_data['html'])) {
@@ -774,7 +784,7 @@ private function build_case_table_html($group, $args) {
     return ob_get_clean();
 }
 
-private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $calculated_data) {
+private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $calculated_data, $historical_ratios_data) {
     // --- START: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
     $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
     $key_metrics = $calculated_data['key_metrics'] ?? [];
