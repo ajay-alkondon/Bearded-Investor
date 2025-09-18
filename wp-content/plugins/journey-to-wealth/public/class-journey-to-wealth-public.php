@@ -715,7 +715,7 @@ private function build_case_table_html($group, $args) {
             <?php elseif ($group === 'earnings'): ?>
                 <tr class="jtw-project-5-year">
                     <td>Net Income Growth</td>
-                    <td><?php echo is_numeric($ttm_net_income_growth) ? number_format($ttm_net_income_growth, 1) . '%' : '-'; ?></td>
+                    <td><?php echo is_numeric($net_income_growth_current_year) ? number_format($net_income_growth_current_year, 1) . '%' : '-'; ?></td>
                     <td><?php echo is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) . '%' : '-'; ?></td>
                     <?php for ($i = 2; $i < 5; $i++) : ?>
                     <td>
@@ -803,6 +803,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 <button class="jtw-modal-trigger jtw-view-assumptions-btn" data-modal-target="#<?php echo esc_attr($modal_id); ?>">View Assumptions</button>
             </div>
         </div>
+
         <div class="jtw-sws-valuation-container" style="display: none;">
             <div class="jtw-sws-header">
                 <h2>1.1 Share Price vs Fair Value</h2>
@@ -874,14 +875,13 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
             if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
 
-            // Create an arguments array to pass to the table builder
             $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'current_year_eps', 'current_year_pe', 'ttm_net_income_growth', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
 
-            // Render each table group
+            // --- START: Reordered Table Rendering ---
             echo $this->build_case_table_html('revenue', $table_args);
             echo $this->build_case_table_html('earnings', $table_args);
             echo $this->build_case_table_html('valuation', $table_args);
-            
+            // --- END: Reordered Table Rendering ---
             ?>
         </div>
         <div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>
