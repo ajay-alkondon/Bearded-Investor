@@ -2088,31 +2088,21 @@ body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group strong {
 
 /* --- START: Valuation Table Grouping Styles --- */
 .jtw-assumptions-table {
-    border-spacing: 0;
-    border-collapse: separate; /* Required for border-spacing */
+    border-spacing: 0 10px; /* Horizontal 0, Vertical 10px for the gap */
+    border-collapse: separate;
 }
 
 .jtw-assumptions-table > tbody.jtw-assumptions-group {
-    border-top: 10px solid transparent; /* Creates the visual space */
+    border: 1px solid var(--jtw-border-color);
+    border-radius: 4px;
 }
 
-.jtw-assumptions-table > tbody.jtw-assumptions-group:first-child {
-    border-top: none; /* Remove space above the first group */
+.jtw-assumptions-table > tbody.jtw-assumptions-group tr td {
+    border-style: none; /* Remove individual cell borders */
 }
 
-.jtw-assumptions-table > tbody.jtw-assumptions-group tr:first-child td {
-    border-top: 1px solid var(--jtw-border-color); /* Add top border to the first row of each group */
-}
-
-.jtw-assumptions-table > tbody.jtw-assumptions-group tr:last-child td {
-    border-bottom: 1px solid var(--jtw-border-color); /* Add bottom border to the last row of each group */
-}
-
-body.dark-mode .jtw-assumptions-table > tbody.jtw-assumptions-group tr:first-child td {
-    border-top-color: #2a3b5c;
-}
-
-body.dark-mode .jtw-assumptions-table > tbody.jtw-assumptions-group tr:last-child td {
-    border-bottom-color: #2a3b5c;
+/* Dark Mode Overrides */
+body.dark-mode .jtw-assumptions-table > tbody.jtw-assumptions-group {
+    border-color: #2a3b5c;
 }
 /* --- END: Valuation Table Grouping Styles --- */
