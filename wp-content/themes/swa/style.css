@@ -448,7 +448,7 @@ body.dark-mode .jtw-historical-table tbody tr[data-metric-key].active td:nth-chi
 /* Force the text inside the bars to be dark for readability */
 body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group span,
 body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group strong {
-    color: #212529 !important;
+    color: #ffffff !important;
 }
 
 /* Ensure text is light when it's pushed outside the bar onto the dark background */
