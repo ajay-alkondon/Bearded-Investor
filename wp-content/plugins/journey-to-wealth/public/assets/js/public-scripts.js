@@ -616,6 +616,7 @@ function initializeFairValueAnalysisSection($container) {
 
     recalculateValuation();
     $container.on('input', '.jtw-assumption-input', recalculateValuation);
+    initializeKeyMetricValuationsChart($container);
 }
 
 function initializeKeyMetricValuationsSection($container) {
