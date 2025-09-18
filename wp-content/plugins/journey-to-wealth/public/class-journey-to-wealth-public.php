@@ -691,8 +691,8 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <th><?php echo esc_html($current_year + 4); ?></th>
             </tr>
         </thead>
-        <tbody class="jtw-assumptions-table-body">
-            
+        
+        <tbody class="jtw-assumptions-group">
             <tr class="jtw-project-5-year">
                 <td>Revenue Growth</td>
                 <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
@@ -711,6 +711,9 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <td class="jtw-revenue-result" data-year="1" data-raw-value="<?php echo esc_attr($analyst_revenue_next_year); ?>"><?php echo number_format($analyst_revenue_next_year / $divisor, 1); ?></td>
                 <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-revenue-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
             </tr>
+        </tbody>
+
+        <tbody class="jtw-assumptions-group">
             <tr class="jtw-project-5-year">
                 <td>Net Income Growth</td>
                 <td><?php echo is_numeric($ttm_net_income_growth) ? number_format($ttm_net_income_growth, 1) . '%' : '-'; ?></td>
@@ -758,6 +761,9 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-pe-input-cell" data-year="' . esc_attr($i) . '"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="' . esc_attr($i) . '" value="' . esc_attr($default_pe) . '"></td>'; }
                 ?>
             </tr>
+        </tbody>
+
+        <tbody class="jtw-assumptions-group">
             <tr class="jtw-metric-group-header jtw-result-header-row jtw-project-5-year">
                 <td>Multiple of Earnings Valuation</td>
                 <td class="jtw-moe-result-cell" data-year="0">
@@ -771,21 +777,6 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 </td>
                 <td class="jtw-moe-result-cell" data-year="1">-</td>
                 <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-moe-result-cell" data-year="' . esc_attr($i) . '">-</td>'; } ?>
-            </tr>
-            <tr class="jtw-metric-group-header jtw-result-header-row jtw-terminal-value-row" data-selected-model="dcf">
-                <td>
-                    <div class="jtw-model-selector" tabindex="0">
-                        <span class="jtw-selected-model">Discounted Cash Flow</span>
-                        <svg class="jtw-chevron-down" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        <ul class="jtw-model-options">
-                        <?php foreach ($available_models as $key => $label) { echo '<li data-model-key="' . esc_attr($key) . '">' . esc_html($label) . '</li>'; } ?>
-                        </ul>
-                    </div>
-                </td>
-                <td class="jtw-dcf-result-final-cell jtw-terminal-value-cell" colspan="5">
-                    <span class="jtw-final-fair-value-text"></span>
-                    <span class="jtw-dcf-error-message" style="display:none;">Valuation could not be run.</span>
-                </td>
             </tr>
         </tbody>
     </table>
