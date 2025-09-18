@@ -804,6 +804,36 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             </div>
         </div>
 
+        <div class="jtw-valuation-tables-wrapper" style="display: none;">
+
+            <?php
+            // Create an arguments array to pass to the table builder
+            $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
+            $current_year_revenue_growth = ($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] ?? 0) * 100;
+            $net_income_growth_current_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'] ?? 0) * 100;
+            $analyst_revenue_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_next_year'] ?? 0;
+            $revenue_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['revenue_growth_next_year'] ?? 0) * 100;
+            $net_income_next_year = $dcf_result_for_ui['calculation_breakdown']['net_income_next_year'] ?? 0;
+            $net_income_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_next_year'] ?? 0) * 100;
+            $analyst_eps_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_next_year'] ?? 0;
+            $current_year_net_income = $dcf_result_for_ui['calculation_breakdown']['net_income_current_year'] ?? 0;
+            $current_year_eps = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_current_year'] ?? 0;
+            $current_year = date('Y');
+            $unit = ''; $divisor = 1;
+            if (abs($analyst_revenue_current_year) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
+            elseif (abs($analyst_revenue_current_year) >= 1.0e+6) { $unit = '(Millions)'; $divisor = 1.0e+6; }
+            $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
+            $next_year_pe = ($analyst_eps_next_year > 0) ? $valuation_summary['current_price'] / $analyst_eps_next_year : 'N/A';
+            $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
+            if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
+            $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'current_year_eps', 'current_year_pe', 'ttm_net_income_growth', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
+
+            // --- START: Reordered Content ---
+            // 1. Render the Revenue table first.
+            echo $this->build_case_table_html('revenue', $table_args);
+            ?>
+        </div>
+
         <div class="jtw-sws-valuation-container" style="display: none;">
             <div class="jtw-sws-header">
                 <h2>1.1 Share Price vs Fair Value</h2>
@@ -839,51 +869,16 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 </div>
             </div>
         </div>
+        
         <div class="jtw-valuation-tables-wrapper" style="display: none;">
-
             <?php
-            $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
-            
-            $current_year_revenue_growth = 0;
-            if (isset($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth']) && is_numeric($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'])) {
-                $current_year_revenue_growth = $dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] * 100;
-            }
-
-            $net_income_growth_current_year = 0;
-            if (isset($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year']) && is_numeric($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'])) {
-                $net_income_growth_current_year = $dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'] * 100;
-            }
-            
-            $analyst_revenue_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_next_year'] ?? 0;
-            $revenue_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['revenue_growth_next_year'] ?? 0) * 100;
-            $net_income_next_year = $dcf_result_for_ui['calculation_breakdown']['net_income_next_year'] ?? 0;
-            $net_income_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_next_year'] ?? 0) * 100;
-            $analyst_eps_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_next_year'] ?? 0;
-
-            $current_year_net_income = $dcf_result_for_ui['calculation_breakdown']['net_income_current_year'] ?? 0;
-            $current_year_eps = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_current_year'] ?? 0;
-
-            $base_revenue = $analyst_revenue_current_year;
-            $current_year = date('Y');
-            $unit = ''; $divisor = 1;
-            if (abs($base_revenue) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
-            elseif (abs($base_revenue) >= 1.0e+6) { $unit = '(Millions)'; $divisor = 1.0e+6; }
-            
-            $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
-            $next_year_pe = ($analyst_eps_next_year > 0) ? $valuation_summary['current_price'] / $analyst_eps_next_year : 'N/A';
-            
-            $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
-            if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
-
-            $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'current_year_eps', 'current_year_pe', 'ttm_net_income_growth', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
-
-            // --- START: Reordered Table Rendering ---
-            echo $this->build_case_table_html('revenue', $table_args);
+            // 2. Render the remaining tables after the graphic.
             echo $this->build_case_table_html('earnings', $table_args);
             echo $this->build_case_table_html('valuation', $table_args);
-            // --- END: Reordered Table Rendering ---
+            // --- END: Reordered Content ---
             ?>
         </div>
+        
         <div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>
         <div id="<?php echo esc_attr($modal_id); ?>" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span></div></div>
         <div class="jtw-modal-overlay"></div>
