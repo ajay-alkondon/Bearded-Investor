@@ -886,18 +886,17 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
              <h2>1.3 Historical Price to Earnings Ratio</h2>
              <p>Historical Price to Earnings Ratio compares a stock’s price to its earnings over time. Higher ratios indicate that investors are willing to pay more for the stock.</p>
         </div>
-        <?php
-        if (!empty($historical_ratios_data)) {
-            $metrics = [
-                'pe_ratio' => 'Price to Earnings', 'ps_ratio' => 'Price to Sales', 'pb_ratio' => 'Price to Book',
-                'ev_to_revenue' => 'EV/Revenue', 'ev_to_ebitda' => 'EV/EBITDA',
-            ];
-            $key_metric_map = [
-                'pe_ratio' => 'PERatio', 'ps_ratio' => 'PriceToSalesRatioTTM', 'pb_ratio' => 'PriceToBookRatio',
-                'ev_to_revenue' => 'EVToRevenue', 'ev_to_ebitda' => 'EVToEBITDA',
-            ];
+        <div id="section-key-metric-valuations-content">
+            <?php if (!empty($historical_ratios_data)):
+                $metrics = [
+                    'pe_ratio' => 'Price to Earnings', 'ps_ratio' => 'Price to Sales', 'pb_ratio' => 'Price to Book',
+                    'ev_to_revenue' => 'EV/Revenue', 'ev_to_ebitda' => 'EV/EBITDA',
+                ];
+                $key_metric_map = [
+                    'pe_ratio' => 'PERatio', 'ps_ratio' => 'PriceToSalesRatioTTM', 'pb_ratio' => 'PriceToBookRatio',
+                    'ev_to_revenue' => 'EVToRevenue', 'ev_to_ebitda' => 'EVToEBITDA',
+                ];
             ?>
-            <div id="section-key-metric-valuations-content">
                 <div class="jtw-kmv-controls">
                     <div class="jtw-kmv-metric-selector-wrapper">
                         <select id="jtw-kmv-metric-selector">
@@ -920,16 +919,13 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 <div class="jtw-kmv-chart-container">
                     <canvas id="jtw-kmv-chart"></canvas>
                 </div>
-            </div>
-            <script type="application/json" id="jtw-historical-ratios-data">
-                <?php echo json_encode($historical_ratios_data); ?>
-            </script>
-             <script type="application/json" id="jtw-current-key-metrics-data">
-                <?php echo json_encode($key_metrics); ?>
-            </script>
-            <?php
-        }
-        ?>
+                <script type="application/json" id="jtw-historical-ratios-data"><?php echo json_encode($historical_ratios_data); ?></script>
+                <script type="application/json" id="jtw-current-key-metrics-data"><?php echo json_encode($key_metrics); ?></script>
+            <?php else: ?>
+                <div class="jtw-notice notice-info"><p>Historical ratio data is not available for this stock.</p></div>
+            <?php endif; ?>
+        </div>
+
         <div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>
         <div id="<?php echo esc_attr($modal_id); ?>" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span></div></div>
         <div class="jtw-modal-overlay"></div>
