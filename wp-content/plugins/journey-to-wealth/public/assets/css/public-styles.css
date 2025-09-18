@@ -1956,7 +1956,6 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
     text-align: right;
     z-index: 3;
     margin: 0;
-    padding: 15px 0 15px 0px;
 }
 .jtw-sws-percentage {
     font-size: 1.8em;
@@ -2096,3 +2095,86 @@ body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group strong {
     width: 14%; /* Distribute the remaining width evenly among the year columns */
 }
 /* --- END: Aligned Table Column Styles --- */
+
+/* --- START: Key Metric Valuations Chart --- */
+.jtw-kmv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+.jtw-kmv-title h2 {
+    font-size: 1.1em;
+    font-weight: 500;
+    margin: 0 0 8px 0;
+}
+.jtw-kmv-title p {
+    font-size: 0.9em;
+    color: var(--jtw-text-medium);
+    margin: 0;
+}
+.jtw-kmv-current-value {
+    text-align: right;
+    flex-shrink: 0;
+}
+.jtw-kmv-current-value .jtw-sws-percentage {
+    font-size: 1.8em;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+    color: var(--jtw-primary-blue);
+}
+.jtw-kmv-current-value .jtw-sws-status {
+    font-size: 0.9em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--jtw-text-light);
+}
+.jtw-kmv-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+.jtw-kmv-metric-selector-wrapper select {
+    padding: 8px 12px;
+    border: 1px solid var(--jtw-border-color);
+    border-radius: 4px;
+    font-weight: 600;
+}
+.jtw-kmv-time-toggles {
+    display: flex;
+    gap: 5px;
+    background-color: var(--jtw-page-bg);
+    padding: 4px;
+    border-radius: 6px;
+}
+.jtw-kmv-time-btn {
+    background-color: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--jtw-text-medium);
+    transition: all 0.2s ease;
+}
+.jtw-kmv-time-btn.active {
+    background-color: var(--jtw-content-bg);
+    color: var(--jtw-text-dark);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.jtw-kmv-chart-container {
+    height: 350px;
+    width: 100%;
+}
+/* Dark Mode */
+body.dark-mode .jtw-kmv-title p { color: #a0aec0; }
+body.dark-mode .jtw-kmv-current-value .jtw-sws-status { color: #718096; }
+body.dark-mode .jtw-kmv-metric-selector-wrapper select { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
+body.dark-mode .jtw-kmv-time-toggles { background-color: #2d3748; }
+body.dark-mode .jtw-kmv-time-btn { color: #a0aec0; }
+body.dark-mode .jtw-kmv-time-btn.active { background-color: #4a5568; color: #f7fafc; }
+/* --- END: Key Metric Valuations Chart --- */
