@@ -819,7 +819,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     ?>
     <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios='<?php echo $component_ratios_json; ?>' data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>">
         
-        <div class="jtw-section-header"><h4><?php esc_html_e('Value Projections', 'journey-to-wealth'); ?></h4></div>
+        <div class="jtw-section-header"><h4><?php esc_html_e('1. Valuation', 'journey-to-wealth'); ?></h4></div>
 
         <div class="jtw-sws-valuation-container" style="display: none;">
             <div class="jtw-sws-header">
@@ -841,16 +841,16 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 <div class="jtw-sws-bar-row current-price-row">
                     <div class="jtw-sws-bar-wrapper">
                         <div class="jtw-sws-label-group">
-                            <span>Current Price</span>
-                            <strong>US$0.00</strong>
+                            <span>Current Price - </span>
+                            <strong>$0.00</strong>
                         </div>
                     </div>
                 </div>
                 <div class="jtw-sws-bar-row fair-value-row">
                      <div class="jtw-sws-bar-wrapper">
                         <div class="jtw-sws-label-group">
-                            <span>Fair Value</span>
-                            <strong>US$0.00</strong>
+                            <span>Fair Value - </span>
+                            <strong>$0.00</strong>
                         </div>
                     </div>
                 </div>
