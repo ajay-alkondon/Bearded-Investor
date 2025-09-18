@@ -642,9 +642,7 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
 
 .jtw-sws-header {
     text-align: center;
-    margin-bottom: 25px;
     font-size: 1.2em;
-    height: 2em; /* Reserve space for the text */
 }
 
 .jtw-sws-status-positive { color: #2ecc71; } /* Green for undervalued */
@@ -1063,7 +1061,6 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
 /* Styles for new case tables */
 .jtw-case-table {
     width: 100%;
-    margin-bottom: 25px;
 }
 .jtw-case-table th, .jtw-case-table td {
     text-align: center;
@@ -1163,7 +1160,6 @@ body.dark-mode .jtw-assumption-input.disabled-by-toggle {
 /* Styles for new case tables */
 .jtw-case-table {
     width: 100%;
-    margin-bottom: 25px;
 }
 .jtw-case-table th, .jtw-case-table td {
     text-align: center;
@@ -1935,8 +1931,6 @@ body.dark-mode .jtw-analyzer-wrapper .jtw-transcript-content p {
 }
 .jtw-sws-header {
     text-align: left;
-    margin-bottom: 50px;
-    padding: 0px;
 }
 .jtw-sws-header h2 {
     font-size: 1.1em;
