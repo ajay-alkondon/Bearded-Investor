@@ -675,13 +675,14 @@ private function build_overview_section_html($overview, $quote) {
     return ob_get_clean();
 }
 
-private function build_case_table_html($case, $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $ttm_net_income_growth, $analyst_revenue_next_year = 0, $revenue_growth_next_year = 0, $net_income_next_year = 0, $net_income_growth_next_year = 0, $analyst_eps_next_year = 0, $next_year_pe = 'N/A') {
-    $modal_id = 'jtw-assumptions-modal';
+private function build_case_table_html($group, $args) {
+    // Extract the arguments into variables
+    extract($args);
+
     ob_start();
     ?>
-    <table class="jtw-assumptions-table jtw-case-table" data-case="<?php echo esc_attr($case); ?>">
+    <table class="jtw-assumptions-table jtw-case-table jtw-assumptions-group-<?php echo esc_attr($group); ?>">
         <thead>
-            <tr><th colspan="6"><div class="jtw-case-header-cell"><span>Valuation Assumptions</span><button class="jtw-modal-trigger jtw-view-assumptions-btn" data-modal-target="#<?php echo esc_attr($modal_id); ?>">View Assumptions</button></div></th></tr>
             <tr>
                 <th>Metric</th>
                 <th><?php echo esc_html($current_year); ?></th>
@@ -691,97 +692,82 @@ private function build_case_table_html($case, $current_year, $current_year_reven
                 <th><?php echo esc_html($current_year + 4); ?></th>
             </tr>
         </thead>
-        
-        <tbody class="jtw-assumptions-group">
-            <tr class="jtw-project-5-year">
-                <td>Revenue Growth</td>
-                <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
-                <td><?php echo is_numeric($revenue_growth_next_year) ? number_format($revenue_growth_next_year, 1) . '%' : '-'; ?></td>
-                <?php for ($i = 2; $i < 5; $i++) :
-                    $default_growth = is_numeric($revenue_growth_next_year) && $revenue_growth_next_year != 0 ? (float)$revenue_growth_next_year : (is_numeric($current_year_revenue_growth) ? (float)$current_year_revenue_growth : 0);
-                ?>
-                <td>
-                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(number_format($default_growth, 1, '.', '')); ?>">
-                </td>
-                <?php endfor; ?>
-            </tr>
-            <tr class="jtw-project-5-year">
-                <td class="jtw-revenue-label">Revenue <?php echo esc_html($unit); ?></td>
-                <td class="jtw-revenue-result" data-year="0" data-raw-value="<?php echo esc_attr($analyst_revenue_current_year); ?>"><?php echo number_format($analyst_revenue_current_year / $divisor, 1); ?></td>
-                <td class="jtw-revenue-result" data-year="1" data-raw-value="<?php echo esc_attr($analyst_revenue_next_year); ?>"><?php echo number_format($analyst_revenue_next_year / $divisor, 1); ?></td>
-                <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-revenue-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
-            </tr>
-        </tbody>
-
-        <tbody class="jtw-assumptions-group">
-            <tr class="jtw-project-5-year">
-                <td>Net Income Growth</td>
-                <td><?php echo is_numeric($ttm_net_income_growth) ? number_format($ttm_net_income_growth, 1) . '%' : '-'; ?></td>
-                <td><?php echo is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) . '%' : '-'; ?></td>
-                 <?php for ($i = 2; $i < 5; $i++) : ?>
-                <td>
-                    <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="<?php echo esc_attr($i); ?>" value="0.0">
-                </td>
-                <?php endfor; ?>
-            </tr>
-            <tr class="jtw-project-5-year">
-                <td>Net Income <?php echo esc_html($unit); ?></td>
-                <td class="jtw-net-income-result" data-year="0" data-raw-value="<?php echo esc_attr($current_year_net_income); ?>"><?php echo number_format($current_year_net_income / $divisor, 1); ?></td>
-                <td class="jtw-net-income-result" data-year="1" data-raw-value="<?php echo esc_attr($net_income_next_year); ?>"><?php echo number_format($net_income_next_year / $divisor, 1); ?></td>
-                <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-net-income-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
-            </tr>
-            <tr class="jtw-project-5-year">
-                <td>Net Income Margin</td>
-                <td class="jtw-net-income-margin-result" data-year="0">
+        <tbody>
+            <?php if ($group === 'revenue'): ?>
+                <tr class="jtw-project-5-year">
+                    <td>Revenue Growth</td>
+                    <td><?php echo is_numeric($current_year_revenue_growth) ? number_format($current_year_revenue_growth, 1) . '%' : '-'; ?></td>
+                    <td><?php echo is_numeric($revenue_growth_next_year) ? number_format($revenue_growth_next_year, 1) . '%' : '-'; ?></td>
+                    <?php for ($i = 2; $i < 5; $i++) :
+                        $default_growth = is_numeric($revenue_growth_next_year) && $revenue_growth_next_year != 0 ? (float)$revenue_growth_next_year : (is_numeric($current_year_revenue_growth) ? (float)$current_year_revenue_growth : 0);
+                    ?>
+                    <td>
+                        <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyRevGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(number_format($default_growth, 1, '.', '')); ?>">
+                    </td>
+                    <?php endfor; ?>
+                </tr>
+                <tr class="jtw-project-5-year">
+                    <td class="jtw-revenue-label">Revenue <?php echo esc_html($unit); ?></td>
+                    <td class="jtw-revenue-result" data-year="0" data-raw-value="<?php echo esc_attr($analyst_revenue_current_year); ?>"><?php echo number_format($analyst_revenue_current_year / $divisor, 1); ?></td>
+                    <td class="jtw-revenue-result" data-year="1" data-raw-value="<?php echo esc_attr($analyst_revenue_next_year); ?>"><?php echo number_format($analyst_revenue_next_year / $divisor, 1); ?></td>
+                    <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-revenue-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
+                </tr>
+            <?php elseif ($group === 'earnings'): ?>
+                <tr class="jtw-project-5-year">
+                    <td>Net Income Growth</td>
+                    <td><?php echo is_numeric($ttm_net_income_growth) ? number_format($ttm_net_income_growth, 1) . '%' : '-'; ?></td>
+                    <td><?php echo is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) . '%' : '-'; ?></td>
+                    <?php for ($i = 2; $i < 5; $i++) : ?>
+                    <td>
+                        <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="<?php echo esc_attr($i); ?>" value="0.0">
+                    </td>
+                    <?php endfor; ?>
+                </tr>
+                <tr class="jtw-project-5-year">
+                    <td>Net Income <?php echo esc_html($unit); ?></td>
+                    <td class="jtw-net-income-result" data-year="0" data-raw-value="<?php echo esc_attr($current_year_net_income); ?>"><?php echo number_format($current_year_net_income / $divisor, 1); ?></td>
+                    <td class="jtw-net-income-result" data-year="1" data-raw-value="<?php echo esc_attr($net_income_next_year); ?>"><?php echo number_format($net_income_next_year / $divisor, 1); ?></td>
+                    <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-net-income-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
+                </tr>
+                <tr class="jtw-project-5-year">
+                    <td>Net Income Margin</td>
+                    <td class="jtw-net-income-margin-result" data-year="0"><?php echo ($analyst_revenue_current_year > 0) ? number_format(($current_year_net_income / $analyst_revenue_current_year) * 100, 1) . '%' : '0.0%'; ?></td>
+                    <td class="jtw-net-income-margin-result" data-year="1"><?php echo ($analyst_revenue_next_year > 0) ? number_format(($net_income_next_year / $analyst_revenue_next_year) * 100, 1) . '%' : '0.0%'; ?></td>
+                    <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-net-income-margin-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
+                </tr>
+                <tr class="jtw-project-5-year">
+                    <td>EPS</td>
+                    <td class="jtw-eps-result" data-year="0"><?php echo number_format($current_year_eps, 2); ?></td>
+                    <td class="jtw-eps-result" data-year="1"><?php echo number_format($analyst_eps_next_year, 2); ?></td>
+                    <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-eps-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
+                </tr>
+                <tr class="jtw-project-5-year">
+                    <td>P/E</td>
+                    <td class="jtw-pe-result" data-year="0"><?php echo is_numeric($current_year_pe) ? number_format($current_year_pe, 1) : 'N/A'; ?></td>
+                    <td class="jtw-pe-input-cell" data-year="1"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="1" value="<?php echo esc_attr(is_numeric($next_year_pe) ? number_format($next_year_pe, 1, '.', '') : '20.0'); ?>"></td>
                     <?php 
-                    $base_margin = ($analyst_revenue_current_year > 0) ? ($current_year_net_income / $analyst_revenue_current_year) * 100 : 0;
-                    echo number_format($base_margin, 1) . '%';
+                    $default_pe = is_numeric($next_year_pe) ? number_format($next_year_pe, 1, '.', '') : '20.0';
+                    for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-pe-input-cell" data-year="' . esc_attr($i) . '"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="' . esc_attr($i) . '" value="' . esc_attr($default_pe) . '"></td>'; }
                     ?>
-                </td>
-                <td class="jtw-net-income-margin-result" data-year="1">
-                    <?php 
-                    $next_year_margin = ($analyst_revenue_next_year > 0) ? ($net_income_next_year / $analyst_revenue_next_year) * 100 : 0;
-                    echo number_format($next_year_margin, 1) . '%';
-                    ?>
-                </td>
-                 <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-net-income-margin-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
-            </tr>
-            <tr class="jtw-project-5-year">
-                <td>EPS</td>
-                <td class="jtw-eps-result" data-year="0"><?php echo number_format($current_year_eps, 2); ?></td>
-                <td class="jtw-eps-result" data-year="1"><?php echo number_format($analyst_eps_next_year, 2); ?></td>
-                <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-eps-result" data-year="' . esc_attr($i) . '">-</td>'; } ?>
-            </tr>
-            <tr class="jtw-project-5-year">
-                <td>P/E</td>
-                <td class="jtw-pe-result" data-year="0"><?php echo is_numeric($current_year_pe) ? number_format($current_year_pe, 1) : 'N/A'; ?></td>
-                <td class="jtw-pe-input-cell" data-year="1"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="1" value="<?php echo esc_attr(is_numeric($next_year_pe) ? number_format($next_year_pe, 1, '.', '') : '20.0'); ?>"></td>
-                <?php 
-                $default_pe = is_numeric($next_year_pe) ? number_format($next_year_pe, 1, '.', '') : '20.0';
-                for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-pe-input-cell" data-year="' . esc_attr($i) . '"><input type="number" step="0.1" class="jtw-assumption-input jtw-pe-input" data-year="' . esc_attr($i) . '" value="' . esc_attr($default_pe) . '"></td>'; }
-                ?>
-            </tr>
-        </tbody>
-
-        <tbody class="jtw-assumptions-group">
-            <tr class="jtw-metric-group-header jtw-result-header-row jtw-project-5-year">
-                <td>Multiple of Earnings Valuation</td>
-                <td class="jtw-moe-result-cell" data-year="0">
-                    <?php
-                        if (is_numeric($current_year_eps) && is_numeric($current_year_pe)) {
-                            echo '$' . number_format($current_year_eps * $current_year_pe, 2);
-                        } else {
-                            echo '-';
-                        }
-                    ?>
-                </td>
-                <td class="jtw-moe-result-cell" data-year="1">-</td>
-                <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-moe-result-cell" data-year="' . esc_attr($i) . '">-</td>'; } ?>
-            </tr>
+                </tr>
+            <?php elseif ($group === 'valuation'): ?>
+                 <tr class="jtw-metric-group-header jtw-result-header-row jtw-project-5-year">
+                    <td>Multiple of Earnings Valuation</td>
+                    <td class="jtw-moe-result-cell" data-year="0">
+                        <?php
+                            if (is_numeric($current_year_eps) && is_numeric($current_year_pe)) {
+                                echo '$' . number_format($current_year_eps * $current_year_pe, 2);
+                            } else {
+                                echo '-';
+                            }
+                        ?>
+                    </td>
+                    <td class="jtw-moe-result-cell" data-year="1">-</td>
+                    <?php for ($i = 2; $i < 5; $i++) { echo '<td class="jtw-moe-result-cell" data-year="' . esc_attr($i) . '">-</td>'; } ?>
+                </tr>
+            <?php endif; ?>
         </tbody>
     </table>
-    <div id="<?php echo esc_attr($modal_id); ?>" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span>
-        </div></div>
     <?php
     return ob_get_clean();
 }
@@ -805,13 +791,18 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     
     $component_ratios_json = isset($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'])) : '[]';
     $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
+    $modal_id = 'jtw-assumptions-modal'; // Define modal ID here for the button
 
     ob_start();
     ?>
     <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios='<?php echo $component_ratios_json; ?>' data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>">
         
-        <div class="jtw-section-header"><h4><?php esc_html_e('1. Valuation', 'journey-to-wealth'); ?></h4></div>
-
+        <div class="jtw-section-header">
+            <h4><?php esc_html_e('1. Valuation', 'journey-to-wealth'); ?></h4>
+            <div class="jtw-header-controls">
+                <button class="jtw-modal-trigger jtw-view-assumptions-btn" data-modal-target="#<?php echo esc_attr($modal_id); ?>">View Assumptions</button>
+            </div>
+        </div>
         <div class="jtw-sws-valuation-container" style="display: none;">
             <div class="jtw-sws-header">
                 <h2>1.1 Share Price vs Fair Value</h2>
@@ -832,16 +823,16 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 <div class="jtw-sws-bar-row current-price-row">
                     <div class="jtw-sws-bar-wrapper">
                         <div class="jtw-sws-label-group">
-                            <span>Current Price | </span>
-                            <strong> $0.00</strong>
+                            <span>Current Price</span>
+                            <strong>$0.00</strong>
                         </div>
                     </div>
                 </div>
                 <div class="jtw-sws-bar-row fair-value-row">
                      <div class="jtw-sws-bar-wrapper">
                         <div class="jtw-sws-label-group">
-                            <span>Fair Value | </span>
-                            <strong> $0.00</strong>
+                            <span>Fair Value</span>
+                            <strong>$0.00</strong>
                         </div>
                     </div>
                 </div>
@@ -883,10 +874,18 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
             if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
 
-            echo $this->build_case_table_html('base', $current_year, $current_year_revenue_growth, $analyst_revenue_current_year, $divisor, $unit, $current_year_net_income, $current_year_eps, $current_year_pe, $available_models, $dcf_result_for_ui, $net_income_growth_current_year, $analyst_revenue_next_year, $revenue_growth_next_year, $net_income_next_year, $net_income_growth_next_year, $analyst_eps_next_year, $next_year_pe);
+            // Create an arguments array to pass to the table builder
+            $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'current_year_eps', 'current_year_pe', 'ttm_net_income_growth', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
+
+            // Render each table group
+            echo $this->build_case_table_html('revenue', $table_args);
+            echo $this->build_case_table_html('earnings', $table_args);
+            echo $this->build_case_table_html('valuation', $table_args);
+            
             ?>
         </div>
         <div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>
+        <div id="<?php echo esc_attr($modal_id); ?>" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span></div></div>
         <div class="jtw-modal-overlay"></div>
     </div>
     <?php

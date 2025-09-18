@@ -2088,21 +2088,14 @@ body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group strong {
 
 /* --- START: Valuation Table Grouping Styles --- */
 .jtw-assumptions-table {
-    border-spacing: 0 10px; /* Horizontal 0, Vertical 10px for the gap */
-    border-collapse: separate;
+    margin-bottom: 20px; /* Adds space between each new table */
 }
 
+/* Remove old tbody-based spacing rules as they are no longer needed */
 .jtw-assumptions-table > tbody.jtw-assumptions-group {
-    border: 1px solid var(--jtw-border-color);
-    border-radius: 4px;
+    border-top: none;
 }
-
-.jtw-assumptions-table > tbody.jtw-assumptions-group tr td {
-    border-style: none; /* Remove individual cell borders */
-}
-
-/* Dark Mode Overrides */
-body.dark-mode .jtw-assumptions-table > tbody.jtw-assumptions-group {
-    border-color: #2a3b5c;
+.jtw-assumptions-table > tbody.jtw-assumptions-group:first-child {
+    border-top: none;
 }
 /* --- END: Valuation Table Grouping Styles --- */
