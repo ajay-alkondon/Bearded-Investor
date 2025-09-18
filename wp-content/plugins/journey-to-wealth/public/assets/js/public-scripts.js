@@ -377,147 +377,148 @@ function initializeFairValueAnalysisSection($container) {
         $fairValueRow.find('.jtw-sws-bar-wrapper').css('width', fairValueWidthPct + '%');
     }
 
-    const recalculateValuation = debounce(function() {
-        if (!componentRatios || $.isEmptyObject(componentRatios)) {
-            return;
-        }
-        if (!sharesOutstanding || sharesOutstanding === 0) {
-            return;
-        }
+const recalculateValuation = debounce(function() {
+    if (!componentRatios || $.isEmptyObject(componentRatios)) {
+        return;
+    }
+    if (!sharesOutstanding || sharesOutstanding === 0) {
+        return;
+    }
 
-        const assumptions = { 
-            yearlyRevGrowth: {},
-            yearlyNIGrowth: {}
-        };
-        let hasAllInputs = true;
-        const $table = $container.find('.jtw-case-table[data-case="base"]');
+    const assumptions = { 
+        yearlyRevGrowth: {},
+        yearlyNIGrowth: {}
+    };
+    let hasAllInputs = true;
+    // START FIX: Select the main container that holds ALL tables.
+    const $tablesContainer = $container.find('.jtw-valuation-tables-wrapper');
+    // END FIX
+
+    // Use the new container for all selections
+    $tablesContainer.find('input[data-metric="yearlyRevGrowth"]').each(function() {
+        const $input = $(this);
+        const year = $input.data('year');
+        const growthRateValue = parseFloat($input.val());
+        if (!isNaN(growthRateValue)) {
+            assumptions.yearlyRevGrowth[year] = growthRateValue;
+        } else {
+            hasAllInputs = false;
+        }
+    });
+
+    $tablesContainer.find('input[data-metric="yearlyNIGrowth"]').each(function() {
+        const $input = $(this);
+        const year = $input.data('year');
+        const growthRateValue = parseFloat($input.val());
+        if (!isNaN(growthRateValue)) {
+            assumptions.yearlyNIGrowth[year] = growthRateValue;
+        } else {
+            hasAllInputs = false;
+        }
+    });
+    
+    // This selector is no longer needed as the model selector was removed.
+    // assumptions.model = $tablesContainer.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
+    assumptions.model = 'dcf'; // Default to DCF model
+
+    const revenueUnitLabel = $tablesContainer.find('.jtw-revenue-label').first().text();
+    let previousRevenue = parseFloat($tablesContainer.find('.jtw-revenue-result[data-year="1"]').data('raw-value'));
+    let previousNetIncome = parseFloat($tablesContainer.find('.jtw-net-income-result[data-year="1"]').data('raw-value'));
+
+    const epsYear0 = parseFloat($tablesContainer.find('.jtw-eps-result[data-year="0"]').text());
+    const peYear0 = parseFloat($tablesContainer.find('.jtw-pe-result[data-year="0"]').text());
+    if (!isNaN(epsYear0) && !isNaN(peYear0)) {
+        $tablesContainer.find('.jtw-moe-result-cell[data-year="0"]').text('$' + (epsYear0 * peYear0).toFixed(2));
+    }
+
+    const epsYear1 = parseFloat($tablesContainer.find('.jtw-eps-result[data-year="1"]').text());
+    const peYear1 = parseFloat($tablesContainer.find('.jtw-pe-input[data-year="1"]').val());
+    if (!isNaN(epsYear1) && !isNaN(peYear1)) {
+        $tablesContainer.find('.jtw-moe-result-cell[data-year="1"]').text('$' + (epsYear1 * peYear1).toFixed(2));
+    }
+
+    for (let i = 2; i <= 4; i++) {
+        const growthRateInput = $tablesContainer.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
+        const niGrowthRateInput = $tablesContainer.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
+        const peInput = $tablesContainer.find('.jtw-pe-input[data-year="' + i + '"]');
         
-        $table.find('input[data-metric="yearlyRevGrowth"]').each(function() {
-            const $input = $(this);
-            const year = $input.data('year');
-            const growthRateValue = parseFloat($input.val());
-            if (!isNaN(growthRateValue)) {
-                assumptions.yearlyRevGrowth[year] = growthRateValue;
-            } else {
-                hasAllInputs = false;
-            }
-        });
-
-        $table.find('input[data-metric="yearlyNIGrowth"]').each(function() {
-            const $input = $(this);
-            const year = $input.data('year');
-            const growthRateValue = parseFloat($input.val());
-            if (!isNaN(growthRateValue)) {
-                assumptions.yearlyNIGrowth[year] = growthRateValue;
-            } else {
-                hasAllInputs = false;
-            }
-        });
+        if (peInput.length && peInput.val() === '') {
+            hasAllInputs = false;
+        }
         
-        assumptions.model = $table.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
+        const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
+        const projectedRevenue = previousRevenue * (1 + growthRate);
+        $tablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
+        previousRevenue = projectedRevenue;
 
-        const revenueUnitLabel = $table.find('.jtw-revenue-label').first().text();
-        let previousRevenue = parseFloat($table.find('.jtw-revenue-result[data-year="1"]').data('raw-value'));
-        let previousNetIncome = parseFloat($table.find('.jtw-net-income-result[data-year="1"]').data('raw-value'));
+        const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
+        let projectedNetIncome = previousNetIncome * (1 + niGrowthRate);
 
-        const epsYear0 = parseFloat($table.find('.jtw-eps-result[data-year="0"]').text());
-        const peYear0 = parseFloat($table.find('.jtw-pe-result[data-year="0"]').text());
-        if (!isNaN(epsYear0) && !isNaN(peYear0)) {
-            $table.find('.jtw-moe-result-cell[data-year="0"]').text('$' + (epsYear0 * peYear0).toFixed(2));
+        if (projectedNetIncome > projectedRevenue) {
+            projectedNetIncome = projectedRevenue;
         }
+        
+        $tablesContainer.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
+        previousNetIncome = projectedNetIncome;
 
-        const epsYear1 = parseFloat($table.find('.jtw-eps-result[data-year="1"]').text());
-        const peYear1 = parseFloat($table.find('.jtw-pe-input[data-year="1"]').val());
-        if (!isNaN(epsYear1) && !isNaN(peYear1)) {
-            $table.find('.jtw-moe-result-cell[data-year="1"]').text('$' + (epsYear1 * peYear1).toFixed(2));
+        const netIncomeMargin = (projectedRevenue > 0) ? (projectedNetIncome / projectedRevenue) * 100 : 0;
+        $tablesContainer.find('.jtw-net-income-margin-result[data-year="' + i + '"]').text(netIncomeMargin.toFixed(1) + '%');
+
+        const eps = Number(sharesOutstanding) > 0 ? projectedNetIncome / Number(sharesOutstanding) : 0;
+        $tablesContainer.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(2));
+        
+        if (peInput.length) {
+            const peRatio = parseFloat(peInput.val()) || 0;
+            const sharePrice = eps * peRatio;
+            $tablesContainer.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
         }
+    }
 
-        for (let i = 2; i <= 4; i++) {
-            const growthRateInput = $table.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
-            const niGrowthRateInput = $table.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
-            const peInput = $table.find('.jtw-pe-input[data-year="' + i + '"]');
-            
-            if (peInput.length && peInput.val() === '') {
-                hasAllInputs = false;
-            }
-            
-            const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
-            const projectedRevenue = previousRevenue * (1 + growthRate);
-            $table.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
-            previousRevenue = projectedRevenue;
+    if (!hasAllInputs) {
+        return;
+    }
 
-            const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
-            let projectedNetIncome = previousNetIncome * (1 + niGrowthRate);
+    const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+    $swsContainer.css('opacity', 0.5);
 
-            if (projectedNetIncome > projectedRevenue) {
-                projectedNetIncome = projectedRevenue;
-            }
-            
-            $table.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
-            previousNetIncome = projectedNetIncome;
-
-            const netIncomeMargin = (projectedRevenue > 0) ? (projectedNetIncome / projectedRevenue) * 100 : 0;
-            $table.find('.jtw-net-income-margin-result[data-year="' + i + '"]').text(netIncomeMargin.toFixed(1) + '%');
-
-            const eps = Number(sharesOutstanding) > 0 ? projectedNetIncome / Number(sharesOutstanding) : 0;
-            $table.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(2));
-            
-            if (peInput.length) {
-                const peRatio = parseFloat(peInput.val()) || 0;
-                const sharePrice = eps * peRatio;
-                $table.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
-            }
-        }
-
-        if (!hasAllInputs) {
-            return;
-        }
-
-        const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
-        $swsContainer.css('opacity', 0.5);
-        $table.find('.jtw-dcf-result-final-cell').css('opacity', 0.5);
-
-        $.ajax({
-            url: jtw_public_params.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'jtw_recalculate_valuation',
-                nonce: jtw_public_params.recalculate_nonce,
-                ticker: ticker,
-                assumptions: { base: assumptions } 
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data) {
-                    const caseData = response.data.base;
-                    if (caseData.error) {
-                        $swsContainer.hide();
-                        $table.find('.jtw-dcf-error-message').show().text(caseData.error);
-                        $table.find('.jtw-final-fair-value-text').hide();
-                    } else {
-                        updateSwsValuationGraphic(caseData.fair_value, currentPrice, caseData.valuation_label);
-                        $table.find('.jtw-dcf-error-message').hide();
-                        $table.find('.jtw-final-fair-value-text').show().text('Fair Value: $' + caseData.fair_value.toFixed(2));
-                        const modalId = '#jtw-assumptions-modal';
-                        if ($(modalId).length && caseData.modal_html) {
-                            $(modalId).find('.jtw-modal-content').html(caseData.modal_html);
-                        }
-                    }
-                } else {
+    $.ajax({
+        url: jtw_public_params.ajax_url,
+        type: 'POST',
+        data: {
+            action: 'jtw_recalculate_valuation',
+            nonce: jtw_public_params.recalculate_nonce,
+            ticker: ticker,
+            assumptions: { base: assumptions } 
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.data) {
+                const caseData = response.data.base;
+                if (caseData.error) {
                     $swsContainer.hide();
-                    $table.find('.jtw-dcf-error-message').show().text("Recalculation failed.");
+                    // Optionally, show an error message elsewhere if needed
+                    console.error('Valuation Error:', caseData.error);
+                } else {
+                    updateSwsValuationGraphic(caseData.fair_value, currentPrice, caseData.valuation_label);
+                    const modalId = '#jtw-assumptions-modal';
+                    if ($(modalId).length && caseData.modal_html) {
+                        $(modalId).find('.jtw-modal-content').html(caseData.modal_html);
+                    }
                 }
-            },
-            error: function() {
+            } else {
                 $swsContainer.hide();
-                $table.find('.jtw-dcf-error-message').show().text("AJAX error.");
-            },
-            complete: function() {
-                $swsContainer.css('opacity', 1);
-                $table.find('.jtw-dcf-result-final-cell').css('opacity', 1);
+                 console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
             }
-        });
-    }, 500);
+        },
+        error: function() {
+            $swsContainer.hide();
+            console.error("AJAX error during recalculation.");
+        },
+        complete: function() {
+            $swsContainer.css('opacity', 1);
+        }
+    });
+}, 500);
     
     recalculateValuation();
     $container.on('input', '.jtw-assumption-input', recalculateValuation);
