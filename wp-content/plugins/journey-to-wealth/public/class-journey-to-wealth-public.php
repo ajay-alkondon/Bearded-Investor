@@ -107,7 +107,6 @@ public function render_analyzer_layout_shortcode( $atts ) {
                     
                     <div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div>
                     <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
-                    <div id="section-key-metric-valuations" class="jtw-content-section-placeholder" data-section="key-metric-valuations"></div>
                     <div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div>
                     <div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div>
                     <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
@@ -208,9 +207,6 @@ public function ajax_fetch_section_data() {
             break;
         case 'key-metrics-ratios':
             $response_data['html'] = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
-            break;
-        case 'key-metric-valuations':
-            $response_data['html'] = $this->build_key_metric_valuations_section_html($calculated_data['historical_ratios_data'], $calculated_data['key_metrics']);
             break;
     }
 
@@ -782,6 +778,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     // --- START: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
     $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
     $key_metrics = $calculated_data['key_metrics'] ?? [];
+    $historical_ratios_data = $calculated_data['historical_ratios_data'] ?? []; // Get new data
     // --- END: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
 
     $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
@@ -797,7 +794,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     
     $component_ratios_json = isset($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'])) : '[]';
     $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
-    $modal_id = 'jtw-assumptions-modal'; // Define modal ID here for the button
+    $modal_id = 'jtw-assumptions-modal';
 
     ob_start();
     ?>
@@ -818,6 +815,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
         <div class="jtw-valuation-tables-wrapper" style="display: none;">
             <?php
             // Create an arguments array to pass to the table builder
+            $table_args = []; // Populate with all necessary variables
             $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
             $current_year_revenue_growth = ($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] ?? 0) * 100;
             $net_income_growth_current_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'] ?? 0) * 100;
@@ -884,6 +882,54 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             ?>
         </div>
         
+        <div class="jtw-sws-header">
+             <h2>1.3 Historical Price to Earnings Ratio</h2>
+             <p>Historical Price to Earnings Ratio compares a stock’s price to its earnings over time. Higher ratios indicate that investors are willing to pay more for the stock.</p>
+        </div>
+        <?php
+        if (!empty($historical_ratios_data)) {
+            $metrics = [
+                'pe_ratio' => 'Price to Earnings', 'ps_ratio' => 'Price to Sales', 'pb_ratio' => 'Price to Book',
+                'ev_to_revenue' => 'EV/Revenue', 'ev_to_ebitda' => 'EV/EBITDA',
+            ];
+            $key_metric_map = [
+                'pe_ratio' => 'PERatio', 'ps_ratio' => 'PriceToSalesRatioTTM', 'pb_ratio' => 'PriceToBookRatio',
+                'ev_to_revenue' => 'EVToRevenue', 'ev_to_ebitda' => 'EVToEBITDA',
+            ];
+            ?>
+            <div id="section-key-metric-valuations-content">
+                <div class="jtw-kmv-controls">
+                    <div class="jtw-kmv-metric-selector-wrapper">
+                        <select id="jtw-kmv-metric-selector">
+                            <?php foreach ($metrics as $key => $label): ?>
+                                <option value="<?php echo esc_attr($key); ?>" data-key-metric-key="<?php echo esc_attr($key_metric_map[$key]); ?>"><?php echo esc_html($label); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="jtw-kmv-current-value" style="display: none;">
+                        <div class="jtw-sws-percentage">0.0x</div>
+                        <div class="jtw-sws-status">Current P/E Ratio</div>
+                    </div>
+                    <div class="jtw-kmv-time-toggles">
+                        <button class="jtw-kmv-time-btn" data-range="3M">3M</button>
+                        <button class="jtw-kmv-time-btn active" data-range="1Y">1Y</button>
+                        <button class="jtw-kmv-time-btn" data-range="3Y">3Y</button>
+                        <button class="jtw-kmv-time-btn" data-range="5Y">5Y</button>
+                    </div>
+                </div>
+                <div class="jtw-kmv-chart-container">
+                    <canvas id="jtw-kmv-chart"></canvas>
+                </div>
+            </div>
+            <script type="application/json" id="jtw-historical-ratios-data">
+                <?php echo json_encode($historical_ratios_data); ?>
+            </script>
+             <script type="application/json" id="jtw-current-key-metrics-data">
+                <?php echo json_encode($key_metrics); ?>
+            </script>
+            <?php
+        }
+        ?>
         <div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>
         <div id="<?php echo esc_attr($modal_id); ?>" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span></div></div>
         <div class="jtw-modal-overlay"></div>

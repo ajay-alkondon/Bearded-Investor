@@ -370,8 +370,8 @@ function initializeFairValueAnalysisSection($container) {
         const $currentPriceRow = $swsContainer.find('.current-price-row');
         const $fairValueRow = $swsContainer.find('.fair-value-row');
 
-        $currentPriceRow.find('strong').text(' ' + ' $' + currentPrice.toFixed(2));
-        $fairValueRow.find('strong').text(' ' + ' $' + fairValue.toFixed(2));
+        $currentPriceRow.find('strong').text('$' + currentPrice.toFixed(2));
+        $fairValueRow.find('strong').text('$' + fairValue.toFixed(2));
         
         $currentPriceRow.find('.jtw-sws-bar-wrapper').css('width', currentPriceWidthPct + '%');
         $fairValueRow.find('.jtw-sws-bar-wrapper').css('width', fairValueWidthPct + '%');
@@ -520,6 +520,100 @@ const recalculateValuation = debounce(function() {
     });
 }, 500);
     
+    // --- START: New Chart Initialization Logic ---
+    const $chartCanvas = $container.find('#jtw-kmv-chart');
+    if ($chartCanvas.length) {
+        const historicalData = JSON.parse($container.find('#jtw-historical-ratios-data').html());
+        const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
+        let chartInstance;
+
+        const createGradient = (ctx, area) => {
+            const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+            gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
+            gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
+            return gradient;
+        };
+
+        function updateChart() {
+            const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
+            const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
+            const data = historicalData[selectedMetric] || [];
+            const endDate = new Date();
+            let startDate = new Date();
+            switch(selectedRange) {
+                case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
+                case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
+                case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
+                case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
+            }
+            const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
+
+            if (chartInstance) {
+                chartInstance.data.labels = filteredData.map(d => d.x);
+                chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
+                chartInstance.update();
+            } else {
+                const ctx = $chartCanvas[0].getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: filteredData.map(d => d.x),
+                        datasets: [{
+                            label: 'Ratio',
+                            data: filteredData.map(d => d.y),
+                            borderColor: 'rgba(0, 122, 255, 1)',
+                            backgroundColor: (context) => {
+                                const chart = context.chart;
+                                const {ctx, chartArea} = chart;
+                                if (!chartArea) return null;
+                                return createGradient(ctx, chartArea);
+                            },
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1,
+                            fill: 'start',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
+                            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
+                        }
+                    }
+                });
+            }
+            
+            const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
+            const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
+            const currentValue = currentMetrics[currentMetricKey];
+            const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
+            
+            if (typeof currentValue === 'number') {
+                $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
+                $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
+                $currentValueDisplay.show();
+            } else {
+                $currentValueDisplay.hide();
+            }
+        }
+
+        $container.on('change', '#jtw-kmv-metric-selector', updateChart);
+        $container.on('click', '.jtw-kmv-time-btn', function() {
+            $container.find('.jtw-kmv-time-btn').removeClass('active');
+            $(this).addClass('active');
+            updateChart();
+        });
+
+        updateChart();
+    }
+    // --- END: New Chart Initialization Logic ---
+
     recalculateValuation();
     $container.on('input', '.jtw-assumption-input', recalculateValuation);
 }
