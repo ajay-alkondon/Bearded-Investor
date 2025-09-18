@@ -2086,16 +2086,19 @@ body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group strong {
 }
 /* --- END: New SWS Valuation Graphic --- */
 
-/* --- START: Valuation Table Grouping Styles --- */
+/* --- START: Aligned Table Column Styles --- */
 .jtw-assumptions-table {
-    margin-bottom: 20px; /* Adds space between each new table */
+    table-layout: fixed; /* This is the key property to enforce column widths */
+    width: 100%;
 }
 
-/* Remove old tbody-based spacing rules as they are no longer needed */
-.jtw-assumptions-table > tbody.jtw-assumptions-group {
-    border-top: none;
+.jtw-assumptions-table th:first-child,
+.jtw-assumptions-table td:first-child {
+    width: 30%; /* Assign a fixed width to the "Metric" column */
 }
-.jtw-assumptions-table > tbody.jtw-assumptions-group:first-child {
-    border-top: none;
+
+.jtw-assumptions-table th:not(:first-child),
+.jtw-assumptions-table td:not(:first-child) {
+    width: 14%; /* Distribute the remaining width evenly among the year columns */
 }
-/* --- END: Valuation Table Grouping Styles --- */
+/* --- END: Aligned Table Column Styles --- */
