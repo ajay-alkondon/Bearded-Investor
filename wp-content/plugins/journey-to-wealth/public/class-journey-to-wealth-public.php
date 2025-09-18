@@ -842,7 +842,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                     <div class="jtw-sws-bar-wrapper">
                         <div class="jtw-sws-label-group">
                             <span>Current Price | </span>
-                            <strong>$0.00</strong>
+                            <strong> $0.00</strong>
                         </div>
                     </div>
                 </div>
@@ -850,7 +850,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                      <div class="jtw-sws-bar-wrapper">
                         <div class="jtw-sws-label-group">
                             <span>Fair Value | </span>
-                            <strong>$0.00</strong>
+                            <strong> $0.00</strong>
                         </div>
                     </div>
                 </div>
