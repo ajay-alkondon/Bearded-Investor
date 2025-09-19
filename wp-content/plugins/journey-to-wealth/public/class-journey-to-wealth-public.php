@@ -1185,8 +1185,6 @@ private function build_past_performance_section_html($historical_data) {
     return ob_get_clean();
 }
 
-// In class-journey-to-wealth-public.php, replace the entire build_earnings_revenue_forecasts_html function.
-
 private function build_earnings_revenue_forecasts_html($forecast_data) {
     ob_start();
     ?>
@@ -1249,10 +1247,18 @@ private function build_earnings_revenue_forecasts_html($forecast_data) {
                 </script>
             </div>
             <div class="jtw-chart-legend">
-                <span class="legend-item"><span class="legend-color revenue"></span> Revenue</span>
-                <span class="legend-item"><span class="legend-color earnings"></span> Earnings</span>
-                <span class="legend-item"><span class="legend-color fcf"></span> Free Cash Flow</span>
-                <span class="legend-item"><span class="legend-color op_cash"></span> Cash From Op</span>
+                <span class="legend-item revenue">
+                    <span class="legend-color"></span> Revenue <span class="legend-value">-</span>
+                </span>
+                <span class="legend-item earnings">
+                    <span class="legend-color"></span> Earnings <span class="legend-value">-</span>
+                </span>
+                <span class="legend-item fcf">
+                    <span class="legend-color"></span> Free Cash Flow <span class="legend-value">-</span>
+                </span>
+                <span class="legend-item op_cash">
+                    <span class="legend-color"></span> Cash From Op <span class="legend-value">-</span>
+                </span>
             </div>
         <?php } ?>
     </div>
