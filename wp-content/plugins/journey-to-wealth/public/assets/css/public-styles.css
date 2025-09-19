@@ -2178,3 +2178,68 @@ body.dark-mode .jtw-kmv-time-toggles { background-color: #2d3748; }
 body.dark-mode .jtw-kmv-time-btn { color: #a0aec0; }
 body.dark-mode .jtw-kmv-time-btn.active { background-color: #4a5568; color: #f7fafc; }
 /* --- END: Key Metric Valuations Chart --- */
+
+/* --- START: Analyst Estimate Section --- */
+.jtw-analyst-estimates-container {
+    padding: 25px 0;
+    margin-top: 20px;
+}
+
+.jtw-analyst-summary {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.jtw-analyst-target .jtw-value, .jtw-analyst-count .jtw-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--jtw-text-dark);
+}
+
+.jtw-analyst-target .jtw-label, .jtw-analyst-count .jtw-label {
+    font-size: 0.9em;
+    color: var(--jtw-text-light);
+}
+
+.jtw-analyst-fair-value-text {
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+}
+
+.jtw-fair-value-undervalued { color: var(--jtw-green-positive); }
+.jtw-fair-value-overvalued { color: var(--jtw-red-negative); }
+.jtw-fair-value-neutral { color: var(--jtw-yellow-neutral); }
+
+.jtw-analyst-ratings-bar {
+    display: flex;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.jtw-rating-segment {
+    height: 100%;
+}
+
+.jtw-rating-segment.strong-sell { background-color: #d63031; }
+.jtw-rating-segment.sell { background-color: #ff7675; }
+.jtw-rating-segment.hold { background-color: #fdcb6e; }
+.jtw-rating-segment.buy { background-color: #81ecec; }
+.jtw-rating-segment.strong-buy { background-color: #00b894; }
+
+/* Dark Mode Styles for Analyst Estimates */
+body.dark-mode .jtw-analyst-target .jtw-value,
+body.dark-mode .jtw-analyst-count .jtw-value {
+    color: #ffffff;
+}
+body.dark-mode .jtw-analyst-target .jtw-label,
+body.dark-mode .jtw-analyst-count .jtw-label {
+    color: #b9b9b9;
+}
+/* --- END: Analyst Estimate Section --- */

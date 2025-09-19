@@ -184,6 +184,15 @@ public function ajax_fetch_section_data() {
         foreach ($valuation_models as $result) { if (isset($result['intrinsic_value_per_share']) && is_numeric($result['intrinsic_value_per_share'])) { $valid_models[] = $result['intrinsic_value_per_share']; } }
         if (!empty($valid_models)) { $valuation_summary['fair_value'] = array_sum($valid_models) / count($valid_models); }
 
+        if ($section === 'analyst-forward-estimate') {
+            $response_data['html'] = $this->build_analyst_forward_estimate_section_html(
+                $calculated_data['analyst_estimates'],
+                $raw_data['overview'] // Pass overview to get current price for over/undervalued calc
+            );
+            wp_send_json_success($response_data);
+            return;
+        }
+
         // --- START: PASS ENTIRE CALCULATED DATA OBJECT ---
         $response_data['html'] = $this->build_intrinsic_valuation_section_html($valuation_models, $valuation_summary, $raw_data['overview'], $calculated_data);
         // --- END: PASS ENTIRE CALCULATED DATA OBJECT ---
@@ -881,9 +890,66 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             echo $this->build_case_table_html('valuation', $table_args);
             ?>
         </div>
-        
         <div class="jtw-sws-header">
-             <h2>1.3 Historical Price to Earnings Ratio</h2>
+             <h2>1.3 Analyst Forward Estimate</h2>
+        </div>
+        <?php
+        if (!empty($analyst_estimates) && $analyst_estimates['total_analysts'] > 0) {
+            $target_price = $analyst_estimates['analyst_target_price'];
+            $total_analysts = $analyst_estimates['total_analysts'];
+            $current_price = $valuation_summary['current_price'];
+            
+            $fair_value_text = '';
+            $fair_value_class = '';
+            if (is_numeric($target_price) && is_numeric($current_price) && $current_price > 0) {
+                $difference_percent = (($target_price - $current_price) / $current_price) * 100;
+                if ($difference_percent > 5) {
+                    $fair_value_text = abs(round($difference_percent)) . '% undervalued';
+                    $fair_value_class = 'jtw-fair-value-undervalued';
+                } else if ($difference_percent < -5) {
+                    $fair_value_text = abs(round($difference_percent)) . '% overvalued';
+                    $fair_value_class = 'jtw-fair-value-overvalued';
+                } else {
+                    $fair_value_text = 'Fairly Valued';
+                    $fair_value_class = 'jtw-fair-value-neutral';
+                }
+            }
+
+            $strong_buy_percent = ($analyst_estimates['strong_buy'] / $total_analysts) * 100;
+            $buy_percent = ($analyst_estimates['buy'] / $total_analysts) * 100;
+            $hold_percent = ($analyst_estimates['hold'] / $total_analysts) * 100;
+            $sell_percent = ($analyst_estimates['sell'] / $total_analysts) * 100;
+            $strong_sell_percent = ($analyst_estimates['strong_sell'] / $total_analysts) * 100;
+        ?>
+        <div class="jtw-analyst-estimates-container">
+            <div class="jtw-analyst-summary">
+                <div class="jtw-analyst-target">
+                    <div class="jtw-value"><?php echo esc_html($target_price ? '$' . number_format($target_price, 2) : 'N/A'); ?></div>
+                    <div class="jtw-label">Analyst Fair Price</div>
+                </div>
+                <div class="jtw-analyst-count">
+                    <div class="jtw-value"><?php echo esc_html($total_analysts); ?></div>
+                    <div class="jtw-label">Number of Analysts</div>
+                </div>
+            </div>
+            <?php if ($fair_value_text): ?>
+                <div class="jtw-analyst-fair-value-text <?php echo esc_attr($fair_value_class); ?>">
+                    <?php echo esc_html($fair_value_text); ?>
+                </div>
+            <?php endif; ?>
+            <div class="jtw-analyst-ratings-bar">
+                <div class="jtw-rating-segment strong-sell" style="width: <?php echo $strong_sell_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['strong_sell']); ?> Strong Sell"></div>
+                <div class="jtw-rating-segment sell" style="width: <?php echo $sell_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['sell']); ?> Sell"></div>
+                <div class="jtw-rating-segment hold" style="width: <?php echo $hold_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['hold']); ?> Hold"></div>
+                <div class="jtw-rating-segment buy" style="width: <?php echo $buy_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['buy']); ?> Buy"></div>
+                <div class="jtw-rating-segment strong-buy" style="width: <?php echo $strong_buy_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['strong_buy']); ?> Strong Buy"></div>
+            </div>
+        </div>
+        <?php } else { ?>
+            <div class="jtw-notice notice-info"><p>Analyst estimate data is not available for this stock.</p></div>
+        <?php } ?>
+        <div class="jtw-sws-header">
+             <h2>1.4 Historical Price to Earnings Ratio</h2>
              <p>Historical Price to Earnings Ratio compares a stock’s price to its earnings over time. Higher ratios indicate that investors are willing to pay more for the stock.</p>
         </div>
         <div id="section-key-metric-valuations-content">
