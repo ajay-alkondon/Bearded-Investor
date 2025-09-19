@@ -39,9 +39,17 @@ class Journey_To_Wealth_Public {
         wp_enqueue_script( 'chartjs-adapter-date-fns', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', array('chartjs'), '1.1.0', true );
         wp_enqueue_script( 'chartjs-plugin-datalabels', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0/dist/chartjs-plugin-datalabels.min.js', array('chartjs'), '2.1.0', true );
         
+        // --- START: ADDED SCRIPT ---
+        wp_enqueue_script( 'chartjs-annotation', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js', array('chartjs'), '3.0.1', true );
+        // --- END: ADDED SCRIPT ---
+        
         $script_path = plugin_dir_path( __FILE__ ) . 'assets/js/public-scripts.js';
         $script_version = file_exists($script_path) ? $this->version . '.' . filemtime( $script_path ) : $this->version;
-        wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels' ), $script_version, true );
+        
+        // Add 'chartjs-annotation' to the dependency array for your main script
+        $dependencies = array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels', 'chartjs-annotation' );
+        
+        wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', $dependencies, $script_version, true );
         
         $analysis_page_slug = get_option('jtw_analysis_page_slug', 'stock-valuation-analysis');
         $analysis_page_url = site_url( '/' . $analysis_page_slug . '/' );
