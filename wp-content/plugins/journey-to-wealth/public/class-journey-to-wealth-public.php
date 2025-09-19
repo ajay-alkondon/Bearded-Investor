@@ -117,23 +117,11 @@ public function render_analyzer_layout_shortcode( $atts ) {
                     <div id="jtw-currency-notice-placeholder"></div>
                     
                     <div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div>
-                    
-                    <div class="jtw-major-content-group">
-                        <h2>1. Valuation</h2>
-                        <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
-                    </div>
-
-                    <div class="jtw-major-content-group">
-                        <h2>2. Performance</h2>
-                        <div id="section-performance" class="jtw-content-section-placeholder" data-section="earnings-revenue-forecasts"></div>
-                    </div>
-                    
-                    <div class="jtw-major-content-group">
-                         <h2>3. Financials</h2>
-                        <div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div>
-                        <div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div>
-                        <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
-                    </div>
+                    <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
+                    <div id="section-performance" class="jtw-content-section-placeholder" data-section="earnings-revenue-forecasts"></div>
+                    <div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div>
+                    <div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div>
+                    <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
                 </main>
             </div>
         </div>
@@ -1197,59 +1185,54 @@ private function build_past_performance_section_html($historical_data) {
     return ob_get_clean();
 }
 
-/**
- * Builds the HTML for the Earnings and Revenue Growth Forecasts section.
- *
- * @param array $forecast_data Data from the API for the chart.
- * @return string The HTML for the section.
- */
 private function build_earnings_revenue_forecasts_html($forecast_data) {
-    if (empty($forecast_data) || (empty($forecast_data['chart_points_revenue']) && empty($forecast_data['chart_points_earnings']))) {
-        return '<div class="jtw-section-header">
-                    <div class="jtw-section-title"><span>2.1 Earnings and Revenue Growth Forecasts</span></div>
-                </div>
-                <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>';
-    }
-
-    $latest_date_str = $forecast_data['latest_data_date'] ?? 'N/A';
-    $latest_revenue = $forecast_data['latest_revenue'] ?? null;
-    $latest_earnings = $forecast_data['latest_earnings'] ?? null;
-
     ob_start();
     ?>
-    <div class="jtw-section-header">
-        <div class="jtw-section-title"><span>2.1 Earnings and Revenue Growth Forecasts</span></div>
-    </div>
-    <div class="jtw-chart-card">
-        <div class="jtw-chart-header">
-            <div class="jtw-chart-latest-data">
-                <div class="jtw-chart-data-date"><?php echo esc_html(date('M d Y', strtotime($latest_date_str))); ?></div>
-                <div class="jtw-chart-data-row">
-                    <span class="jtw-label">Revenue</span>
-                    <span class="jtw-value"><?php echo $latest_revenue !== null ? 'US$' . $this->format_large_number($latest_revenue) . '/yr' : '-'; ?></span>
+    <div class="jtw-content-section" id="section-performance-content">
+        <div class="jtw-section-header">
+            <h4>2. Performance</h4>
+        </div>
+
+        <div class="jtw-sws-header">
+            <h2>2.1 Earnings and Revenue Growth Forecasts</h2>
+        </div>
+        
+        <?php if (empty($forecast_data) || (empty($forecast_data['chart_points_revenue']) && empty($forecast_data['chart_points_earnings']))) { ?>
+            <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
+        <?php } else { 
+            $latest_date_str = $forecast_data['latest_data_date'] ?? 'N/A';
+            $latest_revenue = $forecast_data['latest_revenue'] ?? null;
+            $latest_earnings = $forecast_data['latest_earnings'] ?? null;
+        ?>
+            <div class="jtw-chart-card">
+                <div class="jtw-chart-header">
+                    <div class="jtw-chart-latest-data">
+                        <div class="jtw-chart-data-date"><?php echo esc_html(date('M d, Y', strtotime($latest_date_str))); ?></div>
+                        <div class="jtw-chart-data-row">
+                            <span class="jtw-label">Revenue</span>
+                            <span class="jtw-value"><?php echo $latest_revenue !== null ? 'US$' . $this->format_large_number($latest_revenue, '', 2) . '/yr' : '-'; ?></span>
+                        </div>
+                        <div class="jtw-chart-data-row">
+                            <span class="jtw-label">Earnings</span>
+                            <span class="jtw-value"><?php echo $latest_earnings !== null ? 'US$' . $this->format_large_number($latest_earnings, '', 2) . '/yr' : '-'; ?></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="jtw-chart-data-row">
-                    <span class="jtw-label">Earnings</span>
-                    <span class="jtw-value"><?php echo $latest_earnings !== null ? 'US$' . $this->format_large_number($latest_earnings) . '/yr' : '-'; ?></span>
+                <div class="jtw-chart-container jtw-revenue-earnings-chart-container">
+                    <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
+                    <script type="application/json" id="jtw-earnings-revenue-forecast-data">
+                        <?php echo json_encode([
+                            'revenue' => $forecast_data['chart_points_revenue'],
+                            'earnings' => $forecast_data['chart_points_earnings'],
+                        ]); ?>
+                    </script>
+                </div>
+                <div class="jtw-chart-legend">
+                    <span class="legend-item"><span class="legend-color revenue"></span> Revenue</span>
+                    <span class="legend-item"><span class="legend-color earnings"></span> Earnings</span>
                 </div>
             </div>
-            <div class="jtw-chart-range-toggles">
-                <button class="jtw-chart-range-btn active" data-range="auto">Auto</button>
-            </div>
-        </div>
-        <div class="jtw-chart-container jtw-revenue-earnings-chart-container">
-            <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
-            <script type="application/json" id="jtw-earnings-revenue-forecast-data">
-                <?php echo json_encode([
-                    'revenue' => $forecast_data['chart_points_revenue'],
-                    'earnings' => $forecast_data['chart_points_earnings'],
-                ]); ?>
-            </script>
-        </div>
-        <div class="jtw-chart-legend">
-            <span class="legend-item"><span class="legend-color revenue"></span> Revenue</span>
-            <span class="legend-item"><span class="legend-color earnings"></span> Earnings</span>
-        </div>
+        <?php } ?>
     </div>
     <?php
     return ob_get_clean();
