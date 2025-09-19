@@ -976,7 +976,15 @@ function initializeKeyMetricValuationsSection($container) {
         const $chartDataScripts = $container.find('.jtw-chart-data');
         if (!$chartDataScripts.length) return;
 
-        let charts = {}; 
+        let charts = {};
+
+        $chartDataScripts.each(function() {
+            const chartId = $(this).data('chart-id');
+            const existingChart = Chart.getChart(chartId);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+        });
 
         const hasData = (data) => {
             if (!data || !data.labels || data.labels.length === 0) return false;
@@ -1138,14 +1146,17 @@ function initializeKeyMetricValuationsSection($container) {
         const $dataScript = $container.find('#jtw-historical-data-json');
         if (!$dataScript.length) return;
 
-        const chartId = 'jtw-historical-chart-canvas';
-    
-        const ctx = document.getElementById(chartId);
+        const ctx = document.getElementById('jtw-historical-chart-canvas');
         const $tableWrapper = $container.find('.jtw-historical-table-wrapper');
 
         if (!ctx || !$tableWrapper.length) {
              console.error("Historical data chart/table elements not found.");
              return;
+        }
+
+        const existingChart = Chart.getChart(ctx);
+        if (existingChart) {
+            existingChart.destroy();
         }
     
         let fullHistoricalData;
