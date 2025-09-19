@@ -267,6 +267,10 @@ function initializeEarningsRevenueForecastChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
     if (!$chartCanvas.length) return;
 
+    if (window.ChartAnnotation) {
+        Chart.register(ChartAnnotation);
+    }
+
     // Destroy existing chart if it exists
     const existingChart = Chart.getChart('jtw-earnings-revenue-forecast-chart');
     if (existingChart) {
