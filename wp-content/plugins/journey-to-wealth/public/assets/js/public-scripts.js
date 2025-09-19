@@ -263,7 +263,229 @@ function initializeKeyMetricsRatiosSection($container) {
         });
     }
 
-function initializeFairValueAnalysisSection($container) {
+function initializeEarningsRevenueForecastChart($container) {
+    const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
+    if (!$chartCanvas.length) return;
+
+    // Destroy existing chart if it exists
+    const existingChart = Chart.getChart('jtw-earnings-revenue-forecast-chart');
+    if (existingChart) {
+        existingChart.destroy();
+    }
+
+    const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
+    const { revenue, earnings } = JSON.parse(chartDataRaw);
+
+    // Combine all dates from both datasets
+    const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x)])].sort();
+
+    // Fill in missing points to ensure continuous lines for the chart library
+    const fillMissingPoints = (data, dates) => {
+        const filledData = [];
+        const dataMap = new Map(data.map(d => [d.x, d.y]));
+        for (const date of dates) {
+            filledData.push({ x: date, y: dataMap.has(date) ? dataMap.get(date) : null });
+        }
+        return filledData;
+    };
+
+    const filledRevenue = fillMissingPoints(revenue, allDates);
+    const filledEarnings = fillMissingPoints(earnings, allDates);
+    
+    // Determine the forecast start date (first date where data changes from historical to estimate)
+    // This is a heuristic: find the first date that appears in estimates but might not be explicitly historical
+    let forecastStartDate = null;
+    if (revenue.length > 0) {
+        // Find the last actual historical data point
+        const lastHistoricalRevenueIndex = revenue.findIndex((point, i) => {
+            // Assuming an annual report date ending around year-end means it's historical
+            const year = new Date(point.x).getFullYear();
+            const nextYearPoint = revenue[i + 1];
+            if (nextYearPoint && (new Date(nextYearPoint.x).getFullYear() - year) > 1) {
+                return true; // Large gap suggests a transition
+            }
+            return false;
+        });
+
+        if (lastHistoricalRevenueIndex !== -1 && lastHistoricalRevenueIndex < revenue.length - 1) {
+            forecastStartDate = revenue[lastHistoricalRevenueIndex + 1].x;
+        } else if (revenue.length > 0) {
+            // Fallback: if no clear gap, assume forecast starts after the last known actual annual income statement
+            const lastHistoricalReportYear = new Date(revenue.filter(p => new Date(p.x).getFullYear() < new Date().getFullYear()).pop()?.x || revenue[0].x).getFullYear();
+            forecastStartDate = `${lastHistoricalReportYear + 1}-01-01`; // Start of the next year
+        }
+    }
+
+
+    const ctx = $chartCanvas[0].getContext('2d');
+    const chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: allDates,
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: filledRevenue,
+                    borderColor: '#007bff', // Blue
+                    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: false,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Earnings',
+                    data: filledEarnings,
+                    borderColor: '#2ecc71', // Green
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: false,
+                    yAxisID: 'y_earnings' // Potentially separate Y-axis if needed
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'year',
+                        tooltipFormat: 'MMM D YYYY',
+                        displayFormats: { year: 'YYYY' }
+                    },
+                    grid: {
+                        display: false
+                    },
+                    afterBuildTicks: function(axis) {
+                        if (forecastStartDate) {
+                            axis.ticks.forEach(tick => {
+                                if (new Date(tick.value) >= new Date(forecastStartDate)) {
+                                    tick.font = { weight: 'bold' }; // Make forecast labels bold
+                                }
+                            });
+                        }
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'US$ (Billions)', // Example label, adjust as needed
+                        color: '#999'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.08)'
+                    },
+                    ticks: {
+                        callback: function(value, index, values) {
+                            return '$' + (value / 1e9).toFixed(0) + 'b';
+                        },
+                        color: '#999'
+                    }
+                },
+                y_earnings: { // You might want this for independent scaling if earnings are very different from revenue
+                    type: 'linear',
+                    display: false, // Set to true if you want a separate axis
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false, // Only draw the grid for the main Y-axis
+                        color: 'rgba(255, 255, 255, 0.08)'
+                    },
+                    ticks: {
+                        callback: function(value, index, values) {
+                            return '$' + (value / 1e6).toFixed(0) + 'm';
+                        },
+                        color: '#999'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false // We are using a custom legend
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        },
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += 'US$' + (context.parsed.y / 1e6).toFixed(3) + 'm'; // Display in millions
+                            }
+                            return label;
+                        }
+                    }
+                },
+                annotation: { // To draw the "Past | Analysts Forecasts" divider
+                    annotations: {
+                        line1: {
+                            type: 'line',
+                            yMin: ctx.canvas.height, // Max height
+                            yMax: 0,                 // Min height
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            borderWidth: 1,
+                            borderDash: [6, 6],
+                            value: forecastStartDate, // The x-value where the line should be drawn
+                            scaleID: 'x',
+                            label: {
+                                content: 'Analysts Forecasts',
+                                enabled: true,
+                                position: 'end',
+                                backgroundColor: 'transparent',
+                                color: '#aaa',
+                                xAdjust: 50,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        line2: {
+                            type: 'line',
+                            yMin: ctx.canvas.height, // Max height
+                            yMax: 0,                 // Min height
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            borderWidth: 1,
+                            borderDash: [6, 6],
+                            value: forecastStartDate, // The x-value where the line should be drawn
+                            scaleID: 'x',
+                            label: {
+                                content: 'Past',
+                                enabled: true,
+                                position: 'start',
+                                backgroundColor: 'transparent',
+                                color: '#aaa',
+                                xAdjust: -50,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [ChartAnnotation] // Make sure ChartAnnotation is registered globally or here
+    });
+}
+
+function initializeValuationSection($container) {
     const $contentDiv = $container.find('#section-intrinsic-valuation-content');
     if (!$contentDiv.length) {
         console.error("Intrinsic valuation content div not found.");
@@ -324,6 +546,8 @@ function initializeFairValueAnalysisSection($container) {
         if (unitLabel.includes('(Thousands)')) return num * 1e3;
         return num;
     }
+
+
 
     function updateSwsValuationGraphic(fairValue, currentPrice, modelName) {
         if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
@@ -721,6 +945,14 @@ function initializeKeyMetricValuationsChart($container) {
 function initializeKeyMetricValuationsSection($container) {
     const $chartCanvas = $container.find('#jtw-kmv-chart');
     if (!$chartCanvas.length) return;
+
+    // --- START: FIX FOR CANVAS ERROR ---
+    // Check if a chart instance already exists on this canvas and destroy it.
+    const existingChart = Chart.getChart('jtw-kmv-chart');
+    if (existingChart) {
+        existingChart.destroy();
+    }
+    // --- END: FIX FOR CANVAS ERROR ---
 
     const historicalData = JSON.parse($container.find('#jtw-historical-ratios-data').html());
     const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
@@ -1244,15 +1476,25 @@ function initializeAnalyzerPage() {
             if (entry.isIntersecting) {
                 const $placeholder = $(entry.target);
                 const section = $placeholder.data('section');
+                
+                // Prevent reloading if already loaded
                 if ($placeholder.data('loaded')) {
                     observer.unobserve(entry.target);
                     return;
                 }
+                
                 $placeholder.data('loaded', true).html('<div class="jtw-loading-spinner"></div>');
+                
+                // --- AJAX Call Logic is now directly inside the observer ---
                 $.ajax({
                     url: jtw_public_params.ajax_url,
                     type: 'POST',
-                    data: { action: 'jtw_fetch_section_data', nonce: jtw_public_params.section_nonce, ticker: ticker.toUpperCase(), section: section },
+                    data: { 
+                        action: 'jtw_fetch_section_data', 
+                        nonce: jtw_public_params.section_nonce, 
+                        ticker: ticker.toUpperCase(), 
+                        section: section 
+                    },
                     dataType: 'json',
                     success: function(response) {
                         if (response.success && response.data) {
@@ -1260,24 +1502,28 @@ function initializeAnalyzerPage() {
                                 $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
                             }
 
-                            if (response.data.html) $placeholder.html(response.data.html);
+                            if (response.data.html) {
+                                $placeholder.html(response.data.html);
+                            }
                             
-                            if (section === 'intrinsic-valuation' && response.data.modal_html) {
-                                for (const caseType in response.data.modal_html) {
-                                    const modalId = `#jtw-assumptions-modal-${caseType}`;
-                                    $(modalId).find('.jtw-modal-content').html(response.data.modal_html[caseType]);
-                                }
+                            // Call the appropriate initializer function for the loaded section
+                            if (section === 'overview') {
+                                initializeOverviewSection($placeholder);
+                            } else if (section === 'intrinsic-valuation') {
+                                // This now correctly calls the renamed function
+                                initializeValuationSection($placeholder); 
+                            } else if (section === 'earnings-revenue-forecasts') {
+                                initializeEarningsRevenueForecastChart($placeholder);
+                            } else if (section === 'key-metrics-ratios') {
+                                initializeKeyMetricsRatiosSection($placeholder);
+                            } else if (section === 'historical-data') {
+                                initializeHistoricalDataSection($placeholder);
+                            } else if (section === 'past-performance') {
+                                initializeHistoricalCharts($placeholder);
                             }
 
-                            if (section === 'overview') initializeOverviewSection($placeholder);
-                            else if (section === 'historical-data') initializeHistoricalDataSection($placeholder);
-                            else if (section === 'past-performance') initializeHistoricalCharts($placeholder);
-                            else if (section === 'intrinsic-valuation') initializeFairValueAnalysisSection($placeholder);
-                            else if (section === 'key-metric-valuations') initializeKeyMetricValuationsSection($placeholder);
-                            else if (section === 'key-metrics-ratios') initializeKeyMetricsRatiosSection($placeholder);
-
                         } else {
-                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data.message || getLocalizedText('text_error')) + '</p></div>');
+                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data ? response.data.message : getLocalizedText('text_error', 'An error occurred.')) + '</p></div>');
                         }
                     },
                     error: function(jqXHR) {
