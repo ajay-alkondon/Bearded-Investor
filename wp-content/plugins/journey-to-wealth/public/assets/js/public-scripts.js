@@ -296,7 +296,13 @@ function initializeEarningsRevenueForecastChart($container) {
     }
 
     const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
-    const { revenue, earnings, fcf, op_cash, forecast_start_date } = JSON.parse(chartDataRaw);
+    const parsedData = JSON.parse(chartDataRaw);
+
+    const revenue = parsedData.revenue || [];
+    const earnings = parsedData.earnings || [];
+    const fcf = parsedData.fcf || [];
+    const op_cash = parsedData.op_cash || [];
+    const forecast_start_date = parsedData.forecast_start_date;
 
     // --- START: CUSTOM TOOLTIP FUNCTION ---
     const getOrCreateTooltip = (chart) => {
