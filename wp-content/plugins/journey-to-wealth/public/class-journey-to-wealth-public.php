@@ -667,6 +667,8 @@ private function build_overview_section_html($overview, $quote) {
     return ob_get_clean();
 }
 
+// In class-journey-to-wealth-public.php, replace the existing build_case_table_html function.
+
 private function build_case_table_html($group, $args) {
     // Extract the arguments into variables
     extract($args);
@@ -713,7 +715,7 @@ private function build_case_table_html($group, $args) {
                     <td><?php echo is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1) . '%' : '-'; ?></td>
                     <?php for ($i = 2; $i < 5; $i++) : ?>
                     <td>
-                        <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="<?php echo esc_attr($i); ?>" value="0.0">
+                        <input type="number" step="0.1" class="jtw-assumption-input jtw-yearly-input" data-metric="yearlyNIGrowth" data-year="<?php echo esc_attr($i); ?>" value="<?php echo esc_attr(is_numeric($net_income_growth_next_year) ? number_format($net_income_growth_next_year, 1, '.', '') : '0.0'); ?>">
                     </td>
                     <?php endfor; ?>
                 </tr>
