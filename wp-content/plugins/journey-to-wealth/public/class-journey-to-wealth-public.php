@@ -878,7 +878,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
              <h2>1.3 Analyst Forward Estimate</h2>
         </div>
         <?php
-        if (!empty($analyst_estimates) && $analyst_estimates['total_analysts'] > 0) {
+        if (!empty($analyst_estimates)) {
             $target_price = $analyst_estimates['analyst_target_price'];
             $total_analysts = $analyst_estimates['total_analysts'];
             $current_price = $valuation_summary['current_price'];
