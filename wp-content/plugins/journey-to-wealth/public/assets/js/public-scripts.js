@@ -39,6 +39,29 @@
         };
     }
 
+    const fillMissingPoints = (data, dates) => {
+        const filledData = [];
+        const dataMap = new Map(data.map(d => [d.x, d.y]));
+        for (const date of dates) {
+            filledData.push({ x: date, y: dataMap.has(date) ? dataMap.get(date) : null });
+        }
+        return filledData;
+    };
+
+    const createGradient = (ctx, area, color) => {
+        if (!area) return null;
+        const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+        const colorRGB = {
+            '#007bff': '0, 122, 255',
+            '#2ecc71': '46, 204, 113',
+            '#ffc107': '255, 193, 7',
+            '#fd7e14': '253, 126, 20'
+        }[color] || '0, 122, 255';
+        gradient.addColorStop(0, `rgba(${colorRGB}, 0)`);
+        gradient.addColorStop(1, `rgba(${colorRGB}, 0.4)`);
+        return gradient;
+    };
+
     function formatLargeNumber(num, decimals = 1) {
         if (typeof num !== 'number' || num === 0) return '0';
         const absNum = Math.abs(num);
@@ -262,9 +285,6 @@ function initializeKeyMetricsRatiosSection($container) {
             fetchPeerData(peersToFetch);
         });
     }
-
-
-// In public-scripts.js, replace the entire initializeEarningsRevenueForecastChart function.
 
 function initializeEarningsRevenueForecastChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
