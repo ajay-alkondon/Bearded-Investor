@@ -771,6 +771,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
     $key_metrics = $calculated_data['key_metrics'] ?? [];
     $historical_ratios_data = $calculated_data['historical_ratios_data'] ?? []; // Get new data
+    $analyst_estimates = $calculated_data['analyst_estimates'] ?? []; // <-- THIS LINE WAS MISSING
     // --- END: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
 
     $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
