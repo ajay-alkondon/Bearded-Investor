@@ -34,39 +34,42 @@ class Journey_To_Wealth_Public {
         wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/css/public-styles.css', array(), $style_version, 'all' );
     }
     
-    public function enqueue_scripts() {
-        wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js', array(), '4.5.0', true );
-        wp_enqueue_script( 'chartjs-adapter-date-fns', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', array('chartjs'), '1.1.0', true );
-        wp_enqueue_script( 'chartjs-plugin-datalabels', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0/dist/chartjs-plugin-datalabels.min.js', array('chartjs'), '2.1.0', true );
-        
-        // --- START: ADDED SCRIPT ---
-        wp_enqueue_script( 'chartjs-annotation', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js', array('chartjs'), '3.0.1', true );
-        // --- END: ADDED SCRIPT ---
-        
-        $script_path = plugin_dir_path( __FILE__ ) . 'assets/js/public-scripts.js';
-        $script_version = file_exists($script_path) ? $this->version . '.' . filemtime( $script_path ) : $this->version;
-        
-        // Add 'chartjs-annotation' to the dependency array for your main script
-        $dependencies = array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels', 'chartjs-annotation' );
-        
-        wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', $dependencies, $script_version, true );
-        
-        $analysis_page_slug = get_option('jtw_analysis_page_slug', 'stock-valuation-analysis');
-        $analysis_page_url = site_url( '/' . $analysis_page_slug . '/' );
+// In class-journey-to-wealth-public.php, replace the existing enqueue_scripts function.
 
-        wp_localize_script( $this->plugin_name, 'jtw_public_params', array(
-                'ajax_url' => admin_url( 'admin-ajax.php' ),
-                'section_nonce' => wp_create_nonce('jtw_fetch_section_nonce'),
-                'peer_nonce' => wp_create_nonce('jtw_fetch_peer_nonce'),
-                'recalculate_nonce' => wp_create_nonce('jtw_recalculate_valuation_nonce'),
-                'transcript_nonce' => wp_create_nonce('jtw_fetch_transcript_nonce'),
-                'symbol_search_nonce' => wp_create_nonce('jtw_symbol_search_nonce_action'),
-                'analysis_page_url' => $analysis_page_url,
-                'text_loading' => __('Fetching data...', 'journey-to-wealth'),
-                'text_error' => __('An error occurred. Please check the ticker and try again.', 'journey-to-wealth'),
-            )
-        );
-    }
+public function enqueue_scripts() {
+    wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js', array(), '4.4.1', true );
+    wp_enqueue_script( 'chartjs-adapter-date-fns', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', array('chartjs'), '1.1.0', true );
+    wp_enqueue_script( 'chartjs-plugin-datalabels', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js', array('chartjs'), '2.2.0', true );
+    
+    // --- START: CORRECTED SCRIPT ENQUEUE ---
+    // Use the correct, modern CDN link for the annotation plugin
+    wp_enqueue_script( 'chartjs-annotation', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js', array('chartjs'), '3.0.1', true );
+    // --- END: CORRECTED SCRIPT ENQUEUE ---
+
+    $script_path = plugin_dir_path( __FILE__ ) . 'assets/js/public-scripts.js';
+    $script_version = file_exists($script_path) ? $this->version . '.' . filemtime( $script_path ) : $this->version;
+
+    // Ensure 'chartjs-annotation' is in the dependency array
+    $dependencies = array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels', 'chartjs-annotation' );
+    
+    wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', $dependencies, $script_version, true );
+    
+    $analysis_page_slug = get_option('jtw_analysis_page_slug', 'stock-valuation-analysis');
+    $analysis_page_url = site_url( '/' . $analysis_page_slug . '/' );
+
+    wp_localize_script( $this->plugin_name, 'jtw_public_params', array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'section_nonce' => wp_create_nonce('jtw_fetch_section_nonce'),
+            'peer_nonce' => wp_create_nonce('jtw_fetch_peer_nonce'),
+            'recalculate_nonce' => wp_create_nonce('jtw_recalculate_valuation_nonce'),
+            'transcript_nonce' => wp_create_nonce('jtw_fetch_transcript_nonce'),
+            'symbol_search_nonce' => wp_create_nonce('jtw_symbol_search_nonce_action'),
+            'analysis_page_url' => $analysis_page_url,
+            'text_loading' => __('Fetching data...', 'journey-to-wealth'),
+            'text_error' => __('An error occurred. Please check the ticker and try again.', 'journey-to-wealth'),
+        )
+    );
+}
 
     public function render_header_lookup_shortcode( $atts ) {
         if (!is_user_logged_in()) return '';

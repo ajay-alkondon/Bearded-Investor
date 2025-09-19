@@ -267,10 +267,6 @@ function initializeEarningsRevenueForecastChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
     if (!$chartCanvas.length) return;
 
-    if (window.ChartAnnotation) {
-        Chart.register(ChartAnnotation);
-    }
-
     // Destroy existing chart if it exists
     const existingChart = Chart.getChart('jtw-earnings-revenue-forecast-chart');
     if (existingChart) {
@@ -952,7 +948,7 @@ function initializeKeyMetricValuationsSection($container) {
 
     // --- START: FIX FOR CANVAS ERROR ---
     // Check if a chart instance already exists on this canvas and destroy it.
-    const existingChart = Chart.getChart('jtw-kmv-chart');
+    const existingChart = Chart.getChart($chartCanvas[0]);
     if (existingChart) {
         existingChart.destroy();
     }
