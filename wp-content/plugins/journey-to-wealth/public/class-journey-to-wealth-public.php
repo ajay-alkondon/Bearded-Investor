@@ -827,7 +827,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             $next_year_pe = ($analyst_eps_next_year > 0) ? $valuation_summary['current_price'] / $analyst_eps_next_year : 'N/A';
             $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
             if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
-            $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'current_year_eps', 'current_year_pe', 'ttm_net_income_growth', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
+            $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'net_income_growth_current_year', 'current_year_eps', 'current_year_pe', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
             
             echo $this->build_case_table_html('revenue', $table_args);
             ?>
