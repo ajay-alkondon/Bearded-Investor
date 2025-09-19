@@ -347,7 +347,10 @@ function initializeEarningsRevenueForecastChart($container) {
         tooltipEl.style.left = positionX + tooltip.caretX + 'px';
         tooltipEl.style.top = positionY + tooltip.caretY + 'px';
     };
-    // --- END: CUSTOM TOOLTIP FUNCTION ---
+
+    const now = new Date();
+    const threeYearsAgo = new Date(new Date().setFullYear(now.getFullYear() - 3));
+    const twoYearsHence = new Date(new Date().setFullYear(now.getFullYear() + 2));
 
     const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
 
