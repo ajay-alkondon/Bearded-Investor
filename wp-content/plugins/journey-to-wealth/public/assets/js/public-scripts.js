@@ -290,10 +290,12 @@ function initializeEarningsRevenueForecastChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
     if (!$chartCanvas.length) return;
 
+    // --- FIX 1: Robustly destroy any existing chart on this canvas ---
     const existingChart = Chart.getChart($chartCanvas[0]);
     if (existingChart) {
         existingChart.destroy();
     }
+    // --- END FIX 1 ---
 
     const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
     const { revenue, earnings, fcf, op_cash, forecast_start_date } = JSON.parse(chartDataRaw);
@@ -301,9 +303,10 @@ function initializeEarningsRevenueForecastChart($container) {
     // --- START: DATE FILTERING LOGIC ---
     const now = new Date();
     const threeYearsAgo = new Date(new Date().setFullYear(now.getFullYear() - 3));
-    const twoYearsHence = new Date(new Date().setFullYear(now.getFullYear() + 2));
+    const twoYearsHence = new Date(new Date().setFullYear(now.getFullYear() + 3)); // Adjusted to +3 to include the full second year out
 
     const filterDataByDate = (data) => {
+        if (!data) return [];
         return data.filter(p => {
             const pointDate = new Date(p.x);
             return pointDate >= threeYearsAgo && pointDate <= twoYearsHence;
@@ -318,7 +321,7 @@ function initializeEarningsRevenueForecastChart($container) {
 
     const $summaryBox = $container.find('#jtw-forecast-summary-box');
     const $legend = $container.find('.jtw-chart-legend');
-
+    
     const originalData = {
         date: new Date($summaryBox.data('latest-date')).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         revenue: $summaryBox.find('[data-metric="revenue"]').text(),
@@ -330,12 +333,13 @@ function initializeEarningsRevenueForecastChart($container) {
     const allDates = [...new Set([...filteredRevenue.map(d => d.x), ...filteredEarnings.map(d => d.x), ...filteredFcf.map(d => d.x), ...filteredOpCash.map(d => d.x)])].sort();
 
     const datasets = [
-        { label: 'Revenue', data: filteredRevenue, color: '#007bff', metric: 'revenue' },
-        { label: 'Earnings', data: filteredEarnings, color: '#2ecc71', metric: 'earnings' },
-        { label: 'Free Cash Flow', data: filteredFcf, color: '#ffc107', metric: 'fcf' },
-        { label: 'Cash From Op', data: filteredOpCash, color: '#fd7e14', metric: 'op_cash' },
+        { label: 'Revenue', data: filteredRevenue, color: '#007bff', metricKey: 'revenue' },
+        { label: 'Earnings', data: filteredEarnings, color: '#2ecc71', metricKey: 'earnings' },
+        { label: 'Free Cash Flow', data: filteredFcf, color: '#ffc107', metricKey: 'fcf' },
+        { label: 'Cash From Op', data: filteredOpCash, color: '#fd7e14', metricKey: 'op_cash' },
     ].map(ds => ({
         label: ds.label,
+        metricKey: ds.metricKey,
         data: fillMissingPoints(ds.data, allDates),
         borderColor: ds.color,
         backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, ds.color),
@@ -346,14 +350,24 @@ function initializeEarningsRevenueForecastChart($container) {
     }));
 
     const ctx = $chartCanvas[0].getContext('2d');
-    const chartInstance = new Chart(ctx, {
+    new Chart(ctx, {
         type: 'line',
         data: { labels: allDates, datasets: datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            scales: { /* ... scales config remains the same ... */ },
+            interaction: { mode: 'index', intersect: false, axis: 'x' },
+            scales: {
+                x: { 
+                    type: 'time', 
+                    time: { unit: 'year', displayFormats: { year: 'yyyy' } }, 
+                    grid: { display: false } 
+                },
+                y: { 
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
+                    ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) } 
+                }
+            },
             plugins: { 
                 legend: { display: false },
                 tooltip: { enabled: false },
@@ -367,11 +381,31 @@ function initializeEarningsRevenueForecastChart($container) {
                             borderWidth: 1,
                             borderDash: [6, 6]
                         },
-                        forecastBox: { // Shaded area for forecasts
+                        forecastBox: {
                             type: 'box',
                             scaleID: 'x',
                             xMin: forecast_start_date,
                             backgroundColor: 'rgba(54, 162, 235, 0.1)'
+                        },
+                        pastLabel: {
+                            type: 'label',
+                            scaleID: 'x',
+                            xValue: forecast_start_date,
+                            yValue: 20,
+                            content: 'Past',
+                            color: '#aaa',
+                            font: { size: 12 },
+                            xAdjust: -30,
+                        },
+                        forecastLabel: {
+                            type: 'label',
+                            scaleID: 'x',
+                            xValue: forecast_start_date,
+                            yValue: 20,
+                            content: 'Analysts Forecasts',
+                            color: '#aaa',
+                            font: { size: 12 },
+                            xAdjust: 80,
                         }
                     }
                 }
@@ -382,11 +416,11 @@ function initializeEarningsRevenueForecastChart($container) {
                     const date = new Date(chart.data.labels[index]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     
                     $summaryBox.find('.jtw-chart-data-date').text(date);
-                    chart.data.datasets.forEach((dataset, i) => {
-                        const metric = dataset.label.toLowerCase().replace(/ /g, '_');
+                    chart.data.datasets.forEach(dataset => {
+                        const metric = dataset.metricKey;
                         const value = dataset.data[index] ? dataset.data[index].y : null;
                         const formattedValue = value !== null ? formatLargeNumber(value, 'US$', 2) + '/yr' : '-';
-                        // Update both the summary box and the legend
+                        
                         $summaryBox.find(`[data-metric="${metric}"]`).text(formattedValue);
                         $legend.find(`.legend-item.${metric} .legend-value`).text(formattedValue);
                     });
@@ -396,7 +430,6 @@ function initializeEarningsRevenueForecastChart($container) {
                     $summaryBox.find('[data-metric="earnings"]').text(originalData.earnings);
                     $summaryBox.find('[data-metric="fcf"]').text(originalData.fcf);
                     $summaryBox.find('[data-metric="op_cash"]').text(originalData.op_cash);
-                    // Reset legend values
                     $legend.find('.legend-value').text('-');
                 }
             }
