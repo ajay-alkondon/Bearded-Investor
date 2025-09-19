@@ -133,6 +133,8 @@ public function render_analyzer_layout_shortcode( $atts ) {
         wp_send_json_success(['matches' => array_slice($matches, 0, 3)]);
     }
     
+// In class-journey-to-wealth-public.php, replace the existing `ajax_fetch_section_data` function with this updated version.
+
 public function ajax_fetch_section_data() {
     check_ajax_referer('jtw_fetch_section_nonce', 'nonce');
     $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
@@ -164,42 +166,23 @@ public function ajax_fetch_section_data() {
     // --- END: CURRENCY NOTICE LOGIC ---
 
     if ($section === 'intrinsic-valuation') {
-        $initial_python_data = $python_data;
-        foreach (['bear', 'base', 'bull'] as $case) {
-            $first_model_key = key($initial_python_data['calculated_data']['valuations']);
-            $first_model_result = reset($initial_python_data['calculated_data']['valuations']);
-            if ($first_model_key === 'dcf') {
-                $response_data['modal_html'][$case] = $this->build_dcf_modal_content($first_model_result);
-            } else {
-                $response_data['modal_html'][$case] = $this->build_simple_valuation_modal_content($first_model_result);
-            }
-        }
-        $raw_data = $initial_python_data['raw_data_subset'];
-        $calculated_data = $initial_python_data['calculated_data'];
+        $calculated_data = $python_data['calculated_data'];
+        $raw_data = $python_data['raw_data_subset'];
         $quote_data = $raw_data['quote']['Global Quote'] ?? $raw_data['quote']['Global Quote - DATA DELAYED BY 15 MINUTES'] ?? [];
         $latest_price = !empty($quote_data) ? (float)($quote_data['05. price'] ?? 0) : 0;
         $valuation_models = $calculated_data['valuations'] ?? [];
+        
         $valuation_summary = [ 'current_price' => $latest_price, 'fair_value' => 0, 'percentage_diff' => 0 ];
         $valid_models = [];
         foreach ($valuation_models as $result) { if (isset($result['intrinsic_value_per_share']) && is_numeric($result['intrinsic_value_per_share'])) { $valid_models[] = $result['intrinsic_value_per_share']; } }
         if (!empty($valid_models)) { $valuation_summary['fair_value'] = array_sum($valid_models) / count($valid_models); }
 
-        if ($section === 'analyst-forward-estimate') {
-            $response_data['html'] = $this->build_analyst_forward_estimate_section_html(
-                $calculated_data['analyst_estimates'],
-                $raw_data['overview'] // Pass overview to get current price for over/undervalued calc
-            );
-            wp_send_json_success($response_data);
-            return;
-        }
-
-        // --- START: PASS ENTIRE CALCULATED DATA OBJECT ---
         $response_data['html'] = $this->build_intrinsic_valuation_section_html($valuation_models, $valuation_summary, $raw_data['overview'], $calculated_data);
-        // --- END: PASS ENTIRE CALCULATED DATA OBJECT ---
         wp_send_json_success($response_data);
         return;
     }
 
+    // This part handles the other sections
     $calculated_data = $python_data['calculated_data'];
     $raw_data = $python_data['raw_data_subset'];
 
