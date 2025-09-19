@@ -433,55 +433,35 @@ function initializeEarningsRevenueForecastChart($container) {
                         }
                     }
                 },
-                annotation: { // To draw the "Past | Analysts Forecasts" divider
+                annotation: {
                     annotations: {
                         line1: {
                             type: 'line',
-                            yMin: ctx.canvas.height, // Max height
-                            yMax: 0,                 // Min height
                             borderColor: 'rgba(255, 255, 255, 0.3)',
                             borderWidth: 1,
                             borderDash: [6, 6],
-                            value: forecastStartDate, // The x-value where the line should be drawn
                             scaleID: 'x',
+                            value: forecastStartDate, // This variable should be defined in your function
                             label: {
                                 content: 'Analysts Forecasts',
                                 enabled: true,
                                 position: 'end',
                                 backgroundColor: 'transparent',
                                 color: '#aaa',
-                                xAdjust: 50,
-                                font: {
-                                    size: 11
-                                }
+                                font: { size: 11 },
+                                yAdjust: -15
                             }
                         },
-                        line2: {
-                            type: 'line',
-                            yMin: ctx.canvas.height, // Max height
-                            yMax: 0,                 // Min height
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            borderWidth: 1,
-                            borderDash: [6, 6],
-                            value: forecastStartDate, // The x-value where the line should be drawn
+                        box1: { // Adding a background box for the forecast area
+                            type: 'box',
                             scaleID: 'x',
-                            label: {
-                                content: 'Past',
-                                enabled: true,
-                                position: 'start',
-                                backgroundColor: 'transparent',
-                                color: '#aaa',
-                                xAdjust: -50,
-                                font: {
-                                    size: 11
-                                }
-                            }
+                            xMin: forecastStartDate,
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)'
                         }
                     }
                 }
             }
         },
-        plugins: [ChartAnnotation] // Make sure ChartAnnotation is registered globally or here
     });
 }
 
