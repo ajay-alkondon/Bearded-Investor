@@ -2243,3 +2243,139 @@ body.dark-mode .jtw-analyst-count .jtw-label {
     color: #b9b9b9;
 }
 /* --- END: Analyst Estimate Section --- */
+
+/* --- START: 2.1 Earnings and Revenue Growth Forecasts --- */
+.jtw-chart-card {
+    background-color: var(--jtw-card-background);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .jtw-chart-card {
+    background-color: #2a2c34;
+    box-shadow: none;
+}
+
+.jtw-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Align to top if content varies */
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Allow wrapping */
+}
+
+.jtw-chart-latest-data {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 10px;
+}
+
+.jtw-chart-data-date {
+    font-size: 0.9em;
+    color: var(--jtw-text-light);
+    margin-bottom: 5px;
+}
+body.dark-mode .jtw-chart-data-date { color: #b9b9b9; }
+
+.jtw-chart-data-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1em;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.jtw-chart-data-row .jtw-label {
+    color: var(--jtw-text-light);
+    margin-right: 15px;
+}
+body.dark-mode .jtw-chart-data-row .jtw-label { color: #b9b9b9; }
+
+.jtw-chart-data-row .jtw-value {
+    color: var(--jtw-text-dark);
+}
+body.dark-mode .jtw-chart-data-row .jtw-value { color: #ffffff; }
+
+.jtw-chart-range-toggles {
+    display: flex;
+    gap: 5px;
+}
+
+.jtw-chart-range-btn {
+    background-color: var(--jtw-button-bg);
+    color: var(--jtw-button-text);
+    border: 1px solid var(--jtw-border-color);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.2s ease;
+}
+body.dark-mode .jtw-chart-range-btn {
+    background-color: #3f424b;
+    border-color: #4a4d55;
+    color: #e0e0e0;
+}
+
+.jtw-chart-range-btn:hover {
+    background-color: var(--jtw-button-bg-hover);
+}
+body.dark-mode .jtw-chart-range-btn:hover {
+    background-color: #555861;
+}
+
+.jtw-chart-range-btn.active {
+    background-color: var(--jtw-primary-color);
+    color: #fff;
+    border-color: var(--jtw-primary-color);
+}
+body.dark-mode .jtw-chart-range-btn.active {
+    background-color: var(--jtw-primary-color);
+    border-color: var(--jtw-primary-color);
+}
+
+.jtw-revenue-earnings-chart-container {
+    height: 400px; /* Or a fixed height, or responsive with aspect ratio */
+    width: 100%;
+}
+
+.jtw-chart-legend {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.jtw-chart-legend .legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    color: var(--jtw-text-dark);
+}
+body.dark-mode .jtw-chart-legend .legend-item { color: #e0e0e0; }
+
+.jtw-chart-legend .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 8px;
+    display: inline-block;
+}
+
+.jtw-chart-legend .legend-color.revenue { background-color: #007bff; }
+.jtw-chart-legend .legend-color.earnings { background-color: #2ecc71; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .jtw-chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .jtw-chart-latest-data {
+        margin-bottom: 15px;
+    }
+}
+/* --- END: 2.1 Earnings and Revenue Growth Forecasts --- */
