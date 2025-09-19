@@ -263,16 +263,18 @@ function initializeKeyMetricsRatiosSection($container) {
         });
     }
 
-// Replace the existing initializeEarningsRevenueForecastChart function in your JS file with this complete version.
+// In public-scripts.js, replace the existing initializeEarningsRevenueForecastChart function with this one.
 
 function initializeEarningsRevenueForecastChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
     if (!$chartCanvas.length) return;
 
+    // --- FIX #1: Robustly destroy any existing chart on this canvas ---
     const existingChart = Chart.getChart($chartCanvas[0]);
     if (existingChart) {
         existingChart.destroy();
     }
+    // --- END FIX #1 ---
 
     const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
     const { revenue, earnings, fcf, op_cash } = JSON.parse(chartDataRaw);
@@ -286,7 +288,6 @@ function initializeEarningsRevenueForecastChart($container) {
         op_cash: $summaryBox.find('[data-metric="op_cash"]').text(),
     };
 
-    // Helper functions
     const fillMissingPoints = (data, dates) => {
         const filledData = [];
         const dataMap = new Map(data.map(d => [d.x, d.y]));
@@ -297,6 +298,11 @@ function initializeEarningsRevenueForecastChart($container) {
     };
     
     const createGradient = (ctx, area, color) => {
+        // --- FIX #2: Add safety check for chart area ---
+        if (!area) {
+            return null;
+        }
+        // --- END FIX #2 ---
         const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
         const colorRGB = {
             '#007bff': '0, 122, 255',
@@ -373,23 +379,21 @@ function initializeEarningsRevenueForecastChart($container) {
                             type: 'label',
                             scaleID: 'x',
                             xValue: forecastStartDate,
-                            yValue: (ctx.canvas.clientHeight - 20), // Position near top
+                            yValue: 20,
                             content: 'Past',
                             color: '#aaa',
                             font: { size: 12 },
                             xAdjust: -30,
-                            yAdjust: - (ctx.canvas.clientHeight - 40)
                         },
                         forecastLabel: {
                             type: 'label',
                             scaleID: 'x',
                             xValue: forecastStartDate,
-                            yValue: (ctx.canvas.clientHeight - 20),
+                            yValue: 20,
                             content: 'Analysts Forecasts',
                             color: '#aaa',
                             font: { size: 12 },
                             xAdjust: 80,
-                            yAdjust: - (ctx.canvas.clientHeight - 40)
                         }
                     }
                 }
