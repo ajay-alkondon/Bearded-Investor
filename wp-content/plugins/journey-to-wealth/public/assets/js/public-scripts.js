@@ -274,121 +274,85 @@ function initializeEarningsRevenueForecastChart($container) {
 
     const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
     const { revenue, earnings } = JSON.parse(chartDataRaw);
-    
-    const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x)])].sort();
+    let chartInstance;
 
-    const fillMissingPoints = (data, dates) => {
-        const filledData = [];
-        const dataMap = new Map(data.map(d => [d.x, d.y]));
-        for (const date of dates) {
-            filledData.push({ x: date, y: dataMap.has(date) ? dataMap.get(date) : null });
-        }
-        return filledData;
+    const createGradient = (ctx, area, color) => {
+        const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+        const colorRGB = color === 'blue' ? '0, 122, 255' : '46, 204, 113';
+        gradient.addColorStop(0, `rgba(${colorRGB}, 0)`);
+        gradient.addColorStop(1, `rgba(${colorRGB}, 0.4)`);
+        return gradient;
     };
 
-    const filledRevenue = fillMissingPoints(revenue, allDates);
-    const filledEarnings = fillMissingPoints(earnings, allDates);
-    
-    let forecastStartDate = null;
-    if (revenue.length > 0) {
-        const historicalPoints = revenue.filter(p => new Date(p.x).getFullYear() < new Date().getFullYear());
-        const lastHistoricalYear = historicalPoints.length > 0 ? new Date(historicalPoints.pop().x).getFullYear() : new Date().getFullYear() - 1;
-        forecastStartDate = `${lastHistoricalYear + 1}-01-01`;
+    function updateChart(range) {
+        let filteredRevenue = revenue;
+        let filteredEarnings = earnings;
+        const now = new Date();
+
+        if (range !== 'MAX') {
+            const years = parseInt(range.replace('Y', ''));
+            const startDate = new Date(new Date().setFullYear(now.getFullYear() - years));
+            filteredRevenue = revenue.filter(p => new Date(p.x) >= startDate);
+            filteredEarnings = earnings.filter(p => new Date(p.x) >= startDate);
+        }
+
+        const allDates = [...new Set([...filteredRevenue.map(d => d.x), ...filteredEarnings.map(d => d.x)])].sort();
+        
+        if (chartInstance) {
+            chartInstance.data.labels = allDates;
+            chartInstance.data.datasets[0].data = fillMissingPoints(filteredRevenue, allDates);
+            chartInstance.data.datasets[1].data = fillMissingPoints(filteredEarnings, allDates);
+            chartInstance.update();
+        } else {
+            const ctx = $chartCanvas[0].getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: allDates,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: fillMissingPoints(filteredRevenue, allDates),
+                            borderColor: '#007bff',
+                            backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, 'blue'),
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.3,
+                            fill: 'start'
+                        },
+                        {
+                            label: 'Earnings',
+                            data: fillMissingPoints(filteredEarnings, allDates),
+                            borderColor: '#2ecc71',
+                            backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, 'green'),
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.3,
+                            fill: 'start'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'time', time: { unit: 'year', displayFormats: { year: 'yyyy' } }, grid: { display: false } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => 'US$' + formatLargeNumber(val, '', 1) } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
     }
 
-    const ctx = $chartCanvas[0].getContext('2d');
-    const chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: allDates,
-            datasets: [
-                {
-                    label: 'Revenue',
-                    data: filledRevenue,
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.3,
-                    fill: false,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Earnings',
-                    data: filledEarnings,
-                    borderColor: '#2ecc71',
-                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0.3,
-                    fill: false,
-                    yAxisID: 'y' // Using a single Y-axis for simplicity
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'year',
-                        // --- FIX for Date Format Error ---
-                        tooltipFormat: 'MMM d, yyyy', // Changed YYYY to yyyy
-                        displayFormats: { year: 'yyyy' } // Changed YYYY to yyyy
-                        // --- END FIX ---
-                    },
-                    grid: { display: false },
-                },
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    grid: { color: 'rgba(255, 255, 255, 0.08)' },
-                    ticks: {
-                        callback: function(value) {
-                            if (Math.abs(value) >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'b';
-                            if (Math.abs(value) >= 1e6) return '$' + (value / 1e6).toFixed(0) + 'm';
-                            return '$' + value;
-                        },
-                        color: '#999'
-                    }
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) label += ': ';
-                            if (context.parsed.y !== null) {
-                                label += 'US$' + formatLargeNumber(context.parsed.y, '', 2);
-                            }
-                            return label;
-                        }
-                    }
-                },
-                annotation: {
-                    annotations: {
-                        line1: {
-                            type: 'line',
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            borderWidth: 1,
-                            borderDash: [6, 6],
-                            scaleID: 'x',
-                            value: forecastStartDate,
-                        }
-                    }
-                }
-            }
-        },
+    $container.on('click', '.jtw-kmv-time-btn', function() {
+        $container.find('.jtw-kmv-time-btn').removeClass('active');
+        $(this).addClass('active');
+        updateChart($(this).data('range'));
     });
+
+    // Initial render
+    updateChart($container.find('.jtw-kmv-time-btn.active').data('range'));
 }
 
 function initializeValuationSection($container) {

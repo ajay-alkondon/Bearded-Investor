@@ -1185,6 +1185,8 @@ private function build_past_performance_section_html($historical_data) {
     return ob_get_clean();
 }
 
+// In class-journey-to-wealth-public.php, replace the entire build_earnings_revenue_forecasts_html function.
+
 private function build_earnings_revenue_forecasts_html($forecast_data) {
     ob_start();
     ?>
@@ -1195,6 +1197,7 @@ private function build_earnings_revenue_forecasts_html($forecast_data) {
 
         <div class="jtw-sws-header">
             <h2>2.1 Earnings and Revenue Growth Forecasts</h2>
+            <p>This chart shows the company's historical and estimated future earnings and revenue, providing insight into its growth trajectory.</p>
         </div>
         
         <?php if (empty($forecast_data) || (empty($forecast_data['chart_points_revenue']) && empty($forecast_data['chart_points_earnings']))) { ?>
@@ -1204,33 +1207,36 @@ private function build_earnings_revenue_forecasts_html($forecast_data) {
             $latest_revenue = $forecast_data['latest_revenue'] ?? null;
             $latest_earnings = $forecast_data['latest_earnings'] ?? null;
         ?>
-            <div class="jtw-chart-card">
-                <div class="jtw-chart-header">
-                    <div class="jtw-chart-latest-data">
-                        <div class="jtw-chart-data-date"><?php echo esc_html(date('M d, Y', strtotime($latest_date_str))); ?></div>
-                        <div class="jtw-chart-data-row">
-                            <span class="jtw-label">Revenue</span>
-                            <span class="jtw-value"><?php echo $latest_revenue !== null ? 'US$' . $this->format_large_number($latest_revenue, '', 2) . '/yr' : '-'; ?></span>
-                        </div>
-                        <div class="jtw-chart-data-row">
-                            <span class="jtw-label">Earnings</span>
-                            <span class="jtw-value"><?php echo $latest_earnings !== null ? 'US$' . $this->format_large_number($latest_earnings, '', 2) . '/yr' : '-'; ?></span>
-                        </div>
+            <div class="jtw-kmv-controls">
+                <div class="jtw-chart-latest-data">
+                    <div class="jtw-chart-data-date"><?php echo esc_html(date('M d, Y', strtotime($latest_date_str))); ?></div>
+                    <div class="jtw-chart-data-row">
+                        <span class="jtw-label revenue">Revenue</span>
+                        <span class="jtw-value"><?php echo $latest_revenue !== null ? $this->format_large_number($latest_revenue, 'US$', 2) . '/yr' : '-'; ?></span>
+                    </div>
+                    <div class="jtw-chart-data-row">
+                        <span class="jtw-label earnings">Earnings</span>
+                        <span class="jtw-value"><?php echo $latest_earnings !== null ? $this->format_large_number($latest_earnings, 'US$', 2) . '/yr' : '-'; ?></span>
                     </div>
                 </div>
-                <div class="jtw-chart-container jtw-revenue-earnings-chart-container">
-                    <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
-                    <script type="application/json" id="jtw-earnings-revenue-forecast-data">
-                        <?php echo json_encode([
-                            'revenue' => $forecast_data['chart_points_revenue'],
-                            'earnings' => $forecast_data['chart_points_earnings'],
-                        ]); ?>
-                    </script>
+                <div class="jtw-kmv-time-toggles">
+                    <button class="jtw-kmv-time-btn active" data-range="5Y">5Y</button>
+                    <button class="jtw-kmv-time-btn" data-range="10Y">10Y</button>
+                    <button class="jtw-kmv-time-btn" data-range="MAX">MAX</button>
                 </div>
-                <div class="jtw-chart-legend">
-                    <span class="legend-item"><span class="legend-color revenue"></span> Revenue</span>
-                    <span class="legend-item"><span class="legend-color earnings"></span> Earnings</span>
-                </div>
+            </div>
+            <div class="jtw-kmv-chart-container">
+                <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
+                <script type="application/json" id="jtw-earnings-revenue-forecast-data">
+                    <?php echo json_encode([
+                        'revenue' => $forecast_data['chart_points_revenue'],
+                        'earnings' => $forecast_data['chart_points_earnings'],
+                    ]); ?>
+                </script>
+            </div>
+            <div class="jtw-chart-legend">
+                <span class="legend-item"><span class="legend-color revenue"></span> Revenue</span>
+                <span class="legend-item"><span class="legend-color earnings"></span> Earnings</span>
             </div>
         <?php } ?>
     </div>
