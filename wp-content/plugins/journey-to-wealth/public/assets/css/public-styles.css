@@ -2286,4 +2286,11 @@ body.dark-mode .jtw-chart-data-row .jtw-value { color: #e2e8f0; }
     margin-top: 15px;
     gap: 20px;
 }
-/* --- END: 2.1 Earnings and Revenue Growth Forecasts (Updated) --- */
+
+/* Add these new color rules to public-styles.css */
+
+.jtw-chart-data-row .jtw-label.fcf { color: #ffc107; } /* Yellow */
+.jtw-chart-data-row .jtw-label.op_cash { color: #fd7e14; } /* Orange */
+
+.jtw-chart-legend .legend-color.fcf { background-color: #ffc107; }
+.jtw-chart-legend .legend-color.op_cash { background-color: #fd7e14; }

@@ -1200,29 +1200,41 @@ private function build_earnings_revenue_forecasts_html($forecast_data) {
             <p>This chart shows the company's historical and estimated future earnings and revenue, providing insight into its growth trajectory.</p>
         </div>
         
-        <?php if (empty($forecast_data) || (empty($forecast_data['chart_points_revenue']) && empty($forecast_data['chart_points_earnings']))) { ?>
+        <?php if (empty($forecast_data) || empty($forecast_data['chart_points_revenue'])) { ?>
             <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
         <?php } else { 
-            $latest_date_str = $forecast_data['latest_data_date'] ?? 'N/A';
+            // Store latest data in data-attributes to be used by JS
+            $latest_date = $forecast_data['latest_data_date'] ?? 'N/A';
             $latest_revenue = $forecast_data['latest_revenue'] ?? null;
             $latest_earnings = $forecast_data['latest_earnings'] ?? null;
+            $latest_fcf = $forecast_data['latest_fcf'] ?? null;
+            $latest_op_cash = $forecast_data['latest_op_cash'] ?? null;
         ?>
             <div class="jtw-kmv-controls">
-                <div class="jtw-chart-latest-data">
-                    <div class="jtw-chart-data-date"><?php echo esc_html(date('M d, Y', strtotime($latest_date_str))); ?></div>
+                <div id="jtw-forecast-summary-box" class="jtw-chart-latest-data" 
+                     data-latest-date="<?php echo esc_attr($latest_date); ?>"
+                     data-latest-revenue="<?php echo esc_attr($latest_revenue); ?>"
+                     data-latest-earnings="<?php echo esc_attr($latest_earnings); ?>"
+                     data-latest-fcf="<?php echo esc_attr($latest_fcf); ?>"
+                     data-latest-op-cash="<?php echo esc_attr($latest_op_cash); ?>"
+                >
+                    <div class="jtw-chart-data-date"><?php echo esc_html(date('M d, Y', strtotime($latest_date))); ?></div>
                     <div class="jtw-chart-data-row">
                         <span class="jtw-label revenue">Revenue</span>
-                        <span class="jtw-value"><?php echo $latest_revenue !== null ? $this->format_large_number($latest_revenue, 'US$', 2) . '/yr' : '-'; ?></span>
+                        <span class="jtw-value" data-metric="revenue"><?php echo $latest_revenue !== null ? $this->format_large_number($latest_revenue, 'US$', 2) . '/yr' : '-'; ?></span>
                     </div>
                     <div class="jtw-chart-data-row">
                         <span class="jtw-label earnings">Earnings</span>
-                        <span class="jtw-value"><?php echo $latest_earnings !== null ? $this->format_large_number($latest_earnings, 'US$', 2) . '/yr' : '-'; ?></span>
+                        <span class="jtw-value" data-metric="earnings"><?php echo $latest_earnings !== null ? $this->format_large_number($latest_earnings, 'US$', 2) . '/yr' : '-'; ?></span>
                     </div>
-                </div>
-                <div class="jtw-kmv-time-toggles">
-                    <button class="jtw-kmv-time-btn active" data-range="5Y">5Y</button>
-                    <button class="jtw-kmv-time-btn" data-range="10Y">10Y</button>
-                    <button class="jtw-kmv-time-btn" data-range="MAX">MAX</button>
+                    <div class="jtw-chart-data-row">
+                        <span class="jtw-label fcf">Free Cash Flow</span>
+                        <span class="jtw-value" data-metric="fcf"><?php echo $latest_fcf !== null ? $this->format_large_number($latest_fcf, 'US$', 2) . '/yr' : '-'; ?></span>
+                    </div>
+                    <div class="jtw-chart-data-row">
+                        <span class="jtw-label op_cash">Cash From Op</span>
+                        <span class="jtw-value" data-metric="op_cash"><?php echo $latest_op_cash !== null ? $this->format_large_number($latest_op_cash, 'US$', 2) . '/yr' : '-'; ?></span>
+                    </div>
                 </div>
             </div>
             <div class="jtw-kmv-chart-container">
@@ -1231,12 +1243,16 @@ private function build_earnings_revenue_forecasts_html($forecast_data) {
                     <?php echo json_encode([
                         'revenue' => $forecast_data['chart_points_revenue'],
                         'earnings' => $forecast_data['chart_points_earnings'],
+                        'fcf' => $forecast_data['chart_points_fcf'],
+                        'op_cash' => $forecast_data['chart_points_op_cash'],
                     ]); ?>
                 </script>
             </div>
             <div class="jtw-chart-legend">
                 <span class="legend-item"><span class="legend-color revenue"></span> Revenue</span>
                 <span class="legend-item"><span class="legend-color earnings"></span> Earnings</span>
+                <span class="legend-item"><span class="legend-color fcf"></span> Free Cash Flow</span>
+                <span class="legend-item"><span class="legend-color op_cash"></span> Cash From Op</span>
             </div>
         <?php } ?>
     </div>
