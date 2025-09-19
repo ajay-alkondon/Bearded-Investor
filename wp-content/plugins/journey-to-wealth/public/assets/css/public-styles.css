@@ -2287,10 +2287,53 @@ body.dark-mode .jtw-chart-data-row .jtw-value { color: #e2e8f0; }
     gap: 20px;
 }
 
-/* Add these new color rules to public-styles.css */
+/* In public-styles.css, add these new rules for the custom tooltip */
 
-.jtw-chart-data-row .jtw-label.fcf { color: #ffc107; } /* Yellow */
-.jtw-chart-data-row .jtw-label.op_cash { color: #fd7e14; } /* Orange */
+.jtw-chart-tooltip {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    background: rgba(30, 41, 59, 0.9); /* dark background with transparency */
+    border-radius: 6px;
+    color: white;
+    padding: 10px;
+    font-size: 12px;
+    transition: opacity 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    width: 200px; /* Set a fixed width */
+    z-index: 99;
+}
 
-.jtw-chart-legend .legend-color.fcf { background-color: #ffc107; }
-.jtw-chart-legend .legend-color.op_cash { background-color: #fd7e14; }
+.jtw-chart-tooltip .tooltip-header {
+    font-weight: bold;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 13px;
+}
+
+.jtw-chart-tooltip .tooltip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.jtw-chart-tooltip .tooltip-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.jtw-chart-tooltip .tooltip-color-box {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 8px;
+    border: 1px solid;
+    display: inline-block;
+}
+
+.jtw-chart-tooltip .tooltip-line strong {
+    font-weight: 600;
+}

@@ -1200,65 +1200,12 @@ private function build_earnings_revenue_forecasts_html($forecast_data) {
         
         <?php if (empty($forecast_data) || empty($forecast_data['chart_points_revenue'])) { ?>
             <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
-        <?php } else { 
-            // Store latest data in data-attributes to be used by JS
-            $latest_date = $forecast_data['latest_data_date'] ?? 'N/A';
-            $latest_revenue = $forecast_data['latest_revenue'] ?? null;
-            $latest_earnings = $forecast_data['latest_earnings'] ?? null;
-            $latest_fcf = $forecast_data['latest_fcf'] ?? null;
-            $latest_op_cash = $forecast_data['latest_op_cash'] ?? null;
-        ?>
-            <div class="jtw-kmv-controls">
-                <div id="jtw-forecast-summary-box" class="jtw-chart-latest-data" 
-                     data-latest-date="<?php echo esc_attr($latest_date); ?>"
-                     data-latest-revenue="<?php echo esc_attr($latest_revenue); ?>"
-                     data-latest-earnings="<?php echo esc_attr($latest_earnings); ?>"
-                     data-latest-fcf="<?php echo esc_attr($latest_fcf); ?>"
-                     data-latest-op-cash="<?php echo esc_attr($latest_op_cash); ?>"
-                >
-                    <div class="jtw-chart-data-date"><?php echo esc_html(date('M d, Y', strtotime($latest_date))); ?></div>
-                    <div class="jtw-chart-data-row">
-                        <span class="jtw-label revenue">Revenue</span>
-                        <span class="jtw-value" data-metric="revenue"><?php echo $latest_revenue !== null ? $this->format_large_number($latest_revenue, 'US$', 2) . '/yr' : '-'; ?></span>
-                    </div>
-                    <div class="jtw-chart-data-row">
-                        <span class="jtw-label earnings">Earnings</span>
-                        <span class="jtw-value" data-metric="earnings"><?php echo $latest_earnings !== null ? $this->format_large_number($latest_earnings, 'US$', 2) . '/yr' : '-'; ?></span>
-                    </div>
-                    <div class="jtw-chart-data-row">
-                        <span class="jtw-label fcf">Free Cash Flow</span>
-                        <span class="jtw-value" data-metric="fcf"><?php echo $latest_fcf !== null ? $this->format_large_number($latest_fcf, 'US$', 2) . '/yr' : '-'; ?></span>
-                    </div>
-                    <div class="jtw-chart-data-row">
-                        <span class="jtw-label op_cash">Cash From Op</span>
-                        <span class="jtw-value" data-metric="op_cash"><?php echo $latest_op_cash !== null ? $this->format_large_number($latest_op_cash, 'US$', 2) . '/yr' : '-'; ?></span>
-                    </div>
-                </div>
-            </div>
-            <div class="jtw-kmv-chart-container">
+        <?php } else { ?>
+            <div class="jtw-kmv-chart-container" style="position: relative;">
                 <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
                 <script type="application/json" id="jtw-earnings-revenue-forecast-data">
-                    <?php echo json_encode([
-                        'revenue' => $forecast_data['chart_points_revenue'],
-                        'earnings' => $forecast_data['chart_points_earnings'],
-                        'fcf' => $forecast_data['chart_points_fcf'],
-                        'op_cash' => $forecast_data['chart_points_op_cash'],
-                    ]); ?>
+                    <?php echo json_encode($forecast_data); ?>
                 </script>
-            </div>
-            <div class="jtw-chart-legend">
-                <span class="legend-item revenue">
-                    <span class="legend-color"></span> Revenue <span class="legend-value">-</span>
-                </span>
-                <span class="legend-item earnings">
-                    <span class="legend-color"></span> Earnings <span class="legend-value">-</span>
-                </span>
-                <span class="legend-item fcf">
-                    <span class="legend-color"></span> Free Cash Flow <span class="legend-value">-</span>
-                </span>
-                <span class="legend-item op_cash">
-                    <span class="legend-color"></span> Cash From Op <span class="legend-value">-</span>
-                </span>
             </div>
         <?php } ?>
     </div>
