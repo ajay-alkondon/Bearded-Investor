@@ -267,19 +267,16 @@ function initializeEarningsRevenueForecastChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
     if (!$chartCanvas.length) return;
 
-    // Destroy existing chart if it exists
-    const existingChart = Chart.getChart('jtw-earnings-revenue-forecast-chart');
+    const existingChart = Chart.getChart($chartCanvas[0]);
     if (existingChart) {
         existingChart.destroy();
     }
 
     const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
     const { revenue, earnings } = JSON.parse(chartDataRaw);
-
-    // Combine all dates from both datasets
+    
     const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x)])].sort();
 
-    // Fill in missing points to ensure continuous lines for the chart library
     const fillMissingPoints = (data, dates) => {
         const filledData = [];
         const dataMap = new Map(data.map(d => [d.x, d.y]));
@@ -292,30 +289,12 @@ function initializeEarningsRevenueForecastChart($container) {
     const filledRevenue = fillMissingPoints(revenue, allDates);
     const filledEarnings = fillMissingPoints(earnings, allDates);
     
-    // Determine the forecast start date (first date where data changes from historical to estimate)
-    // This is a heuristic: find the first date that appears in estimates but might not be explicitly historical
     let forecastStartDate = null;
     if (revenue.length > 0) {
-        // Find the last actual historical data point
-        const lastHistoricalRevenueIndex = revenue.findIndex((point, i) => {
-            // Assuming an annual report date ending around year-end means it's historical
-            const year = new Date(point.x).getFullYear();
-            const nextYearPoint = revenue[i + 1];
-            if (nextYearPoint && (new Date(nextYearPoint.x).getFullYear() - year) > 1) {
-                return true; // Large gap suggests a transition
-            }
-            return false;
-        });
-
-        if (lastHistoricalRevenueIndex !== -1 && lastHistoricalRevenueIndex < revenue.length - 1) {
-            forecastStartDate = revenue[lastHistoricalRevenueIndex + 1].x;
-        } else if (revenue.length > 0) {
-            // Fallback: if no clear gap, assume forecast starts after the last known actual annual income statement
-            const lastHistoricalReportYear = new Date(revenue.filter(p => new Date(p.x).getFullYear() < new Date().getFullYear()).pop()?.x || revenue[0].x).getFullYear();
-            forecastStartDate = `${lastHistoricalReportYear + 1}-01-01`; // Start of the next year
-        }
+        const historicalPoints = revenue.filter(p => new Date(p.x).getFullYear() < new Date().getFullYear());
+        const lastHistoricalYear = historicalPoints.length > 0 ? new Date(historicalPoints.pop().x).getFullYear() : new Date().getFullYear() - 1;
+        forecastStartDate = `${lastHistoricalYear + 1}-01-01`;
     }
-
 
     const ctx = $chartCanvas[0].getContext('2d');
     const chartInstance = new Chart(ctx, {
@@ -326,7 +305,7 @@ function initializeEarningsRevenueForecastChart($container) {
                 {
                     label: 'Revenue',
                     data: filledRevenue,
-                    borderColor: '#007bff', // Blue
+                    borderColor: '#007bff',
                     backgroundColor: 'rgba(0, 122, 255, 0.1)',
                     borderWidth: 2,
                     pointRadius: 0,
@@ -337,13 +316,13 @@ function initializeEarningsRevenueForecastChart($container) {
                 {
                     label: 'Earnings',
                     data: filledEarnings,
-                    borderColor: '#2ecc71', // Green
+                    borderColor: '#2ecc71',
                     backgroundColor: 'rgba(46, 204, 113, 0.1)',
                     borderWidth: 2,
                     pointRadius: 0,
                     tension: 0.3,
                     fill: false,
-                    yAxisID: 'y_earnings' // Potentially separate Y-axis if needed
+                    yAxisID: 'y' // Using a single Y-axis for simplicity
                 }
             ]
         },
@@ -359,75 +338,37 @@ function initializeEarningsRevenueForecastChart($container) {
                     type: 'time',
                     time: {
                         unit: 'year',
-                        tooltipFormat: 'MMM D YYYY',
-                        displayFormats: { year: 'YYYY' }
+                        // --- FIX for Date Format Error ---
+                        tooltipFormat: 'MMM d, yyyy', // Changed YYYY to yyyy
+                        displayFormats: { year: 'yyyy' } // Changed YYYY to yyyy
+                        // --- END FIX ---
                     },
-                    grid: {
-                        display: false
-                    },
-                    afterBuildTicks: function(axis) {
-                        if (forecastStartDate) {
-                            axis.ticks.forEach(tick => {
-                                if (new Date(tick.value) >= new Date(forecastStartDate)) {
-                                    tick.font = { weight: 'bold' }; // Make forecast labels bold
-                                }
-                            });
-                        }
-                    }
+                    grid: { display: false },
                 },
                 y: {
                     type: 'linear',
                     display: true,
                     position: 'left',
-                    title: {
-                        display: true,
-                        text: 'US$ (Billions)', // Example label, adjust as needed
-                        color: '#999'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.08)'
-                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.08)' },
                     ticks: {
-                        callback: function(value, index, values) {
-                            return '$' + (value / 1e9).toFixed(0) + 'b';
-                        },
-                        color: '#999'
-                    }
-                },
-                y_earnings: { // You might want this for independent scaling if earnings are very different from revenue
-                    type: 'linear',
-                    display: false, // Set to true if you want a separate axis
-                    position: 'right',
-                    grid: {
-                        drawOnChartArea: false, // Only draw the grid for the main Y-axis
-                        color: 'rgba(255, 255, 255, 0.08)'
-                    },
-                    ticks: {
-                        callback: function(value, index, values) {
-                            return '$' + (value / 1e6).toFixed(0) + 'm';
+                        callback: function(value) {
+                            if (Math.abs(value) >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'b';
+                            if (Math.abs(value) >= 1e6) return '$' + (value / 1e6).toFixed(0) + 'm';
+                            return '$' + value;
                         },
                         color: '#999'
                     }
                 }
             },
             plugins: {
-                legend: {
-                    display: false // We are using a custom legend
-                },
+                legend: { display: false },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
                     callbacks: {
-                        title: function(tooltipItems) {
-                            return tooltipItems[0].label;
-                        },
                         label: function(context) {
                             let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
+                            if (label) label += ': ';
                             if (context.parsed.y !== null) {
-                                label += 'US$' + (context.parsed.y / 1e6).toFixed(3) + 'm'; // Display in millions
+                                label += 'US$' + formatLargeNumber(context.parsed.y, '', 2);
                             }
                             return label;
                         }
@@ -441,22 +382,7 @@ function initializeEarningsRevenueForecastChart($container) {
                             borderWidth: 1,
                             borderDash: [6, 6],
                             scaleID: 'x',
-                            value: forecastStartDate, // This variable should be defined in your function
-                            label: {
-                                content: 'Analysts Forecasts',
-                                enabled: true,
-                                position: 'end',
-                                backgroundColor: 'transparent',
-                                color: '#aaa',
-                                font: { size: 11 },
-                                yAdjust: -15
-                            }
-                        },
-                        box1: { // Adding a background box for the forecast area
-                            type: 'box',
-                            scaleID: 'x',
-                            xMin: forecastStartDate,
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)'
+                            value: forecastStartDate,
                         }
                     }
                 }
@@ -926,18 +852,18 @@ function initializeKeyMetricValuationsSection($container) {
     const $chartCanvas = $container.find('#jtw-kmv-chart');
     if (!$chartCanvas.length) return;
 
-    // --- START: FIX FOR CANVAS ERROR ---
-    // Check if a chart instance already exists on this canvas and destroy it.
+    // --- FIX for "Canvas is already in use" ---
+    // Get the chart instance associated with the canvas element and destroy it.
     const existingChart = Chart.getChart($chartCanvas[0]);
     if (existingChart) {
         existingChart.destroy();
     }
-    // --- END: FIX FOR CANVAS ERROR ---
+    // --- END FIX ---
 
     const historicalData = JSON.parse($container.find('#jtw-historical-ratios-data').html());
     const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
 
-    let chartInstance;
+    let chartInstance; // This will hold the new chart instance
 
     const createGradient = (ctx, area) => {
         const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
@@ -949,9 +875,7 @@ function initializeKeyMetricValuationsSection($container) {
     function updateChart() {
         const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
         const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
-
         const data = historicalData[selectedMetric] || [];
-
         const endDate = new Date();
         let startDate = new Date();
         switch(selectedRange) {
@@ -960,9 +884,10 @@ function initializeKeyMetricValuationsSection($container) {
             case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
             case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
         }
-
         const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
 
+        // Since we destroyed any old chart, chartInstance will be null, so we create a new one.
+        // If we update the chart (e.g., change range), this logic still works.
         if (chartInstance) {
             chartInstance.data.labels = filteredData.map(d => d.x);
             chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
@@ -1010,7 +935,6 @@ function initializeKeyMetricValuationsSection($container) {
             });
         }
         
-        // Update current value display
         const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
         const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
         const currentValue = currentMetrics[currentMetricKey];
@@ -1032,7 +956,6 @@ function initializeKeyMetricValuationsSection($container) {
         updateChart();
     });
 
-    // Initial chart render
     updateChart();
 }
 
