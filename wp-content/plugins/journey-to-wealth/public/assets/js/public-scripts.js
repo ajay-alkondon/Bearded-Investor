@@ -81,52 +81,652 @@
         return 'N/A';
     }
 
-    function parseFormattedNumber(str, unitLabel = '') {
-        let num = parseFloat(str);
-        if (isNaN(num)) return 0;
-        
-        if (unitLabel.includes('(Billions)')) return num * 1e9;
-        if (unitLabel.includes('(Millions)')) return num * 1e6;
-        if (unitLabel.includes('(Thousands)')) return num * 1e3;
-        
-        return num;
-    }
+    function initializeOverviewSection($container) {
+        // Animate the 52-Week Price Range indicator and fill
+        const $priceRangeBar = $container.find('.jtw-price-range-bar');
+        if ($priceRangeBar.length) {
+            const low = parseFloat($priceRangeBar.data('low'));
+            const high = parseFloat($priceRangeBar.data('high'));
+            const current = parseFloat($priceRangeBar.data('current'));
 
-function initializeOverviewSection($container) {
-    // Animate the 52-Week Price Range indicator and fill
-    const $priceRangeBar = $container.find('.jtw-price-range-bar');
-    if ($priceRangeBar.length) {
-        const low = parseFloat($priceRangeBar.data('low'));
-        const high = parseFloat($priceRangeBar.data('high'));
-        const current = parseFloat($priceRangeBar.data('current'));
-
-        if (!isNaN(low) && !isNaN(high) && !isNaN(current) && high > low) {
-            const percentage = Math.max(0, Math.min(100, ((current - low) / (high - low)) * 100));
-            const $fill = $priceRangeBar.find('.jtw-progress-fill');
-            
-            setTimeout(() => {
-                $fill.css('width', `${percentage}%`);
-            }, 100);
-        }
-    }
-
-    // --- START: AD FIX ---
-    // Manually push the ad after a short delay. This gives the browser's
-    // rendering engine time to calculate the container's width.
-    const $adPlaceholder = $container.find('.jtw-ad-placeholder .adsbygoogle');
-    if ($adPlaceholder.length) {
-        setTimeout(function() {
-            try {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-            } catch (e) {
-                console.error("Adsbygoogle push error:", e);
+            if (!isNaN(low) && !isNaN(high) && !isNaN(current) && high > low) {
+                const percentage = Math.max(0, Math.min(100, ((current - low) / (high - low)) * 100));
+                const $fill = $priceRangeBar.find('.jtw-progress-fill');
+                
+                setTimeout(() => {
+                    $fill.css('width', `${percentage}%`);
+                }, 100);
             }
-        }, 150); // A 150ms delay is usually sufficient
-    }
-    // --- END: AD FIX ---
-}
+        }
 
-function initializeKeyMetricsRatiosSection($container) {
+        // --- START: AD FIX ---
+        // Manually push the ad after a short delay. This gives the browser's
+        // rendering engine time to calculate the container's width.
+        const $adPlaceholder = $container.find('.jtw-ad-placeholder .adsbygoogle');
+        if ($adPlaceholder.length) {
+            setTimeout(function() {
+                try {
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                } catch (e) {
+                    console.error("Adsbygoogle push error:", e);
+                }
+            }, 150); // A 150ms delay is usually sufficient
+        }
+        // --- END: AD FIX ---
+    }
+
+    function initializeValuationSection($container) {
+        const $contentDiv = $container.find('#section-intrinsic-valuation-content');
+        if (!$contentDiv.length) {
+            console.error("Intrinsic valuation content div not found.");
+            return;
+        }
+
+        const $valuationWrapper = $contentDiv.find('.jtw-valuation-tables-wrapper');
+        const $loader = $contentDiv.find('.jtw-valuation-loader');
+        $loader.hide();
+        $valuationWrapper.show();
+
+        const componentRatios = $contentDiv.data('ratios');
+        const currentPrice = $contentDiv.data('current-price');
+        const sharesOutstanding = parseFloat($contentDiv.data('shares-outstanding'));
+        const ticker = $contentDiv.data('ticker');
+
+        const $swsContainer = $contentDiv.find('.jtw-sws-valuation-container');
+        $swsContainer.find('.jtw-sws-ticker').text(ticker);
+
+        $container.on('click', '.jtw-model-selector', function(e) {
+            e.stopPropagation();
+            const $selector = $(this);
+            $('.jtw-model-selector').not($selector).removeClass('open');
+            $selector.toggleClass('open');
+        });
+
+        $container.on('click', '.jtw-model-options li', function(e) {
+            e.stopPropagation();
+            const $li = $(this);
+            const $selector = $li.closest('.jtw-model-selector');
+            const $row = $selector.closest('.jtw-terminal-value-row');
+            const modelKey = $li.data('model-key');
+            const modelLabel = $li.text();
+            $selector.find('.jtw-selected-model').text(modelLabel);
+            $row.attr('data-selected-model', modelKey);
+            $selector.removeClass('open');
+            recalculateValuation();
+        });
+
+        $(document).on('click', function() {
+            $('.jtw-model-selector').removeClass('open');
+        });
+
+        function formatNumberForDisplay(num, unitLabel = '', decimals = 1) {
+            if (typeof num !== 'number' || isNaN(num)) return '-';
+            let divisor = 1;
+            if (unitLabel.includes('(Billions)')) divisor = 1e9;
+            else if (unitLabel.includes('(Millions)')) divisor = 1e6;
+            else if (unitLabel.includes('(Thousands)')) divisor = 1e3;
+            return (num / divisor).toFixed(decimals);
+        }
+
+        function parseFormattedNumber(str, unitLabel = '') {
+            let num = parseFloat(str);
+            if (isNaN(num)) return 0;
+            if (unitLabel.includes('(Billions)')) return num * 1e9;
+            if (unitLabel.includes('(Millions)')) return num * 1e6;
+            if (unitLabel.includes('(Thousands)')) return num * 1e3;
+            return num;
+        }
+
+        function updateSwsValuationGraphic(fairValue, currentPrice, modelName) {
+            if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
+                $swsContainer.hide();
+                return;
+            }
+            $swsContainer.show();
+            $swsContainer.find('.jtw-sws-model-name').text(modelName);
+
+            const diff = fairValue - currentPrice;
+            const pctDiff = (diff / currentPrice) * 100;
+
+            const $statusContainer = $swsContainer.find('.jtw-sws-main-metric');
+            const $statusPct = $statusContainer.find('.jtw-sws-percentage');
+            const $statusText = $statusContainer.find('.jtw-sws-status');
+
+            $statusContainer.removeClass('jtw-sws-status-positive jtw-sws-status-negative jtw-sws-status-neutral');
+            $statusPct.text(Math.abs(pctDiff).toFixed(1) + '%');
+
+            if (pctDiff > 20) {
+                $statusText.text('Undervalued');
+                $statusContainer.addClass('jtw-sws-status-positive');
+            } else if (pctDiff < -20) {
+                $statusText.text('Overvalued');
+                $statusContainer.addClass('jtw-sws-status-negative');
+            } else {
+                $statusText.text('Fairly Valued');
+                $statusContainer.addClass('jtw-sws-status-neutral');
+            }
+
+            const undervaluedBoundary = fairValue * 0.8;
+            const overvaluedBoundary = fairValue * 1.2;
+            const rangeMax = Math.max(currentPrice, overvaluedBoundary) * 1.2;
+            
+            const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
+            const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
+            
+            $swsContainer.find('.jtw-sws-zone.undervalued').css('width', undervaluedWidthPct + '%');
+            $swsContainer.find('.jtw-sws-zone.about-right').css('width', aboutRightWidthPct + '%');
+            
+            const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
+            const fairValueWidthPct = (fairValue / rangeMax) * 100;
+
+            const $currentPriceRow = $swsContainer.find('.current-price-row');
+            const $fairValueRow = $swsContainer.find('.fair-value-row');
+
+            $currentPriceRow.find('strong').text('$' + currentPrice.toFixed(2));
+            $fairValueRow.find('strong').text('$' + fairValue.toFixed(2));
+            
+            $currentPriceRow.find('.jtw-sws-bar-wrapper').css('width', currentPriceWidthPct + '%');
+            $fairValueRow.find('.jtw-sws-bar-wrapper').css('width', fairValueWidthPct + '%');
+        }
+
+        const recalculateValuation = debounce(function() {
+            if (!componentRatios || $.isEmptyObject(componentRatios)) {
+                return;
+            }
+            if (!sharesOutstanding || sharesOutstanding === 0) {
+                return;
+            }
+
+            const assumptions = { 
+                yearlyRevGrowth: {},
+                yearlyNIGrowth: {}
+            };
+            let hasAllInputs = true;
+            // START FIX: Select the main container that holds ALL tables.
+            const $tablesContainer = $container.find('.jtw-valuation-tables-wrapper');
+            // END FIX
+
+            // Use the new container for all selections
+            $tablesContainer.find('input[data-metric="yearlyRevGrowth"]').each(function() {
+                const $input = $(this);
+                const year = $input.data('year');
+                const growthRateValue = parseFloat($input.val());
+                if (!isNaN(growthRateValue)) {
+                    assumptions.yearlyRevGrowth[year] = growthRateValue;
+                } else {
+                    hasAllInputs = false;
+                }
+            });
+
+            $tablesContainer.find('input[data-metric="yearlyNIGrowth"]').each(function() {
+                const $input = $(this);
+                const year = $input.data('year');
+                const growthRateValue = parseFloat($input.val());
+                if (!isNaN(growthRateValue)) {
+                    assumptions.yearlyNIGrowth[year] = growthRateValue;
+                } else {
+                    hasAllInputs = false;
+                }
+            });
+            
+            // This selector is no longer needed as the model selector was removed.
+            // assumptions.model = $tablesContainer.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
+            assumptions.model = 'dcf'; // Default to DCF model
+
+            const revenueUnitLabel = $tablesContainer.find('.jtw-revenue-label').first().text();
+            let previousRevenue = parseFloat($tablesContainer.find('.jtw-revenue-result[data-year="1"]').data('raw-value'));
+            let previousNetIncome = parseFloat($tablesContainer.find('.jtw-net-income-result[data-year="1"]').data('raw-value'));
+
+            const epsYear0 = parseFloat($tablesContainer.find('.jtw-eps-result[data-year="0"]').text());
+            const peYear0 = parseFloat($tablesContainer.find('.jtw-pe-result[data-year="0"]').text());
+            if (!isNaN(epsYear0) && !isNaN(peYear0)) {
+                $tablesContainer.find('.jtw-moe-result-cell[data-year="0"]').text('$' + (epsYear0 * peYear0).toFixed(2));
+            }
+
+            const epsYear1 = parseFloat($tablesContainer.find('.jtw-eps-result[data-year="1"]').text());
+            const peYear1 = parseFloat($tablesContainer.find('.jtw-pe-input[data-year="1"]').val());
+            if (!isNaN(epsYear1) && !isNaN(peYear1)) {
+                $tablesContainer.find('.jtw-moe-result-cell[data-year="1"]').text('$' + (epsYear1 * peYear1).toFixed(2));
+            }
+
+            for (let i = 2; i <= 4; i++) {
+                const growthRateInput = $tablesContainer.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
+                const niGrowthRateInput = $tablesContainer.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
+                const peInput = $tablesContainer.find('.jtw-pe-input[data-year="' + i + '"]');
+                
+                if (peInput.length && peInput.val() === '') {
+                    hasAllInputs = false;
+                }
+                
+                const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
+                const projectedRevenue = previousRevenue * (1 + growthRate);
+                $tablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
+                previousRevenue = projectedRevenue;
+
+                const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
+                let projectedNetIncome = previousNetIncome * (1 + niGrowthRate);
+
+                if (projectedNetIncome > projectedRevenue) {
+                    projectedNetIncome = projectedRevenue;
+                }
+                
+                $tablesContainer.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
+                previousNetIncome = projectedNetIncome;
+
+                const netIncomeMargin = (projectedRevenue > 0) ? (projectedNetIncome / projectedRevenue) * 100 : 0;
+                $tablesContainer.find('.jtw-net-income-margin-result[data-year="' + i + '"]').text(netIncomeMargin.toFixed(1) + '%');
+
+                const eps = Number(sharesOutstanding) > 0 ? projectedNetIncome / Number(sharesOutstanding) : 0;
+                $tablesContainer.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(2));
+                
+                if (peInput.length) {
+                    const peRatio = parseFloat(peInput.val()) || 0;
+                    const sharePrice = eps * peRatio;
+                    $tablesContainer.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
+                }
+            }
+
+            if (!hasAllInputs) {
+                return;
+            }
+
+            const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+            $swsContainer.css('opacity', 0.5);
+
+            $.ajax({
+                url: jtw_public_params.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'jtw_recalculate_valuation',
+                    nonce: jtw_public_params.recalculate_nonce,
+                    ticker: ticker,
+                    assumptions: { base: assumptions } 
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        const caseData = response.data.base;
+                        if (caseData.error) {
+                            $swsContainer.hide();
+                            // Optionally, show an error message elsewhere if needed
+                            console.error('Valuation Error:', caseData.error);
+                        } else {
+                            updateSwsValuationGraphic(caseData.fair_value, currentPrice, caseData.valuation_label);
+                            const modalId = '#jtw-assumptions-modal';
+                            if ($(modalId).length && caseData.modal_html) {
+                                $(modalId).find('.jtw-modal-content').html(caseData.modal_html);
+                            }
+                        }
+                    } else {
+                        $swsContainer.hide();
+                        console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
+                    }
+                },
+                error: function() {
+                    $swsContainer.hide();
+                    console.error("AJAX error during recalculation.");
+                },
+                complete: function() {
+                    $swsContainer.css('opacity', 1);
+                }
+            });
+        }, 500);
+        
+        // --- START: New Chart Initialization Logic ---
+        const $chartCanvas = $container.find('#jtw-kmv-chart');
+        if ($chartCanvas.length) {
+            const historicalData = JSON.parse($container.find('#jtw-historical-ratios-data').html());
+            const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
+            let chartInstance;
+
+            const createGradient = (ctx, area) => {
+                const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+                gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
+                gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
+                return gradient;
+            };
+
+            function updateChart() {
+                const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
+                const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
+                const data = historicalData[selectedMetric] || [];
+                const endDate = new Date();
+                let startDate = new Date();
+                switch(selectedRange) {
+                    case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
+                    case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
+                    case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
+                    case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
+                }
+                const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
+
+                if (chartInstance) {
+                    chartInstance.data.labels = filteredData.map(d => d.x);
+                    chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
+                    chartInstance.update();
+                } else {
+                    const ctx = $chartCanvas[0].getContext('2d');
+                    chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: filteredData.map(d => d.x),
+                            datasets: [{
+                                label: 'Ratio',
+                                data: filteredData.map(d => d.y),
+                                borderColor: 'rgba(0, 122, 255, 1)',
+                                backgroundColor: (context) => {
+                                    const chart = context.chart;
+                                    const {ctx, chartArea} = chart;
+                                    if (!chartArea) return null;
+                                    return createGradient(ctx, chartArea);
+                                },
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                tension: 0.1,
+                                fill: 'start',
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
+                                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
+                            }
+                        }
+                    });
+                }
+                
+                const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
+                const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
+                const currentValue = currentMetrics[currentMetricKey];
+                const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
+                
+                if (typeof currentValue === 'number') {
+                    $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
+                    $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
+                    $currentValueDisplay.show();
+                } else {
+                    $currentValueDisplay.hide();
+                }
+            }
+
+            $container.on('change', '#jtw-kmv-metric-selector', updateChart);
+            $container.on('click', '.jtw-kmv-time-btn', function() {
+                $container.find('.jtw-kmv-time-btn').removeClass('active');
+                $(this).addClass('active');
+                updateChart();
+            });
+
+            updateChart();
+        }
+        // --- END: New Chart Initialization Logic ---
+
+    // This function should be added to public-scripts.js and called from initializeFairValueAnalysisSection
+    function initializeKeyMetricValuationsChart($container) {
+        const $chartCanvas = $container.find('#jtw-kmv-chart');
+        const $historicalDataScript = $container.find('#jtw-historical-ratios-data');
+        
+        if (!$chartCanvas.length || !$historicalDataScript.length) {
+            return;
+        }
+
+        const historicalData = JSON.parse($historicalDataScript.html());
+        const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
+        let chartInstance;
+
+        const createGradient = (ctx, area) => {
+            const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+            gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
+            gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
+            return gradient;
+        };
+
+        function updateChart() {
+            const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
+            const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
+            const data = historicalData[selectedMetric] || [];
+            const endDate = new Date();
+            let startDate = new Date();
+            switch(selectedRange) {
+                case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
+                case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
+                case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
+                case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
+            }
+            const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
+
+            if (chartInstance) {
+                chartInstance.data.labels = filteredData.map(d => d.x);
+                chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
+                chartInstance.update();
+            } else {
+                const ctx = $chartCanvas[0].getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: filteredData.map(d => d.x),
+                        datasets: [{
+                            label: 'Ratio',
+                            data: filteredData.map(d => d.y),
+                            borderColor: 'rgba(0, 122, 255, 1)',
+                            backgroundColor: (context) => {
+                                const chart = context.chart;
+                                const {ctx, chartArea} = chart;
+                                if (!chartArea) return null;
+                                return createGradient(ctx, chartArea);
+                            },
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1,
+                            fill: 'start',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
+                            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
+                        }
+                    }
+                });
+            }
+            
+            const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
+            const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
+            const currentValue = currentMetrics[currentMetricKey];
+            const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
+            
+            if (typeof currentValue === 'number') {
+                $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
+                $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
+                $currentValueDisplay.show();
+            } else {
+                $currentValueDisplay.hide();
+            }
+        }
+
+        $container.on('change', '#jtw-kmv-metric-selector', updateChart);
+        $container.on('click', '.jtw-kmv-time-btn', function() {
+            $container.find('.jtw-kmv-time-btn').removeClass('active');
+            $(this).addClass('active');
+            updateChart();
+        });
+
+        updateChart();
+    }
+
+        recalculateValuation();
+        $container.on('input', '.jtw-assumption-input', recalculateValuation);
+        initializeKeyMetricValuationsChart($container);
+    }
+
+    function initializePerformanceSection($container) {
+        const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
+        if (!$chartCanvas.length) return;
+
+        const existingChart = Chart.getChart($chartCanvas[0]);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
+        const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
+        const parsedData = JSON.parse(chartDataRaw);
+
+        const revenue = parsedData.revenue || [];
+        const earnings = parsedData.earnings || [];
+        const fcf = parsedData.fcf || [];
+        const op_cash = parsedData.op_cash || [];
+        const forecast_start_date = parsedData.forecast_start_date;
+
+        // --- START: CUSTOM TOOLTIP FUNCTION ---
+        const getOrCreateTooltip = (chart) => {
+            let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
+            if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.className = 'jtw-chart-tooltip';
+                chart.canvas.parentNode.appendChild(tooltipEl);
+            }
+            return tooltipEl;
+        };
+
+        const externalTooltipHandler = (context) => {
+            const { chart, tooltip } = context;
+            const tooltipEl = getOrCreateTooltip(chart);
+
+            if (tooltip.opacity === 0) {
+                tooltipEl.style.opacity = 0;
+                return;
+            }
+
+            const title = tooltip.title || [];
+            const bodyLines = tooltip.body || [];
+
+            let innerHtml = '<div class="tooltip-header">' + new Date(title[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) + '</div>';
+            innerHtml += '<div class="tooltip-body">';
+
+            bodyLines.forEach((body, i) => {
+                const colors = tooltip.labelColors[i];
+                const label = body.lines[0].split(':')[0];
+                const value = body.lines[0].split(':')[1];
+                const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+                const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+                innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
+            });
+            
+            innerHtml += '</div>';
+            tooltipEl.innerHTML = innerHtml;
+
+            const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+            tooltipEl.style.opacity = 1;
+            tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+            tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+        };
+
+        const now = new Date();
+        const threeYearsAgo = new Date(new Date().setFullYear(now.getFullYear() - 3));
+        const twoYearsHence = new Date(new Date().setFullYear(now.getFullYear() + 2));
+
+        const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
+
+        const datasets = [
+            { label: 'Revenue', data: revenue, color: '#007bff' },
+            { label: 'Earnings', data: earnings, color: '#2ecc71' },
+            { label: 'Free Cash Flow', data: fcf, color: '#ffc107' },
+            { label: 'Cash From Op', data: op_cash, color: '#fd7e14' },
+        ].map(ds => ({
+            label: ds.label,
+            data: fillMissingPoints(ds.data, allDates),
+            borderColor: ds.color,
+            backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, ds.color),
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.3,
+            fill: 'start'
+        }));
+
+        const ctx = $chartCanvas[0].getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels: allDates, datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: { 
+                        type: 'time', 
+                        time: { unit: 'year', displayFormats: { year: 'yyyy' } }, 
+                        grid: { display: false },
+                        // --- FIX: SET DATE RANGE ---
+                        min: threeYearsAgo.toISOString(),
+                        max: twoYearsHence.toISOString()
+                    },
+                    y: { 
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
+                        ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) } 
+                    }
+                },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { 
+                        enabled: false, // Disable default tooltip
+                        external: externalTooltipHandler // Enable custom tooltip
+                    },
+                    annotation: {
+                        annotations: {
+                            forecastLine: {
+                                type: 'line',
+                                scaleID: 'x',
+                                value: forecast_start_date,
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                borderWidth: 1,
+                                borderDash: [6, 6]
+                            },
+                            forecastBox: {
+                                type: 'box',
+                                scaleID: 'x',
+                                xMin: forecast_start_date,
+                                backgroundColor: 'rgba(54, 162, 235, 0.1)'
+                            },
+                            // --- FIX: POSITION ANNOTATION LABELS AT TOP ---
+                            pastLabel: {
+                                type: 'label',
+                                scaleID: 'x',
+                                xValue: forecast_start_date,
+                                yValue: 20,
+                                content: 'Past',
+                                color: '#aaa',
+                                font: { size: 12 },
+                                xAdjust: -30,
+                            },
+                            forecastLabel: {
+                                type: 'label',
+                                scaleID: 'x',
+                                xValue: forecast_start_date,
+                                yValue: 20,
+                                content: 'Analysts Forecasts',
+                                color: '#aaa',
+                                font: { size: 12 },
+                                xAdjust: 80,
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function initializeKeyMetricsRatiosSection($container) {
         // PEG/PEGY Calculator Logic
         const $calculator = $container.find('.jtw-peg-pegy-calculator');
         if ($calculator.length) {
@@ -285,730 +885,6 @@ function initializeKeyMetricsRatiosSection($container) {
             fetchPeerData(peersToFetch);
         });
     }
-
-function initializeEarningsRevenueForecastChart($container) {
-    const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
-    if (!$chartCanvas.length) return;
-
-    const existingChart = Chart.getChart($chartCanvas[0]);
-    if (existingChart) {
-        existingChart.destroy();
-    }
-
-    const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
-    const parsedData = JSON.parse(chartDataRaw);
-
-    const revenue = parsedData.revenue || [];
-    const earnings = parsedData.earnings || [];
-    const fcf = parsedData.fcf || [];
-    const op_cash = parsedData.op_cash || [];
-    const forecast_start_date = parsedData.forecast_start_date;
-
-    // --- START: CUSTOM TOOLTIP FUNCTION ---
-    const getOrCreateTooltip = (chart) => {
-        let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
-        if (!tooltipEl) {
-            tooltipEl = document.createElement('div');
-            tooltipEl.className = 'jtw-chart-tooltip';
-            chart.canvas.parentNode.appendChild(tooltipEl);
-        }
-        return tooltipEl;
-    };
-
-    const externalTooltipHandler = (context) => {
-        const { chart, tooltip } = context;
-        const tooltipEl = getOrCreateTooltip(chart);
-
-        if (tooltip.opacity === 0) {
-            tooltipEl.style.opacity = 0;
-            return;
-        }
-
-        const title = tooltip.title || [];
-        const bodyLines = tooltip.body || [];
-
-        let innerHtml = '<div class="tooltip-header">' + new Date(title[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) + '</div>';
-        innerHtml += '<div class="tooltip-body">';
-
-        bodyLines.forEach((body, i) => {
-            const colors = tooltip.labelColors[i];
-            const label = body.lines[0].split(':')[0];
-            const value = body.lines[0].split(':')[1];
-            const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-            const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-            innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
-        });
-        
-        innerHtml += '</div>';
-        tooltipEl.innerHTML = innerHtml;
-
-        const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-        tooltipEl.style.opacity = 1;
-        tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-        tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-    };
-
-    const now = new Date();
-    const threeYearsAgo = new Date(new Date().setFullYear(now.getFullYear() - 3));
-    const twoYearsHence = new Date(new Date().setFullYear(now.getFullYear() + 2));
-
-    const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
-
-    const datasets = [
-        { label: 'Revenue', data: revenue, color: '#007bff' },
-        { label: 'Earnings', data: earnings, color: '#2ecc71' },
-        { label: 'Free Cash Flow', data: fcf, color: '#ffc107' },
-        { label: 'Cash From Op', data: op_cash, color: '#fd7e14' },
-    ].map(ds => ({
-        label: ds.label,
-        data: fillMissingPoints(ds.data, allDates),
-        borderColor: ds.color,
-        backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, ds.color),
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.3,
-        fill: 'start'
-    }));
-
-    const ctx = $chartCanvas[0].getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: { labels: allDates, datasets: datasets },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            scales: {
-                x: { 
-                    type: 'time', 
-                    time: { unit: 'year', displayFormats: { year: 'yyyy' } }, 
-                    grid: { display: false },
-                    // --- FIX: SET DATE RANGE ---
-                    min: threeYearsAgo.toISOString(),
-                    max: twoYearsHence.toISOString()
-                },
-                y: { 
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
-                    ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) } 
-                 }
-            },
-            plugins: { 
-                legend: { display: false },
-                tooltip: { 
-                    enabled: false, // Disable default tooltip
-                    external: externalTooltipHandler // Enable custom tooltip
-                },
-                annotation: {
-                    annotations: {
-                        forecastLine: {
-                            type: 'line',
-                            scaleID: 'x',
-                            value: forecast_start_date,
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                            borderWidth: 1,
-                            borderDash: [6, 6]
-                        },
-                        forecastBox: {
-                            type: 'box',
-                            scaleID: 'x',
-                            xMin: forecast_start_date,
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)'
-                        },
-                        // --- FIX: POSITION ANNOTATION LABELS AT TOP ---
-                        pastLabel: {
-                            type: 'label',
-                            scaleID: 'x',
-                            xValue: forecast_start_date,
-                            yValue: 20,
-                            content: 'Past',
-                            color: '#aaa',
-                            font: { size: 12 },
-                            xAdjust: -30,
-                        },
-                        forecastLabel: {
-                            type: 'label',
-                            scaleID: 'x',
-                            xValue: forecast_start_date,
-                            yValue: 20,
-                            content: 'Analysts Forecasts',
-                            color: '#aaa',
-                            font: { size: 12 },
-                            xAdjust: 80,
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function initializeValuationSection($container) {
-    const $contentDiv = $container.find('#section-intrinsic-valuation-content');
-    if (!$contentDiv.length) {
-        console.error("Intrinsic valuation content div not found.");
-        return;
-    }
-
-    const $valuationWrapper = $contentDiv.find('.jtw-valuation-tables-wrapper');
-    const $loader = $contentDiv.find('.jtw-valuation-loader');
-    $loader.hide();
-    $valuationWrapper.show();
-
-    const componentRatios = $contentDiv.data('ratios');
-    const currentPrice = $contentDiv.data('current-price');
-    const sharesOutstanding = parseFloat($contentDiv.data('shares-outstanding'));
-    const ticker = $contentDiv.data('ticker');
-
-    const $swsContainer = $contentDiv.find('.jtw-sws-valuation-container');
-    $swsContainer.find('.jtw-sws-ticker').text(ticker);
-
-    $container.on('click', '.jtw-model-selector', function(e) {
-        e.stopPropagation();
-        const $selector = $(this);
-        $('.jtw-model-selector').not($selector).removeClass('open');
-        $selector.toggleClass('open');
-    });
-
-    $container.on('click', '.jtw-model-options li', function(e) {
-        e.stopPropagation();
-        const $li = $(this);
-        const $selector = $li.closest('.jtw-model-selector');
-        const $row = $selector.closest('.jtw-terminal-value-row');
-        const modelKey = $li.data('model-key');
-        const modelLabel = $li.text();
-        $selector.find('.jtw-selected-model').text(modelLabel);
-        $row.attr('data-selected-model', modelKey);
-        $selector.removeClass('open');
-        recalculateValuation();
-    });
-
-    $(document).on('click', function() {
-        $('.jtw-model-selector').removeClass('open');
-    });
-
-    function formatNumberForDisplay(num, unitLabel = '', decimals = 1) {
-        if (typeof num !== 'number' || isNaN(num)) return '-';
-        let divisor = 1;
-        if (unitLabel.includes('(Billions)')) divisor = 1e9;
-        else if (unitLabel.includes('(Millions)')) divisor = 1e6;
-        else if (unitLabel.includes('(Thousands)')) divisor = 1e3;
-        return (num / divisor).toFixed(decimals);
-    }
-
-    function parseFormattedNumber(str, unitLabel = '') {
-        let num = parseFloat(str);
-        if (isNaN(num)) return 0;
-        if (unitLabel.includes('(Billions)')) return num * 1e9;
-        if (unitLabel.includes('(Millions)')) return num * 1e6;
-        if (unitLabel.includes('(Thousands)')) return num * 1e3;
-        return num;
-    }
-
-
-
-    function updateSwsValuationGraphic(fairValue, currentPrice, modelName) {
-        if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
-            $swsContainer.hide();
-            return;
-        }
-        $swsContainer.show();
-        $swsContainer.find('.jtw-sws-model-name').text(modelName);
-
-        const diff = fairValue - currentPrice;
-        const pctDiff = (diff / currentPrice) * 100;
-
-        const $statusContainer = $swsContainer.find('.jtw-sws-main-metric');
-        const $statusPct = $statusContainer.find('.jtw-sws-percentage');
-        const $statusText = $statusContainer.find('.jtw-sws-status');
-
-        $statusContainer.removeClass('jtw-sws-status-positive jtw-sws-status-negative jtw-sws-status-neutral');
-        $statusPct.text(Math.abs(pctDiff).toFixed(1) + '%');
-
-        if (pctDiff > 20) {
-            $statusText.text('Undervalued');
-            $statusContainer.addClass('jtw-sws-status-positive');
-        } else if (pctDiff < -20) {
-            $statusText.text('Overvalued');
-            $statusContainer.addClass('jtw-sws-status-negative');
-        } else {
-            $statusText.text('Fairly Valued');
-            $statusContainer.addClass('jtw-sws-status-neutral');
-        }
-
-        const undervaluedBoundary = fairValue * 0.8;
-        const overvaluedBoundary = fairValue * 1.2;
-        const rangeMax = Math.max(currentPrice, overvaluedBoundary) * 1.2;
-        
-        const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
-        const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
-        
-        $swsContainer.find('.jtw-sws-zone.undervalued').css('width', undervaluedWidthPct + '%');
-        $swsContainer.find('.jtw-sws-zone.about-right').css('width', aboutRightWidthPct + '%');
-        
-        const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
-        const fairValueWidthPct = (fairValue / rangeMax) * 100;
-
-        const $currentPriceRow = $swsContainer.find('.current-price-row');
-        const $fairValueRow = $swsContainer.find('.fair-value-row');
-
-        $currentPriceRow.find('strong').text('$' + currentPrice.toFixed(2));
-        $fairValueRow.find('strong').text('$' + fairValue.toFixed(2));
-        
-        $currentPriceRow.find('.jtw-sws-bar-wrapper').css('width', currentPriceWidthPct + '%');
-        $fairValueRow.find('.jtw-sws-bar-wrapper').css('width', fairValueWidthPct + '%');
-    }
-
-    const recalculateValuation = debounce(function() {
-        if (!componentRatios || $.isEmptyObject(componentRatios)) {
-            return;
-        }
-        if (!sharesOutstanding || sharesOutstanding === 0) {
-            return;
-        }
-
-        const assumptions = { 
-            yearlyRevGrowth: {},
-            yearlyNIGrowth: {}
-        };
-        let hasAllInputs = true;
-        // START FIX: Select the main container that holds ALL tables.
-        const $tablesContainer = $container.find('.jtw-valuation-tables-wrapper');
-        // END FIX
-
-        // Use the new container for all selections
-        $tablesContainer.find('input[data-metric="yearlyRevGrowth"]').each(function() {
-            const $input = $(this);
-            const year = $input.data('year');
-            const growthRateValue = parseFloat($input.val());
-            if (!isNaN(growthRateValue)) {
-                assumptions.yearlyRevGrowth[year] = growthRateValue;
-            } else {
-                hasAllInputs = false;
-            }
-        });
-
-        $tablesContainer.find('input[data-metric="yearlyNIGrowth"]').each(function() {
-            const $input = $(this);
-            const year = $input.data('year');
-            const growthRateValue = parseFloat($input.val());
-            if (!isNaN(growthRateValue)) {
-                assumptions.yearlyNIGrowth[year] = growthRateValue;
-            } else {
-                hasAllInputs = false;
-            }
-        });
-        
-        // This selector is no longer needed as the model selector was removed.
-        // assumptions.model = $tablesContainer.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
-        assumptions.model = 'dcf'; // Default to DCF model
-
-        const revenueUnitLabel = $tablesContainer.find('.jtw-revenue-label').first().text();
-        let previousRevenue = parseFloat($tablesContainer.find('.jtw-revenue-result[data-year="1"]').data('raw-value'));
-        let previousNetIncome = parseFloat($tablesContainer.find('.jtw-net-income-result[data-year="1"]').data('raw-value'));
-
-        const epsYear0 = parseFloat($tablesContainer.find('.jtw-eps-result[data-year="0"]').text());
-        const peYear0 = parseFloat($tablesContainer.find('.jtw-pe-result[data-year="0"]').text());
-        if (!isNaN(epsYear0) && !isNaN(peYear0)) {
-            $tablesContainer.find('.jtw-moe-result-cell[data-year="0"]').text('$' + (epsYear0 * peYear0).toFixed(2));
-        }
-
-        const epsYear1 = parseFloat($tablesContainer.find('.jtw-eps-result[data-year="1"]').text());
-        const peYear1 = parseFloat($tablesContainer.find('.jtw-pe-input[data-year="1"]').val());
-        if (!isNaN(epsYear1) && !isNaN(peYear1)) {
-            $tablesContainer.find('.jtw-moe-result-cell[data-year="1"]').text('$' + (epsYear1 * peYear1).toFixed(2));
-        }
-
-        for (let i = 2; i <= 4; i++) {
-            const growthRateInput = $tablesContainer.find('input[data-metric="yearlyRevGrowth"][data-year="' + i + '"]');
-            const niGrowthRateInput = $tablesContainer.find('input[data-metric="yearlyNIGrowth"][data-year="' + i + '"]');
-            const peInput = $tablesContainer.find('.jtw-pe-input[data-year="' + i + '"]');
-            
-            if (peInput.length && peInput.val() === '') {
-                hasAllInputs = false;
-            }
-            
-            const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
-            const projectedRevenue = previousRevenue * (1 + growthRate);
-            $tablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
-            previousRevenue = projectedRevenue;
-
-            const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
-            let projectedNetIncome = previousNetIncome * (1 + niGrowthRate);
-
-            if (projectedNetIncome > projectedRevenue) {
-                projectedNetIncome = projectedRevenue;
-            }
-            
-            $tablesContainer.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
-            previousNetIncome = projectedNetIncome;
-
-            const netIncomeMargin = (projectedRevenue > 0) ? (projectedNetIncome / projectedRevenue) * 100 : 0;
-            $tablesContainer.find('.jtw-net-income-margin-result[data-year="' + i + '"]').text(netIncomeMargin.toFixed(1) + '%');
-
-            const eps = Number(sharesOutstanding) > 0 ? projectedNetIncome / Number(sharesOutstanding) : 0;
-            $tablesContainer.find('.jtw-eps-result[data-year="' + i + '"]').text(eps.toFixed(2));
-            
-            if (peInput.length) {
-                const peRatio = parseFloat(peInput.val()) || 0;
-                const sharePrice = eps * peRatio;
-                $tablesContainer.find('.jtw-moe-result-cell[data-year="' + i + '"]').text('$' + sharePrice.toFixed(2));
-            }
-        }
-
-        if (!hasAllInputs) {
-            return;
-        }
-
-        const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
-        $swsContainer.css('opacity', 0.5);
-
-        $.ajax({
-            url: jtw_public_params.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'jtw_recalculate_valuation',
-                nonce: jtw_public_params.recalculate_nonce,
-                ticker: ticker,
-                assumptions: { base: assumptions } 
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data) {
-                    const caseData = response.data.base;
-                    if (caseData.error) {
-                        $swsContainer.hide();
-                        // Optionally, show an error message elsewhere if needed
-                        console.error('Valuation Error:', caseData.error);
-                    } else {
-                        updateSwsValuationGraphic(caseData.fair_value, currentPrice, caseData.valuation_label);
-                        const modalId = '#jtw-assumptions-modal';
-                        if ($(modalId).length && caseData.modal_html) {
-                            $(modalId).find('.jtw-modal-content').html(caseData.modal_html);
-                        }
-                    }
-                } else {
-                    $swsContainer.hide();
-                    console.error("Recalculation failed:", response.data ? response.data.message : 'No data in response');
-                }
-            },
-            error: function() {
-                $swsContainer.hide();
-                console.error("AJAX error during recalculation.");
-            },
-            complete: function() {
-                $swsContainer.css('opacity', 1);
-            }
-        });
-    }, 500);
-    
-    // --- START: New Chart Initialization Logic ---
-    const $chartCanvas = $container.find('#jtw-kmv-chart');
-    if ($chartCanvas.length) {
-        const historicalData = JSON.parse($container.find('#jtw-historical-ratios-data').html());
-        const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
-        let chartInstance;
-
-        const createGradient = (ctx, area) => {
-            const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-            gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
-            gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
-            return gradient;
-        };
-
-        function updateChart() {
-            const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
-            const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
-            const data = historicalData[selectedMetric] || [];
-            const endDate = new Date();
-            let startDate = new Date();
-            switch(selectedRange) {
-                case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
-                case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
-                case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
-                case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
-            }
-            const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
-
-            if (chartInstance) {
-                chartInstance.data.labels = filteredData.map(d => d.x);
-                chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
-                chartInstance.update();
-            } else {
-                const ctx = $chartCanvas[0].getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: filteredData.map(d => d.x),
-                        datasets: [{
-                            label: 'Ratio',
-                            data: filteredData.map(d => d.y),
-                            borderColor: 'rgba(0, 122, 255, 1)',
-                            backgroundColor: (context) => {
-                                const chart = context.chart;
-                                const {ctx, chartArea} = chart;
-                                if (!chartArea) return null;
-                                return createGradient(ctx, chartArea);
-                            },
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.1,
-                            fill: 'start',
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
-                            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
-                        }
-                    }
-                });
-            }
-            
-            const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
-            const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
-            const currentValue = currentMetrics[currentMetricKey];
-            const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
-            
-            if (typeof currentValue === 'number') {
-                $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
-                $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
-                $currentValueDisplay.show();
-            } else {
-                $currentValueDisplay.hide();
-            }
-        }
-
-        $container.on('change', '#jtw-kmv-metric-selector', updateChart);
-        $container.on('click', '.jtw-kmv-time-btn', function() {
-            $container.find('.jtw-kmv-time-btn').removeClass('active');
-            $(this).addClass('active');
-            updateChart();
-        });
-
-        updateChart();
-    }
-    // --- END: New Chart Initialization Logic ---
-
-// This function should be added to public-scripts.js and called from initializeFairValueAnalysisSection
-function initializeKeyMetricValuationsChart($container) {
-    const $chartCanvas = $container.find('#jtw-kmv-chart');
-    const $historicalDataScript = $container.find('#jtw-historical-ratios-data');
-    
-    if (!$chartCanvas.length || !$historicalDataScript.length) {
-        return;
-    }
-
-    const historicalData = JSON.parse($historicalDataScript.html());
-    const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
-    let chartInstance;
-
-    const createGradient = (ctx, area) => {
-        const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-        gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
-        gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
-        return gradient;
-    };
-
-    function updateChart() {
-        const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
-        const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
-        const data = historicalData[selectedMetric] || [];
-        const endDate = new Date();
-        let startDate = new Date();
-        switch(selectedRange) {
-            case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
-            case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
-            case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
-            case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
-        }
-        const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
-
-        if (chartInstance) {
-            chartInstance.data.labels = filteredData.map(d => d.x);
-            chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
-            chartInstance.update();
-        } else {
-            const ctx = $chartCanvas[0].getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: filteredData.map(d => d.x),
-                    datasets: [{
-                        label: 'Ratio',
-                        data: filteredData.map(d => d.y),
-                        borderColor: 'rgba(0, 122, 255, 1)',
-                        backgroundColor: (context) => {
-                            const chart = context.chart;
-                            const {ctx, chartArea} = chart;
-                            if (!chartArea) return null;
-                            return createGradient(ctx, chartArea);
-                        },
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        tension: 0.1,
-                        fill: 'start',
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
-                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
-                    }
-                }
-            });
-        }
-        
-        const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
-        const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
-        const currentValue = currentMetrics[currentMetricKey];
-        const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
-        
-        if (typeof currentValue === 'number') {
-            $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
-            $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
-            $currentValueDisplay.show();
-        } else {
-            $currentValueDisplay.hide();
-        }
-    }
-
-    $container.on('change', '#jtw-kmv-metric-selector', updateChart);
-    $container.on('click', '.jtw-kmv-time-btn', function() {
-        $container.find('.jtw-kmv-time-btn').removeClass('active');
-        $(this).addClass('active');
-        updateChart();
-    });
-
-    updateChart();
-}
-
-    recalculateValuation();
-    $container.on('input', '.jtw-assumption-input', recalculateValuation);
-    initializeKeyMetricValuationsChart($container);
-}
-
-function initializeKeyMetricValuationsSection($container) {
-    const $chartCanvas = $container.find('#jtw-kmv-chart');
-    if (!$chartCanvas.length) return;
-
-    // --- FIX for "Canvas is already in use" ---
-    // Get the chart instance associated with the canvas element and destroy it.
-    const existingChart = Chart.getChart($chartCanvas[0]);
-    if (existingChart) {
-        existingChart.destroy();
-    }
-    // --- END FIX ---
-
-    const historicalData = JSON.parse($container.find('#jtw-historical-ratios-data').html());
-    const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
-
-    let chartInstance; // This will hold the new chart instance
-
-    const createGradient = (ctx, area) => {
-        const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-        gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
-        gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
-        return gradient;
-    };
-
-    function updateChart() {
-        const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
-        const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
-        const data = historicalData[selectedMetric] || [];
-        const endDate = new Date();
-        let startDate = new Date();
-        switch(selectedRange) {
-            case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
-            case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
-            case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
-            case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
-        }
-        const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
-
-        // Since we destroyed any old chart, chartInstance will be null, so we create a new one.
-        // If we update the chart (e.g., change range), this logic still works.
-        if (chartInstance) {
-            chartInstance.data.labels = filteredData.map(d => d.x);
-            chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
-            chartInstance.update();
-        } else {
-            const ctx = $chartCanvas[0].getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: filteredData.map(d => d.x),
-                    datasets: [{
-                        label: 'Ratio',
-                        data: filteredData.map(d => d.y),
-                        borderColor: 'rgba(0, 122, 255, 1)',
-                        backgroundColor: (context) => {
-                            const chart = context.chart;
-                            const {ctx, chartArea} = chart;
-                            if (!chartArea) return null;
-                            return createGradient(ctx, chartArea);
-                        },
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        tension: 0.1,
-                        fill: 'start',
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
-                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x`,
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
-        const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
-        const currentValue = currentMetrics[currentMetricKey];
-        const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
-        
-        if (typeof currentValue === 'number') {
-            $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
-            $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
-            $currentValueDisplay.show();
-        } else {
-            $currentValueDisplay.hide();
-        }
-    }
-
-    $container.on('change', '#jtw-kmv-metric-selector', updateChart);
-    $container.on('click', '.jtw-kmv-time-btn', function() {
-        $container.find('.jtw-kmv-time-btn').removeClass('active');
-        $(this).addClass('active');
-        updateChart();
-    });
-
-    updateChart();
-}
 
     function initializeHistoricalCharts($container) {
         const $chartDataScripts = $container.find('.jtw-chart-data');
@@ -1429,79 +1305,79 @@ function initializeKeyMetricValuationsSection($container) {
         });
     }
 
-function initializeAnalyzerPage() {
-    const $container = $('.jtw-analyzer-wrapper').first();
-    if (!$container.length) return;
+    function initializeAnalyzerPage() {
+        const $container = $('.jtw-analyzer-wrapper').first();
+        if (!$container.length) return;
 
-    const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
-    if (!ticker) return;
+        const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+        if (!ticker) return;
 
-    const observer = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const $placeholder = $(entry.target);
-                const section = $placeholder.data('section');
-                
-                // Prevent reloading if already loaded
-                if ($placeholder.data('loaded')) {
-                    observer.unobserve(entry.target);
-                    return;
-                }
-                
-                $placeholder.data('loaded', true).html('<div class="jtw-loading-spinner"></div>');
-                
-                // --- AJAX Call Logic is now directly inside the observer ---
-                $.ajax({
-                    url: jtw_public_params.ajax_url,
-                    type: 'POST',
-                    data: { 
-                        action: 'jtw_fetch_section_data', 
-                        nonce: jtw_public_params.section_nonce, 
-                        ticker: ticker.toUpperCase(), 
-                        section: section 
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success && response.data) {
-                            if (response.data.currency_notice) {
-                                $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
-                            }
-
-                            if (response.data.html) {
-                                $placeholder.html(response.data.html);
-                            }
-                            
-                            // Call the appropriate initializer function for the loaded section
-                            if (section === 'overview') {
-                                initializeOverviewSection($placeholder);
-                            } else if (section === 'intrinsic-valuation') {
-                                // This now correctly calls the renamed function
-                                initializeValuationSection($placeholder); 
-                            } else if (section === 'earnings-revenue-forecasts') {
-                                initializeEarningsRevenueForecastChart($placeholder);
-                            } else if (section === 'key-metrics-ratios') {
-                                initializeKeyMetricsRatiosSection($placeholder);
-                            } else if (section === 'historical-data') {
-                                initializeHistoricalDataSection($placeholder);
-                            } else if (section === 'past-performance') {
-                                initializeHistoricalCharts($placeholder);
-                            }
-
-                        } else {
-                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data ? response.data.message : getLocalizedText('text_error', 'An error occurred.')) + '</p></div>');
-                        }
-                    },
-                    error: function(jqXHR) {
-                        $placeholder.html('<div class="jtw-error notice notice-error inline"><p>AJAX request failed. Server responded: <br><small><code>' + (jqXHR.responseText || getLocalizedText('text_error')) + '</code></small></p></div>');
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const $placeholder = $(entry.target);
+                    const section = $placeholder.data('section');
+                    
+                    // Prevent reloading if already loaded
+                    if ($placeholder.data('loaded')) {
+                        observer.unobserve(entry.target);
+                        return;
                     }
-                });
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { rootMargin: "200px" });
+                    
+                    $placeholder.data('loaded', true).html('<div class="jtw-loading-spinner"></div>');
+                    
+                    // --- AJAX Call Logic is now directly inside the observer ---
+                    $.ajax({
+                        url: jtw_public_params.ajax_url,
+                        type: 'POST',
+                        data: { 
+                            action: 'jtw_fetch_section_data', 
+                            nonce: jtw_public_params.section_nonce, 
+                            ticker: ticker.toUpperCase(), 
+                            section: section 
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success && response.data) {
+                                if (response.data.currency_notice) {
+                                    $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
+                                }
 
-    document.querySelectorAll('.jtw-content-section-placeholder').forEach(p => observer.observe(p));
-}
+                                if (response.data.html) {
+                                    $placeholder.html(response.data.html);
+                                }
+                                
+                                // Call the appropriate initializer function for the loaded section
+                                if (section === 'overview') {
+                                    initializeOverviewSection($placeholder);
+                                } else if (section === 'intrinsic-valuation') {
+                                    // This now correctly calls the renamed function
+                                    initializeValuationSection($placeholder); 
+                                } else if (section === 'earnings-revenue-forecasts') {
+                                    initializePerformanceSection($placeholder);
+                                } else if (section === 'key-metrics-ratios') {
+                                    initializeKeyMetricsRatiosSection($placeholder);
+                                } else if (section === 'historical-data') {
+                                    initializeHistoricalDataSection($placeholder);
+                                } else if (section === 'past-performance') {
+                                    initializeHistoricalCharts($placeholder);
+                                }
+
+                            } else {
+                                $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data ? response.data.message : getLocalizedText('text_error', 'An error occurred.')) + '</p></div>');
+                            }
+                        },
+                        error: function(jqXHR) {
+                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>AJAX request failed. Server responded: <br><small><code>' + (jqXHR.responseText || getLocalizedText('text_error')) + '</code></small></p></div>');
+                        }
+                    });
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { rootMargin: "200px" });
+
+        document.querySelectorAll('.jtw-content-section-placeholder').forEach(p => observer.observe(p));
+    }
 
     $(document).ready(function() {
         initializeHeaderSearch();
