@@ -145,8 +145,6 @@ public function render_analyzer_layout_shortcode( $atts ) {
         wp_send_json_success(['matches' => array_slice($matches, 0, 3)]);
     }
     
-// In class-journey-to-wealth-public.php, replace the existing `ajax_fetch_section_data` function with this updated version.
-
 public function ajax_fetch_section_data() {
     check_ajax_referer('jtw_fetch_section_nonce', 'nonce');
     $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
@@ -203,6 +201,9 @@ public function ajax_fetch_section_data() {
             $this->store_and_map_discovered_company($ticker, $raw_data['overview']['Industry'], $raw_data['overview']['Sector']);
             $response_data['html'] = $this->build_overview_section_html($raw_data['overview'], $raw_data['quote']);
             break;
+        case 'earnings-revenue-forecasts': // ADD THIS NEW CASE
+            $response_data['html'] = $this->build_performance_section_html($calculated_data);
+            break;
         case 'historical-data':
             $response_data['html'] = $this->build_historical_data_section_html($calculated_data['historical_table_data']);
             break;
@@ -211,9 +212,6 @@ public function ajax_fetch_section_data() {
             break;
         case 'key-metrics-ratios':
             $response_data['html'] = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
-            break;
-        case 'earnings-revenue-forecasts': // ADD THIS NEW CASE
-            $response_data['html'] = $this->build_earnings_revenue_forecasts_html($calculated_data['earnings_revenue_forecasts']);
             break;
     }
 
@@ -783,449 +781,463 @@ private function build_case_table_html($group, $args) {
     return ob_get_clean();
 }
 
-private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $calculated_data) {
-    // --- START: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
-    $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
-    $key_metrics = $calculated_data['key_metrics'] ?? [];
-    $historical_ratios_data = $calculated_data['historical_ratios_data'] ?? []; // Get new data
-    $analyst_estimates = $calculated_data['analyst_estimates'] ?? []; // <-- THIS LINE WAS MISSING
-    // --- END: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
+    private function build_intrinsic_valuation_section_html($valuation_data, $valuation_summary, $details, $calculated_data) {
+        // --- START: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
+        $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
+        $key_metrics = $calculated_data['key_metrics'] ?? [];
+        $historical_ratios_data = $calculated_data['historical_ratios_data'] ?? []; // Get new data
+        $analyst_estimates = $calculated_data['analyst_estimates'] ?? []; // <-- THIS LINE WAS MISSING
+        // --- END: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
 
-    $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
+        $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
 
-    if (is_null($dcf_result_data)) {
-        $first_model_key = key($valuation_data);
-        $first_model_result = reset($valuation_data);
-        if (!$first_model_result || isset($first_model_result['error'])) {
-             return '<div class="jtw-content-section"><p>Could not generate valuation projection tables. Required data is missing or contains an error.</p></div>';
-        }
-        $dcf_result_data = $first_model_result['calculation_breakdown'];
-    }
-    
-    $component_ratios_json = isset($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'])) : '[]';
-    $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
-    $modal_id = 'jtw-assumptions-modal';
-
-    ob_start();
-    ?>
-    <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios='<?php echo $component_ratios_json; ?>' data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>">
-        
-        <div class="jtw-section-header">
-            <h4><?php esc_html_e('1. Valuation', 'journey-to-wealth'); ?></h4>
-            <div class="jtw-header-controls">
-                <button class="jtw-modal-trigger jtw-view-assumptions-btn" data-modal-target="#<?php echo esc_attr($modal_id); ?>">View Assumptions</button>
-            </div>
-        </div>
-
-        <div class="jtw-sws-header">
-            <h2>1.1 Share Price vs Fair Value</h2>
-            <p>What is the Fair Price of <span class="jtw-sws-ticker"></span> when looking at its future cash flows? For this estimate we use a <span class="jtw-sws-model-name">Discounted Cash Flow</span> model.</p>
-        </div>
-
-        <div class="jtw-valuation-tables-wrapper" style="display: none;">
-            <?php
-            // Create an arguments array to pass to the table builder
-            $table_args = []; // Populate with all necessary variables
-            $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
-            $current_year_revenue_growth = ($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] ?? 0) * 100;
-            $net_income_growth_current_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'] ?? 0) * 100;
-            $analyst_revenue_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_next_year'] ?? 0;
-            $revenue_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['revenue_growth_next_year'] ?? 0) * 100;
-            $net_income_next_year = $dcf_result_for_ui['calculation_breakdown']['net_income_next_year'] ?? 0;
-            $net_income_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_next_year'] ?? 0) * 100;
-            $analyst_eps_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_next_year'] ?? 0;
-            $current_year_net_income = $dcf_result_for_ui['calculation_breakdown']['net_income_current_year'] ?? 0;
-            $current_year_eps = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_current_year'] ?? 0;
-            $current_year = date('Y');
-            $unit = ''; $divisor = 1;
-            if (abs($analyst_revenue_current_year) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
-            elseif (abs($analyst_revenue_current_year) >= 1.0e+6) { $unit = '(Millions)'; $divisor = 1.0e+6; }
-            $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
-            $next_year_pe = ($analyst_eps_next_year > 0) ? $valuation_summary['current_price'] / $analyst_eps_next_year : 'N/A';
-            $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
-            if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
-            $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'net_income_growth_current_year', 'current_year_eps', 'current_year_pe', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
-            
-            echo $this->build_case_table_html('revenue', $table_args);
-            ?>
-        </div>
-
-        <div class="jtw-sws-valuation-container" style="display: none;">
-            <div class="jtw-sws-main-metric">
-                <div class="jtw-sws-percentage">-%</div>
-                <div class="jtw-sws-status">Calculating...</div>
-            </div>
-            <div class="jtw-sws-chart">
-                 <div class="jtw-sws-zone-bar-row">
-                    <div class="jtw-sws-zone-bar">
-                        <div class="jtw-sws-zone undervalued"><span class="jtw-zone-label">20% Undervalued</span></div>
-                        <div class="jtw-sws-zone about-right"><span class="jtw-zone-label">About Right</span></div>
-                        <div class="jtw-sws-zone overvalued"><span class="jtw-zone-label">20% Overvalued</span></div>
-                    </div>
-                </div>
-                <div class="jtw-sws-bar-row current-price-row">
-                    <div class="jtw-sws-bar-wrapper">
-                        <div class="jtw-sws-label-group">
-                            <span>Current Price</span>
-                            <strong>$0.00</strong>
-                        </div>
-                    </div>
-                </div>
-                <div class="jtw-sws-bar-row fair-value-row">
-                     <div class="jtw-sws-bar-wrapper">
-                        <div class="jtw-sws-label-group">
-                            <span>Fair Value</span>
-                            <strong>$0.00</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="jtw-valuation-tables-wrapper" style="display: none;">
-            <div class="jtw-sws-header">
-                <h2>1.2 Multiple of Earnings</h2>
-            </div>
-            <?php
-            echo $this->build_case_table_html('earnings', $table_args);
-            echo $this->build_case_table_html('valuation', $table_args);
-            ?>
-        </div>
-        <div class="jtw-sws-header">
-             <h2>1.3 Analyst Forward Estimate</h2>
-        </div>
-        <?php
-        if (!empty($analyst_estimates) && $analyst_estimates['total_analysts'] > 0) {
-            $target_price = $analyst_estimates['analyst_target_price'];
-            $total_analysts = $analyst_estimates['total_analysts'];
-            $current_price = $valuation_summary['current_price'];
-            
-            $fair_value_text = '';
-            $fair_value_class = '';
-            if (is_numeric($target_price) && is_numeric($current_price) && $current_price > 0) {
-                $difference_percent = (($target_price - $current_price) / $current_price) * 100;
-                if ($difference_percent > 5) {
-                    $fair_value_text = abs(round($difference_percent)) . '% undervalued';
-                    $fair_value_class = 'jtw-fair-value-undervalued';
-                } else if ($difference_percent < -5) {
-                    $fair_value_text = abs(round($difference_percent)) . '% overvalued';
-                    $fair_value_class = 'jtw-fair-value-overvalued';
-                } else {
-                    $fair_value_text = 'Fairly Valued';
-                    $fair_value_class = 'jtw-fair-value-neutral';
-                }
+        if (is_null($dcf_result_data)) {
+            $first_model_key = key($valuation_data);
+            $first_model_result = reset($valuation_data);
+            if (!$first_model_result || isset($first_model_result['error'])) {
+                return '<div class="jtw-content-section"><p>Could not generate valuation projection tables. Required data is missing or contains an error.</p></div>';
             }
+            $dcf_result_data = $first_model_result['calculation_breakdown'];
+        }
+        
+        $component_ratios_json = isset($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'])) : '[]';
+        $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
+        $modal_id = 'jtw-assumptions-modal';
 
-            $strong_buy_percent = ($analyst_estimates['strong_buy'] / $total_analysts) * 100;
-            $buy_percent = ($analyst_estimates['buy'] / $total_analysts) * 100;
-            $hold_percent = ($analyst_estimates['hold'] / $total_analysts) * 100;
-            $sell_percent = ($analyst_estimates['sell'] / $total_analysts) * 100;
-            $strong_sell_percent = ($analyst_estimates['strong_sell'] / $total_analysts) * 100;
+        ob_start();
         ?>
-        <div class="jtw-analyst-estimates-container">
-            <div class="jtw-analyst-summary">
-                <div class="jtw-analyst-target">
-                    <div class="jtw-value"><?php echo esc_html($target_price ? '$' . number_format($target_price, 2) : 'N/A'); ?></div>
-                    <div class="jtw-label">Analyst Fair Price</div>
-                </div>
-                <div class="jtw-analyst-count">
-                    <div class="jtw-value"><?php echo esc_html($total_analysts); ?></div>
-                    <div class="jtw-label">Number of Analysts</div>
+        <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios='<?php echo $component_ratios_json; ?>' data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>">
+            
+            <div class="jtw-section-header">
+                <h4><?php esc_html_e('1. Valuation', 'journey-to-wealth'); ?></h4>
+                <div class="jtw-header-controls">
+                    <button class="jtw-modal-trigger jtw-view-assumptions-btn" data-modal-target="#<?php echo esc_attr($modal_id); ?>">View Assumptions</button>
                 </div>
             </div>
-            <?php if ($fair_value_text): ?>
-                <div class="jtw-analyst-fair-value-text <?php echo esc_attr($fair_value_class); ?>">
-                    <?php echo esc_html($fair_value_text); ?>
-                </div>
-            <?php endif; ?>
-            <div class="jtw-analyst-ratings-bar">
-                <div class="jtw-rating-segment strong-sell" style="width: <?php echo $strong_sell_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['strong_sell']); ?> Strong Sell"></div>
-                <div class="jtw-rating-segment sell" style="width: <?php echo $sell_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['sell']); ?> Sell"></div>
-                <div class="jtw-rating-segment hold" style="width: <?php echo $hold_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['hold']); ?> Hold"></div>
-                <div class="jtw-rating-segment buy" style="width: <?php echo $buy_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['buy']); ?> Buy"></div>
-                <div class="jtw-rating-segment strong-buy" style="width: <?php echo $strong_buy_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['strong_buy']); ?> Strong Buy"></div>
+
+            <div class="jtw-sws-header">
+                <h2>1.1 Share Price vs Fair Value</h2>
+                <p>What is the Fair Price of <span class="jtw-sws-ticker"></span> when looking at its future cash flows? For this estimate we use a <span class="jtw-sws-model-name">Discounted Cash Flow</span> model.</p>
             </div>
-        </div>
-        <?php } else { ?>
-            <div class="jtw-notice notice-info"><p>Analyst estimate data is not available for this stock.</p></div>
-        <?php } ?>
-        <div class="jtw-sws-header">
-             <h2>1.4 Historical Price to Earnings Ratio</h2>
-             <p>Historical Price to Earnings Ratio compares a stock’s price to its earnings over time. Higher ratios indicate that investors are willing to pay more for the stock.</p>
-        </div>
-        <div id="section-key-metric-valuations-content">
-            <?php if (!empty($historical_ratios_data)):
-                $metrics = [
-                    'pe_ratio' => 'Price to Earnings', 'ps_ratio' => 'Price to Sales', 'pb_ratio' => 'Price to Book',
-                    'ev_to_revenue' => 'EV/Revenue', 'ev_to_ebitda' => 'EV/EBITDA',
-                ];
-                $key_metric_map = [
-                    'pe_ratio' => 'PERatio', 'ps_ratio' => 'PriceToSalesRatioTTM', 'pb_ratio' => 'PriceToBookRatio',
-                    'ev_to_revenue' => 'EVToRevenue', 'ev_to_ebitda' => 'EVToEBITDA',
-                ];
+
+            <div class="jtw-valuation-tables-wrapper" style="display: none;">
+                <?php
+                // Create an arguments array to pass to the table builder
+                $table_args = []; // Populate with all necessary variables
+                $analyst_revenue_current_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_current_year'] ?? 0;
+                $current_year_revenue_growth = ($dcf_result_for_ui['calculation_breakdown']['current_year_revenue_growth'] ?? 0) * 100;
+                $net_income_growth_current_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_current_year'] ?? 0) * 100;
+                $analyst_revenue_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_revenue_next_year'] ?? 0;
+                $revenue_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['revenue_growth_next_year'] ?? 0) * 100;
+                $net_income_next_year = $dcf_result_for_ui['calculation_breakdown']['net_income_next_year'] ?? 0;
+                $net_income_growth_next_year = ($dcf_result_for_ui['calculation_breakdown']['net_income_growth_next_year'] ?? 0) * 100;
+                $analyst_eps_next_year = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_next_year'] ?? 0;
+                $current_year_net_income = $dcf_result_for_ui['calculation_breakdown']['net_income_current_year'] ?? 0;
+                $current_year_eps = $dcf_result_for_ui['calculation_breakdown']['analyst_eps_current_year'] ?? 0;
+                $current_year = date('Y');
+                $unit = ''; $divisor = 1;
+                if (abs($analyst_revenue_current_year) >= 1.0e+9) { $unit = '(Billions)'; $divisor = 1.0e+9; } 
+                elseif (abs($analyst_revenue_current_year) >= 1.0e+6) { $unit = '(Millions)'; $divisor = 1.0e+6; }
+                $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
+                $next_year_pe = ($analyst_eps_next_year > 0) ? $valuation_summary['current_price'] / $analyst_eps_next_year : 'N/A';
+                $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
+                if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
+                $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'net_income_growth_current_year', 'current_year_eps', 'current_year_pe', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
+                
+                echo $this->build_case_table_html('revenue', $table_args);
+                ?>
+            </div>
+
+            <div class="jtw-sws-valuation-container" style="display: none;">
+                <div class="jtw-sws-main-metric">
+                    <div class="jtw-sws-percentage">-%</div>
+                    <div class="jtw-sws-status">Calculating...</div>
+                </div>
+                <div class="jtw-sws-chart">
+                    <div class="jtw-sws-zone-bar-row">
+                        <div class="jtw-sws-zone-bar">
+                            <div class="jtw-sws-zone undervalued"><span class="jtw-zone-label">20% Undervalued</span></div>
+                            <div class="jtw-sws-zone about-right"><span class="jtw-zone-label">About Right</span></div>
+                            <div class="jtw-sws-zone overvalued"><span class="jtw-zone-label">20% Overvalued</span></div>
+                        </div>
+                    </div>
+                    <div class="jtw-sws-bar-row current-price-row">
+                        <div class="jtw-sws-bar-wrapper">
+                            <div class="jtw-sws-label-group">
+                                <span>Current Price</span>
+                                <strong>$0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="jtw-sws-bar-row fair-value-row">
+                        <div class="jtw-sws-bar-wrapper">
+                            <div class="jtw-sws-label-group">
+                                <span>Fair Value</span>
+                                <strong>$0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="jtw-valuation-tables-wrapper" style="display: none;">
+                <div class="jtw-sws-header">
+                    <h2>1.2 Multiple of Earnings</h2>
+                </div>
+                <?php
+                echo $this->build_case_table_html('earnings', $table_args);
+                echo $this->build_case_table_html('valuation', $table_args);
+                ?>
+            </div>
+            <div class="jtw-sws-header">
+                <h2>1.3 Analyst Forward Estimate</h2>
+            </div>
+            <?php
+            if (!empty($analyst_estimates) && $analyst_estimates['total_analysts'] > 0) {
+                $target_price = $analyst_estimates['analyst_target_price'];
+                $total_analysts = $analyst_estimates['total_analysts'];
+                $current_price = $valuation_summary['current_price'];
+                
+                $fair_value_text = '';
+                $fair_value_class = '';
+                if (is_numeric($target_price) && is_numeric($current_price) && $current_price > 0) {
+                    $difference_percent = (($target_price - $current_price) / $current_price) * 100;
+                    if ($difference_percent > 5) {
+                        $fair_value_text = abs(round($difference_percent)) . '% undervalued';
+                        $fair_value_class = 'jtw-fair-value-undervalued';
+                    } else if ($difference_percent < -5) {
+                        $fair_value_text = abs(round($difference_percent)) . '% overvalued';
+                        $fair_value_class = 'jtw-fair-value-overvalued';
+                    } else {
+                        $fair_value_text = 'Fairly Valued';
+                        $fair_value_class = 'jtw-fair-value-neutral';
+                    }
+                }
+
+                $strong_buy_percent = ($analyst_estimates['strong_buy'] / $total_analysts) * 100;
+                $buy_percent = ($analyst_estimates['buy'] / $total_analysts) * 100;
+                $hold_percent = ($analyst_estimates['hold'] / $total_analysts) * 100;
+                $sell_percent = ($analyst_estimates['sell'] / $total_analysts) * 100;
+                $strong_sell_percent = ($analyst_estimates['strong_sell'] / $total_analysts) * 100;
             ?>
-                <div class="jtw-kmv-controls">
-                    <div class="jtw-kmv-metric-selector-wrapper">
-                        <select id="jtw-kmv-metric-selector">
-                            <?php foreach ($metrics as $key => $label): ?>
-                                <option value="<?php echo esc_attr($key); ?>" data-key-metric-key="<?php echo esc_attr($key_metric_map[$key]); ?>"><?php echo esc_html($label); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+            <div class="jtw-analyst-estimates-container">
+                <div class="jtw-analyst-summary">
+                    <div class="jtw-analyst-target">
+                        <div class="jtw-value"><?php echo esc_html($target_price ? '$' . number_format($target_price, 2) : 'N/A'); ?></div>
+                        <div class="jtw-label">Analyst Fair Price</div>
                     </div>
-                    <div class="jtw-kmv-current-value" style="display: none;">
-                        <div class="jtw-sws-percentage">0.0x</div>
-                        <div class="jtw-sws-status">Current P/E Ratio</div>
-                    </div>
-                    <div class="jtw-kmv-time-toggles">
-                        <button class="jtw-kmv-time-btn" data-range="3M">3M</button>
-                        <button class="jtw-kmv-time-btn active" data-range="1Y">1Y</button>
-                        <button class="jtw-kmv-time-btn" data-range="3Y">3Y</button>
-                        <button class="jtw-kmv-time-btn" data-range="5Y">5Y</button>
+                    <div class="jtw-analyst-count">
+                        <div class="jtw-value"><?php echo esc_html($total_analysts); ?></div>
+                        <div class="jtw-label">Number of Analysts</div>
                     </div>
                 </div>
-                <div class="jtw-kmv-chart-container">
-                    <canvas id="jtw-kmv-chart"></canvas>
+                <?php if ($fair_value_text): ?>
+                    <div class="jtw-analyst-fair-value-text <?php echo esc_attr($fair_value_class); ?>">
+                        <?php echo esc_html($fair_value_text); ?>
+                    </div>
+                <?php endif; ?>
+                <div class="jtw-analyst-ratings-bar">
+                    <div class="jtw-rating-segment strong-sell" style="width: <?php echo $strong_sell_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['strong_sell']); ?> Strong Sell"></div>
+                    <div class="jtw-rating-segment sell" style="width: <?php echo $sell_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['sell']); ?> Sell"></div>
+                    <div class="jtw-rating-segment hold" style="width: <?php echo $hold_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['hold']); ?> Hold"></div>
+                    <div class="jtw-rating-segment buy" style="width: <?php echo $buy_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['buy']); ?> Buy"></div>
+                    <div class="jtw-rating-segment strong-buy" style="width: <?php echo $strong_buy_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['strong_buy']); ?> Strong Buy"></div>
                 </div>
-                <script type="application/json" id="jtw-historical-ratios-data"><?php echo json_encode($historical_ratios_data); ?></script>
-                <script type="application/json" id="jtw-current-key-metrics-data"><?php echo json_encode($key_metrics); ?></script>
-            <?php else: ?>
-                <div class="jtw-notice notice-info"><p>Historical ratio data is not available for this stock.</p></div>
-            <?php endif; ?>
-        </div>
-
-        <div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>
-        <div id="<?php echo esc_attr($modal_id); ?>" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span></div></div>
-        <div class="jtw-modal-overlay"></div>
-    </div>
-    <?php
-    return ob_get_clean();
-}
-
-private function build_key_metric_valuations_section_html($ratios_data, $key_metrics) {
-    if (empty($ratios_data)) {
-        return ''; // Don't render the section if there's no data
-    }
-
-    $metrics = [
-        'pe_ratio' => 'Price to Earnings',
-        'ps_ratio' => 'Price to Sales',
-        'pb_ratio' => 'Price to Book',
-        'ev_to_revenue' => 'EV/Revenue',
-        'ev_to_ebitda' => 'EV/EBITDA',
-    ];
-
-    $key_metric_map = [
-        'pe_ratio' => 'PERatio',
-        'ps_ratio' => 'PriceToSalesRatioTTM',
-        'pb_ratio' => 'PriceToBookRatio',
-        'ev_to_revenue' => 'EVToRevenue',
-        'ev_to_ebitda' => 'EVToEBITDA',
-    ];
-
-    ob_start();
-    ?>
-    <div id="section-key-metric-valuations-content" class="jtw-content-section">
-        <div class="jtw-kmv-header">
-            <div class="jtw-kmv-title">
-                <h2>1.3 Historical Price to Earnings Ratio</h2>
+            </div>
+            <?php } else { ?>
+                <div class="jtw-notice notice-info"><p>Analyst estimate data is not available for this stock.</p></div>
+            <?php } ?>
+            <div class="jtw-sws-header">
+                <h2>1.4 Historical Price to Earnings Ratio</h2>
                 <p>Historical Price to Earnings Ratio compares a stock’s price to its earnings over time. Higher ratios indicate that investors are willing to pay more for the stock.</p>
             </div>
-            <div class="jtw-kmv-current-value" style="display: none;">
-                <div class="jtw-sws-percentage">0.0x</div>
-                <div class="jtw-sws-status">Current P/E Ratio</div>
-            </div>
-        </div>
-        <div class="jtw-kmv-controls">
-            <div class="jtw-kmv-metric-selector-wrapper">
-                <select id="jtw-kmv-metric-selector">
-                    <?php foreach ($metrics as $key => $label): ?>
-                        <option value="<?php echo esc_attr($key); ?>" data-key-metric-key="<?php echo esc_attr($key_metric_map[$key]); ?>"><?php echo esc_html($label); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="jtw-kmv-time-toggles">
-                <button class="jtw-kmv-time-btn" data-range="3M">3M</button>
-                <button class="jtw-kmv-time-btn active" data-range="1Y">1Y</button>
-                <button class="jtw-kmv-time-btn" data-range="3Y">3Y</button>
-                <button class="jtw-kmv-time-btn" data-range="5Y">5Y</button>
-            </div>
-        </div>
-        <div class="jtw-kmv-chart-container">
-            <canvas id="jtw-kmv-chart"></canvas>
-        </div>
-    </div>
-    <script type="application/json" id="jtw-historical-ratios-data">
-        <?php echo json_encode($ratios_data); ?>
-    </script>
-     <script type="application/json" id="jtw-current-key-metrics-data">
-        <?php echo json_encode($key_metrics); ?>
-    </script>
-    <?php
-    return ob_get_clean();
-}
-
-private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
-    ob_start();
-    ?>
-    <div id="section-key-metrics-ratios-content" class="jtw-content-section">
-        <div class="jtw-section-header">
-            <h4><?php esc_html_e('Comparative Company Analysis', 'journey-to-wealth'); ?></h4>
-            <div class="jtw-peer-controls-container">
-                <span><?php esc_html_e('Auto-suggest Peers', 'journey-to-wealth'); ?></span>
-                <label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>
-                <button id="jtw-compare-peers-btn" class="jtw-compare-button"><?php esc_html_e('Compare', 'journey-to-wealth'); ?></button>
-            </div>
-        </div>
-        <div class="jtw-metrics-table-container">
-            <table class="jtw-metrics-table peer-view">
-                <thead>
-                    <tr>
-                        <th>Metric</th>
-                        <th class="jtw-primary-col"><?php echo esc_html($ticker); ?></th>
-                        <th class="jtw-peer-col"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>
-                        <th class="jtw-peer-col"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    // --- START: UPDATED METRIC GROUPS ---
-                    $metric_groups = [
-                        'Relative Valuation' => [
-                            'PERatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 
-                            'ForwardPE' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'], 
-                            'PriceToBookRatio' => ['label' => 'P/B Ratio', 'suffix' => 'x'], 
-                            'PriceToSalesRatioTTM' => ['label' => 'P/S Ratio', 'suffix' => 'x'],
-                            'pegRatio' => ['label' => 'PEG Ratio', 'suffix' => 'x'],
-                            'pegyRatio' => ['label' => 'PEGY Ratio', 'suffix' => 'x']
-                        ],
-                        'Growth Analysis' => [ 
-                            'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'], 
-                            'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'],
-                            'ttmRevenueGrowth' => ['label' => 'TTM Revenue Growth', 'suffix' => '%'],
-                            'nextYearRevenueGrowth' => ['label' => 'Next Year Revenue Growth (Est)', 'suffix' => '%']
-                        ],
-                        'Profitability' => [
-                            'grossMargin' => ['label' => 'Gross Margin', 'suffix' => '%'], 
-                            'netMargin' => ['label' => 'Net Margin', 'suffix' => '%'], 
-                            'returnOnEquityTTM' => ['label' => 'Return on Equity', 'suffix' => '%'], 
-                            'returnOnCapitalTTM' => ['label' => 'Return on Capital', 'suffix' => '%']
-                        ],
+            <div id="section-key-metric-valuations-content">
+                <?php if (!empty($historical_ratios_data)):
+                    $metrics = [
+                        'pe_ratio' => 'Price to Earnings', 'ps_ratio' => 'Price to Sales', 'pb_ratio' => 'Price to Book',
+                        'ev_to_revenue' => 'EV/Revenue', 'ev_to_ebitda' => 'EV/EBITDA',
                     ];
-                    // --- END: UPDATED METRIC GROUPS ---
-                    foreach ($metric_groups as $group_name => $metrics) :
-                    ?>
-                        <tr class="jtw-metric-group-header"><td colspan="4"><?php echo esc_html($group_name); ?></td></tr>
-                        <?php foreach ($metrics as $key => $details) : ?>
-                            <tr>
-                                <td><?php echo esc_html($details['label']); ?></td>
-                                <td class="jtw-primary-col"><?php echo $this->format_metric_value($primary_metrics[$key] ?? 'N/A', $details['suffix']); ?></td>
-                                <td class="jtw-peer-col jtw-peer-1-value" data-metric="<?php echo esc_attr($key); ?>">-</td>
-                                <td class="jtw-peer-col jtw-peer-2-value" data-metric="<?php echo esc_attr($key); ?>">-</td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-            <div class="jtw-peer-loading-spinner" style="display:none;"><div class="jtw-loading-spinner"></div></div>
-            <div class="jtw-peer-error-message" style="display:none;"></div>
-        </div>
-    </div>
-    <?php
-    return ob_get_clean();
-}
-
-private function build_past_performance_section_html($historical_data) {
-    ob_start();
-    ?>
-    <div id="section-past-performance-content" class="jtw-content-section">
-        <h4><?php esc_html_e('Visual Data Trends', 'journey-to-wealth'); ?></h4>
-        <div class="jtw-chart-controls">
-            <div class="jtw-period-toggle">
-                <button class="jtw-period-button active" data-period="annual">Annual</button>
-                <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+                    $key_metric_map = [
+                        'pe_ratio' => 'PERatio', 'ps_ratio' => 'PriceToSalesRatioTTM', 'pb_ratio' => 'PriceToBookRatio',
+                        'ev_to_revenue' => 'EVToRevenue', 'ev_to_ebitda' => 'EVToEBITDA',
+                    ];
+                ?>
+                    <div class="jtw-kmv-controls">
+                        <div class="jtw-kmv-metric-selector-wrapper">
+                            <select id="jtw-kmv-metric-selector">
+                                <?php foreach ($metrics as $key => $label): ?>
+                                    <option value="<?php echo esc_attr($key); ?>" data-key-metric-key="<?php echo esc_attr($key_metric_map[$key]); ?>"><?php echo esc_html($label); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="jtw-kmv-current-value" style="display: none;">
+                            <div class="jtw-sws-percentage">0.0x</div>
+                            <div class="jtw-sws-status">Current P/E Ratio</div>
+                        </div>
+                        <div class="jtw-kmv-time-toggles">
+                            <button class="jtw-kmv-time-btn" data-range="3M">3M</button>
+                            <button class="jtw-kmv-time-btn active" data-range="1Y">1Y</button>
+                            <button class="jtw-kmv-time-btn" data-range="3Y">3Y</button>
+                            <button class="jtw-kmv-time-btn" data-range="5Y">5Y</button>
+                        </div>
+                    </div>
+                    <div class="jtw-kmv-chart-container">
+                        <canvas id="jtw-kmv-chart"></canvas>
+                    </div>
+                    <script type="application/json" id="jtw-historical-ratios-data"><?php echo json_encode($historical_ratios_data); ?></script>
+                    <script type="application/json" id="jtw-current-key-metrics-data"><?php echo json_encode($key_metrics); ?></script>
+                <?php else: ?>
+                    <div class="jtw-notice notice-info"><p>Historical ratio data is not available for this stock.</p></div>
+                <?php endif; ?>
             </div>
+
+            <div class="jtw-valuation-loader" style="display: flex; justify-content: center; padding: 50px 0;"><div class="jtw-loading-spinner"></div></div>
+            <div id="<?php echo esc_attr($modal_id); ?>" class="jtw-modal"><div class="jtw-modal-content"><span class="jtw-modal-close">&times;</span></div></div>
+            <div class="jtw-modal-overlay"></div>
         </div>
-        <div class="jtw-historical-charts-grid">
-            <?php
-            $chart_configs = [
-                'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'], // Example color added for consistency
-                'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'], // Example color added for consistency
-                'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#7ed321"]'], // Example color added for consistency
-                'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#4a90e2"]'], // Example color added for consistency
-                'cash-and-debt' => ['title' => 'Cash & Debt', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#f5a623", "#d0021b"]'], // Updated colors for Cash & Debt
-                'expenses' => [
-                    'title' => 'Expenses', 
-                    'type' => 'bar', 
-                    'prefix' => '$', 
-                    'stacked' => true, // <-- NEW: This makes it a stacked bar chart
-                    'colors' => '["#f5a623", "#f8e71c", "#d0021b"]' // <-- NEW: Specific colors from the image (orange, yellow, red)
-                ],
-                'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#bd10e0"]'], // Example color added for consistency
-                'shares_outstanding' => ['title' => 'Shares Outstanding', 'type' => 'bar', 'prefix' => '', 'colors' => '["#50e3c2"]'], // Example color added for consistency
-                'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'] // Example color added for consistency
-            ];
-            foreach ($chart_configs as $key => $config) {
-                $annual_data = $historical_data['annual'][$key] ?? [];
-                $quarterly_data = $historical_data['quarterly'][$key] ?? [];
-                $chart_id = 'chart-' . uniqid();
+        <?php
+        return ob_get_clean();
+    }
+
+    private function build_performance_section_html($calculated_data) {
+        // Extract data for both charts
+        $revenue_forecast_data = $calculated_data['earnings_revenue_forecasts'] ?? [];
+        $eps_forecast_data = $calculated_data['eps_growth_forecasts'] ?? [];
+
+        ob_start();
+        ?>
+        <div class="jtw-content-section" id="section-performance-content">
+            <div class="jtw-section-header">
+                <h4>2. Performance</h4>
+            </div>
+
+            <div class="jtw-sws-header">
+                <h2>2.1 Earnings and Revenue Growth Forecasts</h2>
+                <p>This chart shows the company's historical and estimated future earnings and revenue, providing insight into its growth trajectory.</p>
+            </div>
+            
+            <?php if (empty($revenue_forecast_data) || empty($revenue_forecast_data['chart_points_revenue'])) { ?>
+                <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
+            <?php } else { ?>
+                <div class="jtw-kmv-chart-container" style="position: relative;">
+                    <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
+                    <script type="application/json" id="jtw-earnings-revenue-forecast-data">
+                        <?php echo json_encode($revenue_forecast_data); ?>
+                    </script>
+                </div>
+                <div class="jtw-chart-legend">
+                    <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="0"><span class="jtw-legend-color-box" style="background-color: #007bff; border-color: #007bff;"></span> Revenue</span>
+                    <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="1"><span class="jtw-legend-color-box" style="background-color: #2ecc71; border-color: #2ecc71;"></span> Earnings</span>
+                    <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="2"><span class="jtw-legend-color-box" style="background-color: #ffc107; border-color: #ffc107;"></span> Free Cash Flow</span>
+                    <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="3"><span class="jtw-legend-color-box" style="background-color: #fd7e14; border-color: #fd7e14;"></span> Cash From Op</span>
+                </div>
+            <?php } ?>
+
+            <div class="jtw-subsection">
+                <div class="jtw-sws-header">
+                    <h2>2.2 EPS Growth Forecasts</h2>
+                    <p>This chart shows historical reported EPS against analyst estimates, including the high and low range of forecasts.</p>
+                </div>
                 
-                // Set colors attribute if it exists in the config
-                $colors_attr = isset($config['colors']) ? "data-colors='" . esc_attr($config['colors']) . "'" : '';
-                $stacked_attr = isset($config['stacked']) && $config['stacked'] ? "data-stacked='true'" : ''; // <-- NEW: Add stacked attribute
-
-                echo '<div class="jtw-chart-item">';
-                echo '<h5>' . esc_html($config['title']) . '</h5><div class="jtw-chart-wrapper"><canvas id="' . esc_attr($chart_id) . '"></canvas></div>';
-                echo "<script type='application/json' class='jtw-chart-data' data-chart-id='" . esc_attr($chart_id) . "' data-chart-type='" . esc_attr($config['type']) . "' data-prefix='" . esc_attr($config['prefix']) . "' " . $colors_attr . " " . $stacked_attr . " data-annual='" . esc_attr(json_encode($annual_data)) . "' data-quarterly='" . esc_attr(json_encode($quarterly_data)) . "'></script>";
-                echo '</div>';
-            }
-            ?>
-        </div>
-    </div>
-    <?php
-    return ob_get_clean();
-}
-
-private function build_earnings_revenue_forecasts_html($forecast_data) {
-    ob_start();
-    ?>
-    <div class="jtw-content-section" id="section-performance-content">
-        <div class="jtw-section-header">
-            <h4>2. Performance</h4>
-        </div>
-
-        <div class="jtw-sws-header">
-            <h2>2.1 Earnings and Revenue Growth Forecasts</h2>
-            <p>This chart shows the company's historical and estimated future earnings and revenue, providing insight into its growth trajectory.</p>
-        </div>
-        
-        <?php if (empty($forecast_data) || empty($forecast_data['chart_points_revenue'])) { ?>
-            <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
-        <?php } else { ?>
-            <div class="jtw-kmv-chart-container" style="position: relative;">
-                <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
-                <script type="application/json" id="jtw-earnings-revenue-forecast-data">
-                    <?php echo json_encode($forecast_data); ?>
-                </script>
+                <?php if (empty($eps_forecast_data) || empty($eps_forecast_data['estimated_eps'])) { ?>
+                    <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
+                <?php } else { ?>
+                    <div class="jtw-kmv-chart-container" style="position: relative;">
+                        <canvas id="jtw-eps-growth-forecast-chart"></canvas>
+                        <script type="application/json" id="jtw-eps-growth-forecast-data">
+                            <?php echo json_encode($eps_forecast_data); ?>
+                        </script>
+                    </div>
+                <?php } ?>
             </div>
-            <div class="jtw-chart-legend">
-                <span class="jtw-legend-item active" data-dataset-index="0">
-                    <span class="jtw-legend-color-box" style="background-color: #007bff;"></span> Revenue
-                </span>
-                <span class="jtw-legend-item active" data-dataset-index="1">
-                    <span class="jtw-legend-color-box" style="background-color: #2ecc71;"></span> Earnings
-                </span>
-                <span class="jtw-legend-item active" data-dataset-index="2">
-                    <span class="jtw-legend-color-box" style="background-color: #ffc107;"></span> Free Cash Flow
-                </span>
-                 <span class="jtw-legend-item active" data-dataset-index="3">
-                    <span class="jtw-legend-color-box" style="background-color: #fd7e14;"></span> Cash From Op
-                </span>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function build_key_metric_valuations_section_html($ratios_data, $key_metrics) {
+        if (empty($ratios_data)) {
+            return ''; // Don't render the section if there's no data
+        }
+
+        $metrics = [
+            'pe_ratio' => 'Price to Earnings',
+            'ps_ratio' => 'Price to Sales',
+            'pb_ratio' => 'Price to Book',
+            'ev_to_revenue' => 'EV/Revenue',
+            'ev_to_ebitda' => 'EV/EBITDA',
+        ];
+
+        $key_metric_map = [
+            'pe_ratio' => 'PERatio',
+            'ps_ratio' => 'PriceToSalesRatioTTM',
+            'pb_ratio' => 'PriceToBookRatio',
+            'ev_to_revenue' => 'EVToRevenue',
+            'ev_to_ebitda' => 'EVToEBITDA',
+        ];
+
+        ob_start();
+        ?>
+        <div id="section-key-metric-valuations-content" class="jtw-content-section">
+            <div class="jtw-kmv-header">
+                <div class="jtw-kmv-title">
+                    <h2>1.3 Historical Price to Earnings Ratio</h2>
+                    <p>Historical Price to Earnings Ratio compares a stock’s price to its earnings over time. Higher ratios indicate that investors are willing to pay more for the stock.</p>
+                </div>
+                <div class="jtw-kmv-current-value" style="display: none;">
+                    <div class="jtw-sws-percentage">0.0x</div>
+                    <div class="jtw-sws-status">Current P/E Ratio</div>
+                </div>
             </div>
-        <?php } ?>
-    </div>
-    <?php
-    return ob_get_clean();
-}
+            <div class="jtw-kmv-controls">
+                <div class="jtw-kmv-metric-selector-wrapper">
+                    <select id="jtw-kmv-metric-selector">
+                        <?php foreach ($metrics as $key => $label): ?>
+                            <option value="<?php echo esc_attr($key); ?>" data-key-metric-key="<?php echo esc_attr($key_metric_map[$key]); ?>"><?php echo esc_html($label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="jtw-kmv-time-toggles">
+                    <button class="jtw-kmv-time-btn" data-range="3M">3M</button>
+                    <button class="jtw-kmv-time-btn active" data-range="1Y">1Y</button>
+                    <button class="jtw-kmv-time-btn" data-range="3Y">3Y</button>
+                    <button class="jtw-kmv-time-btn" data-range="5Y">5Y</button>
+                </div>
+            </div>
+            <div class="jtw-kmv-chart-container">
+                <canvas id="jtw-kmv-chart"></canvas>
+            </div>
+        </div>
+        <script type="application/json" id="jtw-historical-ratios-data">
+            <?php echo json_encode($ratios_data); ?>
+        </script>
+        <script type="application/json" id="jtw-current-key-metrics-data">
+            <?php echo json_encode($key_metrics); ?>
+        </script>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
+        ob_start();
+        ?>
+        <div id="section-key-metrics-ratios-content" class="jtw-content-section">
+            <div class="jtw-section-header">
+                <h4><?php esc_html_e('Comparative Company Analysis', 'journey-to-wealth'); ?></h4>
+                <div class="jtw-peer-controls-container">
+                    <span><?php esc_html_e('Auto-suggest Peers', 'journey-to-wealth'); ?></span>
+                    <label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>
+                    <button id="jtw-compare-peers-btn" class="jtw-compare-button"><?php esc_html_e('Compare', 'journey-to-wealth'); ?></button>
+                </div>
+            </div>
+            <div class="jtw-metrics-table-container">
+                <table class="jtw-metrics-table peer-view">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th class="jtw-primary-col"><?php echo esc_html($ticker); ?></th>
+                            <th class="jtw-peer-col"><input type="text" id="jtw-peer-1-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>
+                            <th class="jtw-peer-col"><input type="text" id="jtw-peer-2-input" class="jtw-peer-input" placeholder="Enter Ticker..."></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        // --- START: UPDATED METRIC GROUPS ---
+                        $metric_groups = [
+                            'Relative Valuation' => [
+                                'PERatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 
+                                'ForwardPE' => ['label' => 'Forward P/E Ratio', 'suffix' => 'x'], 
+                                'PriceToBookRatio' => ['label' => 'P/B Ratio', 'suffix' => 'x'], 
+                                'PriceToSalesRatioTTM' => ['label' => 'P/S Ratio', 'suffix' => 'x'],
+                                'pegRatio' => ['label' => 'PEG Ratio', 'suffix' => 'x'],
+                                'pegyRatio' => ['label' => 'PEGY Ratio', 'suffix' => 'x']
+                            ],
+                            'Growth Analysis' => [ 
+                                'ttmEpsGrowth' => ['label' => 'TTM EPS Growth', 'suffix' => '%'], 
+                                'nextYearEpsGrowth' => ['label' => 'Next Year EPS Growth (Est)', 'suffix' => '%'],
+                                'ttmRevenueGrowth' => ['label' => 'TTM Revenue Growth', 'suffix' => '%'],
+                                'nextYearRevenueGrowth' => ['label' => 'Next Year Revenue Growth (Est)', 'suffix' => '%']
+                            ],
+                            'Profitability' => [
+                                'grossMargin' => ['label' => 'Gross Margin', 'suffix' => '%'], 
+                                'netMargin' => ['label' => 'Net Margin', 'suffix' => '%'], 
+                                'returnOnEquityTTM' => ['label' => 'Return on Equity', 'suffix' => '%'], 
+                                'returnOnCapitalTTM' => ['label' => 'Return on Capital', 'suffix' => '%']
+                            ],
+                        ];
+                        // --- END: UPDATED METRIC GROUPS ---
+                        foreach ($metric_groups as $group_name => $metrics) :
+                        ?>
+                            <tr class="jtw-metric-group-header"><td colspan="4"><?php echo esc_html($group_name); ?></td></tr>
+                            <?php foreach ($metrics as $key => $details) : ?>
+                                <tr>
+                                    <td><?php echo esc_html($details['label']); ?></td>
+                                    <td class="jtw-primary-col"><?php echo $this->format_metric_value($primary_metrics[$key] ?? 'N/A', $details['suffix']); ?></td>
+                                    <td class="jtw-peer-col jtw-peer-1-value" data-metric="<?php echo esc_attr($key); ?>">-</td>
+                                    <td class="jtw-peer-col jtw-peer-2-value" data-metric="<?php echo esc_attr($key); ?>">-</td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <div class="jtw-peer-loading-spinner" style="display:none;"><div class="jtw-loading-spinner"></div></div>
+                <div class="jtw-peer-error-message" style="display:none;"></div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    private function build_past_performance_section_html($historical_data) {
+        ob_start();
+        ?>
+        <div id="section-past-performance-content" class="jtw-content-section">
+            <h4><?php esc_html_e('Visual Data Trends', 'journey-to-wealth'); ?></h4>
+            <div class="jtw-chart-controls">
+                <div class="jtw-period-toggle">
+                    <button class="jtw-period-button active" data-period="annual">Annual</button>
+                    <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+                </div>
+            </div>
+            <div class="jtw-historical-charts-grid">
+                <?php
+                $chart_configs = [
+                    'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'], // Example color added for consistency
+                    'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'], // Example color added for consistency
+                    'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#7ed321"]'], // Example color added for consistency
+                    'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#4a90e2"]'], // Example color added for consistency
+                    'cash-and-debt' => ['title' => 'Cash & Debt', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#f5a623", "#d0021b"]'], // Updated colors for Cash & Debt
+                    'expenses' => [
+                        'title' => 'Expenses', 
+                        'type' => 'bar', 
+                        'prefix' => '$', 
+                        'stacked' => true, // <-- NEW: This makes it a stacked bar chart
+                        'colors' => '["#f5a623", "#f8e71c", "#d0021b"]' // <-- NEW: Specific colors from the image (orange, yellow, red)
+                    ],
+                    'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#bd10e0"]'], // Example color added for consistency
+                    'shares_outstanding' => ['title' => 'Shares Outstanding', 'type' => 'bar', 'prefix' => '', 'colors' => '["#50e3c2"]'], // Example color added for consistency
+                    'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'] // Example color added for consistency
+                ];
+                foreach ($chart_configs as $key => $config) {
+                    $annual_data = $historical_data['annual'][$key] ?? [];
+                    $quarterly_data = $historical_data['quarterly'][$key] ?? [];
+                    $chart_id = 'chart-' . uniqid();
+                    
+                    // Set colors attribute if it exists in the config
+                    $colors_attr = isset($config['colors']) ? "data-colors='" . esc_attr($config['colors']) . "'" : '';
+                    $stacked_attr = isset($config['stacked']) && $config['stacked'] ? "data-stacked='true'" : ''; // <-- NEW: Add stacked attribute
+
+                    echo '<div class="jtw-chart-item">';
+                    echo '<h5>' . esc_html($config['title']) . '</h5><div class="jtw-chart-wrapper"><canvas id="' . esc_attr($chart_id) . '"></canvas></div>';
+                    echo "<script type='application/json' class='jtw-chart-data' data-chart-id='" . esc_attr($chart_id) . "' data-chart-type='" . esc_attr($config['type']) . "' data-prefix='" . esc_attr($config['prefix']) . "' " . $colors_attr . " " . $stacked_attr . " data-annual='" . esc_attr(json_encode($annual_data)) . "' data-quarterly='" . esc_attr(json_encode($quarterly_data)) . "'></script>";
+                    echo '</div>';
+                }
+                ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
 
     private function build_historical_data_section_html($table_data) {
         if (empty($table_data)) { return '<div class="jtw-content-section"><p>Historical data is not available for this company.</p></div>'; }

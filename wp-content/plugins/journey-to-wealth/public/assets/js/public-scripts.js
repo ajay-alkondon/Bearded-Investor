@@ -363,175 +363,261 @@
     }
 
     function initializePerformanceSection($container) {
-        const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
-        if (!$chartCanvas.length) return;
+        function initializeRevenueChart() {
+            const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
+            if (!$chartCanvas.length) return;
 
-        const existingChart = Chart.getChart($chartCanvas[0]);
-        if (existingChart) {
-            existingChart.destroy();
-        }
-
-        const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
-        const parsedData = JSON.parse(chartDataRaw);
-
-        const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
-        const revenue = (parsedData.chart_points_revenue || []).filter(isValidDate);
-        const earnings = (parsedData.chart_points_earnings || []).filter(isValidDate);
-        const fcf = (parsedData.chart_points_fcf || []).filter(isValidDate);
-        const op_cash = (parsedData.chart_points_op_cash || []).filter(isValidDate);
-        const forecast_start_date = parsedData.forecast_start_date;
-
-        const getOrCreateTooltip = (chart) => {
-            let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
-            if (!tooltipEl) {
-                tooltipEl = document.createElement('div');
-                tooltipEl.className = 'jtw-chart-tooltip';
-                chart.canvas.parentNode.appendChild(tooltipEl);
-            }
-            return tooltipEl;
-        };
-
-        const externalTooltipHandler = (context) => {
-            const { chart, tooltip } = context;
-            const tooltipEl = getOrCreateTooltip(chart);
-
-            if (tooltip.opacity === 0) {
-                tooltipEl.style.opacity = 0;
-                return;
+            const existingChart = Chart.getChart($chartCanvas[0]);
+            if (existingChart) {
+                existingChart.destroy();
             }
 
-            // --- FIX: Use parsed data point for the date to prevent "Invalid Date" ---
-            const date = new Date(tooltip.dataPoints[0].parsed.x);
-            let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) + '</div>';
-            innerHtml += '<div class="tooltip-body">';
+            const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
+            const parsedData = JSON.parse(chartDataRaw);
 
-            tooltip.body.forEach((body, i) => {
-                if (chart.isDatasetVisible(tooltip.dataPoints[i].datasetIndex)) {
-                    const colors = tooltip.labelColors[i];
-                    const label = body.lines[0].split(':')[0];
-                    const value = body.lines[0].split(':')[1];
-                    const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-                    const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-                    innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
+            const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
+            const revenue = (parsedData.chart_points_revenue || []).filter(isValidDate);
+            const earnings = (parsedData.chart_points_earnings || []).filter(isValidDate);
+            const fcf = (parsedData.chart_points_fcf || []).filter(isValidDate);
+            const op_cash = (parsedData.chart_points_op_cash || []).filter(isValidDate);
+            const forecast_start_date = parsedData.forecast_start_date;
+
+            const getOrCreateTooltip = (chart) => {
+                let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
+                if (!tooltipEl) {
+                    tooltipEl = document.createElement('div');
+                    tooltipEl.className = 'jtw-chart-tooltip';
+                    chart.canvas.parentNode.appendChild(tooltipEl);
                 }
-            });
-            
-            innerHtml += '</div>';
-            tooltipEl.innerHTML = innerHtml;
+                return tooltipEl;
+            };
 
-            const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-            tooltipEl.style.opacity = 1;
-            tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-            tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-        };
+            const externalTooltipHandler = (context) => {
+                const { chart, tooltip } = context;
+                const tooltipEl = getOrCreateTooltip(chart);
 
-        const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
-        
-        // --- FIX: Dynamically calculate chart start and end dates with padding ---
-        let minDate, maxDate;
-        if (allDates.length > 0) {
-            minDate = new Date(allDates[0]);
-            minDate.setMonth(minDate.getMonth() - 6); // 6 months padding at the start
-            maxDate = new Date(allDates[allDates.length - 1]);
-            maxDate.setMonth(maxDate.getMonth() + 6); // 6 months padding at the end
-        }
+                if (tooltip.opacity === 0) {
+                    tooltipEl.style.opacity = 0;
+                    return;
+                }
 
-        const datasets = [
-            { label: 'Revenue', data: revenue, color: '#007bff' },
-            { label: 'Earnings', data: earnings, color: '#2ecc71' },
-            { label: 'Free Cash Flow', data: fcf, color: '#ffc107' },
-            { label: 'Cash From Op', data: op_cash, color: '#fd7e14' },
-        ].map(ds => ({
-            label: ds.label,
-            data: fillMissingPoints(ds.data, allDates),
-            borderColor: ds.color,
-            backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, ds.color),
-            borderWidth: 2,
-            pointRadius: 0,
-            tension: 0.3,
-            fill: 'start'
-        }));
+                // --- FIX: Use parsed data point for the date to prevent "Invalid Date" ---
+                const date = new Date(tooltip.dataPoints[0].parsed.x);
+                let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) + '</div>';
+                innerHtml += '<div class="tooltip-body">';
 
-        const ctx = $chartCanvas[0].getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: allDates, datasets: datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    x: { 
-                        type: 'time', 
-                        time: { unit: 'year', displayFormats: { year: 'yyyy' } }, 
-                        grid: { display: false },
-                        min: minDate ? minDate.toISOString() : undefined,
-                        max: maxDate ? maxDate.toISOString() : undefined
-                    },
-                    y: { 
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
-                        ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) } 
+                tooltip.body.forEach((body, i) => {
+                    if (chart.isDatasetVisible(tooltip.dataPoints[i].datasetIndex)) {
+                        const colors = tooltip.labelColors[i];
+                        const label = body.lines[0].split(':')[0];
+                        const value = body.lines[0].split(':')[1];
+                        const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+                        const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+                        innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
                     }
-                },
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: { 
-                        enabled: false,
-                        external: externalTooltipHandler
+                });
+                
+                innerHtml += '</div>';
+                tooltipEl.innerHTML = innerHtml;
+
+                const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+                tooltipEl.style.opacity = 1;
+                tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+                tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+            };
+
+            const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
+            
+            // --- FIX: Dynamically calculate chart start and end dates with padding ---
+            let minDate, maxDate;
+            if (allDates.length > 0) {
+                minDate = new Date(allDates[0]);
+                minDate.setMonth(minDate.getMonth() - 6); // 6 months padding at the start
+                maxDate = new Date(allDates[allDates.length - 1]);
+                maxDate.setMonth(maxDate.getMonth() + 6); // 6 months padding at the end
+            }
+
+            const datasets = [
+                { label: 'Revenue', data: revenue, color: '#007bff' },
+                { label: 'Earnings', data: earnings, color: '#2ecc71' },
+                { label: 'Free Cash Flow', data: fcf, color: '#ffc107' },
+                { label: 'Cash From Op', data: op_cash, color: '#fd7e14' },
+            ].map(ds => ({
+                label: ds.label,
+                data: fillMissingPoints(ds.data, allDates),
+                borderColor: ds.color,
+                backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, ds.color),
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.3,
+                fill: 'start'
+            }));
+
+            const ctx = $chartCanvas[0].getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: allDates, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { 
+                            type: 'time', 
+                            time: { unit: 'year', displayFormats: { year: 'yyyy' } }, 
+                            grid: { display: false },
+                            min: minDate ? minDate.toISOString() : undefined,
+                            max: maxDate ? maxDate.toISOString() : undefined
+                        },
+                        y: { 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
+                            ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) } 
+                        }
                     },
-                    annotation: {
-                        annotations: {
-                            forecastLine: {
-                                type: 'line',
-                                scaleID: 'x',
-                                value: forecast_start_date,
-                                borderColor: 'rgba(255, 255, 255, 0.3)',
-                                borderWidth: 1,
-                                borderDash: [6, 6]
-                            },
-                            forecastBox: {
-                                type: 'box',
-                                scaleID: 'x',
-                                xMin: forecast_start_date,
-                                backgroundColor: 'rgba(54, 162, 235, 0.1)'
-                            },
-                            // --- FIX: Adjust label positioning ---
-                            pastLabel: {
-                                type: 'label',
-                                xValue: forecast_start_date,
-                                yValue: 10,
-                                content: 'Past',
-                                color: '#aaa',
-                                font: { size: 12 },
-                                position: 'end',
-                                xAdjust: -10,
-                            },
-                            forecastLabel: {
-                                type: 'label',
-                                xValue: forecast_start_date,
-                                yValue: 10,
-                                content: 'Analysts Forecasts',
-                                color: '#aaa',
-                                font: { size: 12 },
-                                position: 'start',
-                                xAdjust: 10,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { 
+                            enabled: false,
+                            external: externalTooltipHandler
+                        },
+                        annotation: {
+                            annotations: {
+                                forecastLine: {
+                                    type: 'line',
+                                    scaleID: 'x',
+                                    value: forecast_start_date,
+                                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                                    borderWidth: 1,
+                                    borderDash: [6, 6]
+                                },
+                                forecastBox: {
+                                    type: 'box',
+                                    scaleID: 'x',
+                                    xMin: forecast_start_date,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.1)'
+                                },
+                                // --- FIX: Adjust label positioning ---
+                                pastLabel: {
+                                    type: 'label',
+                                    xValue: forecast_start_date,
+                                    yValue: 10,
+                                    content: 'Past',
+                                    color: '#aaa',
+                                    font: { size: 12 },
+                                    position: 'end',
+                                    xAdjust: -10,
+                                },
+                                forecastLabel: {
+                                    type: 'label',
+                                    xValue: forecast_start_date,
+                                    yValue: 10,
+                                    content: 'Analysts Forecasts',
+                                    color: '#aaa',
+                                    font: { size: 12 },
+                                    position: 'start',
+                                    xAdjust: 10,
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
 
-        const $legendContainer = $container.find('.jtw-chart-legend');
-        $legendContainer.on('click', '.jtw-legend-item', function() {
-            const $item = $(this);
-            const datasetIndex = $item.data('dataset-index');
-            
-            $item.toggleClass('active');
-            const isVisible = chart.isDatasetVisible(datasetIndex);
-            chart.setDatasetVisibility(datasetIndex, !isVisible);
-            chart.update();
-        });
+            const $legendContainer = $container.find('.jtw-chart-legend');
+            $legendContainer.on('click', '.jtw-legend-item', function() {
+                const $item = $(this);
+                const datasetIndex = $item.data('dataset-index');
+                
+                $item.toggleClass('active');
+                const isVisible = chart.isDatasetVisible(datasetIndex);
+                chart.setDatasetVisibility(datasetIndex, !isVisible);
+                chart.update();
+            });
+        }
+
+        function initializeEpsChart() {
+            const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
+            if (!$chartCanvas.length) return;
+
+            const chartDataRaw = $container.find('#jtw-eps-growth-forecast-data').html();
+            if (!chartDataRaw) return;
+            const parsedData = JSON.parse(chartDataRaw);
+
+            // ... (The entire logic for the 2.2 EPS chart is now inside here)
+            const actual_eps = parsedData.actual_eps || [];
+            const estimated_eps = parsedData.estimated_eps || [];
+            const estimate_range_low = parsedData.estimate_range_low || [];
+            const estimate_range_high = parsedData.estimate_range_high || [];
+
+            const ctx = $chartCanvas[0].getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Estimate Range',
+                            data: estimate_range_high,
+                            borderColor: 'transparent',
+                            backgroundColor: 'rgba(0, 122, 255, 0.2)',
+                            pointRadius: 0,
+                            fill: '+1',
+                        },
+                        {
+                            label: 'Low Estimate',
+                            data: estimate_range_low,
+                            borderColor: 'transparent',
+                            backgroundColor: 'rgba(0, 122, 255, 0.2)',
+                            pointRadius: 0,
+                            fill: false,
+                        },
+                        {
+                            label: 'Estimated EPS',
+                            data: estimated_eps,
+                            borderColor: '#007bff',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            tension: 0.3,
+                            fill: false,
+                        },
+                        {
+                            label: 'Actual EPS',
+                            data: actual_eps,
+                            borderColor: '#2ecc71',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            tension: 0.3,
+                            fill: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'quarter' },
+                            grid: { display: false }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { callback: (val) => '$' + val.toFixed(2) }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }, // Using custom legend if needed
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Main execution ---
+        initializeRevenueChart();
+        initializeEpsChart();
     }
 
     function initializeKeyMetricsRatiosSection($container) {
