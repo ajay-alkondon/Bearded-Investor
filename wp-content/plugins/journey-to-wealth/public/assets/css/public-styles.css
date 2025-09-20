@@ -2386,3 +2386,39 @@ body.dark-mode .jtw-chart-data-row .jtw-value { color: #e2e8f0; }
 .jtw-chart-tooltip .tooltip-line strong {
     font-weight: 600;
 }
+
+.jtw-chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+.jtw-legend-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--jtw-text-medium);
+    transition: color 0.2s ease;
+}
+.jtw-legend-item:not(.active) {
+    text-decoration: line-through;
+    color: var(--jtw-text-light);
+}
+.jtw-legend-item .jtw-legend-color-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 8px;
+    transition: opacity 0.2s ease;
+}
+.jtw-legend-item:not(.active) .jtw-legend-color-box {
+    opacity: 0.3;
+}
+body.dark-mode .jtw-legend-item {
+    color: #a0aec0;
+}
+body.dark-mode .jtw-legend-item:not(.active) {
+    color: #718096;
+}

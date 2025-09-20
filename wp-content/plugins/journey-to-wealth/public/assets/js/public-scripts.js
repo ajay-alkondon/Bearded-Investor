@@ -374,11 +374,12 @@
         const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
         const parsedData = JSON.parse(chartDataRaw);
 
-        // --- FIX: Use correct data keys from the API response ---
-        const revenue = parsedData.chart_points_revenue || [];
-        const earnings = parsedData.chart_points_earnings || [];
-        const fcf = parsedData.chart_points_fcf || [];
-        const op_cash = parsedData.chart_points_op_cash || [];
+        // --- FIX: Validate dates to prevent "Invalid Date" errors ---
+        const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
+        const revenue = (parsedData.chart_points_revenue || []).filter(isValidDate);
+        const earnings = (parsedData.chart_points_earnings || []).filter(isValidDate);
+        const fcf = (parsedData.chart_points_fcf || []).filter(isValidDate);
+        const op_cash = (parsedData.chart_points_op_cash || []).filter(isValidDate);
         const forecast_start_date = parsedData.forecast_start_date;
         // --- END FIX ---
 
@@ -403,17 +404,19 @@
 
             const title = tooltip.title || [];
             const bodyLines = tooltip.body || [];
-
+            
             let innerHtml = '<div class="tooltip-header">' + new Date(title[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) + '</div>';
             innerHtml += '<div class="tooltip-body">';
 
             bodyLines.forEach((body, i) => {
-                const colors = tooltip.labelColors[i];
-                const label = body.lines[0].split(':')[0];
-                const value = body.lines[0].split(':')[1];
-                const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-                const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-                innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
+                if (chart.isDatasetVisible(tooltip.dataPoints[i].datasetIndex)) {
+                    const colors = tooltip.labelColors[i];
+                    const label = body.lines[0].split(':')[0];
+                    const value = body.lines[0].split(':')[1];
+                    const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+                    const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+                    innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
+                }
             });
             
             innerHtml += '</div>';
@@ -448,7 +451,7 @@
         }));
 
         const ctx = $chartCanvas[0].getContext('2d');
-        new Chart(ctx, {
+        const chart = new Chart(ctx, {
             type: 'line',
             data: { labels: allDates, datasets: datasets },
             options: {
@@ -514,6 +517,18 @@
                     }
                 }
             }
+        });
+
+        // --- NEW: Legend Toggle Logic ---
+        const $legendContainer = $container.find('.jtw-chart-legend');
+        $legendContainer.on('click', '.jtw-legend-item', function() {
+            const $item = $(this);
+            const datasetIndex = $item.data('dataset-index');
+            
+            $item.toggleClass('active');
+            const isVisible = chart.isDatasetVisible(datasetIndex);
+            chart.setDatasetVisibility(datasetIndex, !isVisible);
+            chart.update();
         });
     }
 

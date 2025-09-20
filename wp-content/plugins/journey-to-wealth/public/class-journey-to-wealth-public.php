@@ -1207,6 +1207,20 @@ private function build_earnings_revenue_forecasts_html($forecast_data) {
                     <?php echo json_encode($forecast_data); ?>
                 </script>
             </div>
+            <div class="jtw-chart-legend">
+                <span class="jtw-legend-item active" data-dataset-index="0">
+                    <span class="jtw-legend-color-box" style="background-color: #007bff;"></span> Revenue
+                </span>
+                <span class="jtw-legend-item active" data-dataset-index="1">
+                    <span class="jtw-legend-color-box" style="background-color: #2ecc71;"></span> Earnings
+                </span>
+                <span class="jtw-legend-item active" data-dataset-index="2">
+                    <span class="jtw-legend-color-box" style="background-color: #ffc107;"></span> Free Cash Flow
+                </span>
+                 <span class="jtw-legend-item active" data-dataset-index="3">
+                    <span class="jtw-legend-color-box" style="background-color: #fd7e14;"></span> Cash From Op
+                </span>
+            </div>
         <?php } ?>
     </div>
     <?php
