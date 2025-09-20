@@ -374,13 +374,14 @@
         const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
         const parsedData = JSON.parse(chartDataRaw);
 
-        const revenue = parsedData.revenue || [];
-        const earnings = parsedData.earnings || [];
-        const fcf = parsedData.fcf || [];
-        const op_cash = parsedData.op_cash || [];
+        // --- FIX: Use correct data keys from the API response ---
+        const revenue = parsedData.chart_points_revenue || [];
+        const earnings = parsedData.chart_points_earnings || [];
+        const fcf = parsedData.chart_points_fcf || [];
+        const op_cash = parsedData.chart_points_op_cash || [];
         const forecast_start_date = parsedData.forecast_start_date;
+        // --- END FIX ---
 
-        // --- START: CUSTOM TOOLTIP FUNCTION ---
         const getOrCreateTooltip = (chart) => {
             let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
             if (!tooltipEl) {
