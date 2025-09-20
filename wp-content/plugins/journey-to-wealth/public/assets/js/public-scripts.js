@@ -374,14 +374,12 @@
         const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
         const parsedData = JSON.parse(chartDataRaw);
 
-        // --- FIX: Validate dates to prevent "Invalid Date" errors ---
         const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
         const revenue = (parsedData.chart_points_revenue || []).filter(isValidDate);
         const earnings = (parsedData.chart_points_earnings || []).filter(isValidDate);
         const fcf = (parsedData.chart_points_fcf || []).filter(isValidDate);
         const op_cash = (parsedData.chart_points_op_cash || []).filter(isValidDate);
         const forecast_start_date = parsedData.forecast_start_date;
-        // --- END FIX ---
 
         const getOrCreateTooltip = (chart) => {
             let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
@@ -402,13 +400,12 @@
                 return;
             }
 
-            const title = tooltip.title || [];
-            const bodyLines = tooltip.body || [];
-            
-            let innerHtml = '<div class="tooltip-header">' + new Date(title[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) + '</div>';
+            // --- FIX: Use parsed data point for the date to prevent "Invalid Date" ---
+            const date = new Date(tooltip.dataPoints[0].parsed.x);
+            let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) + '</div>';
             innerHtml += '<div class="tooltip-body">';
 
-            bodyLines.forEach((body, i) => {
+            tooltip.body.forEach((body, i) => {
                 if (chart.isDatasetVisible(tooltip.dataPoints[i].datasetIndex)) {
                     const colors = tooltip.labelColors[i];
                     const label = body.lines[0].split(':')[0];
@@ -428,11 +425,16 @@
             tooltipEl.style.top = positionY + tooltip.caretY + 'px';
         };
 
-        const now = new Date();
-        const threeYearsAgo = new Date(new Date().setFullYear(now.getFullYear() - 3));
-        const twoYearsHence = new Date(new Date().setFullYear(now.getFullYear() + 2));
-
         const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
+        
+        // --- FIX: Dynamically calculate chart start and end dates with padding ---
+        let minDate, maxDate;
+        if (allDates.length > 0) {
+            minDate = new Date(allDates[0]);
+            minDate.setMonth(minDate.getMonth() - 6); // 6 months padding at the start
+            maxDate = new Date(allDates[allDates.length - 1]);
+            maxDate.setMonth(maxDate.getMonth() + 6); // 6 months padding at the end
+        }
 
         const datasets = [
             { label: 'Revenue', data: revenue, color: '#007bff' },
@@ -463,8 +465,8 @@
                         type: 'time', 
                         time: { unit: 'year', displayFormats: { year: 'yyyy' } }, 
                         grid: { display: false },
-                        min: threeYearsAgo.toISOString(),
-                        max: twoYearsHence.toISOString()
+                        min: minDate ? minDate.toISOString() : undefined,
+                        max: maxDate ? maxDate.toISOString() : undefined
                     },
                     y: { 
                         grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
@@ -493,25 +495,26 @@
                                 xMin: forecast_start_date,
                                 backgroundColor: 'rgba(54, 162, 235, 0.1)'
                             },
+                            // --- FIX: Adjust label positioning ---
                             pastLabel: {
                                 type: 'label',
-                                scaleID: 'x',
                                 xValue: forecast_start_date,
-                                yValue: 20,
+                                yValue: 10,
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: -30,
+                                position: 'end',
+                                xAdjust: -10,
                             },
                             forecastLabel: {
                                 type: 'label',
-                                scaleID: 'x',
                                 xValue: forecast_start_date,
-                                yValue: 20,
+                                yValue: 10,
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: 80,
+                                position: 'start',
+                                xAdjust: 10,
                             }
                         }
                     }
@@ -519,7 +522,6 @@
             }
         });
 
-        // --- NEW: Legend Toggle Logic ---
         const $legendContainer = $container.find('.jtw-chart-legend');
         $legendContainer.on('click', '.jtw-legend-item', function() {
             const $item = $(this);
