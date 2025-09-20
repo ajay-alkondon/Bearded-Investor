@@ -168,15 +168,6 @@
             return (num / divisor).toFixed(decimals);
         }
 
-        function parseFormattedNumber(str, unitLabel = '') {
-            let num = parseFloat(str);
-            if (isNaN(num)) return 0;
-            if (unitLabel.includes('(Billions)')) return num * 1e9;
-            if (unitLabel.includes('(Millions)')) return num * 1e6;
-            if (unitLabel.includes('(Thousands)')) return num * 1e3;
-            return num;
-        }
-
         function updateSwsValuationGraphic(fairValue, currentPrice, modelName) {
             if (typeof fairValue !== 'number' || isNaN(fairValue) || fairValue <= 0) {
                 $swsContainer.hide();
@@ -242,11 +233,8 @@
                 yearlyNIGrowth: {}
             };
             let hasAllInputs = true;
-            // START FIX: Select the main container that holds ALL tables.
             const $tablesContainer = $container.find('.jtw-valuation-tables-wrapper');
-            // END FIX
 
-            // Use the new container for all selections
             $tablesContainer.find('input[data-metric="yearlyRevGrowth"]').each(function() {
                 const $input = $(this);
                 const year = $input.data('year');
@@ -269,9 +257,7 @@
                 }
             });
             
-            // This selector is no longer needed as the model selector was removed.
-            // assumptions.model = $tablesContainer.find('.jtw-terminal-value-row').attr('data-selected-model') || 'auto';
-            assumptions.model = 'dcf'; // Default to DCF model
+            assumptions.model = 'dcf';
 
             const revenueUnitLabel = $tablesContainer.find('.jtw-revenue-label').first().text();
             let previousRevenue = parseFloat($tablesContainer.find('.jtw-revenue-result[data-year="1"]').data('raw-value'));
@@ -348,7 +334,6 @@
                         const caseData = response.data.base;
                         if (caseData.error) {
                             $swsContainer.hide();
-                            // Optionally, show an error message elsewhere if needed
                             console.error('Valuation Error:', caseData.error);
                         } else {
                             updateSwsValuationGraphic(caseData.fair_value, currentPrice, caseData.valuation_label);
@@ -372,199 +357,6 @@
             });
         }, 500);
         
-        // --- START: New Chart Initialization Logic ---
-        const $chartCanvas = $container.find('#jtw-kmv-chart');
-        if ($chartCanvas.length) {
-            const historicalData = JSON.parse($container.find('#jtw-historical-ratios-data').html());
-            const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
-            let chartInstance;
-
-            const createGradient = (ctx, area) => {
-                const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-                gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
-                gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
-                return gradient;
-            };
-
-            function updateChart() {
-                const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
-                const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
-                const data = historicalData[selectedMetric] || [];
-                const endDate = new Date();
-                let startDate = new Date();
-                switch(selectedRange) {
-                    case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
-                    case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
-                    case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
-                    case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
-                }
-                const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
-
-                if (chartInstance) {
-                    chartInstance.data.labels = filteredData.map(d => d.x);
-                    chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
-                    chartInstance.update();
-                } else {
-                    const ctx = $chartCanvas[0].getContext('2d');
-                    chartInstance = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: filteredData.map(d => d.x),
-                            datasets: [{
-                                label: 'Ratio',
-                                data: filteredData.map(d => d.y),
-                                borderColor: 'rgba(0, 122, 255, 1)',
-                                backgroundColor: (context) => {
-                                    const chart = context.chart;
-                                    const {ctx, chartArea} = chart;
-                                    if (!chartArea) return null;
-                                    return createGradient(ctx, chartArea);
-                                },
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                tension: 0.1,
-                                fill: 'start',
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
-                                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
-                            },
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
-                            }
-                        }
-                    });
-                }
-                
-                const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
-                const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
-                const currentValue = currentMetrics[currentMetricKey];
-                const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
-                
-                if (typeof currentValue === 'number') {
-                    $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
-                    $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
-                    $currentValueDisplay.show();
-                } else {
-                    $currentValueDisplay.hide();
-                }
-            }
-
-            $container.on('change', '#jtw-kmv-metric-selector', updateChart);
-            $container.on('click', '.jtw-kmv-time-btn', function() {
-                $container.find('.jtw-kmv-time-btn').removeClass('active');
-                $(this).addClass('active');
-                updateChart();
-            });
-
-            updateChart();
-        }
-        // --- END: New Chart Initialization Logic ---
-
-    // This function should be added to public-scripts.js and called from initializeFairValueAnalysisSection
-    function initializeKeyMetricValuationsChart($container) {
-        const $chartCanvas = $container.find('#jtw-kmv-chart');
-        const $historicalDataScript = $container.find('#jtw-historical-ratios-data');
-        
-        if (!$chartCanvas.length || !$historicalDataScript.length) {
-            return;
-        }
-
-        const historicalData = JSON.parse($historicalDataScript.html());
-        const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
-        let chartInstance;
-
-        const createGradient = (ctx, area) => {
-            const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-            gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
-            gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
-            return gradient;
-        };
-
-        function updateChart() {
-            const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
-            const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
-            const data = historicalData[selectedMetric] || [];
-            const endDate = new Date();
-            let startDate = new Date();
-            switch(selectedRange) {
-                case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
-                case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
-                case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
-                case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
-            }
-            const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
-
-            if (chartInstance) {
-                chartInstance.data.labels = filteredData.map(d => d.x);
-                chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
-                chartInstance.update();
-            } else {
-                const ctx = $chartCanvas[0].getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: filteredData.map(d => d.x),
-                        datasets: [{
-                            label: 'Ratio',
-                            data: filteredData.map(d => d.y),
-                            borderColor: 'rgba(0, 122, 255, 1)',
-                            backgroundColor: (context) => {
-                                const chart = context.chart;
-                                const {ctx, chartArea} = chart;
-                                if (!chartArea) return null;
-                                return createGradient(ctx, chartArea);
-                            },
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.1,
-                            fill: 'start',
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
-                            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
-                        }
-                    }
-                });
-            }
-            
-            const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
-            const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
-            const currentValue = currentMetrics[currentMetricKey];
-            const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
-            
-            if (typeof currentValue === 'number') {
-                $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
-                $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
-                $currentValueDisplay.show();
-            } else {
-                $currentValueDisplay.hide();
-            }
-        }
-
-        $container.on('change', '#jtw-kmv-metric-selector', updateChart);
-        $container.on('click', '.jtw-kmv-time-btn', function() {
-            $container.find('.jtw-kmv-time-btn').removeClass('active');
-            $(this).addClass('active');
-            updateChart();
-        });
-
-        updateChart();
-    }
-
         recalculateValuation();
         $container.on('input', '.jtw-assumption-input', recalculateValuation);
         initializeKeyMetricValuationsChart($container);
@@ -1225,6 +1017,111 @@
         const resizeObserver = new ResizeObserver(debounce(updateChartAndTable, 150));
         resizeObserver.observe($container[0]);
         updateChartAndTable(); 
+    }
+
+    function initializeKeyMetricValuationsChart($container) {
+        const $chartCanvas = $container.find('#jtw-kmv-chart');
+        const $historicalDataScript = $container.find('#jtw-historical-ratios-data');
+        
+        if (!$chartCanvas.length || !$historicalDataScript.length) {
+            return;
+        }
+
+        // --- FIX: Destroy the existing chart before creating a new one ---
+        const existingChart = Chart.getChart($chartCanvas[0]);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        // --- END FIX ---
+
+        const historicalData = JSON.parse($historicalDataScript.html());
+        const currentMetrics = JSON.parse($container.find('#jtw-current-key-metrics-data').html());
+        let chartInstance;
+
+        const createGradient = (ctx, area) => {
+            const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+            gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
+            gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
+            return gradient;
+        };
+
+        function updateChart() {
+            const selectedMetric = $container.find('#jtw-kmv-metric-selector').val();
+            const selectedRange = $container.find('.jtw-kmv-time-btn.active').data('range');
+            const data = historicalData[selectedMetric] || [];
+            const endDate = new Date();
+            let startDate = new Date();
+            switch(selectedRange) {
+                case '3M': startDate.setMonth(endDate.getMonth() - 3); break;
+                case '1Y': startDate.setFullYear(endDate.getFullYear() - 1); break;
+                case '3Y': startDate.setFullYear(endDate.getFullYear() - 3); break;
+                case '5Y': startDate.setFullYear(endDate.getFullYear() - 5); break;
+            }
+            const filteredData = data.filter(point => new Date(point.x) >= startDate && point.y !== null);
+
+            if (chartInstance) {
+                chartInstance.data.labels = filteredData.map(d => d.x);
+                chartInstance.data.datasets[0].data = filteredData.map(d => d.y);
+                chartInstance.update();
+            } else {
+                const ctx = $chartCanvas[0].getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: filteredData.map(d => d.x),
+                        datasets: [{
+                            label: 'Ratio',
+                            data: filteredData.map(d => d.y),
+                            borderColor: 'rgba(0, 122, 255, 1)',
+                            backgroundColor: (context) => {
+                                const chart = context.chart;
+                                const {ctx, chartArea} = chart;
+                                if (!chartArea) return null;
+                                return createGradient(ctx, chartArea);
+                            },
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1,
+                            fill: 'start',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { type: 'time', time: { unit: 'month' }, grid: { display: false } },
+                            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
+                        }
+                    }
+                });
+            }
+            
+            const $currentValueDisplay = $container.find('.jtw-kmv-current-value');
+            const currentMetricKey = $container.find('#jtw-kmv-metric-selector option:selected').data('key-metric-key');
+            const currentValue = currentMetrics[currentMetricKey];
+            const currentLabel = $container.find('#jtw-kmv-metric-selector option:selected').text();
+            
+            if (typeof currentValue === 'number') {
+                $currentValueDisplay.find('.jtw-sws-percentage').text(currentValue.toFixed(1) + 'x');
+                $currentValueDisplay.find('.jtw-sws-status').text(`Current ${currentLabel}`);
+                $currentValueDisplay.show();
+            } else {
+                $currentValueDisplay.hide();
+            }
+        }
+
+        $container.on('change', '#jtw-kmv-metric-selector', updateChart);
+        $container.on('click', '.jtw-kmv-time-btn', function() {
+            $container.find('.jtw-kmv-time-btn').removeClass('active');
+            $(this).addClass('active');
+            updateChart();
+        });
+
+        updateChart();
     }
 
     function initializeHeaderSearch() {
