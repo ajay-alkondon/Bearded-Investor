@@ -667,7 +667,6 @@
                         type: 'time', 
                         time: { unit: 'year', displayFormats: { year: 'yyyy' } }, 
                         grid: { display: false },
-                        // --- FIX: SET DATE RANGE ---
                         min: threeYearsAgo.toISOString(),
                         max: twoYearsHence.toISOString()
                     },
@@ -679,8 +678,8 @@
                 plugins: { 
                     legend: { display: false },
                     tooltip: { 
-                        enabled: false, // Disable default tooltip
-                        external: externalTooltipHandler // Enable custom tooltip
+                        enabled: false,
+                        external: externalTooltipHandler
                     },
                     annotation: {
                         annotations: {
@@ -698,7 +697,6 @@
                                 xMin: forecast_start_date,
                                 backgroundColor: 'rgba(54, 162, 235, 0.1)'
                             },
-                            // --- FIX: POSITION ANNOTATION LABELS AT TOP ---
                             pastLabel: {
                                 type: 'label',
                                 scaleID: 'x',
