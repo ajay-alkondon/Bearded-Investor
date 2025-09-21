@@ -1039,7 +1039,7 @@ private function build_case_table_html($group, $args) {
                     <p>This chart shows historical reported EPS against analyst estimates, including the high and low range of forecasts.</p>
                 </div>
                 
-                <?php if (empty($eps_forecast_data) ) { ?>
+                <?php if (empty($eps_forecast_data) || empty($eps_forecast_data['estimated_eps'])) { ?>
                     <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
                 <?php } else { ?>
                     <div class="jtw-kmv-chart-container" style="position: relative;">
@@ -1047,6 +1047,14 @@ private function build_case_table_html($group, $args) {
                         <script type="application/json" id="jtw-eps-growth-forecast-data">
                             <?php echo json_encode($eps_forecast_data); ?>
                         </script>
+                    </div>
+                    <div class="jtw-chart-legend">
+                        <span class="jtw-legend-item active" data-chart-id="jtw-eps-growth-forecast-chart" data-dataset-index="3">
+                            <span class="jtw-legend-color-box" style="background-color: #2ecc71; border-color: #2ecc71;"></span> Actual EPS
+                        </span>
+                        <span class="jtw-legend-item active" data-chart-id="jtw-eps-growth-forecast-chart" data-dataset-index="2">
+                            <span class="jtw-legend-color-box" style="background-color: #007bff; border-color: #007bff;"></span> Estimated EPS
+                        </span>
                     </div>
                 <?php } ?>
             </div>

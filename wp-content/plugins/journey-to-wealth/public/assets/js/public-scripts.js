@@ -535,7 +535,6 @@
             });
         }
 
-        // --- Internal Function for Chart 2.2: EPS Growth ---
         function initializeEpsChart() {
             const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
             if (!$chartCanvas.length) return;
@@ -555,7 +554,7 @@
             const estimate_range_high = parsedData.estimate_range_high || [];
 
             const ctx = $chartCanvas[0].getContext('2d');
-            new Chart(ctx, {
+            const epsChart = new Chart(ctx, { // <-- give the chart a variable name
                 type: 'line',
                 data: {
                     datasets: [
@@ -565,10 +564,10 @@
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(0, 122, 255, 0.2)',
                             pointRadius: 0,
-                            fill: '+1', // Fill to the next dataset in the list (low estimate)
+                            fill: '+1',
                         },
                         {
-                            label: 'Low Estimate', // This dataset is just for the fill boundary
+                            label: 'Low Estimate',
                             data: estimate_range_low,
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(0, 122, 255, 0.2)',
@@ -578,7 +577,7 @@
                         {
                             label: 'Estimated EPS',
                             data: estimated_eps,
-                            borderColor: '#007bff', // Blue
+                            borderColor: '#007bff',
                             borderWidth: 2,
                             pointRadius: 3,
                             tension: 0.3,
@@ -587,7 +586,7 @@
                         {
                             label: 'Actual EPS',
                             data: actual_eps,
-                            borderColor: '#2ecc71', // Green
+                            borderColor: '#2ecc71',
                             borderWidth: 2,
                             pointRadius: 3,
                             tension: 0.3,
@@ -611,12 +610,27 @@
                     },
                     plugins: {
                         legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                        }
+                        tooltip: { mode: 'index', intersect: false, }
                     }
                 }
+            });
+
+            // --- NEW: Legend Toggle Logic for EPS Chart ---
+            $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-eps-growth-forecast-chart"]', function() {
+                const $item = $(this);
+                const datasetIndex = $item.data('dataset-index');
+                
+                $item.toggleClass('active');
+                const isVisible = epsChart.isDatasetVisible(datasetIndex);
+                epsChart.setDatasetVisibility(datasetIndex, !isVisible);
+
+                // Also toggle the cloud fill when Estimated EPS is clicked
+                if (datasetIndex === 2) {
+                    epsChart.setDatasetVisibility(0, !isVisible); // High estimate
+                    epsChart.setDatasetVisibility(1, !isVisible); // Low estimate
+                }
+
+                epsChart.update();
             });
         }
 
