@@ -506,29 +506,27 @@ function initializeRevenueChart() {
                                 xMin: forecast_start_date,
                                 backgroundColor: 'rgba(54, 162, 235, 0.1)',
                             },
-                            // --- FIX: Position labels on either side of the line ---
+                            // --- FIX: Use explicit getTime() for correct coordinate calculation ---
                             pastLabel: {
                                 display: annotationsAreVisible,
                                 type: 'label',
-                                x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date).getTime()),
                                 y: 20,
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
                                 xAdjust: -10,
-                                yAdjust: 0,
                                 textAlign: 'right',
                             },
                             forecastLabel: {
                                 display: annotationsAreVisible,
                                 type: 'label',
-                                x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date).getTime()),
                                 y: 20,
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
                                 font: { size: 12 },
                                 xAdjust: 10,
-                                yAdjust: 0,
                                 textAlign: 'left',
                             }
                         }
@@ -667,29 +665,27 @@ function initializeEpsChart() {
                                 xMin: forecast_start_date,
                                 backgroundColor: 'rgba(54, 162, 235, 0.1)',
                             },
-                            // --- FIX: Position labels on either side of the line ---
+                            // --- FIX: Use explicit getTime() for correct coordinate calculation ---
                             pastLabel: {
                                 display: annotationsAreVisible,
                                 type: 'label',
-                                x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date).getTime()),
                                 y: 20,
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
                                 xAdjust: -10,
-                                yAdjust: 0,
                                 textAlign: 'right',
                             },
                             forecastLabel: {
                                 display: annotationsAreVisible,
                                 type: 'label',
-                                x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date).getTime()),
                                 y: 20,
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
                                 font: { size: 12 },
                                 xAdjust: 10,
-                                yAdjust: 0,
                                 textAlign: 'left',
                             }
                         }
