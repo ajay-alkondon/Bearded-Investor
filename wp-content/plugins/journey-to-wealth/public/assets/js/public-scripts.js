@@ -1461,14 +1461,10 @@ function initializeEpsChart() {
                                 } else if (section === 'intrinsic-valuation') {
                                     // This now correctly calls the renamed function
                                     initializeValuationSection($placeholder); 
-                                } else if (section === 'earnings-revenue-forecasts') {
+                                } else if (section === 'performance') {
                                     initializePerformanceSection($placeholder);
                                 } else if (section === 'key-metrics-ratios') {
                                     initializeKeyMetricsRatiosSection($placeholder);
-                                } else if (section === 'historical-data') {
-                                    initializeHistoricalDataSection($placeholder);
-                                } else if (section === 'past-performance') {
-                                    initializeHistoricalCharts($placeholder);
                                 }
 
                             } else {

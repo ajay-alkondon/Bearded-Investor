@@ -118,10 +118,8 @@ public function render_analyzer_layout_shortcode( $atts ) {
                     
                     <div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div>
                     <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
-                    <div id="section-performance" class="jtw-content-section-placeholder" data-section="earnings-revenue-forecasts"></div>
+                    <div id="section-performance" class="jtw-content-section-placeholder" data-section="performance"></div>
                     <div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div>
-                    <div id="section-historical-data" class="jtw-content-section-placeholder" data-section="historical-data"></div>
-                    <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
                 </main>
             </div>
         </div>
@@ -201,14 +199,8 @@ public function ajax_fetch_section_data() {
             $this->store_and_map_discovered_company($ticker, $raw_data['overview']['Industry'], $raw_data['overview']['Sector']);
             $response_data['html'] = $this->build_overview_section_html($raw_data['overview'], $raw_data['quote']);
             break;
-        case 'earnings-revenue-forecasts': // ADD THIS NEW CASE
+        case 'performance': // ADD THIS NEW CASE
             $response_data['html'] = $this->build_performance_section_html($calculated_data);
-            break;
-        case 'historical-data':
-            $response_data['html'] = $this->build_historical_data_section_html($calculated_data['historical_table_data']);
-            break;
-        case 'past-performance':
-            $response_data['html'] = $this->build_past_performance_section_html($calculated_data['historical_chart_data']);
             break;
         case 'key-metrics-ratios':
             $response_data['html'] = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
@@ -1206,90 +1198,6 @@ private function build_performance_section_html($calculated_data) {
                 <div class="jtw-peer-loading-spinner" style="display:none;"><div class="jtw-loading-spinner"></div></div>
                 <div class="jtw-peer-error-message" style="display:none;"></div>
             </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    private function build_past_performance_section_html($historical_data) {
-        ob_start();
-        ?>
-        <div id="section-past-performance-content" class="jtw-content-section">
-            <h4><?php esc_html_e('Visual Data Trends', 'journey-to-wealth'); ?></h4>
-            <div class="jtw-chart-controls">
-                <div class="jtw-period-toggle">
-                    <button class="jtw-period-button active" data-period="annual">Annual</button>
-                    <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
-                </div>
-            </div>
-            <div class="jtw-historical-charts-grid">
-                <?php
-                $chart_configs = [
-                    'revenue' => ['title' => 'Revenue', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'], // Example color added for consistency
-                    'net_income' => ['title' => 'Net Income', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'], // Example color added for consistency
-                    'ebitda' => ['title' => 'EBITDA', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#7ed321"]'], // Example color added for consistency
-                    'fcf' => ['title' => 'Free Cash Flow', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#4a90e2"]'], // Example color added for consistency
-                    'cash-and-debt' => ['title' => 'Cash & Debt', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#f5a623", "#d0021b"]'], // Updated colors for Cash & Debt
-                    'expenses' => [
-                        'title' => 'Expenses', 
-                        'type' => 'bar', 
-                        'prefix' => '$', 
-                        'stacked' => true, // <-- NEW: This makes it a stacked bar chart
-                        'colors' => '["#f5a623", "#f8e71c", "#d0021b"]' // <-- NEW: Specific colors from the image (orange, yellow, red)
-                    ],
-                    'dividend' => ['title' => 'Dividend Per Share', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#bd10e0"]'], // Example color added for consistency
-                    'shares_outstanding' => ['title' => 'Shares Outstanding', 'type' => 'bar', 'prefix' => '', 'colors' => '["#50e3c2"]'], // Example color added for consistency
-                    'eps' => ['title' => 'EPS', 'type' => 'bar', 'prefix' => '$', 'colors' => '["#ffd700"]'] // Example color added for consistency
-                ];
-                foreach ($chart_configs as $key => $config) {
-                    $annual_data = $historical_data['annual'][$key] ?? [];
-                    $quarterly_data = $historical_data['quarterly'][$key] ?? [];
-                    $chart_id = 'chart-' . uniqid();
-                    
-                    // Set colors attribute if it exists in the config
-                    $colors_attr = isset($config['colors']) ? "data-colors='" . esc_attr($config['colors']) . "'" : '';
-                    $stacked_attr = isset($config['stacked']) && $config['stacked'] ? "data-stacked='true'" : ''; // <-- NEW: Add stacked attribute
-
-                    echo '<div class="jtw-chart-item">';
-                    echo '<h5>' . esc_html($config['title']) . '</h5><div class="jtw-chart-wrapper"><canvas id="' . esc_attr($chart_id) . '"></canvas></div>';
-                    echo "<script type='application/json' class='jtw-chart-data' data-chart-id='" . esc_attr($chart_id) . "' data-chart-type='" . esc_attr($config['type']) . "' data-prefix='" . esc_attr($config['prefix']) . "' " . $colors_attr . " " . $stacked_attr . " data-annual='" . esc_attr(json_encode($annual_data)) . "' data-quarterly='" . esc_attr(json_encode($quarterly_data)) . "'></script>";
-                    echo '</div>';
-                }
-                ?>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    private function build_historical_data_section_html($table_data) {
-        if (empty($table_data)) { return '<div class="jtw-content-section"><p>Historical data is not available for this company.</p></div>'; }
-        ob_start();
-        ?>
-        <div class="jtw-content-section" id="section-historical-data-content">
-            <h4><?php esc_html_e('Shareholder Metrics', 'journey-to-wealth'); ?></h4>
-            <div class="jtw-historical-combined-wrapper">
-                <div class="jtw-historical-chart-container"><canvas id="jtw-historical-chart-canvas"></canvas></div>
-                <div class="jtw-historical-table-wrapper">
-                    <table class="jtw-historical-table">
-                        <thead><tr><th>Metric</th><?php foreach ($table_data as $dp) { echo '<th>' . esc_html($dp['year']) . '</th>'; } ?></tr></thead>
-                        <tbody>
-                            <?php
-                            $metrics = [ 'price' => ['label' => 'Price / Share', 'prefix' => '$'], 'revenue_ps' => ['label' => 'Revenue / Share', 'prefix' => '$'], 'eps' => ['label' => 'EPS', 'prefix' => '$'], 'cash_flow_ps' => ['label' => 'FCF / Share', 'prefix' => '$'], 'book_value_ps' => ['label' => 'Book Value / Share', 'prefix' => '$'], 'net_profit_margin' => ['label' => 'Net Profit Margin', 'prefix' => '%'], 'return_on_equity' => ['label' => 'Return on Equity', 'prefix' => '%'], 'return_on_capital' => ['label' => 'Return on Capital', 'prefix' => '%'] ];
-                            foreach ($metrics as $key => $details) : ?>
-                                <tr data-metric-key="<?php echo esc_attr($key); ?>">
-                                    <td><?php echo esc_html($details['label']); ?></td>
-                                    <?php foreach ($table_data as $dp) {
-                                        $val_key = ($key === 'price') ? 'avg_price' : $key;
-                                        echo '<td>' . $this->format_metric_value($dp[$val_key] ?? 'N/A', $details['prefix']) . '</td>';
-                                    } ?>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <script type='application/json' id='jtw-historical-data-json'><?php echo json_encode($table_data); ?></script>
         </div>
         <?php
         return ob_get_clean();
