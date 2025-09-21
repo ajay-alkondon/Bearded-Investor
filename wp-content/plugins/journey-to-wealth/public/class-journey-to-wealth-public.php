@@ -1019,6 +1019,12 @@ private function build_case_table_html($group, $args) {
             <?php if (empty($revenue_forecast_data) || empty($revenue_forecast_data['chart_points_revenue'])) { ?>
                 <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
             <?php } else { ?>
+                <div class="jtw-chart-controls">
+                    <div class="jtw-period-toggle jtw-revenue-period-toggle">
+                        <button class="jtw-period-button active" data-period="annual">Annual</button>
+                        <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+                    </div>
+                </div>
                 <div class="jtw-kmv-chart-container" style="position: relative;">
                     <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
                     <script type="application/json" id="jtw-earnings-revenue-forecast-data">
@@ -1026,11 +1032,7 @@ private function build_case_table_html($group, $args) {
                     </script>
                 </div>
                 <div class="jtw-chart-legend">
-                    <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="0"><span class="jtw-legend-color-box" style="background-color: #007bff; border-color: #007bff;"></span> Revenue</span>
-                    <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="1"><span class="jtw-legend-color-box" style="background-color: #2ecc71; border-color: #2ecc71;"></span> Earnings</span>
-                    <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="2"><span class="jtw-legend-color-box" style="background-color: #ffc107; border-color: #ffc107;"></span> Free Cash Flow</span>
-                    <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="3"><span class="jtw-legend-color-box" style="background-color: #fd7e14; border-color: #fd7e14;"></span> Cash From Op</span>
-                </div>
+                    </div>
             <?php } ?>
 
             <div class="jtw-subsection">
