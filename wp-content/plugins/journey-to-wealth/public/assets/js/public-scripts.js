@@ -363,6 +363,7 @@
     }
 
     function initializePerformanceSection($container) {
+        // --- Internal Function for Chart 2.1: Revenue & Earnings ---
         function initializeRevenueChart() {
             const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
             if (!$chartCanvas.length) return;
@@ -373,15 +374,16 @@
             }
 
             const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
+            if(!chartDataRaw) return;
             const parsedData = JSON.parse(chartDataRaw);
-
+            
             const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
             const revenue = (parsedData.chart_points_revenue || []).filter(isValidDate);
             const earnings = (parsedData.chart_points_earnings || []).filter(isValidDate);
             const fcf = (parsedData.chart_points_fcf || []).filter(isValidDate);
             const op_cash = (parsedData.chart_points_op_cash || []).filter(isValidDate);
             const forecast_start_date = parsedData.forecast_start_date;
-
+        
             const getOrCreateTooltip = (chart) => {
                 let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
                 if (!tooltipEl) {
@@ -391,7 +393,7 @@
                 }
                 return tooltipEl;
             };
-
+        
             const externalTooltipHandler = (context) => {
                 const { chart, tooltip } = context;
                 const tooltipEl = getOrCreateTooltip(chart);
@@ -401,7 +403,6 @@
                     return;
                 }
 
-                // --- FIX: Use parsed data point for the date to prevent "Invalid Date" ---
                 const date = new Date(tooltip.dataPoints[0].parsed.x);
                 let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) + '</div>';
                 innerHtml += '<div class="tooltip-body">';
@@ -427,14 +428,15 @@
             };
 
             const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
-            
-            // --- FIX: Dynamically calculate chart start and end dates with padding ---
+        
             let minDate, maxDate;
             if (allDates.length > 0) {
                 minDate = new Date(allDates[0]);
-                minDate.setMonth(minDate.getMonth() - 6); // 6 months padding at the start
+                // --- FIX: Change padding to 1 month ---
+                minDate.setMonth(minDate.getMonth() - 1);
                 maxDate = new Date(allDates[allDates.length - 1]);
-                maxDate.setMonth(maxDate.getMonth() + 6); // 6 months padding at the end
+                // --- FIX: Change padding to 1 month ---
+                maxDate.setMonth(maxDate.getMonth() + 1);
             }
 
             const datasets = [
@@ -452,7 +454,7 @@
                 tension: 0.3,
                 fill: 'start'
             }));
-
+        
             const ctx = $chartCanvas[0].getContext('2d');
             const chart = new Chart(ctx, {
                 type: 'line',
@@ -496,7 +498,6 @@
                                     xMin: forecast_start_date,
                                     backgroundColor: 'rgba(54, 162, 235, 0.1)'
                                 },
-                                // --- FIX: Adjust label positioning ---
                                 pastLabel: {
                                     type: 'label',
                                     xValue: forecast_start_date,
@@ -522,9 +523,8 @@
                     }
                 }
             });
-
-            const $legendContainer = $container.find('.jtw-chart-legend');
-            $legendContainer.on('click', '.jtw-legend-item', function() {
+            
+            $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-earnings-revenue-forecast-chart"]', function() {
                 const $item = $(this);
                 const datasetIndex = $item.data('dataset-index');
                 
@@ -535,15 +535,20 @@
             });
         }
 
+        // --- Internal Function for Chart 2.2: EPS Growth ---
         function initializeEpsChart() {
             const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
             if (!$chartCanvas.length) return;
+
+            const existingChart = Chart.getChart($chartCanvas[0]);
+            if (existingChart) {
+                existingChart.destroy();
+            }
 
             const chartDataRaw = $container.find('#jtw-eps-growth-forecast-data').html();
             if (!chartDataRaw) return;
             const parsedData = JSON.parse(chartDataRaw);
 
-            // ... (The entire logic for the 2.2 EPS chart is now inside here)
             const actual_eps = parsedData.actual_eps || [];
             const estimated_eps = parsedData.estimated_eps || [];
             const estimate_range_low = parsedData.estimate_range_low || [];
@@ -560,10 +565,10 @@
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(0, 122, 255, 0.2)',
                             pointRadius: 0,
-                            fill: '+1',
+                            fill: '+1', // Fill to the next dataset in the list (low estimate)
                         },
                         {
-                            label: 'Low Estimate',
+                            label: 'Low Estimate', // This dataset is just for the fill boundary
                             data: estimate_range_low,
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(0, 122, 255, 0.2)',
@@ -573,7 +578,7 @@
                         {
                             label: 'Estimated EPS',
                             data: estimated_eps,
-                            borderColor: '#007bff',
+                            borderColor: '#007bff', // Blue
                             borderWidth: 2,
                             pointRadius: 3,
                             tension: 0.3,
@@ -582,7 +587,7 @@
                         {
                             label: 'Actual EPS',
                             data: actual_eps,
-                            borderColor: '#2ecc71',
+                            borderColor: '#2ecc71', // Green
                             borderWidth: 2,
                             pointRadius: 3,
                             tension: 0.3,
@@ -605,7 +610,7 @@
                         }
                     },
                     plugins: {
-                        legend: { display: false }, // Using custom legend if needed
+                        legend: { display: false },
                         tooltip: {
                             mode: 'index',
                             intersect: false,
