@@ -578,6 +578,9 @@
                 const forecast_start_date = period === 'annual' 
                     ? parsedData.forecast_start_date_annual
                     : parsedData.forecast_start_date_quarterly;
+                
+                // --- FIX: Conditionally display annotations only if a forecast date exists ---
+                const annotationsAreVisible = !!forecast_start_date;
 
                 const ctx = $chartCanvas[0].getContext('2d');
                 epsChart = new Chart(ctx, {
@@ -590,10 +593,10 @@
                                 borderColor: 'transparent',
                                 backgroundColor: 'rgba(0, 122, 255, 0.2)',
                                 pointRadius: 0,
-                                fill: '+1', // Fill to the next dataset in the list (low estimate)
+                                fill: '+1',
                             },
                             {
-                                label: 'Low Estimate', // This dataset is just for the fill boundary
+                                label: 'Low Estimate',
                                 data: estimate_range_low,
                                 borderColor: 'transparent',
                                 backgroundColor: 'rgba(0, 122, 255, 0.2)',
@@ -603,7 +606,7 @@
                             {
                                 label: 'Estimated EPS',
                                 data: estimated_eps,
-                                borderColor: '#007bff', // Blue
+                                borderColor: '#007bff',
                                 borderWidth: 2,
                                 pointRadius: 3,
                                 tension: 0.3,
@@ -612,7 +615,7 @@
                             {
                                 label: 'Actual EPS',
                                 data: actual_eps,
-                                borderColor: '#2ecc71', // Green
+                                borderColor: '#2ecc71',
                                 borderWidth: 2,
                                 pointRadius: 3,
                                 tension: 0.3,
@@ -643,6 +646,7 @@
                             annotation: {
                                 annotations: {
                                     forecastLine: {
+                                        display: annotationsAreVisible, // Conditional display
                                         type: 'line',
                                         scaleID: 'x',
                                         value: forecast_start_date,
@@ -651,12 +655,14 @@
                                         borderDash: [6, 6]
                                     },
                                     forecastBox: {
+                                        display: annotationsAreVisible, // Conditional display
                                         type: 'box',
                                         scaleID: 'x',
                                         xMin: forecast_start_date,
                                         backgroundColor: 'rgba(54, 162, 235, 0.1)',
                                     },
                                     pastLabel: {
+                                        display: annotationsAreVisible, // Conditional display
                                         type: 'label',
                                         xValue: forecast_start_date,
                                         yValue: 10,
@@ -667,6 +673,7 @@
                                         xAdjust: -10,
                                     },
                                     forecastLabel: {
+                                        display: annotationsAreVisible, // Conditional display
                                         type: 'label',
                                         xValue: forecast_start_date,
                                         yValue: 10,
@@ -683,7 +690,7 @@
                 });
             }
 
-            // Initial draw is now 'annual'
+            // Initial draw is 'annual'
             drawEpsChart('annual');
 
             // Period Toggle Logic
