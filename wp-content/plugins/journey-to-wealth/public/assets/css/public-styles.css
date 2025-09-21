@@ -2299,6 +2299,7 @@ body.dark-mode .jtw-chart-data-row .jtw-value { color: #e2e8f0; }
     transition: opacity 0.2s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    width:280px;
     max-width: 360px;
     z-index: 99;
 }

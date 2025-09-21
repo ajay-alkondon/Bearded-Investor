@@ -1039,7 +1039,7 @@ private function build_case_table_html($group, $args) {
                     <p>This chart shows historical reported EPS against analyst estimates, including the high and low range of forecasts.</p>
                 </div>
                 
-                <?php if (empty($eps_forecast_data) || empty($eps_forecast_data['estimated_eps'])) { ?>
+                <?php if (empty($eps_forecast_data) ) { ?>
                     <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
                 <?php } else { ?>
                     <div class="jtw-kmv-chart-container" style="position: relative;">
