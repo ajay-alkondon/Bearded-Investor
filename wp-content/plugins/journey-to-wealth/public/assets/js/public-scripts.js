@@ -535,26 +535,29 @@
             });
         }
 
-        function initializeEpsChart() {
-            const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
-            if (!$chartCanvas.length) return;
+    function initializeEpsChart() {
+        const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
+        if (!$chartCanvas.length) return;
 
-            const existingChart = Chart.getChart($chartCanvas[0]);
-            if (existingChart) {
-                existingChart.destroy();
+        const chartDataRaw = $container.find('#jtw-eps-growth-forecast-data').html();
+        if (!chartDataRaw) return;
+        const parsedData = JSON.parse(chartDataRaw);
+        
+        let epsChart;
+
+        function drawEpsChart(period) {
+            if (epsChart) {
+                epsChart.destroy();
             }
 
-            const chartDataRaw = $container.find('#jtw-eps-growth-forecast-data').html();
-            if (!chartDataRaw) return;
-            const parsedData = JSON.parse(chartDataRaw);
-
-            const actual_eps = parsedData.actual_eps || [];
-            const estimated_eps = parsedData.estimated_eps || [];
-            const estimate_range_low = parsedData.estimate_range_low || [];
-            const estimate_range_high = parsedData.estimate_range_high || [];
+            const periodData = parsedData[period] || {};
+            const actual_eps = periodData.actual_eps || [];
+            const estimated_eps = periodData.estimated_eps || [];
+            const estimate_range_low = periodData.estimate_range_low || [];
+            const estimate_range_high = periodData.estimate_range_high || [];
 
             const ctx = $chartCanvas[0].getContext('2d');
-            const epsChart = new Chart(ctx, { // <-- give the chart a variable name
+            epsChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     datasets: [
@@ -564,10 +567,10 @@
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(0, 122, 255, 0.2)',
                             pointRadius: 0,
-                            fill: '+1',
+                            fill: '+1', // Fill to the next dataset in the list (low estimate)
                         },
                         {
-                            label: 'Low Estimate',
+                            label: 'Low Estimate', // This dataset is just for the fill boundary
                             data: estimate_range_low,
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(0, 122, 255, 0.2)',
@@ -577,7 +580,7 @@
                         {
                             label: 'Estimated EPS',
                             data: estimated_eps,
-                            borderColor: '#007bff',
+                            borderColor: '#007bff', // Blue
                             borderWidth: 2,
                             pointRadius: 3,
                             tension: 0.3,
@@ -586,7 +589,7 @@
                         {
                             label: 'Actual EPS',
                             data: actual_eps,
-                            borderColor: '#2ecc71',
+                            borderColor: '#2ecc71', // Green
                             borderWidth: 2,
                             pointRadius: 3,
                             tension: 0.3,
@@ -600,7 +603,7 @@
                     scales: {
                         x: {
                             type: 'time',
-                            time: { unit: 'quarter' },
+                            time: { unit: period === 'annual' ? 'year' : 'quarter' },
                             grid: { display: false }
                         },
                         y: {
@@ -610,29 +613,45 @@
                     },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false, }
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
                     }
                 }
             });
-
-            // --- NEW: Legend Toggle Logic for EPS Chart ---
-            $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-eps-growth-forecast-chart"]', function() {
-                const $item = $(this);
-                const datasetIndex = $item.data('dataset-index');
-                
-                $item.toggleClass('active');
-                const isVisible = epsChart.isDatasetVisible(datasetIndex);
-                epsChart.setDatasetVisibility(datasetIndex, !isVisible);
-
-                // Also toggle the cloud fill when Estimated EPS is clicked
-                if (datasetIndex === 2) {
-                    epsChart.setDatasetVisibility(0, !isVisible); // High estimate
-                    epsChart.setDatasetVisibility(1, !isVisible); // Low estimate
-                }
-
-                epsChart.update();
-            });
         }
+
+        // Initial draw
+        drawEpsChart('quarterly');
+
+        // Period Toggle Logic
+        $container.find('.jtw-eps-period-toggle .jtw-period-button').on('click', function() {
+            const $button = $(this);
+            if ($button.hasClass('active')) return;
+            $container.find('.jtw-eps-period-toggle .jtw-period-button').removeClass('active');
+            $button.addClass('active');
+            drawEpsChart($button.data('period'));
+        });
+
+        // Legend Toggle Logic
+        $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-eps-growth-forecast-chart"]', function() {
+            const $item = $(this);
+            const datasetIndex = $item.data('dataset-index');
+            
+            $item.toggleClass('active');
+            const isVisible = epsChart.isDatasetVisible(datasetIndex);
+            epsChart.setDatasetVisibility(datasetIndex, !isVisible);
+
+            // Also toggle the cloud fill when Estimated EPS is clicked
+            if (datasetIndex === 2) {
+                epsChart.setDatasetVisibility(0, !isVisible); // High estimate
+                epsChart.setDatasetVisibility(1, !isVisible); // Low estimate
+            }
+
+            epsChart.update();
+        });
+    }
 
         // --- Main execution ---
         initializeRevenueChart();
