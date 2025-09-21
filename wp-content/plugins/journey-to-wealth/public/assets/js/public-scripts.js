@@ -381,7 +381,9 @@ function initializeRevenueChart() {
 
         const periodKey = period === 'annual' ? 'chart_points_annual' : 'chart_points_quarterly';
         const periodData = parsedData[periodKey] || {};
-        const forecast_start_date = parsedData.forecast_start_date; // This line is annual-based
+        const forecast_start_date = period === 'annual' 
+            ? parsedData.forecast_start_date 
+            : parsedData.forecast_start_date_quarterly;
 
         const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
         const revenue = (periodData.revenue || []).filter(isValidDate);
@@ -494,14 +496,12 @@ function initializeRevenueChart() {
                                 borderColor: 'rgba(255, 255, 255, 0.3)',
                                 borderWidth: 1,
                                 borderDash: [6, 6],
-                                display: period === 'annual' // Only show on annual chart
                             },
                             forecastBox: {
                                 type: 'box',
                                 scaleID: 'x',
                                 xMin: forecast_start_date,
                                 backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                                display: period === 'annual'
                             },
                             pastLabel: {
                                 type: 'label',
@@ -512,7 +512,6 @@ function initializeRevenueChart() {
                                 font: { size: 12 },
                                 position: 'end',
                                 xAdjust: -10,
-                                display: period === 'annual'
                             },
                             forecastLabel: {
                                 type: 'label',
@@ -523,7 +522,6 @@ function initializeRevenueChart() {
                                 font: { size: 12 },
                                 position: 'start',
                                 xAdjust: 10,
-                                display: period === 'annual'
                             }
                         }
                     }
