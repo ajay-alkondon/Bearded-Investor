@@ -363,7 +363,6 @@
     }
 
     function initializePerformanceSection($container) {
-        // --- Internal Function for Chart 2.1: Revenue & Earnings ---
         function initializeRevenueChart() {
             const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
             if (!$chartCanvas.length) return;
@@ -507,7 +506,6 @@
                                         xMin: forecast_start_date,
                                         backgroundColor: 'rgba(54, 162, 235, 0.1)',
                                     },
-                                    // --- FIX: Use pixel-based positioning for static labels ---
                                     pastLabel: {
                                         display: annotationsAreVisible,
                                         type: 'label',
@@ -516,7 +514,8 @@
                                         content: 'Past',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        xAdjust: -10,
+                                        // --- FIX: Adjust position ---
+                                        xAdjust: -20,
                                         yAdjust: 0,
                                         textAlign: 'right',
                                     },
@@ -528,7 +527,8 @@
                                         content: 'Analysts Forecasts',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        xAdjust: 10,
+                                        // --- FIX: Adjust position ---
+                                        xAdjust: 20,
                                         yAdjust: 0,
                                         textAlign: 'left',
                                     }
@@ -562,7 +562,6 @@
             });
         }
 
-        // --- Internal Function for Chart 2.2: EPS Growth ---
         function initializeEpsChart() {
             const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
             if (!$chartCanvas.length) return;
@@ -572,51 +571,6 @@
             const parsedData = JSON.parse(chartDataRaw);
             
             let epsChart;
-
-            // --- NEW: Add Tooltip Handler ---
-            const getOrCreateTooltip = (chart) => {
-                let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
-                if (!tooltipEl) {
-                    tooltipEl = document.createElement('div');
-                    tooltipEl.className = 'jtw-chart-tooltip';
-                    chart.canvas.parentNode.appendChild(tooltipEl);
-                }
-                return tooltipEl;
-            };
-
-            const externalTooltipHandler = (context) => {
-                const { chart, tooltip } = context;
-                const tooltipEl = getOrCreateTooltip(chart);
-
-                if (tooltip.opacity === 0) {
-                    tooltipEl.style.opacity = 0;
-                    return;
-                }
-
-                const date = new Date(tooltip.dataPoints[0].parsed.x);
-                let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
-                innerHtml += '<div class="tooltip-body">';
-
-                tooltip.body.forEach((body, i) => {
-                    if (chart.isDatasetVisible(tooltip.dataPoints[i].datasetIndex)) {
-                        const colors = tooltip.labelColors[i];
-                        const label = body.lines[0].split(':')[0];
-                        const value = body.lines[0].split(':')[1];
-                        const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-                        const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-                        innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
-                    }
-                });
-
-                innerHtml += '</div>';
-                tooltipEl.innerHTML = innerHtml;
-
-                const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-                tooltipEl.style.opacity = 1;
-                tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-                tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-            };
-
 
             function drawEpsChart(period) {
                 if (epsChart) {
@@ -692,10 +646,7 @@
                         },
                         plugins: {
                             legend: { display: false },
-                            // --- NEW: Use custom tooltip ---
                             tooltip: {
-                                enabled: false,
-                                external: externalTooltipHandler,
                                 mode: 'index',
                                 intersect: false,
                             },
@@ -725,7 +676,8 @@
                                         content: 'Past',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        xAdjust: -10,
+                                        // --- FIX: Adjust position ---
+                                        xAdjust: -20,
                                         yAdjust: 0,
                                         textAlign: 'right',
                                     },
@@ -737,7 +689,8 @@
                                         content: 'Analysts Forecasts',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        xAdjust: 10,
+                                        // --- FIX: Adjust position ---
+                                        xAdjust: 20,
                                         yAdjust: 0,
                                         textAlign: 'left',
                                     }
@@ -748,10 +701,8 @@
                 });
             }
 
-            // Initial draw is 'annual'
             drawEpsChart('annual');
 
-            // Period Toggle Logic
             $container.find('.jtw-eps-period-toggle .jtw-period-button').on('click', function() {
                 const $button = $(this);
                 if ($button.hasClass('active')) return;
@@ -760,7 +711,6 @@
                 drawEpsChart($button.data('period'));
             });
 
-            // Legend Toggle Logic
             $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-eps-growth-forecast-chart"]', function() {
                 const $item = $(this);
                 const datasetIndex = $item.data('dataset-index');
@@ -770,10 +720,9 @@
                     const isVisible = epsChart.isDatasetVisible(datasetIndex);
                     epsChart.setDatasetVisibility(datasetIndex, !isVisible);
 
-                    // Also toggle the cloud fill when Estimated EPS is clicked
                     if (datasetIndex === 2) {
-                        epsChart.setDatasetVisibility(0, !isVisible); // High estimate
-                        epsChart.setDatasetVisibility(1, !isVisible); // Low estimate
+                        epsChart.setDatasetVisibility(0, !isVisible);
+                        epsChart.setDatasetVisibility(1, !isVisible);
                     }
 
                     epsChart.update();
