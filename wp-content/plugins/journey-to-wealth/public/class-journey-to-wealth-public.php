@@ -999,77 +999,84 @@ private function build_case_table_html($group, $args) {
         return ob_get_clean();
     }
 
-    private function build_performance_section_html($calculated_data) {
-        // Extract data for both charts
-        $revenue_forecast_data = $calculated_data['earnings_revenue_forecasts'] ?? [];
-        $eps_forecast_data = $calculated_data['eps_growth_forecasts'] ?? [];
+private function build_performance_section_html($calculated_data) {
+    // Extract data for both charts
+    $revenue_forecast_data = $calculated_data['earnings_revenue_forecasts'] ?? [];
+    $eps_forecast_data = $calculated_data['eps_growth_forecasts'] ?? [];
 
-        ob_start();
+    ob_start();
+    ?>
+    <div class="jtw-content-section" id="section-performance-content">
+        <div class="jtw-section-header">
+            <h4>2. Performance</h4>
+        </div>
+
+        <div class="jtw-sws-header">
+            <h2>2.1 Earnings and Revenue Growth Forecasts</h2>
+            <p>This chart shows the company's historical and estimated future earnings and revenue, providing insight into its growth trajectory.</p>
+        </div>
+        
+        <?php 
+        // --- FIX: Check for data inside the new 'chart_points_annual' key ---
+        if (empty($revenue_forecast_data) || empty($revenue_forecast_data['chart_points_annual']['revenue'])) { 
         ?>
-        <div class="jtw-content-section" id="section-performance-content">
-            <div class="jtw-section-header">
-                <h4>2. Performance</h4>
+            <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
+        <?php } else { ?>
+            <div class="jtw-chart-controls">
+                <div class="jtw-period-toggle jtw-revenue-period-toggle">
+                    <button class="jtw-period-button active" data-period="annual">Annual</button>
+                    <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+                </div>
             </div>
+            <div class="jtw-kmv-chart-container" style="position: relative;">
+                <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
+                <script type="application/json" id="jtw-earnings-revenue-forecast-data">
+                    <?php echo json_encode($revenue_forecast_data); ?>
+                </script>
+            </div>
+            <div class="jtw-chart-legend">
+                <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="0"><span class="jtw-legend-color-box" style="background-color: #007bff; border-color: #007bff;"></span> Revenue</span>
+                <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="1"><span class="jtw-legend-color-box" style="background-color: #2ecc71; border-color: #2ecc71;"></span> Earnings</span>
+                <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="2"><span class="jtw-legend-color-box" style="background-color: #ffc107; border-color: #ffc107;"></span> Free Cash Flow</span>
+                <span class="jtw-legend-item active" data-chart-id="jtw-earnings-revenue-forecast-chart" data-dataset-index="3"><span class="jtw-legend-color-box" style="background-color: #fd7e14; border-color: #fd7e14;"></span> Cash From Op</span>
+            </div>
+        <?php } ?>
 
+        <div class="jtw-subsection">
             <div class="jtw-sws-header">
-                <h2>2.1 Earnings and Revenue Growth Forecasts</h2>
-                <p>This chart shows the company's historical and estimated future earnings and revenue, providing insight into its growth trajectory.</p>
+                <h2>2.2 EPS Growth Forecasts</h2>
+                <p>This chart shows historical reported EPS against analyst estimates, including the high and low range of forecasts.</p>
             </div>
             
-            <?php if (empty($revenue_forecast_data) || empty($revenue_forecast_data['chart_points_revenue'])) { ?>
-                <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
+            <?php if (empty($eps_forecast_data) || (empty($eps_forecast_data['annual']['estimated_eps']) && empty($eps_forecast_data['quarterly']['estimated_eps']))) { ?>
+                <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
             <?php } else { ?>
                 <div class="jtw-chart-controls">
-                    <div class="jtw-period-toggle jtw-revenue-period-toggle">
-                        <button class="jtw-period-button active" data-period="annual">Annual</button>
-                        <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+                    <div class="jtw-period-toggle jtw-eps-period-toggle">
+                        <button class="jtw-period-button active" data-period="quarterly">Quarterly</button>
+                        <button class="jtw-period-button" data-period="annual">Annual</button>
                     </div>
                 </div>
                 <div class="jtw-kmv-chart-container" style="position: relative;">
-                    <canvas id="jtw-earnings-revenue-forecast-chart"></canvas>
-                    <script type="application/json" id="jtw-earnings-revenue-forecast-data">
-                        <?php echo json_encode($revenue_forecast_data); ?>
+                    <canvas id="jtw-eps-growth-forecast-chart"></canvas>
+                    <script type="application/json" id="jtw-eps-growth-forecast-data">
+                        <?php echo json_encode($eps_forecast_data); ?>
                     </script>
                 </div>
                 <div class="jtw-chart-legend">
-                    </div>
-            <?php } ?>
-
-            <div class="jtw-subsection">
-                <div class="jtw-sws-header">
-                    <h2>2.2 EPS Growth Forecasts</h2>
-                    <p>This chart shows historical reported EPS against analyst estimates, including the high and low range of forecasts.</p>
+                    <span class="jtw-legend-item active" data-chart-id="jtw-eps-growth-forecast-chart" data-dataset-index="3">
+                        <span class="jtw-legend-color-box" style="background-color: #2ecc71; border-color: #2ecc71;"></span> Actual EPS
+                    </span>
+                    <span class="jtw-legend-item active" data-chart-id="jtw-eps-growth-forecast-chart" data-dataset-index="2">
+                        <span class="jtw-legend-color-box" style="background-color: #007bff; border-color: #007bff;"></span> Estimated EPS
+                    </span>
                 </div>
-                
-                <?php if (empty($eps_forecast_data) || (empty($eps_forecast_data['annual']['estimated_eps']) && empty($eps_forecast_data['quarterly']['estimated_eps']))) { ?>
-                    <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
-                <?php } else { ?>
-                    <div class="jtw-chart-controls">
-                        <div class="jtw-period-toggle jtw-eps-period-toggle">
-                            <button class="jtw-period-button active" data-period="quarterly">Quarterly</button>
-                            <button class="jtw-period-button" data-period="annual">Annual</button>
-                        </div>
-                    </div>
-                    <div class="jtw-kmv-chart-container" style="position: relative;">
-                        <canvas id="jtw-eps-growth-forecast-chart"></canvas>
-                        <script type="application/json" id="jtw-eps-growth-forecast-data">
-                            <?php echo json_encode($eps_forecast_data); ?>
-                        </script>
-                    </div>
-                    <div class="jtw-chart-legend">
-                        <span class="jtw-legend-item active" data-chart-id="jtw-eps-growth-forecast-chart" data-dataset-index="3">
-                            <span class="jtw-legend-color-box" style="background-color: #2ecc71; border-color: #2ecc71;"></span> Actual EPS
-                        </span>
-                        <span class="jtw-legend-item active" data-chart-id="jtw-eps-growth-forecast-chart" data-dataset-index="2">
-                            <span class="jtw-legend-color-box" style="background-color: #007bff; border-color: #007bff;"></span> Estimated EPS
-                        </span>
-                    </div>
-                <?php } ?>
-            </div>
+            <?php } ?>
         </div>
-        <?php
-        return ob_get_clean();
-    }
+    </div>
+    <?php
+    return ob_get_clean();
+}
 
     private function build_key_metric_valuations_section_html($ratios_data, $key_metrics) {
         if (empty($ratios_data)) {
