@@ -460,6 +460,8 @@
                     fill: 'start'
                 }));
 
+                const annotationsAreVisible = !!forecast_start_date;
+
                 const ctx = $chartCanvas[0].getContext('2d');
                 revenueChart = new Chart(ctx, {
                     type: 'line',
@@ -490,6 +492,7 @@
                             annotation: {
                                 annotations: {
                                     forecastLine: {
+                                        display: annotationsAreVisible,
                                         type: 'line',
                                         scaleID: 'x',
                                         value: forecast_start_date,
@@ -498,30 +501,36 @@
                                         borderDash: [6, 6],
                                     },
                                     forecastBox: {
+                                        display: annotationsAreVisible,
                                         type: 'box',
                                         scaleID: 'x',
                                         xMin: forecast_start_date,
                                         backgroundColor: 'rgba(54, 162, 235, 0.1)',
                                     },
+                                    // --- FIX: Use pixel-based positioning for static labels ---
                                     pastLabel: {
+                                        display: annotationsAreVisible,
                                         type: 'label',
-                                        xValue: forecast_start_date,
-                                        yValue: 10,
+                                        x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                        y: 20,
                                         content: 'Past',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        position: 'end',
                                         xAdjust: -10,
+                                        yAdjust: 0,
+                                        textAlign: 'right',
                                     },
                                     forecastLabel: {
+                                        display: annotationsAreVisible,
                                         type: 'label',
-                                        xValue: forecast_start_date,
-                                        yValue: 10,
+                                        x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                        y: 20,
                                         content: 'Analysts Forecasts',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        position: 'start',
                                         xAdjust: 10,
+                                        yAdjust: 0,
+                                        textAlign: 'left',
                                     }
                                 }
                             }
@@ -530,7 +539,7 @@
                 });
             }
 
-            drawRevenueChart('annual'); // Initial draw
+            drawRevenueChart('annual');
 
             $container.find('.jtw-revenue-period-toggle .jtw-period-button').on('click', function() {
                 const $button = $(this);
@@ -579,7 +588,6 @@
                     ? parsedData.forecast_start_date_annual
                     : parsedData.forecast_start_date_quarterly;
                 
-                // --- FIX: Conditionally display annotations only if a forecast date exists ---
                 const annotationsAreVisible = !!forecast_start_date;
 
                 const ctx = $chartCanvas[0].getContext('2d');
@@ -646,7 +654,7 @@
                             annotation: {
                                 annotations: {
                                     forecastLine: {
-                                        display: annotationsAreVisible, // Conditional display
+                                        display: annotationsAreVisible,
                                         type: 'line',
                                         scaleID: 'x',
                                         value: forecast_start_date,
@@ -655,33 +663,36 @@
                                         borderDash: [6, 6]
                                     },
                                     forecastBox: {
-                                        display: annotationsAreVisible, // Conditional display
+                                        display: annotationsAreVisible,
                                         type: 'box',
                                         scaleID: 'x',
                                         xMin: forecast_start_date,
                                         backgroundColor: 'rgba(54, 162, 235, 0.1)',
                                     },
+                                    // --- FIX: Use pixel-based positioning for static labels ---
                                     pastLabel: {
-                                        display: annotationsAreVisible, // Conditional display
+                                        display: annotationsAreVisible,
                                         type: 'label',
-                                        xValue: forecast_start_date,
-                                        yValue: 10,
+                                        x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                        y: 20,
                                         content: 'Past',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        position: 'end',
                                         xAdjust: -10,
+                                        yAdjust: 0,
+                                        textAlign: 'right',
                                     },
                                     forecastLabel: {
-                                        display: annotationsAreVisible, // Conditional display
+                                        display: annotationsAreVisible,
                                         type: 'label',
-                                        xValue: forecast_start_date,
-                                        yValue: 10,
+                                        x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                        y: 20,
                                         content: 'Analysts Forecasts',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        position: 'start',
                                         xAdjust: 10,
+                                        yAdjust: 0,
+                                        textAlign: 'left',
                                     }
                                 }
                             }
@@ -690,10 +701,8 @@
                 });
             }
 
-            // Initial draw is 'annual'
             drawEpsChart('annual');
 
-            // Period Toggle Logic
             $container.find('.jtw-eps-period-toggle .jtw-period-button').on('click', function() {
                 const $button = $(this);
                 if ($button.hasClass('active')) return;
@@ -702,7 +711,6 @@
                 drawEpsChart($button.data('period'));
             });
 
-            // Legend Toggle Logic
             $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-eps-growth-forecast-chart"]', function() {
                 const $item = $(this);
                 const datasetIndex = $item.data('dataset-index');
@@ -712,10 +720,9 @@
                     const isVisible = epsChart.isDatasetVisible(datasetIndex);
                     epsChart.setDatasetVisibility(datasetIndex, !isVisible);
 
-                    // Also toggle the cloud fill when Estimated EPS is clicked
                     if (datasetIndex === 2) {
-                        epsChart.setDatasetVisibility(0, !isVisible); // High estimate
-                        epsChart.setDatasetVisibility(1, !isVisible); // Low estimate
+                        epsChart.setDatasetVisibility(0, !isVisible);
+                        epsChart.setDatasetVisibility(1, !isVisible);
                     }
 
                     epsChart.update();
