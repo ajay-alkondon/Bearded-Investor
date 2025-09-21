@@ -506,31 +506,34 @@
                                         xMin: forecast_start_date,
                                         backgroundColor: 'rgba(54, 162, 235, 0.1)',
                                     },
+                                    // --- FIX: Center labels in their respective zones ---
                                     pastLabel: {
                                         display: annotationsAreVisible,
                                         type: 'label',
-                                        x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                        x: (ctx) => {
+                                            const xScale = ctx.chart.scales.x;
+                                            const forecastPixel = xScale.getPixelForValue(new Date(forecast_start_date));
+                                            return (xScale.left + forecastPixel) / 2;
+                                        },
                                         y: 20,
                                         content: 'Past',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        // --- FIX: Adjust position ---
-                                        xAdjust: -20,
-                                        yAdjust: 0,
-                                        textAlign: 'right',
+                                        textAlign: 'center',
                                     },
                                     forecastLabel: {
                                         display: annotationsAreVisible,
                                         type: 'label',
-                                        x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                        x: (ctx) => {
+                                            const xScale = ctx.chart.scales.x;
+                                            const forecastPixel = xScale.getPixelForValue(new Date(forecast_start_date));
+                                            return (forecastPixel + xScale.right) / 2;
+                                        },
                                         y: 20,
                                         content: 'Analysts Forecasts',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        // --- FIX: Adjust position ---
-                                        xAdjust: 20,
-                                        yAdjust: 0,
-                                        textAlign: 'left',
+                                        textAlign: 'center',
                                     }
                                 }
                             }
@@ -668,31 +671,34 @@
                                         xMin: forecast_start_date,
                                         backgroundColor: 'rgba(54, 162, 235, 0.1)',
                                     },
+                                    // --- FIX: Center labels in their respective zones ---
                                     pastLabel: {
                                         display: annotationsAreVisible,
                                         type: 'label',
-                                        x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                        x: (ctx) => {
+                                            const xScale = ctx.chart.scales.x;
+                                            const forecastPixel = xScale.getPixelForValue(new Date(forecast_start_date));
+                                            return (xScale.left + forecastPixel) / 2;
+                                        },
                                         y: 20,
                                         content: 'Past',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        // --- FIX: Adjust position ---
-                                        xAdjust: -20,
-                                        yAdjust: 0,
-                                        textAlign: 'right',
+                                        textAlign: 'center',
                                     },
                                     forecastLabel: {
                                         display: annotationsAreVisible,
                                         type: 'label',
-                                        x: (ctx) => ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date)),
+                                        x: (ctx) => {
+                                            const xScale = ctx.chart.scales.x;
+                                            const forecastPixel = xScale.getPixelForValue(new Date(forecast_start_date));
+                                            return (forecastPixel + xScale.right) / 2;
+                                        },
                                         y: 20,
                                         content: 'Analysts Forecasts',
                                         color: '#aaa',
                                         font: { size: 12 },
-                                        // --- FIX: Adjust position ---
-                                        xAdjust: 20,
-                                        yAdjust: 0,
-                                        textAlign: 'left',
+                                        textAlign: 'center',
                                     }
                                 }
                             }
