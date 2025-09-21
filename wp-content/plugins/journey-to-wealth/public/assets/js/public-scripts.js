@@ -587,6 +587,7 @@ function initializeEpsChart() {
         const annotationsAreVisible = !!forecast_start_date;
 
         const ctx = $chartCanvas[0].getContext('2d');
+        console.log(ctx.chart.scales.x.getPixelForValue(new Date(forecast_start_date).getTime()));
         epsChart = new Chart(ctx, {
             type: 'line',
             data: {
