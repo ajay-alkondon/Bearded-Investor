@@ -1053,8 +1053,8 @@ private function build_performance_section_html($calculated_data) {
             <?php } else { ?>
                 <div class="jtw-chart-controls">
                     <div class="jtw-period-toggle jtw-eps-period-toggle">
-                        <button class="jtw-period-button active" data-period="quarterly">Quarterly</button>
-                        <button class="jtw-period-button" data-period="annual">Annual</button>
+                        <button class="jtw-period-button active" data-period="annual">Annual</button>
+                        <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
                     </div>
                 </div>
                 <div class="jtw-kmv-chart-container" style="position: relative;">
