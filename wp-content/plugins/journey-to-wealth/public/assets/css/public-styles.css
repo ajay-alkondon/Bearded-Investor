@@ -2408,86 +2408,53 @@ body.dark-mode .jtw-legend-item:not(.active) {
 }
 
 /* In journey-to-wealth/public/assets/css/public-styles.css,
-   replace the entire block for the year slider controls with this new version. */
+   replace the entire block for the year slider controls with this final version. */
 
-/* Year Slider Controls */
+/* Year Selector Controls */
 .jtw-sankey-chart-controls {
     padding: 0 15px;
 }
 
 #jtw-sankey-year-slider-container {
-    width: 100%;
-    max-width: 600px;
-    margin: 15px auto 0;
-    position: relative;
-    padding-top: 25px;
-}
-
-.jtw-year-slider-labels {
-    position: absolute;
-    top: 0;
-    left: 10px;
-    right: 10px;
     display: flex;
-    justify-content: space-between;
-    pointer-events: none; /* Allow clicks to pass through to the slider */
+    justify-content: center;
+    margin: 15px auto 0;
 }
 
-.jtw-year-label {
-    font-size: 0.8em;
-    font-weight: 500;
+.jtw-year-selector-container {
+    display: inline-flex;
+    background-color: transparent;
+    border: 1px solid #4a5568;
+    border-radius: 8px;
+    padding: 4px;
+    overflow-x: auto; /* For mobile responsiveness */
+}
+
+.jtw-year-selector-item {
+    padding: 6px 14px;
     color: var(--jtw-text-light);
-    transition: color 0.2s ease;
-    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9em;
+    border-radius: 6px;
+    white-space: nowrap;
 }
 
-.jtw-year-label.active {
-    color: var(--jtw-primary-blue);
-    font-weight: 700;
-}
-
-.jtw-year-label::before {
-    content: '';
-    position: absolute;
-    width: 1px;
-    height: 5px;
+.jtw-year-selector-item:hover {
     background-color: #4a5568;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
 }
 
-/* --- START: NEW SLIDER STYLES --- */
-input[type="range"].jtw-year-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 3px;
-    background: #4a5568; /* The main track line */
-    border-radius: 5px;
-    outline: none;
-    padding: 0;
-    margin: 0;
+.jtw-year-selector-item.active {
+    background-color: var(--jtw-primary-blue);
+    color: #fff;
+    font-weight: 600;
 }
 
-input[type="range"].jtw-year-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--jtw-primary-blue); /* The solid blue circle */
-    border: 3px solid var(--jtw-content-bg); /* The white border around the circle */
-    border-radius: 50%;
-    cursor: pointer;
-    margin-top: -6.5px; /* Vertically center the thumb on the track */
+/* Responsive adjustments for the selector on small screens */
+@media (max-width: 600px) {
+    .jtw-year-selector-item {
+        padding: 6px 10px;
+        font-size: 0.85em;
+    }
 }
-
-input[type="range"].jtw-year-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: var(--jtw-primary-blue);
-    border: 3px solid var(--jtw-content-bg);
-    border-radius: 50%;
-    cursor: pointer;
-}
-/* --- END: NEW SLIDER STYLES --- */
