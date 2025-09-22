@@ -749,18 +749,18 @@ function initializeSankeyChart($container) {
     $sliderContainer.html(sliderHtml);
 
     const formatSankeyTooltip = function() {
-        const point = this.point;
-        const from = point.from;
-        const to = point.to;
-        const value = point.weight;
-        const percentage = point.custom; // This is the 4th element in our data array
-        let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(value, '$', 2)}`;
+        if (this.point.isNode) {
+            return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
+        }
+        const { from, to, weight, custom: percentage } = this.point;
+        let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
         if (percentage) {
             tooltipText += `<br/>${percentage} of ${from}`;
         }
         return tooltipText;
     };
     
+    // --- START: MODIFIED HIGHCHARTS CONFIG ---
     const sankeyChart = Highcharts.chart($chartContainer[0], {
         chart: {
             backgroundColor: 'transparent'
@@ -772,16 +772,34 @@ function initializeSankeyChart($container) {
             keys: ['from', 'to', 'weight', 'custom'],
             data: sankeyDataByYear[latestYear],
             type: 'sankey',
-            name: 'Revenue & Expenses Breakdown',
+            name: 'Financial Flow',
+            nodeWidth: 15, // Make streams thinner
+            nodePadding: 25, // Add more vertical space between nodes
             dataLabels: {
                 enabled: true,
+                nodeFormatter: function() {
+                    return `<b>${this.key}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`;
+                },
                 style: {
-                    color: '#FFFFFF',
+                    color: '#e2e8f0',
                     textOutline: 'none',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    fontSize: '13px'
                 }
             },
-            nodeWidth: 25
+            // Define colors for each node
+            nodes: [
+                { id: 'Revenue Streams', color: '#3b82f6' },
+                { id: 'Revenue', color: '#60a5fa' },
+                { id: 'Gross Profit', color: '#2dd4bf' },
+                { id: 'Cost of Sales', color: '#f59e0b' },
+                { id: 'Expenses', color: '#d97706' },
+                { id: 'Earnings', color: '#10b981' },
+                { id: 'Sales & Marketing', color: '#8b5cf6' },
+                { id: 'Research & Development', color: '#a855f7' },
+                { id: 'General & Admin', color: '#d8b4fe' },
+                { id: 'Non-Operating Expenses', color: '#fca5a5'}
+            ]
         }],
         tooltip: {
             formatter: formatSankeyTooltip,
@@ -795,15 +813,17 @@ function initializeSankeyChart($container) {
             enabled: false
         }
     });
+    // --- END: MODIFIED HIGHCHARTS CONFIG ---
 
     $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
         const selectedYear = availableYears[$(this).val()];
-        sankeyChart.series[0].setData(sankeyDataByYear[selectedYear]);
+        if (sankeyDataByYear[selectedYear]) {
+            sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
+        }
         $sliderContainer.find('.jtw-year-label').removeClass('active');
         $sliderContainer.find(`.jtw-year-label[data-year="${selectedYear}"]`).addClass('active');
     });
 
-    // Set initial active state
     $sliderContainer.find(`.jtw-year-label[data-year="${latestYear}"]`).addClass('active');
 }
 
