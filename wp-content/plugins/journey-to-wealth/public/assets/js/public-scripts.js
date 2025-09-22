@@ -778,7 +778,7 @@ function initializeSankeyChart($container) {
             type: 'sankey',
             name: 'Financial Flow',
             nodeWidth: 30,
-            nodePadding: 120,
+            nodePadding: 200,
             dataLabels: {
                 enabled: true,
                 nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
