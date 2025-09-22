@@ -2496,8 +2496,8 @@ input[type="range"].jtw-year-slider::-moz-range-thumb {
 .jtw-subsection-block + .jtw-subsection-block,
 .jtw-subsection-block + .jtw-subsection,
 .jtw-subsection + .jtw-subsection {
-    padding-top: 25px; /* Adds space above the subsection */
-    margin-top: 25px;  /* Adds space above the separator line */
+    padding-top: 50px; /* Adds space above the subsection */
+    margin-top: 50px;  /* Adds space above the separator line */
     border-top: 1px solid var(--jtw-border-color); /* The thin separator line */
 }
 
