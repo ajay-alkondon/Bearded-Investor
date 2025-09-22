@@ -728,6 +728,9 @@ function initializeEpsChart() {
     });
 }
 
+// In journey-to-wealth/public/assets/js/public-scripts.js,
+// replace the entire initializeSankeyChart function with this final version.
+
 function initializeSankeyChart($container) {
     const $chartContainer = $container.find('#jtw-sankey-chart-container');
     const $dataScript = $container.find('#jtw-sankey-chart-data');
@@ -739,15 +742,16 @@ function initializeSankeyChart($container) {
 
     const latestYear = availableYears[availableYears.length - 1];
     
-    // --- START: NEW YEAR SELECTOR LOGIC ---
-    const $selectorContainer = $container.find('#jtw-sankey-year-slider-container');
-    let selectorHtml = '<div class="jtw-year-selector-container">';
+    // --- START: SLIDER HTML GENERATION ---
+    const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
+    let sliderHtml = '<div class="jtw-year-slider-labels">';
     availableYears.forEach(year => {
-        selectorHtml += `<div class="jtw-year-selector-item" data-year="${year}">${year}</div>`;
+        sliderHtml += `<span class="jtw-year-label" data-year="${year}">${year}</span>`;
     });
-    selectorHtml += '</div>';
-    $selectorContainer.html(selectorHtml);
-    // --- END: NEW YEAR SELECTOR LOGIC ---
+    sliderHtml += '</div>';
+    sliderHtml += `<input type="range" min="0" max="${availableYears.length - 1}" value="${availableYears.length - 1}" class="jtw-year-slider" id="jtw-sankey-year-slider">`;
+    $sliderContainer.html(sliderHtml);
+    // --- END: SLIDER HTML GENERATION ---
 
     const formatSankeyTooltip = function() {
         if (this.point.isNode) {
@@ -767,18 +771,18 @@ function initializeSankeyChart($container) {
         plotOptions: {
             sankey: {
                 link: {
-                    borderRadius: 0 // This correctly removes the border radius from the links
+                    borderRadius: 0
                 }
             }
         },
         series: [{
             keys: ['from', 'to', 'weight', 'custom'],
             data: sankeyDataByYear[latestYear],
-            link: { borderRadius: 0 }, // This correctly removes the border radius from the links
             type: 'sankey',
+            link: { borderRadius: 0 },
             name: 'Financial Flow',
             nodeWidth: 30,
-            nodePadding: 200,
+            nodePadding: 120,
             dataLabels: {
                 enabled: true,
                 nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
@@ -801,23 +805,18 @@ function initializeSankeyChart($container) {
         credits: { enabled: false }
     });
 
-    // --- START: NEW EVENT LISTENER ---
-    $selectorContainer.on('click', '.jtw-year-selector-item', function() {
-        const $this = $(this);
-        if ($this.hasClass('active')) return;
-
-        const selectedYear = $this.data('year');
+    // --- START: SLIDER EVENT LISTENER ---
+    $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
+        const selectedYear = availableYears[$(this).val()];
         if (sankeyDataByYear[selectedYear]) {
             sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
         }
-        
-        $selectorContainer.find('.jtw-year-selector-item').removeClass('active');
-        $this.addClass('active');
+        $sliderContainer.find('.jtw-year-label').removeClass('active');
+        $sliderContainer.find(`.jtw-year-label[data-year="${selectedYear}"]`).addClass('active');
     });
+    // --- END: SLIDER EVENT LISTENER ---
 
-    // Set initial active state
-    $selectorContainer.find(`.jtw-year-selector-item[data-year="${latestYear}"]`).addClass('active');
-    // --- END: NEW EVENT LISTENER ---
+    $sliderContainer.find(`.jtw-year-label[data-year="${latestYear}"]`).addClass('active');
 }
 
         // --- Main execution ---
