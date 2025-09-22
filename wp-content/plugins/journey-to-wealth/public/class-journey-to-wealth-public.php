@@ -1005,6 +1005,7 @@ private function build_performance_section_html($calculated_data) {
     // Extract data for both charts
     $revenue_forecast_data = $calculated_data['earnings_revenue_forecasts'] ?? [];
     $eps_forecast_data = $calculated_data['eps_growth_forecasts'] ?? [];
+    $sankey_data = $calculated_data['sankey_data'] ?? [];
 
     ob_start();
     ?>
@@ -1075,32 +1076,20 @@ private function build_performance_section_html($calculated_data) {
                     </span>
                 </div>
             <?php } ?>
-            <?php echo $this->build_sankey_chart_section_html($calculated_data); // ?>
+            <div class="jtw-subsection-block">
+                <div class="jtw-sws-header">
+                    <h2>2.3 Revenue & Expenses Breakdown</h2>
+                    <p>How the company makes and spends money, based on latest reported earnings on an LTM basis.</p>
+                </div>
+                <div class="jtw-sankey-chart-controls">
+                    <div id="jtw-sankey-year-slider-container"></div>
+                </div>
+                <div id="jtw-sankey-chart-container"></div>
+                <script type="application/json" id="jtw-sankey-chart-data">
+                    <?php echo json_encode($sankey_data); ?>
+                </script>
+            </div>
         </div>
-    </div>
-    <?php
-    return ob_get_clean();
-}
-
-private function build_sankey_chart_section_html($calculated_data) {
-    $sankey_data = $calculated_data['sankey_data'] ?? [];
-    if (empty($sankey_data)) {
-        return '';
-    }
-    ob_start();
-    ?>
-    <div class="jtw-subsection-block">
-        <div class="jtw-sws-header">
-            <h2>2.3 Revenue & Expenses Breakdown</h2>
-            <p>How the company makes and spends money, based on latest reported earnings on an LTM basis.</p>
-        </div>
-        <div class="jtw-sankey-chart-controls">
-            <div id="jtw-sankey-year-slider-container"></div>
-        </div>
-        <div id="jtw-sankey-chart-container"></div>
-        <script type="application/json" id="jtw-sankey-chart-data">
-            <?php echo json_encode($sankey_data); ?>
-        </script>
     </div>
     <?php
     return ob_get_clean();
