@@ -728,6 +728,9 @@ function initializeEpsChart() {
     });
 }
 
+// In journey-to-wealth/public/assets/js/public-scripts.js,
+// replace the entire initializeSankeyChart function with this corrected version.
+
 function initializeSankeyChart($container) {
     const $chartContainer = $container.find('#jtw-sankey-chart-container');
     const $dataScript = $container.find('#jtw-sankey-chart-data');
@@ -760,7 +763,7 @@ function initializeSankeyChart($container) {
         return tooltipText;
     };
     
-    // --- START: MODIFIED HIGHCHARTS CONFIG ---
+    // --- START: CORRECTED HIGHCHARTS CONFIG ---
     const sankeyChart = Highcharts.chart($chartContainer[0], {
         chart: {
             backgroundColor: 'transparent'
@@ -773,12 +776,13 @@ function initializeSankeyChart($container) {
             data: sankeyDataByYear[latestYear],
             type: 'sankey',
             name: 'Financial Flow',
-            nodeWidth: 15, // Make streams thinner
-            nodePadding: 25, // Add more vertical space between nodes
+            nodeWidth: 5,  // Make streams much thinner
+            nodePadding: 50, // Increase vertical space between nodes
             dataLabels: {
                 enabled: true,
+                // **FIX**: Use this.point.id to reliably get the node name
                 nodeFormatter: function() {
-                    return `<b>${this.key}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`;
+                    return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`;
                 },
                 style: {
                     color: '#e2e8f0',
@@ -787,7 +791,7 @@ function initializeSankeyChart($container) {
                     fontSize: '13px'
                 }
             },
-            // Define colors for each node
+            // Node colors are defined here
             nodes: [
                 { id: 'Revenue Streams', color: '#3b82f6' },
                 { id: 'Revenue', color: '#60a5fa' },
@@ -813,7 +817,7 @@ function initializeSankeyChart($container) {
             enabled: false
         }
     });
-    // --- END: MODIFIED HIGHCHARTS CONFIG ---
+    // --- END: CORRECTED HIGHCHARTS CONFIG ---
 
     $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
         const selectedYear = availableYears[$(this).val()];
