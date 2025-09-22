@@ -2487,25 +2487,24 @@ input[type="range"].jtw-year-slider::-moz-range-thumb {
     cursor: pointer;
 }
 
-/* In journey-to-wealth/public/assets/css/public-styles.css */
+/* In journey-to-wealth/public/assets/css/public-styles.css,
+   replace the entire "Subsection Separator Styles" block with this corrected version. */
 
 /* --- START: Corrected Subsection Separator Styles --- */
 
-/* This set of selectors targets subsections that follow a previous one,
-  handling the different layouts in the Valuation and Performance sections.
-*/
-.jtw-sws-header ~ .jtw-sws-header,
-.jtw-sws-header ~ .jtw-subsection,
-.jtw-subsection .jtw-subsection {
-    padding-top: 50px; /* Adds space above the subsection title */
-    margin-top: 50px;  /* Adds space above the separator line */
+/* This rule targets any subsection that directly follows another one */
+.jtw-subsection-block + .jtw-subsection-block,
+.jtw-subsection-block + .jtw-subsection,
+.jtw-subsection + .jtw-subsection {
+    padding-top: 25px; /* Adds space above the subsection */
+    margin-top: 25px;  /* Adds space above the separator line */
     border-top: 1px solid var(--jtw-border-color); /* The thin separator line */
 }
 
 /* Dark mode specific color for the separator line */
-body.dark-mode .jtw-sws-header ~ .jtw-sws-header,
-body.dark-mode .jtw-sws-header ~ .jtw-subsection,
-body.dark-mode .jtw-subsection .jtw-subsection {
-    border-top-color: #334155; /* A suitable dark mode border color */
+body.dark-mode .jtw-subsection-block + .jtw-subsection-block,
+body.dark-mode .jtw-subsection-block + .jtw-subsection,
+body.dark-mode .jtw-subsection + .jtw-subsection {
+    border-top-color: #334155;
 }
 /* --- END: Corrected Subsection Separator Styles --- */
