@@ -728,9 +728,6 @@ function initializeEpsChart() {
     });
 }
 
-// In journey-to-wealth/public/assets/js/public-scripts.js,
-// replace the entire initializeSankeyChart function with this corrected version.
-
 function initializeSankeyChart($container) {
     const $chartContainer = $container.find('#jtw-sankey-chart-container');
     const $dataScript = $container.find('#jtw-sankey-chart-data');
@@ -742,14 +739,15 @@ function initializeSankeyChart($container) {
 
     const latestYear = availableYears[availableYears.length - 1];
     
-    const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
-    let sliderHtml = '<div class="jtw-year-slider-labels">';
+    // --- START: NEW YEAR SELECTOR LOGIC ---
+    const $selectorContainer = $container.find('#jtw-sankey-year-slider-container');
+    let selectorHtml = '<div class="jtw-year-selector-container">';
     availableYears.forEach(year => {
-        sliderHtml += `<span class="jtw-year-label" data-year="${year}">${year}</span>`;
+        selectorHtml += `<div class="jtw-year-selector-item" data-year="${year}">${year}</div>`;
     });
-    sliderHtml += '</div>';
-    sliderHtml += `<input type="range" min="0" max="${availableYears.length - 1}" value="${availableYears.length - 1}" class="jtw-year-slider" id="jtw-sankey-year-slider">`;
-    $sliderContainer.html(sliderHtml);
+    selectorHtml += '</div>';
+    $selectorContainer.html(selectorHtml);
+    // --- END: NEW YEAR SELECTOR LOGIC ---
 
     const formatSankeyTooltip = function() {
         if (this.point.isNode) {
@@ -763,75 +761,56 @@ function initializeSankeyChart($container) {
         return tooltipText;
     };
     
-    // --- START: CORRECTED HIGHCHARTS CONFIG ---
     const sankeyChart = Highcharts.chart($chartContainer[0], {
-        chart: {
-            backgroundColor: 'transparent'
-        },
-        title: {
-            text: null
-        },
+        chart: { backgroundColor: 'transparent' },
+        title: { text: null },
         series: [{
             keys: ['from', 'to', 'weight', 'custom'],
             data: sankeyDataByYear[latestYear],
             type: 'sankey',
             name: 'Financial Flow',
-            nodeWidth: 10,  // Make streams much thinner
-            nodePadding: 120, // Increase vertical space between nodes
-            link: {
-                borderRadius: 0 // Removes rounded corners on stream joints
-            },
+            nodeWidth: 10,
+            nodePadding: 120,
+            link: { borderRadius: 0 },
             dataLabels: {
                 enabled: true,
-                // **FIX**: Use this.point.id to reliably get the node name
-                nodeFormatter: function() {
-                    return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`;
-                },
-                style: {
-                    color: '#e2e8f0',
-                    textOutline: 'none',
-                    fontWeight: '500',
-                    fontSize: '13px'
-                }
+                nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
+                style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
             },
-            // Node colors are defined here
             nodes: [
-                { id: 'Revenue Streams', color: '#3b82f6' },
-                { id: 'Revenue', color: '#60a5fa' },
-                { id: 'Gross Profit', color: '#2dd4bf' },
-                { id: 'Cost of Sales', color: '#f59e0b' },
-                { id: 'Expenses', color: '#d97706' },
-                { id: 'Earnings', color: '#10b981' },
-                { id: 'Sales & Marketing', color: '#8b5cf6' },
-                { id: 'Research & Development', color: '#a855f7' },
-                { id: 'General & Admin', color: '#d8b4fe' },
-                { id: 'Non-Operating Expenses', color: '#fca5a5'}
+                { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
+                { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
+                { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
+                { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
+                { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
             ]
         }],
         tooltip: {
             formatter: formatSankeyTooltip,
             backgroundColor: 'rgba(30, 41, 59, 0.9)',
             borderColor: 'rgba(255, 255, 255, 0.1)',
-            style: {
-                color: '#FFFFFF'
-            }
+            style: { color: '#FFFFFF' }
         },
-        credits: {
-            enabled: false
-        }
+        credits: { enabled: false }
     });
-    // --- END: CORRECTED HIGHCHARTS CONFIG ---
 
-    $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
-        const selectedYear = availableYears[$(this).val()];
+    // --- START: NEW EVENT LISTENER ---
+    $selectorContainer.on('click', '.jtw-year-selector-item', function() {
+        const $this = $(this);
+        if ($this.hasClass('active')) return;
+
+        const selectedYear = $this.data('year');
         if (sankeyDataByYear[selectedYear]) {
             sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
         }
-        $sliderContainer.find('.jtw-year-label').removeClass('active');
-        $sliderContainer.find(`.jtw-year-label[data-year="${selectedYear}"]`).addClass('active');
+        
+        $selectorContainer.find('.jtw-year-selector-item').removeClass('active');
+        $this.addClass('active');
     });
 
-    $sliderContainer.find(`.jtw-year-label[data-year="${latestYear}"]`).addClass('active');
+    // Set initial active state
+    $selectorContainer.find(`.jtw-year-selector-item[data-year="${latestYear}"]`).addClass('active');
+    // --- END: NEW EVENT LISTENER ---
 }
 
         // --- Main execution ---
