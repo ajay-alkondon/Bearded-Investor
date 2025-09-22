@@ -1084,8 +1084,8 @@ private function build_performance_section_html($calculated_data) {
                 <p>How the company makes and spends money, based on latest reported earnings on an LTM basis.</p>
             </div>
 
-            <?php if (empty($eps_forecast_data) || (empty($eps_forecast_data['annual']['estimated_eps']) && empty($eps_forecast_data['quarterly']['estimated_eps']))) { ?>
-                <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
+            <?php if (empty($sankey_data) ) { ?>
+                <div class="jtw-notice notice-info"><p>Sankey data is not available for this stock.</p></div>
             <?php } else { ?>
                 <div class="jtw-sankey-chart-controls">
                     <div id="jtw-sankey-year-slider-container"></div>
