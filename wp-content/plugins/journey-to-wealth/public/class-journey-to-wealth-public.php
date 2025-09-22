@@ -46,11 +46,14 @@ public function enqueue_scripts() {
     wp_enqueue_script( 'chartjs-annotation', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js', array('chartjs'), '3.0.1', true );
     // --- END: CORRECTED SCRIPT ENQUEUE ---
 
+    wp_enqueue_script( 'highcharts', 'https://code.highcharts.com/highcharts.js', array(), '11.1.0', true );
+    wp_enqueue_script( 'highcharts-sankey', 'https://code.highcharts.com/modules/sankey.js', array('highcharts'), '11.1.0', true );
+
     $script_path = plugin_dir_path( __FILE__ ) . 'assets/js/public-scripts.js';
     $script_version = file_exists($script_path) ? $this->version . '.' . filemtime( $script_path ) : $this->version;
 
     // Ensure 'chartjs-annotation' is in the dependency array
-    $dependencies = array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels', 'chartjs-annotation' );
+    $dependencies = array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels', 'chartjs-annotation', 'highcharts', 'highcharts-sankey' ); // Add dependencies
     
     wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', $dependencies, $script_version, true );
     
@@ -1064,7 +1067,32 @@ private function build_performance_section_html($calculated_data) {
                     </span>
                 </div>
             <?php } ?>
+            <?php echo $this->build_sankey_chart_section_html($calculated_data); // ?>
         </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+private function build_sankey_chart_section_html($calculated_data) {
+    $sankey_data = $calculated_data['sankey_data'] ?? [];
+    if (empty($sankey_data)) {
+        return '';
+    }
+    ob_start();
+    ?>
+    <div class="jtw-subsection">
+        <div class="jtw-sws-header">
+            <h2>2.3 Revenue & Expenses Breakdown</h2>
+            <p>How the company makes and spends money, based on latest reported earnings on an LTM basis.</p>
+        </div>
+        <div class="jtw-sankey-chart-controls">
+            <div id="jtw-sankey-year-slider-container"></div>
+        </div>
+        <div id="jtw-sankey-chart-container"></div>
+        <script type="application/json" id="jtw-sankey-chart-data">
+            <?php echo json_encode($sankey_data); ?>
+        </script>
     </div>
     <?php
     return ob_get_clean();

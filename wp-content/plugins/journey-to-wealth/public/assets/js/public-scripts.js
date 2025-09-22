@@ -728,9 +728,89 @@ function initializeEpsChart() {
     });
 }
 
+function initializeSankeyChart($container) {
+    const $chartContainer = $container.find('#jtw-sankey-chart-container');
+    const $dataScript = $container.find('#jtw-sankey-chart-data');
+    if (!$chartContainer.length || !$dataScript.length) return;
+
+    const sankeyDataByYear = JSON.parse($dataScript.html());
+    const availableYears = Object.keys(sankeyDataByYear).sort();
+    if (availableYears.length === 0) return;
+
+    const latestYear = availableYears[availableYears.length - 1];
+    
+    const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
+    let sliderHtml = '<div class="jtw-year-slider-labels">';
+    availableYears.forEach(year => {
+        sliderHtml += `<span class="jtw-year-label" data-year="${year}">${year}</span>`;
+    });
+    sliderHtml += '</div>';
+    sliderHtml += `<input type="range" min="0" max="${availableYears.length - 1}" value="${availableYears.length - 1}" class="jtw-year-slider" id="jtw-sankey-year-slider">`;
+    $sliderContainer.html(sliderHtml);
+
+    const formatSankeyTooltip = function() {
+        const point = this.point;
+        const from = point.from;
+        const to = point.to;
+        const value = point.weight;
+        const percentage = point.custom; // This is the 4th element in our data array
+        let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(value, '$', 2)}`;
+        if (percentage) {
+            tooltipText += `<br/>${percentage} of ${from}`;
+        }
+        return tooltipText;
+    };
+    
+    const sankeyChart = Highcharts.chart($chartContainer[0], {
+        chart: {
+            backgroundColor: 'transparent'
+        },
+        title: {
+            text: null
+        },
+        series: [{
+            keys: ['from', 'to', 'weight', 'custom'],
+            data: sankeyDataByYear[latestYear],
+            type: 'sankey',
+            name: 'Revenue & Expenses Breakdown',
+            dataLabels: {
+                enabled: true,
+                style: {
+                    color: '#FFFFFF',
+                    textOutline: 'none',
+                    fontWeight: '500'
+                }
+            },
+            nodeWidth: 25
+        }],
+        tooltip: {
+            formatter: formatSankeyTooltip,
+            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            style: {
+                color: '#FFFFFF'
+            }
+        },
+        credits: {
+            enabled: false
+        }
+    });
+
+    $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
+        const selectedYear = availableYears[$(this).val()];
+        sankeyChart.series[0].setData(sankeyDataByYear[selectedYear]);
+        $sliderContainer.find('.jtw-year-label').removeClass('active');
+        $sliderContainer.find(`.jtw-year-label[data-year="${selectedYear}"]`).addClass('active');
+    });
+
+    // Set initial active state
+    $sliderContainer.find(`.jtw-year-label[data-year="${latestYear}"]`).addClass('active');
+}
+
         // --- Main execution ---
         initializeRevenueChart();
         initializeEpsChart();
+        initializeSankeyChart($container);
     }
 
     function initializeKeyMetricsRatiosSection($container) {
