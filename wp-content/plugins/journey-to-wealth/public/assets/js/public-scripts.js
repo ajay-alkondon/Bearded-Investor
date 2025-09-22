@@ -777,7 +777,7 @@ function initializeSankeyChart($container) {
             type: 'sankey',
             name: 'Financial Flow',
             nodeWidth: 10,  // Make streams much thinner
-            nodePadding: 100, // Increase vertical space between nodes
+            nodePadding: 120, // Increase vertical space between nodes
             dataLabels: {
                 enabled: true,
                 // **FIX**: Use this.point.id to reliably get the node name

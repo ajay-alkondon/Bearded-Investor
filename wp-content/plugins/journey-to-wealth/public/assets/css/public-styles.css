@@ -2392,7 +2392,7 @@ body.dark-mode .jtw-legend-item:not(.active) {
 /* --- START: Sankey Chart Section --- */
 #jtw-sankey-chart-container {
     width: 100%;
-    height: 200px;
+    height: 280px;
     margin-top: 20px;
 }
 
