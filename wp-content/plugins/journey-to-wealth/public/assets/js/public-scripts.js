@@ -771,10 +771,10 @@ function initializeSankeyChart($container) {
                 }
             }
         },
-        link: { borderRadius: 0 }, // This correctly removes the border radius from the links
         series: [{
             keys: ['from', 'to', 'weight', 'custom'],
             data: sankeyDataByYear[latestYear],
+            link: { borderRadius: 0 }, // This correctly removes the border radius from the links
             type: 'sankey',
             name: 'Financial Flow',
             nodeWidth: 30,
