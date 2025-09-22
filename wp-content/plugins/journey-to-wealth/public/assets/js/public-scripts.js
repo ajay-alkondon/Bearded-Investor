@@ -515,7 +515,7 @@ function initializeRevenueChart() {
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: 0,
+                                xAdjust: -100,
                                 yAdjust: 0,
                                 textAlign: 'right',
                             },
@@ -527,7 +527,7 @@ function initializeRevenueChart() {
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: 0,
+                                xAdjust: 100,
                                 yAdjust: 0,
                                 textAlign: 'left',
                             }
