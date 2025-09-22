@@ -2489,17 +2489,23 @@ input[type="range"].jtw-year-slider::-moz-range-thumb {
 
 /* In journey-to-wealth/public/assets/css/public-styles.css */
 
-/* --- START: Subsection Separator Styles --- */
+/* --- START: Corrected Subsection Separator Styles --- */
 
-/* This rule targets every subsection header except for the very first one inside a section */
-.jtw-sws-header:not(:first-of-type) {
+/* This set of selectors targets subsections that follow a previous one,
+  handling the different layouts in the Valuation and Performance sections.
+*/
+.jtw-sws-header ~ .jtw-sws-header,
+.jtw-sws-header ~ .jtw-subsection,
+.jtw-subsection .jtw-subsection {
     padding-top: 25px; /* Adds space above the subsection title */
     margin-top: 25px;  /* Adds space above the separator line */
     border-top: 1px solid var(--jtw-border-color); /* The thin separator line */
 }
 
 /* Dark mode specific color for the separator line */
-body.dark-mode .jtw-sws-header:not(:first-of-type) {
+body.dark-mode .jtw-sws-header ~ .jtw-sws-header,
+body.dark-mode .jtw-sws-header ~ .jtw-subsection,
+body.dark-mode .jtw-subsection .jtw-subsection {
     border-top-color: #334155; /* A suitable dark mode border color */
 }
-/* --- END: Subsection Separator Styles --- */
+/* --- END: Corrected Subsection Separator Styles --- */
