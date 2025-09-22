@@ -676,7 +676,7 @@ function initializeEpsChart() {
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: -50,
+                                xAdjust: -100,
                                 yAdjust: 0,
                                 textAlign: 'right',
                             },
