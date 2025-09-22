@@ -764,14 +764,21 @@ function initializeSankeyChart($container) {
     const sankeyChart = Highcharts.chart($chartContainer[0], {
         chart: { backgroundColor: 'transparent' },
         title: { text: null },
+        plotOptions: {
+            sankey: {
+                link: {
+                    borderRadius: 0 // This correctly removes the border radius from the links
+                }
+            }
+        },
+        link: { borderRadius: 0 }, // This correctly removes the border radius from the links
         series: [{
             keys: ['from', 'to', 'weight', 'custom'],
             data: sankeyDataByYear[latestYear],
             type: 'sankey',
             name: 'Financial Flow',
-            nodeWidth: 10,
+            nodeWidth: 30,
             nodePadding: 120,
-            link: { borderRadius: 0 },
             dataLabels: {
                 enabled: true,
                 nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
