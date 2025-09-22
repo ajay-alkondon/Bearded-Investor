@@ -778,6 +778,9 @@ function initializeSankeyChart($container) {
             name: 'Financial Flow',
             nodeWidth: 10,  // Make streams much thinner
             nodePadding: 120, // Increase vertical space between nodes
+            link: {
+                borderRadius: 0 // Removes rounded corners on stream joints
+            },
             dataLabels: {
                 enabled: true,
                 // **FIX**: Use this.point.id to reliably get the node name
