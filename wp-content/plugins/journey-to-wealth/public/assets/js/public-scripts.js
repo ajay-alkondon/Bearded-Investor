@@ -522,7 +522,7 @@ function initializeRevenueChart() {
                             forecastLabel: {
                                 display: annotationsAreVisible,
                                 type: 'label',
-                                xValue: forecast_start_date + 50,
+                                xValue: forecast_start_date,
                                 yValue: 0,
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
