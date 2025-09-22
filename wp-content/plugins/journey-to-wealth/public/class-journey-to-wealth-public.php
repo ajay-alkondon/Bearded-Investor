@@ -1089,7 +1089,7 @@ private function build_sankey_chart_section_html($calculated_data) {
     }
     ob_start();
     ?>
-    <div class="jtw-subsection">
+    <div class="jtw-subsection-block">
         <div class="jtw-sws-header">
             <h2>2.3 Revenue & Expenses Breakdown</h2>
             <p>How the company makes and spends money, based on latest reported earnings on an LTM basis.</p>
