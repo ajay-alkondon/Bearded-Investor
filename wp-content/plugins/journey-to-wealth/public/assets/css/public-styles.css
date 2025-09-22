@@ -2392,7 +2392,7 @@ body.dark-mode .jtw-legend-item:not(.active) {
 /* --- START: Sankey Chart Section --- */
 #jtw-sankey-chart-container {
     width: 100%;
-    height: 200px;
+    height: 360px;
     margin-top: 20px;
 }
 
@@ -2486,3 +2486,20 @@ input[type="range"].jtw-year-slider::-moz-range-thumb {
     border-radius: 50%;
     cursor: pointer;
 }
+
+/* In journey-to-wealth/public/assets/css/public-styles.css */
+
+/* --- START: Subsection Separator Styles --- */
+
+/* This rule targets every subsection header except for the very first one inside a section */
+.jtw-sws-header:not(:first-of-type) {
+    padding-top: 25px; /* Adds space above the subsection title */
+    margin-top: 25px;  /* Adds space above the separator line */
+    border-top: 1px solid var(--jtw-border-color); /* The thin separator line */
+}
+
+/* Dark mode specific color for the separator line */
+body.dark-mode .jtw-sws-header:not(:first-of-type) {
+    border-top-color: #334155; /* A suitable dark mode border color */
+}
+/* --- END: Subsection Separator Styles --- */
