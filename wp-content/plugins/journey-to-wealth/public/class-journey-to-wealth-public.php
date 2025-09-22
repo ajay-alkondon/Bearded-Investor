@@ -1076,11 +1076,17 @@ private function build_performance_section_html($calculated_data) {
                     </span>
                 </div>
             <?php } ?>
-            <div class="jtw-subsection-block">
-                <div class="jtw-sws-header">
-                    <h2>2.3 Revenue & Expenses Breakdown</h2>
-                    <p>How the company makes and spends money, based on latest reported earnings on an LTM basis.</p>
-                </div>
+        </div>
+
+        <div class="jtw-subsection-block">
+            <div class="jtw-sws-header">
+                <h2>2.3 Revenue & Expenses Breakdown</h2>
+                <p>How the company makes and spends money, based on latest reported earnings on an LTM basis.</p>
+            </div>
+
+            <?php if (empty($eps_forecast_data) || (empty($eps_forecast_data['annual']['estimated_eps']) && empty($eps_forecast_data['quarterly']['estimated_eps']))) { ?>
+                <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
+            <?php } else { ?>
                 <div class="jtw-sankey-chart-controls">
                     <div id="jtw-sankey-year-slider-container"></div>
                 </div>
@@ -1088,7 +1094,7 @@ private function build_performance_section_html($calculated_data) {
                 <script type="application/json" id="jtw-sankey-chart-data">
                     <?php echo json_encode($sankey_data); ?>
                 </script>
-            </div>
+            <?php } ?>
         </div>
     </div>
     <?php
