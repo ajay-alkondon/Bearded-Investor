@@ -2388,3 +2388,87 @@ body.dark-mode .jtw-legend-item:not(.active) {
     background-color: transparent;
     border-color: transparent;
 }
+
+/* --- START: Sankey Chart Section --- */
+#jtw-sankey-chart-container {
+    width: 100%;
+    height: 450px;
+    margin-top: 20px;
+}
+
+/* Highcharts Overrides for Dark Mode */
+.highcharts-sankey-node text {
+    fill: #e2e8f0 !important;
+}
+.highcharts-sankey-link {
+    transition: opacity 0.2s ease;
+}
+.highcharts-sankey-point:hover .highcharts-sankey-link {
+    opacity: 0.8 !important;
+}
+
+/* Year Slider Controls */
+.jtw-sankey-chart-controls {
+    padding: 0 15px;
+}
+
+#jtw-sankey-year-slider-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 15px auto 0;
+}
+
+.jtw-year-slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    padding: 0 5px;
+}
+
+.jtw-year-label {
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--jtw-text-light);
+    transition: color 0.2s ease;
+}
+
+.jtw-year-label.active {
+    color: var(--jtw-primary-blue);
+    font-weight: 700;
+}
+
+input[type="range"].jtw-year-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #4a5568;
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity .2s;
+}
+
+input[type="range"].jtw-year-slider:hover {
+    opacity: 1;
+}
+
+input[type="range"].jtw-year-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--jtw-primary-blue);
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid var(--jtw-content-bg);
+}
+
+input[type="range"].jtw-year-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--jtw-primary-blue);
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid var(--jtw-content-bg);
+}
+/* --- END: Sankey Chart Section --- */
