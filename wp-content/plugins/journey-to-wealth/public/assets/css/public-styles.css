@@ -2392,7 +2392,7 @@ body.dark-mode .jtw-legend-item:not(.active) {
 /* --- START: Sankey Chart Section --- */
 #jtw-sankey-chart-container {
     width: 100%;
-    height: 450px;
+    height: 200px;
     margin-top: 20px;
 }
 
@@ -2406,9 +2406,6 @@ body.dark-mode .jtw-legend-item:not(.active) {
 .highcharts-sankey-point:hover .highcharts-sankey-link {
     opacity: 0.8 !important;
 }
-
-/* In journey-to-wealth/public/assets/css/public-styles.css,
-   replace the entire ".jtw-year-slider" block with the following updated styles. */
 
 /* Year Slider Controls */
 .jtw-sankey-chart-controls {
