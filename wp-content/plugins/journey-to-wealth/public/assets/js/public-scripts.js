@@ -213,8 +213,8 @@
             const $currentPriceRow = $swsContainer.find('.current-price-row');
             const $fairValueRow = $swsContainer.find('.fair-value-row');
 
-            $currentPriceRow.find('strong').text('$' + currentPrice.toFixed(2));
-            $fairValueRow.find('strong').text('$' + fairValue.toFixed(2));
+            $currentPriceRow.find('strong').text(' $' + currentPrice.toFixed(2));
+            $fairValueRow.find('strong').text(' $' + fairValue.toFixed(2));
             
             $currentPriceRow.find('.jtw-sws-bar-wrapper').css('width', currentPriceWidthPct + '%');
             $fairValueRow.find('.jtw-sws-bar-wrapper').css('width', fairValueWidthPct + '%');
