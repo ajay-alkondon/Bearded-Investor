@@ -16,7 +16,7 @@ if (!empty($records)) {
             // Style attributes for each col.
             $class = "class=\"{$column_name} column-{$column_name}\"";
             $style = '';
-            if (in_array($column_name, $hidden)) {
+            if (in_array($column_name, $hidden, true)) {
                 $style = ' style="display:none;"';
             }
             $attributes = $class . $style;
@@ -41,17 +41,17 @@ if (!empty($records)) {
                     $view_url = admin_url("admin.php?page=memberpress-trans&subscription={$rec->id}");
                     $add_url  = admin_url("admin.php?page=memberpress-trans&action=new&subscription={$rec->id}");
                     ?>
-          <td <?php echo $attributes; ?>><b><?php echo $rec->subscr_id; ?></b> <img src="<?php echo MEPR_IMAGES_URL . '/square-loader.gif'; ?>" alt="<?php _e('Loading...', 'memberpress'); ?>" class="mepr_loader" />
+          <td <?php echo $attributes; ?>><b><?php echo $rec->subscr_id; ?></b> <img src="<?php echo MEPR_IMAGES_URL . '/square-loader.gif'; ?>" alt="<?php esc_attr_e('Loading...', 'memberpress'); ?>" class="mepr_loader" />
             <div class="mepr-row-actions">
-              <a href="<?php echo $add_url; ?>" title="<?php _e('Manually add a transaction to this subscription', 'memberpress'); ?>"><?php _e('Add Txn', 'memberpress'); ?></a> |
-              <a href="<?php echo $view_url; ?>" title="<?php _e('View related transactions', 'memberpress'); ?>"><?php _e('View Txns', 'memberpress'); ?></a> |
+              <a href="<?php echo $add_url; ?>" title="<?php esc_attr_e('Manually add a transaction to this subscription', 'memberpress'); ?>"><?php esc_html_e('Add Txn', 'memberpress'); ?></a> |
+              <a href="<?php echo $view_url; ?>" title="<?php esc_attr_e('View related transactions', 'memberpress'); ?>"><?php esc_html_e('View Txns', 'memberpress'); ?></a> |
                     <?php
                     $sub = new MeprSubscription($rec->id);
                     if ($sub->can('suspend-subscriptions')) :
-                        if ($sub->status == MeprSubscription::$active_str) {
+                        if ($sub->status === MeprSubscription::$active_str) {
                             $hide_suspend = '';
                             $hide_resume  = ' mepr-hidden';
-                        } elseif ($sub->status == MeprSubscription::$suspended_str) {
+                        } elseif ($sub->status === MeprSubscription::$suspended_str) {
                                           $hide_suspend = ' mepr-hidden';
                                           $hide_resume  = '';
                         } else {
@@ -60,28 +60,28 @@ if (!empty($records)) {
 
                         ?>
                 <span class="mepr-suspend-sub-action<?php echo $hide_suspend; ?>">
-                  <a href="" class="mepr-suspend-sub" title="<?php _e('Pause Subscription', 'memberpress'); ?>" data-value="<?php echo $rec->id; ?>"><?php _e('Pause', 'memberpress'); ?></a> |
+                  <a href="" class="mepr-suspend-sub" title="<?php esc_attr_e('Pause Subscription', 'memberpress'); ?>" data-value="<?php echo $rec->id; ?>"><?php esc_html_e('Pause', 'memberpress'); ?></a> |
                 </span>
                 <span class="mepr-resume-sub-action<?php echo $hide_resume; ?>">
-                  <a href="" class="mepr-resume-sub" title="<?php _e('Resume Subscription', 'memberpress'); ?>" data-value="<?php echo $rec->id; ?>"><?php _e('Resume', 'memberpress'); ?></a> |
+                  <a href="" class="mepr-resume-sub" title="<?php esc_attr_e('Resume Subscription', 'memberpress'); ?>" data-value="<?php echo $rec->id; ?>"><?php esc_html_e('Resume', 'memberpress'); ?></a> |
                 </span>
                         <?php
                     endif;
 
                     ?>
               <span class="mepr-edit-sub-action">
-                <a href="<?php echo admin_url('admin.php?page=memberpress-subscriptions&action=edit&id=' . $rec->id); ?>" title="<?php _e('Edit Subscription', 'memberpress'); ?>"><?php _e('Edit', 'memberpress'); ?></a> |
+                <a href="<?php echo admin_url('admin.php?page=memberpress-subscriptions&action=edit&id=' . $rec->id); ?>" title="<?php esc_attr_e('Edit Subscription', 'memberpress'); ?>"><?php esc_html_e('Edit', 'memberpress'); ?></a> |
               </span>
                     <?php
-                    if ($sub->status == MeprSubscription::$active_str and $sub->can('cancel-subscriptions')) :
+                    if ($sub->status === MeprSubscription::$active_str and $sub->can('cancel-subscriptions')) :
                         ?>
                 <span class="mepr-cancel-sub-action">
-                  <a href="" class="mepr-cancel-sub" title="<?php _e('Cancel Subscription', 'memberpress'); ?>" data-value="<?php echo $rec->id; ?>"><?php _e('Cancel', 'memberpress'); ?></a> |
+                  <a href="" class="mepr-cancel-sub" title="<?php esc_attr_e('Cancel Subscription', 'memberpress'); ?>" data-value="<?php echo $rec->id; ?>"><?php esc_html_e('Cancel', 'memberpress'); ?></a> |
                 </span>
                         <?php
                     endif;
                     ?>
-              <a href="" class="remove-sub-row" title="<?php _e('Delete Subscription', 'memberpress'); ?>" data-value="<?php echo $rec->id; ?>"><?php _e('Delete', 'memberpress'); ?></a>
+              <a href="" class="remove-sub-row" title="<?php esc_attr_e('Delete Subscription', 'memberpress'); ?>" data-value="<?php echo $rec->id; ?>"><?php esc_html_e('Delete', 'memberpress'); ?></a>
             </div>
           </td>
                     <?php
@@ -96,7 +96,7 @@ if (!empty($records)) {
                     }
                     ?>
           <td <?php echo $attributes; ?>>
-            <a href="<?php echo admin_url('admin.php?page=memberpress-trans&transaction=') . $rec->id . $include_confirmations; ?>" title="<?php _e('Show related transaction', 'memberpress'); ?>"><b><?php echo $rec->subscr_id; ?></b></a>
+            <a href="<?php echo admin_url('admin.php?page=memberpress-trans&transaction=') . $rec->id . $include_confirmations; ?>" title="<?php esc_attr_e('Show related transaction', 'memberpress'); ?>"><b><?php echo $rec->subscr_id; ?></b></a>
           </td>
                     <?php
                     break;
@@ -105,7 +105,7 @@ if (!empty($records)) {
                     $view_url = admin_url("admin.php?page=memberpress-trans&subscription={$rec->id}");
                     ?>
           <td <?php echo $attributes; ?>>
-            <a href="<?php echo $view_url; ?>" title="<?php _e('Show related transactions', 'memberpress'); ?>"><?php echo $rec->txn_count; ?></a>
+            <a href="<?php echo $view_url; ?>" title="<?php esc_attr_e('Show related transactions', 'memberpress'); ?>"><?php echo $rec->txn_count; ?></a>
           </td>
                     <?php
                     break;
@@ -114,7 +114,7 @@ if (!empty($records)) {
                     ?>
           <td <?php echo $attributes; ?>>
                     <?php if (!empty($rec->user_id)) : ?>
-              <a href="<?php echo $editlink; ?>" title="<?php _e("View member's profile", 'memberpress'); ?>"><?php echo stripslashes($rec->member); ?></a>
+              <a href="<?php echo $editlink; ?>" title="<?php esc_attr_e("View member's profile", 'memberpress'); ?>"><?php echo stripslashes($rec->member); ?></a>
                     <?php else : ?>
                         <?php echo __('Deleted', 'memberpress'); ?>
                     <?php endif; ?>
@@ -154,7 +154,7 @@ if (!empty($records)) {
                     if ($table->lifetime) {
                           $txn = new MeprTransaction($rec->id);
                           echo MeprTransactionsHelper::format_currency($txn);
-                    } elseif ($rec->status == MeprSubscription::$pending_str) {
+                    } elseif ($rec->status === MeprSubscription::$pending_str) {
                         $prd = new MeprProduct($rec->product_id);
                         $sub = new MeprSubscription();
                         $sub->load_product_vars($prd);
@@ -164,7 +164,7 @@ if (!empty($records)) {
                         $sub = new MeprSubscription($rec->id);
                         $txn = $sub->latest_txn();
 
-                        if (false != $txn && $txn instanceof MeprTransaction) {
+                        if ($txn instanceof MeprTransaction) {
                             echo MeprTransactionsHelper::format_currency($txn);
                         } else {
                             echo MeprSubscriptionsHelper::format_currency($sub);
@@ -183,7 +183,7 @@ if (!empty($records)) {
                 case 'col_expires_at':
                 case 'col_txn_expires_at':
                     $expire_ts = is_null($rec->expires_at) ? 0 : strtotime($rec->expires_at);
-                    $lifetime  = (MeprAppHelper::format_date($rec->expires_at, 0) == 0);
+                    $lifetime  = (MeprAppHelper::format_date($rec->expires_at, 0) === 0);
 
                     $expired_class = '';
                     if (!$lifetime and $expire_ts < current_time('timestamp')) {
@@ -196,9 +196,9 @@ if (!empty($records)) {
                         $sub = new MeprSubscription($rec->id);
                         $txn = $sub->latest_txn();
 
-                        if ($txn == false || !($txn instanceof MeprTransaction) || $txn->id <= 0) {
+                        if (!($txn instanceof MeprTransaction) || $txn->id <= 0) {
                             $default = __('Unknown', 'memberpress');
-                        } elseif (trim($txn->expires_at) == MeprUtils::db_lifetime() || empty($txn->expires_at)) {
+                        } elseif (trim($txn->expires_at) === MeprUtils::db_lifetime() || empty($txn->expires_at)) {
                             $default = __('Never', 'memberpress');
                         } else {
                             $default = __('Unknown', 'memberpress');
@@ -222,17 +222,17 @@ if (!empty($records)) {
                     );
                     ?>
               <select id="status-select-<?php echo $rec->id; ?>" class="status_select" data-value="<?php echo $rec->id; ?>">
-                <option value="<?php echo MeprSubscription::$pending_str; ?>"><?php _e('Pending', 'memberpress'); ?></option>
-                <option value="<?php echo MeprSubscription::$active_str; ?>"><?php _e('Enabled', 'memberpress'); ?></option>
-                <option value="<?php echo MeprSubscription::$suspended_str; ?>"><?php _e('Paused', 'memberpress'); ?></option>
-                <option value="<?php echo MeprSubscription::$cancelled_str; ?>"><?php _e('Stopped', 'memberpress'); ?></option>
+                <option value="<?php echo MeprSubscription::$pending_str; ?>"><?php esc_html_e('Pending', 'memberpress'); ?></option>
+                <option value="<?php echo MeprSubscription::$active_str; ?>"><?php esc_html_e('Enabled', 'memberpress'); ?></option>
+                <option value="<?php echo MeprSubscription::$suspended_str; ?>"><?php esc_html_e('Paused', 'memberpress'); ?></option>
+                <option value="<?php echo MeprSubscription::$cancelled_str; ?>"><?php esc_html_e('Stopped', 'memberpress'); ?></option>
               </select><br/>
-              <a href="" class="button status_save" data-value="<?php echo $rec->id; ?>"><?php _e('Save', 'memberpress'); ?></a>
-              <a href="" class="button cancel_change" data-value="<?php echo $rec->id; ?>"><?php _e('Cancel', 'memberpress'); ?></a>
+              <a href="" class="button status_save" data-value="<?php echo $rec->id; ?>"><?php esc_html_e('Save', 'memberpress'); ?></a>
+              <a href="" class="button cancel_change" data-value="<?php echo $rec->id; ?>"><?php esc_html_e('Cancel', 'memberpress'); ?></a>
             </div>
 
             <div id="status-saving-<?php echo $rec->id; ?>" class="status_saving">
-                    <?php _e('Saving...', 'memberpress'); ?>
+                    <?php esc_html_e('Saving...', 'memberpress'); ?>
             </div>
           </td>
                     <?php
@@ -262,7 +262,7 @@ if (!empty($records)) {
                     <?php
                     break;
                 default:
-                    MeprHooks::do_action('mepr-admin-subscriptions-cell', $column_name, $rec, $table, $attributes);
+                    MeprHooks::do_action('mepr_admin_subscriptions_cell', $column_name, $rec, $table, $attributes);
                     break;
             }
         }

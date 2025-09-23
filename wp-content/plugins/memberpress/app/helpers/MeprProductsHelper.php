@@ -19,8 +19,8 @@ class MeprProductsHelper
       <select id="<?php echo $id; ?>-custom"
               class="mepr-dropdown mepr-period-type-dropdown"
               data-period-type-id="<?php echo $id; ?>">
-        <option value="months"><?php _e('months', 'memberpress'); ?>&nbsp;</option>
-        <option value="weeks"><?php _e('weeks', 'memberpress'); ?>&nbsp;</option>
+        <option value="months"><?php esc_html_e('months', 'memberpress'); ?>&nbsp;</option>
+        <option value="weeks"><?php esc_html_e('weeks', 'memberpress'); ?>&nbsp;</option>
       </select>
         <?php
     }
@@ -39,12 +39,12 @@ class MeprProductsHelper
     <select id="<?php echo $period_type_str; ?>-presets"
             data-period-id="<?php echo $period_str; ?>"
             data-period-type-id="<?php echo $period_type_str; ?>">
-      <option value="monthly"><?php _e('Monthly', 'memberpress'); ?>&nbsp;</option>
-      <option value="yearly"><?php _e('Yearly', 'memberpress'); ?>&nbsp;</option>
-      <option value="weekly"><?php _e('Weekly', 'memberpress'); ?>&nbsp;</option>
-      <option value="quarterly"><?php _e('Every 3 Months', 'memberpress'); ?>&nbsp;</option>
-      <option value="semi-annually"><?php _e('Every 6 Months', 'memberpress'); ?>&nbsp;</option>
-      <option value="custom"><?php _e('Custom', 'memberpress'); ?>&nbsp;</option>
+      <option value="monthly"><?php esc_html_e('Monthly', 'memberpress'); ?>&nbsp;</option>
+      <option value="yearly"><?php esc_html_e('Yearly', 'memberpress'); ?>&nbsp;</option>
+      <option value="weekly"><?php esc_html_e('Weekly', 'memberpress'); ?>&nbsp;</option>
+      <option value="quarterly"><?php esc_html_e('Every 3 Months', 'memberpress'); ?>&nbsp;</option>
+      <option value="semi-annually"><?php esc_html_e('Every 6 Months', 'memberpress'); ?>&nbsp;</option>
+      <option value="custom"><?php esc_html_e('Custom', 'memberpress'); ?>&nbsp;</option>
     </select>
         <?php
     }
@@ -64,7 +64,7 @@ class MeprProductsHelper
         <li class="benefit-item">
           <input type="text" name="<?php echo MeprProduct::$pricing_benefits_str; ?>[]" class="benefit-input" value="<?php echo stripslashes(htmlspecialchars($b, ENT_QUOTES)); ?>" />
           <span class="remove-span">
-            <a href="" class="remove-benefit-item" title="<?php _e('Remove Benefit', 'memberpress'); ?>"><i class="mp-icon mp-icon-cancel-circled mp-16"></i></a>
+            <a href="" class="remove-benefit-item" title="<?php esc_attr_e('Remove Benefit', 'memberpress'); ?>"><i class="mp-icon mp-icon-cancel-circled mp-16"></i></a>
           </span>
         </li>
                 <?php
@@ -74,7 +74,7 @@ class MeprProductsHelper
         <li class="benefit-item">
           <input type="text" name="<?php echo MeprProduct::$pricing_benefits_str; ?>[]" class="benefit-input" value="" />
           <span class="remove-span">
-            <a href="" class="remove-benefit-item" title="<?php _e('Remove Benefit', 'memberpress'); ?>"><i class="mp-icon mp-icon-cancel-circled mp-16"></i></a>
+            <a href="" class="remove-benefit-item" title="<?php esc_attr_e('Remove Benefit', 'memberpress'); ?>"><i class="mp-icon mp-icon-cancel-circled mp-16"></i></a>
           </span>
         </li>
             <?php
@@ -89,7 +89,7 @@ class MeprProductsHelper
     public static function show_pricing_benefits_add_new()
     {
         ?>
-    <a href="" class="add-new-benefit" title="<?php _e('Add Benefit', 'memberpress'); ?>"><i class="mp-icon mp-icon-plus-circled mp-24"></i></a>
+    <a href="" class="add-new-benefit" title="<?php esc_attr_e('Add Benefit', 'memberpress'); ?>"><i class="mp-icon mp-icon-plus-circled mp-24"></i></a>
         <?php
     }
 
@@ -127,7 +127,7 @@ class MeprProductsHelper
         ?>
         <?php if (!empty($product->who_can_purchase)) : ?>
             <?php foreach ($product->who_can_purchase as $who) : ?>
-                <?php if ($who->user_type == 'members') {
+                <?php if ($who->user_type === 'members') {
                     $class = '';
                 } else {
                     $class = 'who_have_purchased';
@@ -186,10 +186,10 @@ class MeprProductsHelper
     {
         ?>
       <select name="<?php echo MeprProduct::$who_can_purchase_str . '-user_type'; ?>[]" class="user_types_dropdown" data-value="<?php echo $id; ?>">
-        <option value="everyone" <?php selected('everyone', $chosen); ?>><?php _e('Everyone', 'memberpress'); ?></option>
-        <option value="guests" <?php selected('guests', $chosen); ?>><?php _e('Guests', 'memberpress'); ?></option>
-        <option value="members" <?php selected('members', $chosen); ?>><?php _e('Members', 'memberpress'); ?></option>
-        <option value="disabled" <?php selected('disabled', $chosen); ?>><?php _e('No One (Disabled)', 'memberpress'); ?></option>
+        <option value="everyone" <?php selected('everyone', $chosen); ?>><?php esc_html_e('Everyone', 'memberpress'); ?></option>
+        <option value="guests" <?php selected('guests', $chosen); ?>><?php esc_html_e('Guests', 'memberpress'); ?></option>
+        <option value="members" <?php selected('members', $chosen); ?>><?php esc_html_e('Members', 'memberpress'); ?></option>
+        <option value="disabled" <?php selected('disabled', $chosen); ?>><?php esc_html_e('No One (Disabled)', 'memberpress'); ?></option>
       </select>
         <?php
     }
@@ -208,17 +208,17 @@ class MeprProductsHelper
 
         ?>
       <select name="<?php echo MeprProduct::$who_can_purchase_str . '-product_id'; ?>[]" id="<?php echo MeprProduct::$who_can_purchase_str . '-product_id'; ?>">
-        <option value="nothing" <?php selected($chosen, 'nothing'); ?>><?php _e('no active memberships', 'memberpress'); ?></option>
-        <option value="anything" <?php selected($chosen, 'anything'); ?>><?php _e('any membership', 'memberpress'); ?></option>
-        <option value="subscribed-before" <?php selected($chosen, 'subscribed-before'); ?>><?php _e('subscribed to this membership before', 'memberpress'); ?></option>
-        <option value="not-subscribed-before" <?php selected($chosen, 'not-subscribed-before'); ?>><?php _e('NOT subscribed to this membership before', 'memberpress'); ?></option>
-        <option value="not-subscribed-any-before" <?php selected($chosen, 'not-subscribed-any-before'); ?>><?php _e('NOT subscribed to any membership before', 'memberpress'); ?></option>
+        <option value="nothing" <?php selected($chosen, 'nothing'); ?>><?php esc_html_e('no active memberships', 'memberpress'); ?></option>
+        <option value="anything" <?php selected($chosen, 'anything'); ?>><?php esc_html_e('any membership', 'memberpress'); ?></option>
+        <option value="subscribed-before" <?php selected($chosen, 'subscribed-before'); ?>><?php esc_html_e('subscribed to this membership before', 'memberpress'); ?></option>
+        <option value="not-subscribed-before" <?php selected($chosen, 'not-subscribed-before'); ?>><?php esc_html_e('NOT subscribed to this membership before', 'memberpress'); ?></option>
+        <option value="not-subscribed-any-before" <?php selected($chosen, 'not-subscribed-any-before'); ?>><?php esc_html_e('NOT subscribed to any membership before', 'memberpress'); ?></option>
         <?php foreach ($products as $p) : ?>
-            <?php if ($p->ID != $my_id) : ?>
+            <?php if ($p->ID !== $my_id) : ?>
             <option value="<?php echo $p->ID; ?>" <?php selected($p->ID, $chosen) ?>><?php echo $p->post_title; ?></option>
             <?php endif; ?>
         <?php endforeach; ?>
-        <?php MeprHooks::do_action('mepr-get-products-dropdown-options', $chosen, $my_id, $products); ?>
+        <?php MeprHooks::do_action('mepr_get_products_dropdown_options', $chosen, $my_id, $products); ?>
       </select>
         <?php
     }
@@ -234,8 +234,8 @@ class MeprProductsHelper
     {
         ?>
       <select name="<?php echo MeprProduct::$have_or_had_str . '-type'; ?>[]" id="purchase_type_dropdown">
-        <option value="have" <?php selected($chosen, 'have'); ?>><?php _e('who currently have', 'memberpress'); ?></option>
-        <option value="had" <?php selected($chosen, 'had'); ?>><?php _e('who had', 'memberpress'); ?></option>
+        <option value="have" <?php selected($chosen, 'have'); ?>><?php esc_html_e('who currently have', 'memberpress'); ?></option>
+        <option value="had" <?php selected($chosen, 'had'); ?>><?php esc_html_e('who had', 'memberpress'); ?></option>
       </select>
         <?php
     }
@@ -251,7 +251,7 @@ class MeprProductsHelper
     public static function generate_product_link_html($product, $content)
     {
         $permalink = MeprUtils::get_permalink($product->ID);
-        $title     = ($content == '') ? $product->post_title : $content;
+        $title     = ($content === '') ? $product->post_title : $content;
 
         ob_start();
         ?>
@@ -281,18 +281,19 @@ class MeprProductsHelper
             $tmp_txn->user_id = (isset($current_user->ID)) ? $current_user->ID : 0;
             $tmp_txn->load_product_vars($product, $coupon_code, true);
             $tmp_txn               = MeprHooks::apply_filters('mepr_display_invoice_txn', $tmp_txn);
-            $tmp_txn->expires_at   = date(get_option('date_format'), $product->get_expires_at(time()));
+            $tmp_txn->expires_at   = gmdate(get_option('date_format'), $product->get_expires_at(time()));
             $tmp_txn->expire_type  = $product->expire_type;
             $tmp_txn->expire_unit  = $product->expire_unit;
             $tmp_txn->expire_after = $product->expire_after;
             $tmp_txn->expire_fixed = $product->expire_fixed;
+            $tmp_txn->period_type  = $product->period_type;
 
             if ($display_title) {
                 echo esc_html($product->post_title) . ': ';
             }
 
             if (empty($coupon_code)) { // We've already validated the coupon before including signup_form.php.
-                if ($product->register_price_action == 'custom') {
+                if ($product->register_price_action === 'custom') {
                     echo stripslashes($product->register_price);
                 } else {
                     echo MeprAppHelper::format_price_string($tmp_txn, $tmp_txn->amount, true, $coupon_code);
@@ -312,7 +313,7 @@ class MeprProductsHelper
             $tmp_sub->user_id = (isset($current_user->ID)) ? $current_user->ID : 0;
             $tmp_sub->load_product_vars($product, $coupon_code, true);
             $tmp_sub->maybe_prorate();
-            $tmp_sub->expires_at = date(get_option('date_format'), $product->get_expires_at(time()));
+            $tmp_sub->expires_at = gmdate(get_option('date_format'), $product->get_expires_at(time()));
 
             $tmp_sub = MeprHooks::apply_filters('mepr_display_invoice_sub', $tmp_sub);
 
@@ -320,7 +321,7 @@ class MeprProductsHelper
                 echo esc_html($product->post_title) . ': ';
             }
 
-            if ($product->register_price_action == 'custom' && empty($coupon_code) && !$tmp_sub->prorated_trial) {
+            if ($product->register_price_action === 'custom' && empty($coupon_code) && !$tmp_sub->prorated_trial) {
                 printf('<span class="mepr-custom-price">%s</span>', stripslashes($product->register_price));
             } else {
                 echo MeprAppHelper::format_price_string($tmp_sub, $tmp_sub->price, true, $coupon_code);
@@ -445,16 +446,20 @@ class MeprProductsHelper
                 $new_expires_at = MeprAppHelper::format_date(gmdate('Y-m-d H:i:s', $new_expires_at));
 
                 // RL Thank you special case.
-                if ($is_thankyou_page && !empty($_GET['transaction_id'])) {
-                    $txn_id = sanitize_text_field($_GET['transaction_id']);
-                    $renewal_txn = new MeprTransaction($txn_id);
+                if ($is_thankyou_page) {
+                    if (!empty($_GET['trans_num'])) {
+                        $renewal_txn = MeprTransaction::get_one_by_trans_num(sanitize_text_field(wp_unslash($_GET['trans_num'])));
+                    } elseif (!empty($_GET['transaction_id'])) {
+                        $renewal_txn = MeprTransaction::get_one(sanitize_text_field(wp_unslash($_GET['transaction_id'])));
+                    }
                     $active_txns = $user->transactions_for_product($product->ID);
 
                     // Ensure active txns larger than 1 and it's not an offline gateway renewal pending txn.
                     if (
                         !empty($active_txns) &&
+                        isset($renewal_txn) &&
                         $renewal_txn->id > 0 &&
-                        $renewal_txn->status != MeprTransaction::$pending_str
+                        $renewal_txn->status !== MeprTransaction::$pending_str
                     ) {
                         if (count($active_txns) > 1) {
                             $new_created_at = MeprAppHelper::format_date($active_txns[1]->expires_at);
@@ -475,7 +480,7 @@ class MeprProductsHelper
         }
 
         return MeprHooks::apply_filters(
-            'mepr-product-renewal-string',
+            'mepr_product_renewal_string',
             $renewal_str,
             $product
         );

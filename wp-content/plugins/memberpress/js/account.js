@@ -3,7 +3,11 @@ jQuery(document).ready(function ($) {
 
   $('.mepr-open-resume-confirm, .mepr-open-cancel-confirm').magnificPopup({
     type: 'inline',
-    closeBtnInside: false
+    callbacks: {
+      elementParse: function(item) {
+        item.src = '#' + item.el.data('href');
+      }
+    }
   });
 
   body.on('click', '.mepr-confirm-no', function() {

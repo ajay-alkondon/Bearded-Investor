@@ -1,7 +1,9 @@
-<?php if(!defined('ABSPATH')) {die('You are not allowed to call this page directly.');} ?>
+<?php if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+} ?>
 <div class="mp_wrapper mpcs-course-list">
   <div class="mpcs-cards">
-    <?php foreach($my_courses as $course): ?>
+    <?php foreach ($my_courses as $course) : ?>
       <div class="mpcs-card-wrapper<?php echo isset($attributes['show_3_col']) ? ' col-3' : ''; ?>">
         <div class="mpcs-card">
           <?php if (!isset($attributes['hide_image']) && has_post_thumbnail($course->ID)) { ?>
@@ -21,17 +23,17 @@
           </div>
           <div class="mpcs-card-content">
             <?php if (!isset($attributes['hide_excerpt'])) {
-              $excerpt = get_the_excerpt($course->ID);
-              $excerpt = substr($excerpt, 0, 140);
-              $result = substr($excerpt, 0, strrpos($excerpt, ' '));
-              echo wpautop($result . ' [...]');
+                $excerpt = get_the_excerpt($course->ID);
+                $excerpt = substr($excerpt, 0, 140);
+                $result  = substr($excerpt, 0, strrpos($excerpt, ' '));
+                echo wpautop($result . ' [...]');
             } ?>
           </div>
           <?php if (!isset($attributes['hide_author'])) { ?>
             <div class="mpcs-card-footer">
                 <span class="mpcs-card-author">
-              <?php $user_id = (int) $course->post_author; ?>
-              <?php echo memberpress\courses\lib\Utils::get_avatar( $user_id, '30' ) . memberpress\courses\lib\Utils::get_full_name( $user_id ); ?>
+                <?php $user_id = (int) $course->post_author; ?>
+                <?php echo memberpress\courses\lib\Utils::get_avatar($user_id, '30') . memberpress\courses\lib\Utils::get_full_name($user_id); ?>
             </span>
             </div>
           <?php } ?>
@@ -42,10 +44,10 @@
   <?php if (!isset($attributes['hide_navigation'])) { ?>
     <div class="mpcs-card-nav">
       <div class="alignleft">
-        <?php previous_posts_link( __('&laquo; Previous', 'memberpress-courses') ); ?>
+        <?php previous_posts_link(__('&laquo; Previous', 'memberpress-courses')); ?>
       </div>
       <div class="alignright">
-        <?php next_posts_link( __('Next &raquo;', 'memberpress-courses'), $course_query->max_num_pages); ?>
+        <?php next_posts_link(__('Next &raquo;', 'memberpress-courses'), $course_query->max_num_pages); ?>
       </div>
     </div>
   <?php } ?>

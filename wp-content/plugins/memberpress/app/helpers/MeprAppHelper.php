@@ -226,7 +226,7 @@ class MeprAppHelper
      */
     public static function human_readable_status($status, $type = 'transaction')
     {
-        if ($type == 'transaction') {
+        if ($type === 'transaction') {
             switch ($status) {
                 case MeprTransaction::$pending_str:
                     return __('Pending', 'memberpress');
@@ -239,7 +239,7 @@ class MeprAppHelper
                 default:
                     return __('Unknown', 'memberpress');
             }
-        } elseif ($type == 'subscription') {
+        } elseif ($type === 'subscription') {
             switch ($status) {
                 case MeprSubscription::$pending_str:
                     return __('Pending', 'memberpress');
@@ -265,13 +265,13 @@ class MeprAppHelper
     public static function pro_template_sub_status($sub)
     {
         $type = $sub->sub_type;
-        if ($type == 'transaction') {
+        if ($type === 'transaction') {
             if (strpos($sub->active, 'mepr-active') !== false) {
                 return 'active';
             } else {
                 return 'canceled';
             }
-        } elseif ($type == 'subscription') {
+        } elseif ($type === 'subscription') {
             $status = $sub->status;
 
             if ('active' === $status) {
@@ -353,7 +353,7 @@ class MeprAppHelper
         }
 
         $proration_single_cycle = false;
-        if ($obj instanceof MeprSubscription && $obj->prorated_trial && $obj->trial && $obj->limit_cycles && 1 == $obj->limit_cycles_num) {
+        if ($obj instanceof MeprSubscription && $obj->prorated_trial && $obj->trial && $obj->limit_cycles && 1 === (int) $obj->limit_cycles_num) {
             $proration_single_cycle = true;
         }
 
@@ -381,13 +381,13 @@ class MeprAppHelper
 
         if ((float) $price <= 0.00) {
             if (
-                $period_type != 'lifetime' && !empty($coupon) &&
-                (($coupon->discount_type == 'percent' && $coupon->discount_amount == 100) or ($coupon->discount_mode == 'standard' && $obj->trial == false))
+                $period_type !== 'lifetime' && !empty($coupon) &&
+                (($coupon->discount_type === 'percent' && (int) $coupon->discount_amount === 100) or ($coupon->discount_mode === 'standard' && (bool) $obj->trial === false))
             ) {
                 $price_str = __('Free forever', 'memberpress');
-            } elseif ($period_type == 'lifetime') {
+            } elseif ($period_type === 'lifetime') {
                 $price_str = __('Free', 'memberpress');
-            } elseif ($period == 1) {
+            } elseif ($period === 1) {
                 $price_str = sprintf(
                     // Translators: %s: period type.
                     __('Free for a %s', 'memberpress'),
@@ -401,7 +401,7 @@ class MeprAppHelper
                     $period_type_str
                 );
             }
-        } elseif ($period_type == 'lifetime') {
+        } elseif ($period_type === 'lifetime') {
             $price_str = $fprice;
             if (
                 $show_prorated && $obj instanceof MeprProduct &&
@@ -473,7 +473,7 @@ class MeprAppHelper
 
                     $price_str = sprintf($sub_str, $conv_trial_count, $conv_trial_type_str, $trial_str, $upgrade_str);
                 } else {
-                    $sub_str   = (
+                    $sub_str = (
                         // Translators: %1$s: trial price, %2$s: upgrade price.
                         __('%1$s%2$s once and ', 'memberpress')
                     );
@@ -483,10 +483,10 @@ class MeprAppHelper
                 $price_str = '';
             }
 
-            if ($obj->limit_cycles and $obj->limit_cycles_num == 1) {
+            if ($obj->limit_cycles and (int) $obj->limit_cycles_num === 1) {
                 if (!$proration_single_cycle) {
                     $price_str .= $fprice;
-                    if ($obj->limit_cycles_action == 'expire') {
+                    if ($obj->limit_cycles_action === 'expire') {
                         $price_str .= sprintf(
                             // Translators: %1$d: period, %2$s: period type.
                             __(' for %1$d %2$s', 'memberpress'),
@@ -504,12 +504,12 @@ class MeprAppHelper
                         $obj->limit_cycles_num,
                         'memberpress'
                     ),
-                    $obj->limit_cycles_num
+                    (int) $obj->limit_cycles_num
                 );
             }
 
             if (!$obj->limit_cycles or ($obj->limit_cycles and $obj->limit_cycles_num > 1)) {
-                if ($period == 1) {
+                if ($period === 1) {
                     $price_str .= sprintf(
                         // Translators: %1$s: price, %2$s: period type.
                         __('%1$s / %2$s', 'memberpress'),
@@ -528,8 +528,8 @@ class MeprAppHelper
             }
         }
 
-        if ($period_type == 'lifetime') {
-            if ($obj->expire_type == 'delay') {
+        if ($period_type === 'lifetime') {
+            if ($obj->expire_type === 'delay') {
                 $expire_str = MeprUtils::period_type_name($obj->expire_unit, $obj->expire_after);
                 $price_str .= sprintf(
                     // Translators: %1$d: expiration period, %2$s: expiration unit.
@@ -537,7 +537,7 @@ class MeprAppHelper
                     $obj->expire_after,
                     $expire_str
                 );
-            } elseif ($obj->expire_type == 'fixed') {
+            } elseif ($obj->expire_type === 'fixed') {
                 $now = time();
 
                 if ($obj instanceof MeprTransaction || $obj instanceof MeprSubscription) {
@@ -577,7 +577,7 @@ class MeprAppHelper
             );
         }
 
-        return MeprHooks::apply_filters('mepr-price-string', $price_str, $obj, $show_symbol);
+        return MeprHooks::apply_filters('mepr_price_string', $price_str, $obj, $show_symbol);
     }
 
     /**
@@ -591,7 +591,7 @@ class MeprAppHelper
         ?>
         <div class="mepr-emails-wrap"><?php
 
-        $emails = apply_filters('mepr_display_emails', MeprEmailFactory::all($etype, $args), $etype, $args);
+        $emails = MeprHooks::apply_filters('mepr_display_emails', MeprEmailFactory::all($etype, $args), $etype, $args);
 
         foreach ($emails as $email) {
             if ($email->show_form) {
@@ -631,7 +631,7 @@ class MeprAppHelper
         }
 
         // Close the file and exit.
-        fclose($output);
+        fclose($output); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         exit;
     }
 
@@ -655,7 +655,7 @@ class MeprAppHelper
         ?>
         <select name="<?php echo $field_key; ?>" id="<?php echo $field_key . $unique_suffix; ?>"
                 class="<?php echo $classes; ?> mepr-countries-dropdown mepr-form-input mepr-select-field" <?php echo $required_attr; ?>>
-            <option value=""><?php _e('-- Select Country --', 'memberpress'); ?></option>
+            <option value=""><?php esc_html_e('-- Select Country --', 'memberpress'); ?></option>
             <?php foreach (MeprUtils::countries() as $opt_key => $opt_val) : ?>
                 <option
                     value="<?php echo $opt_key; ?>" <?php selected(esc_attr($opt_key), esc_attr($value)); ?>><?php echo stripslashes($opt_val); ?></option>
@@ -685,14 +685,17 @@ class MeprAppHelper
         ob_start();
         ?>
         <select name="" data-fieldname="<?php echo $field_key; ?>" data-value="<?php echo esc_attr($value); ?>"
-                id="<?php echo $field_key . $unique_suffix; ?>"
+                data-unique-suffix="<?php echo $unique_suffix; ?>"
                 class="<?php echo $classes; ?> mepr-hidden mepr-states-dropdown mepr-form-input mepr-select-field"
+                aria-label="<?php esc_attr_e('State/Province', 'memberpress'); ?>"
                 style="display: none;" <?php echo $required_attr; ?>>
         </select>
         <?php // Make sure the text box isn't hidden ... at the very least we need to see something! ?>
         <input type="text" name="<?php echo $field_key; ?>" data-fieldname="<?php echo $field_key; ?>"
-               data-value="<?php echo esc_attr($value); ?>" id="<?php echo $field_key . $unique_suffix; ?>"
+               data-value="<?php echo esc_attr($value); ?>" data-unique-suffix="<?php echo $unique_suffix; ?>"
+               id="<?php echo $field_key . $unique_suffix; ?>"
                class="<?php echo $classes; ?> mepr-states-text mepr-form-input"
+               aria-label="<?php esc_attr_e('State/Province', 'memberpress'); ?>"
                value="<?php echo esc_attr($value); ?>" <?php echo $required_attr; ?>/>
         <?php
         return ob_get_clean();
@@ -724,7 +727,7 @@ class MeprAppHelper
         <select name="<?php echo esc_attr($field_name); ?>" class="<?php echo esc_attr($classes); ?>">
             <?php foreach ($contents as $curr_type => $curr_label) : ?>
                 <option
-                    value="<?php echo esc_attr($curr_type); ?>" <?php selected(in_array($curr_type, $memberships)); ?>><?php echo esc_html($curr_label); ?>
+                    value="<?php echo esc_attr($curr_type); ?>" <?php selected(in_array($curr_type, array_map('intval', $memberships), true)); ?>><?php echo esc_html($curr_label); ?>
                     &nbsp;
                 </option>
             <?php endforeach; ?>
@@ -755,11 +758,83 @@ class MeprAppHelper
         <select name="<?php echo esc_attr($field_name); ?>" class="<?php echo esc_attr($classes); ?>">
             <?php foreach ($contents as $curr_type => $curr_label) : ?>
                 <option
-                    value="<?php echo esc_attr($curr_type); ?>" <?php selected(in_array($curr_type, $roles)); ?>><?php echo esc_html($curr_label); ?>
+                    value="<?php echo esc_attr($curr_type); ?>" <?php selected(in_array($curr_type, $roles, true)); ?>><?php echo esc_html($curr_label); ?>
                     &nbsp;
                 </option>
             <?php endforeach; ?>
         </select>
+        <?php
+    }
+
+    /**
+     * Renders a dropdown for login state types.
+     *
+     * @param string $field_name The field name.
+     * @param string $selected   The roles to include.
+     * @param string $classes    Additional CSS classes.
+     *
+     * @return void
+     */
+    public static function login_state_dropdown($field_name, $selected, $classes = '')
+    {
+        $states = [
+            'logged_in' => __('Logged In', 'memberpress'),
+            'guest'     => __('Logged Out (Guest)', 'memberpress'),
+        ];
+        ?>
+        <select name="<?php echo esc_attr($field_name); ?>" class="<?php echo esc_attr($classes); ?>">
+            <?php foreach ($states as $type => $label) : ?>
+                <option
+                    value="<?php echo esc_attr($type); ?>"
+                    <?php selected($type, $selected); ?>
+                >
+                    <?php echo esc_html($label); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        <?php
+    }
+
+    /**
+     * Renders a text input for members (with instant search).
+     *
+     * @param string $field_name The field name.
+     * @param string $value      The current value.
+     * @param string $classes    Additional HTML classes.
+     */
+    public static function members_input($field_name, $value = '', $classes = ''): void
+    {
+        ?>
+        <input
+            type="text"
+            name="<?php echo esc_attr($field_name); ?>"
+            class="mepr_suggest_user <?php echo esc_attr($classes); ?>"
+            value="<?php echo esc_attr($value); ?>"
+            placeholder="<?php esc_attr_e('Begin Typing Name', 'memberpress') ?>"
+            data-validation="length"
+            data-validation-error-msg="<?php esc_attr_e('Member Name must be between 1-100 characters', 'memberpress'); ?>"
+            data-validation-length="1-100"
+        />
+        <?php
+    }
+
+    /**
+     * Renders a text input for capabilities.
+     *
+     * @param string $field_name The field name.
+     * @param string $value      The current value.
+     * @param string $classes    Additional CSS classes.
+     */
+    public static function capabilities_input($field_name, $value = '', $classes = ''): void
+    {
+        ?>
+        <input
+            type="text"
+            name="<?php echo esc_attr($field_name); ?>"
+            class="<?php echo esc_attr($classes); ?>"
+            value="<?php echo esc_attr($value); ?>"
+            placeholder="<?php esc_attr_e('Enter Capability', 'memberpress'); ?>"
+        />
         <?php
     }
 
@@ -961,7 +1036,7 @@ class MeprAppHelper
     public static function is_thankyou_page($post)
     {
         $mepr_options     = MeprOptions::fetch();
-        $is_thankyou_page = $post instanceof WP_Post && $post->ID == $mepr_options->thankyou_page_id;
+        $is_thankyou_page = $post instanceof WP_Post && $post->ID === $mepr_options->thankyou_page_id;
 
         return MeprHooks::apply_filters('mepr_is_thankyou_page', $is_thankyou_page, $post);
     }
@@ -1033,9 +1108,9 @@ class MeprAppHelper
                         'srcset'  => [],
                     ],
                     'form'       => [
-                        'name'   => [],
-                        'action' => [],
-                        'method' => [],
+                        'name'       => [],
+                        'action'     => [],
+                        'method'     => [],
                         'aria-label' => [],
                     ],
                     'li'         => [],
@@ -1078,7 +1153,7 @@ class MeprAppHelper
                         'disabled'      => [],
                     ],
                     'label'      => [
-                        'for'    => [],
+                        'for' => [],
                     ],
                     'nav'        => [
                         'aria-label' => [],
@@ -1088,7 +1163,7 @@ class MeprAppHelper
                         'aria-labelledby' => [],
                     ],
                     'table'      => [
-                        'role'   => [],
+                        'role' => [],
                     ],
                     'thead'      => [],
                     'tbody'      => [],

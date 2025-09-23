@@ -9,7 +9,7 @@ class MeprDeactivationSurveyCtrl extends MeprBaseCtrl
      */
     public function load_hooks()
     {
-        if (apply_filters('mepr_deactivation_survey_skip', $this->is_dev_url())) {
+        if (MeprHooks::apply_filters('mepr_deactivation_survey_skip', $this->is_dev_url())) {
             return;
         }
 
@@ -30,11 +30,11 @@ class MeprDeactivationSurveyCtrl extends MeprBaseCtrl
         // Trim it up.
         $url = strtolower(trim($url));
 
-        // Need to get the host...so let's add the scheme so we can use parse_url.
+        // Need to get the host...so let's add the scheme so we can use wp_parse_url.
         if (false === strpos($url, 'http://') && false === strpos($url, 'https://')) {
             $url = 'http://' . $url;
         }
-        $url_parts = parse_url($url);
+        $url_parts = wp_parse_url($url);
         $host      = ! empty($url_parts['host']) ? $url_parts['host'] : false;
         if (! empty($url) && ! empty($host)) {
             if (false !== ip2long($host)) {
@@ -133,6 +133,6 @@ class MeprDeactivationSurveyCtrl extends MeprBaseCtrl
      */
     protected function is_plugin_page()
     {
-        return in_array(MeprUtils::get_current_screen_id(), ['plugins', 'plugins-network']);
+        return in_array(MeprUtils::get_current_screen_id(), ['plugins', 'plugins-network'], true);
     }
 }

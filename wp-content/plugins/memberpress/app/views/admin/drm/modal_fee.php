@@ -7,7 +7,12 @@ $account_link = MeprDrmHelper::get_drm_link(MeprDrmHelper::DRM_LOCKED, 'general'
    <div class="mepr-notice-modal-wrapper">
     <a href='#' class='mepr-notice-modal-close'></a>
     <div class="mepr-notice-modal-content">
-     <h3 class="mepr-notice-title"><?php _e('<span>ALERT!</span> MemberPress is running without a license', 'memberpress'); ?></h3>
+     <h3 class="mepr-notice-title"><?php printf(
+         // Translators: %1$s: opening span tag, %2$s: closing span tag.
+         esc_html__('%1$sALERT!%2$s MemberPress is running without a license', 'memberpress'),
+         '<span>',
+         '</span>'
+     ); ?></h3>
      <div class="mepr-notice-desc">
       <p><?php printf(
           // Translators: %s: application fee percentage.
@@ -16,7 +21,7 @@ $account_link = MeprDrmHelper::get_drm_link(MeprDrmHelper::DRM_LOCKED, 'general'
       ); ?></p>
 
       <p>
-        <a target="_blank" href="<?php echo $account_link; ?>" class="button button-primary"><?php _e('Click here to purchase or renew your license key', 'memberpress'); ?></a>
+        <a target="_blank" href="<?php echo $account_link; ?>" class="button button-primary"><?php esc_html_e('Click here to purchase or renew your license key', 'memberpress'); ?></a>
       </p>
 
       <p><?php printf(

@@ -24,7 +24,7 @@ class MeprSubscriptionsWidget extends WP_Widget
      */
     public static function register_widget()
     {
-        if (MeprHooks::apply_filters('mepr-enable-legacy-widgets', !current_theme_supports('widgets-block-editor'))) {
+        if (MeprHooks::apply_filters('mepr_enable_legacy_widgets', !current_theme_supports('widgets-block-editor'))) {
             register_widget('MeprSubscriptionsWidget');
         }
     }
@@ -69,7 +69,7 @@ class MeprSubscriptionsWidget extends WP_Widget
                 $prev_dups = [];
 
                 foreach ($subs as $prd) {
-                    if (empty($prev_dups) || !in_array($prd->ID, $prev_dups, false)) {
+                    if (empty($prev_dups) || !in_array($prd->ID, $prev_dups, true)) {
                         $prev_dups[] = $prd->ID;
 
                         if ($show_link && !empty($prd->access_url)) {
@@ -103,7 +103,7 @@ class MeprSubscriptionsWidget extends WP_Widget
     public function update($new_instance, $old_instance)
     {
         $instance                       = [];
-        $instance['title']              = stripslashes(strip_tags($new_instance['title']));
+        $instance['title']              = stripslashes(wp_strip_all_tags($new_instance['title']));
         $instance['top_desc']           = stripslashes($new_instance['top_desc']);
         $instance['bottom_desc']        = stripslashes($new_instance['bottom_desc']);
         $instance['not_logged_in_msg']  = stripslashes($new_instance['not_logged_in_msg']);
@@ -130,29 +130,29 @@ class MeprSubscriptionsWidget extends WP_Widget
 
         ?>
     <p>
-      <label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:', 'memberpress'); ?></label>
+      <label for="<?php echo $this->get_field_id('title'); ?>"><?php esc_html_e('Title:', 'memberpress'); ?></label>
       <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" />
     </p>
     <p>
-      <label for="<?php echo $this->get_field_id('not_logged_in_msg'); ?>"><?php _e('Not Logged In Message:', 'memberpress'); ?></label>
+      <label for="<?php echo $this->get_field_id('not_logged_in_msg'); ?>"><?php esc_html_e('Not Logged In Message:', 'memberpress'); ?></label>
       <textarea class="widefat" id="<?php echo $this->get_field_id('not_logged_in_msg'); ?>" name="<?php echo $this->get_field_name('not_logged_in_msg'); ?>"><?php echo esc_attr(stripslashes($not_logged_in_msg)); ?></textarea>
     </p>
     <p>
-      <label for="<?php echo $this->get_field_id('member_no_subs_msg'); ?>"><?php _e('No Subscriptions Message:', 'memberpress'); ?></label>
+      <label for="<?php echo $this->get_field_id('member_no_subs_msg'); ?>"><?php esc_html_e('No Subscriptions Message:', 'memberpress'); ?></label>
       <textarea class="widefat" id="<?php echo $this->get_field_id('member_no_subs_msg'); ?>" name="<?php echo $this->get_field_name('member_no_subs_msg'); ?>"><?php echo esc_attr(stripslashes($member_no_subs_msg)); ?></textarea>
     </p>
     <p>
-      <label for="<?php echo $this->get_field_id('top_desc'); ?>"><?php _e('Top Description (optional):', 'memberpress'); ?></label>
+      <label for="<?php echo $this->get_field_id('top_desc'); ?>"><?php esc_html_e('Top Description (optional):', 'memberpress'); ?></label>
       <textarea class="widefat" id="<?php echo $this->get_field_id('top_desc'); ?>" name="<?php echo $this->get_field_name('top_desc'); ?>"><?php echo esc_attr(stripslashes($top_desc)); ?></textarea>
     </p>
     <p>
-      <label for="<?php echo $this->get_field_id('bottom_desc'); ?>"><?php _e('Bottom Description (optional):', 'memberpress'); ?></label>
+      <label for="<?php echo $this->get_field_id('bottom_desc'); ?>"><?php esc_html_e('Bottom Description (optional):', 'memberpress'); ?></label>
       <textarea class="widefat" id="<?php echo $this->get_field_id('bottom_desc'); ?>" name="<?php echo $this->get_field_name('bottom_desc'); ?>"><?php echo esc_attr(stripslashes($bottom_desc)); ?></textarea>
     </p>
     <p>
       <input type="checkbox" id="<?php echo $this->get_field_id('show_link'); ?>" name="<?php echo $this->get_field_name('show_link'); ?>" <?php checked($show_link); ?> />
-      <label for="<?php echo $this->get_field_id('show_link'); ?>"><?php _e('Use Membership Access URLs?', 'memberpress'); ?></label><br/>
-      <small style="display:block;padding-left:24px;"><?php _e('Makes the Subscription name clickable, pointing to the Membership Access URL you have set in the Membership settings (Advanced tab).', 'memberpress'); ?></small>
+      <label for="<?php echo $this->get_field_id('show_link'); ?>"><?php esc_html_e('Use Membership Access URLs?', 'memberpress'); ?></label><br/>
+      <small style="display:block;padding-left:24px;"><?php esc_html_e('Makes the Subscription name clickable, pointing to the Membership Access URL you have set in the Membership settings (Advanced tab).', 'memberpress'); ?></small>
     </p>
         <?php
     }

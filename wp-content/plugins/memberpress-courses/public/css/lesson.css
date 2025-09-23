@@ -10,10 +10,16 @@ div#mpcs-lesson-navigation {
   display: block; }
 
 div#mpcs-lesson-navigation #previous_lesson_link {
-  float: left; }
+  display: inline-block;
+  float: left;
+  width: auto;
+}
 
 div#mpcs-lesson-navigation #next_lesson_link {
-  float: right; }
+  display: inline-block;
+  float: right;
+  width: auto;
+}
 
 div.mpcs-breadcrumbs span.mpcs-breadcrumb.mpcs-active a {
   font-weight: bold; }
@@ -23,6 +29,16 @@ div.mpcs-breadcrumbs span.mpcs-breadcrumb:not(:last-child)::after {
 
 div.mpcs-breadcrumb {
   font-weight: bold; }
+
+#mpcs-sidebar .mpcs-lessons {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#mpcs-sidebar .mpcs-lessons li {
+  margin: 0;
+}
 
 .mpcs-sidebar-with-accordion #mpcs-sidebar .mpcs-lessons {
   display: none;
@@ -35,19 +51,28 @@ div.mpcs-breadcrumb {
 }
 
 .mpcs-sidebar-with-accordion #mpcs-sidebar .mpcs-section-title {
-  padding: 1em;
+  padding: 1.2em 1em;
+}
+
+.mpcs-sidebar-with-accordion #mpcs-sidebar .mpcs-section-title-text {
+  line-height: 18px;
 }
 
 .mpcs-sidebar-with-accordion #mpcs-sidebar .mpcs-section-header {
-  border-bottom: 1px solid rgba(255,255,255,.15);
   position: relative;
+  width: 100%;
+  padding: 0;
+  border-width: 0 0 1px;
+  border-bottom: 1px solid rgba(255,255,255,.15);
+  text-align: left;
+  font-weight: 400;
 }
 
 .mpcs-sidebar-with-accordion #mpcs-sidebar .mpcs-section-header:after {
   content: '';
   position: absolute;
   right: 20px;
-  top: 20px;
+  top: 23px;
   width: 0;
   height: 0;
   border-left: 6px solid transparent;

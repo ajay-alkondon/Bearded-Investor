@@ -1,45 +1,13 @@
-<?php
-use memberpress\courses as base;
-
-switch($course->certificates_style) {
-  case 'style_a':
-  default:
-    $bg_image = 'Certificate_1-pdf-background.jpg';
-    break;
-  case 'style_b':
-    $bg_image = 'Certificate_2-pdf-background.jpg';
-    break;
-  case 'style_c':
-    $bg_image = 'Certificate_3-pdf-background.jpg';
-    break;
-}
-
-/** @var base\models\Course $course */
-$base_path          = ABSPATH;
-$no_bottom_logo     = empty($course->certificates_bottom_logo);
-$no_top_logo        = empty($course->certificates_logo);
-$no_instructor_sign = empty($course->certificates_instructor_signature);
-$title              = $course->certificates_title;
-$paper_size         = $course->certificates_paper_size;
-$footer_message     = wp_trim_words($course->certificates_footer_message, 55, '...');
-$instructor_title   = $course->certificates_instructor_title;
-$instructor_name    = $course->certificates_instructor_name;
-$bg_image_path      = base\IMAGES_URL . '/' . $bg_image;
-$top_logo_path      = $course->certificates_logo;
-$signature_path     = $course->certificates_instructor_signature;
-$bottom_logo_path   = $course->certificates_bottom_logo;
-$student_name       = esc_textarea(ucwords(strtolower($user->first_name . ' ' . $user->last_name)));
-$course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_textarea(ucwords(strtolower($course->post_title))), $course->post_title);
-
-?>
 <!DOCTYPE html>
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href='https://fonts.googleapis.com/css2?family=Great+Vibes' rel='stylesheet' type='text/css'>
-    <link href='https://fonts.googleapis.com/css2?family=Crimson+Text' rel='stylesheet' type='text/css'>
-    <link href='https://fonts.googleapis.com/css2?family=Poppins' rel='stylesheet' type='text/css'>
-    <?php do_action( 'mpcs_certificate_pdf_before_style_tag' ); ?>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@700&display=swap" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap' rel='stylesheet' type='text/css'>
+    <?php do_action('mpcs_certificate_pdf_before_style_tag'); ?>
     <style>
       @page {
         margin: 0;
@@ -49,13 +17,19 @@ $course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_tex
       body {
         margin: 0;
         padding: 0;
-        font-family: <?php echo esc_attr( $default_font ); ?>;
+        font-family: <?php echo esc_attr($default_font); ?>;
         background: url('<?php echo $bg_image_path; ?>') no-repeat center center;
         background-size: 100% 100%;
       }
 
       .container {
-        height: <?php if ($paper_size == 'A4') echo '793px'; elseif ($paper_size == 'letter') echo '815px'; else echo apply_filters('mpcs_certificate_pdf_file_height', '800px'); ?>;
+        height: <?php if ($paper_size == 'A4') {
+            echo '793px';
+                } elseif ($paper_size == 'letter') {
+                    echo '815px';
+                } else {
+                    echo apply_filters('mpcs_certificate_pdf_file_height', '800px');
+                } ?>;
         position: relative;
         border: 0;
         margin: 0;
@@ -84,7 +58,7 @@ $course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_tex
 
       h1.top-title {
         font-size: 3em;
-        font-family: <?php echo esc_attr( $title_font ); ?>;
+        font-family: <?php echo esc_attr($title_font); ?>;
       }
 
       div.footer-message {
@@ -102,7 +76,7 @@ $course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_tex
         margin: 0;
         padding: 0;
         padding-bottom: 27px;
-        font-family: <?php echo esc_attr( $student_name_font ); ?>;
+        font-family: <?php echo esc_attr($student_name_font); ?>;
         font-size: 4em;
         line-height: 1em;
       }
@@ -114,7 +88,7 @@ $course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_tex
         line-height: 1em;
         width: 68%;
         font-weight: bold;
-        font-family: <?php echo esc_attr( $footer_font ); ?>;
+        font-family: <?php echo esc_attr($footer_font); ?>;
         text-align: center;
       }
 
@@ -180,7 +154,7 @@ $course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_tex
         width: 100%;
         margin: 0 auto;
         margin-bottom:3px;
-        font-family: <?php echo esc_attr( $instructor_name_font ); ?>;
+        font-family: <?php echo esc_attr($instructor_name_font); ?>;
         font-size: 1.3em;
       }
 
@@ -198,7 +172,7 @@ $course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_tex
   <body>
     <div class="container">
       <div class="vertical-center">
-        <?php if(!$no_top_logo): ?>
+        <?php if (!$no_top_logo) : ?>
           <p>
             <img class="top-logo" src="<?php echo $top_logo_path; ?>" />
           </p>
@@ -218,14 +192,18 @@ $course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_tex
         <h4 class="course-name">
           <?php echo $course_title; ?>
         </h4>
-        <?php if ($course->certificates_completion_date == 'enabled' || $course->certificates_expiration_date == 'enabled'){ ?>
+        <?php if ($course->certificates_completion_date == 'enabled' || $course->certificates_expiration_date == 'enabled') { ?>
         <p class="completion-date">
-          <?php if ($course->certificates_completion_date == 'enabled') { ?><span><b><?php esc_html_e('COMPLETED', 'memberpress-courses'); ?>:</b> <?php echo esc_html(wp_date(apply_filters('mpcs_certificate_pdf_completion_date', 'F jS Y'), strtotime($last_completion_date))); ?></span><?php } ?>
-          <?php if ($course->certificates_expiration_date == 'enabled') { ?><span><b><?php esc_html_e('EXPIRES', 'memberpress-courses'); ?>:</b> <?php echo esc_html(wp_date(apply_filters('mpcs_certificate_pdf_expiration_date', 'F jS Y'), $last_completion_datetime->getTimestamp())); ?></span><?php } ?>
+            <?php if ($course->certificates_completion_date == 'enabled') {
+                ?><span><b><?php esc_html_e('COMPLETED', 'memberpress-courses'); ?>:</b> <?php echo esc_html(wp_date(apply_filters('mpcs_certificate_pdf_completion_date', 'F jS Y'), strtotime($last_completion_date))); ?></span><?php
+            } ?>
+            <?php if ($course->certificates_expiration_date == 'enabled') {
+                ?><span><b><?php esc_html_e('EXPIRES', 'memberpress-courses'); ?>:</b> <?php echo esc_html(wp_date(apply_filters('mpcs_certificate_pdf_expiration_date', 'F jS Y'), $last_completion_datetime->getTimestamp())); ?></span><?php
+            } ?>
         </p>
         <?php } ?>
         <div class="footer-wrap">
-          <?php if(!$no_instructor_sign): ?>
+          <?php if (!$no_instructor_sign) : ?>
           <div class="signature-wrap">
               <div class="signature">
                 <img src="<?php echo $signature_path; ?>" />
@@ -233,12 +211,12 @@ $course_title       = apply_filters('mpcs_certificate_pdf_course_title', esc_tex
               <b class="signature-denom"><?php esc_html_e('Signature', 'memberpress-courses'); ?></b>
           </div>
           <?php endif; ?>
-          <?php if(!$no_bottom_logo): ?>
+          <?php if (!$no_bottom_logo) : ?>
           <div class="bottom-logo">
               <img src="<?php echo $bottom_logo_path; ?>" />
           </div>
           <?php endif; ?>
-          <?php if(!(empty($instructor_name) || empty($instructor_title))): ?>
+          <?php if (!(empty($instructor_name) || empty($instructor_title))) : ?>
             <div class="instructor-wrap">
               <div class="instructor-name">
                 <?php echo esc_textarea($instructor_name); ?>

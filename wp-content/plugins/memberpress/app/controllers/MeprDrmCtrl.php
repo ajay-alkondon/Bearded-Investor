@@ -27,6 +27,7 @@ class MeprDrmCtrl extends MeprBaseCtrl
         add_action('mepr_drm_app_fee_mapper', [$this, 'drm_app_fee_mapper']);
         add_action('mepr_drm_app_fee_reversal', [$this, 'drm_app_fee_reversal']);
         add_action('mepr_drm_app_fee_revision', [$this, 'drm_app_fee_percentage_revision']);
+        add_filter('site_status_tests', ['MeprDrmDebugHelper', 'site_health_debug_status'], 1);
     }
 
     /**
@@ -112,11 +113,11 @@ class MeprDrmCtrl extends MeprBaseCtrl
             $event_hash   = $secret_parts[1];
             $notice_key   = MeprDrmHelper::prepare_dismissable_notice_key($notice);
 
-            if ($notice_hash == sha1($notice)) {
+            if ($notice_hash === sha1($notice)) {
                 $event = null;
-                if (sha1(MeprDrmHelper::NO_LICENSE_EVENT) == $event_hash) {
+                if (sha1(MeprDrmHelper::NO_LICENSE_EVENT) === $event_hash) {
                     $event = MeprEvent::latest(MeprDrmHelper::NO_LICENSE_EVENT);
-                } elseif (sha1(MeprDrmHelper::INVALID_LICENSE_EVENT) == $event_hash) {
+                } elseif (sha1(MeprDrmHelper::INVALID_LICENSE_EVENT) === $event_hash) {
                     $event = MeprEvent::latest(MeprDrmHelper::INVALID_LICENSE_EVENT);
                 }
 
@@ -185,16 +186,16 @@ class MeprDrmCtrl extends MeprBaseCtrl
                 return; // Bail.
             }
 
-            $page = isset($_GET['page']) ? $_GET['page'] : ''; // phpcs:ignore WordPress.Security.NonceVerification
+            $page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
             if ('memberpress-members' === $page) {
-                $action = isset($_GET['action']) ? $_GET['action'] : ''; // phpcs:ignore WordPress.Security.NonceVerification
+                $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 
-                if ('new' == $action) {
+                if ('new' === $action) {
                     wp_die(__('Sorry, you are not allowed to access this page.', 'memberpress')); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 }
 
-                if (MeprUtils::is_post_request() && 'create' == $action) {
+                if (MeprUtils::is_post_request() && 'create' === $action) {
                     wp_die(__('Sorry, you are not allowed to access this page.', 'memberpress')); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 }
             }

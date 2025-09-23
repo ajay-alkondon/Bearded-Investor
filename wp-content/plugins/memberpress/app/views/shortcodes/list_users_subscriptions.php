@@ -16,9 +16,9 @@
                     echo esc_html($arow->membership);
                 }
                 ?><br/>
-                <?php _ex('Expires', 'ui', 'memberpress'); ?>: <?php echo esc_html($arow->expires); ?>
+                <?php echo esc_html_x('Expires', 'ui', 'memberpress'); ?>: <?php echo esc_html($arow->expires); ?>
                 <?php if ($arow->renewal_link) : ?>
-              <br/><a href="<?php echo esc_url($arow->renewal_link); ?>"><?php _ex('Renew', 'ui', 'memberpress'); ?></a>
+              <br/><a href="<?php echo esc_url($arow->renewal_link); ?>"><?php echo esc_html_x('Renew', 'ui', 'memberpress'); ?></a>
                 <?php endif; ?>
           </li>
             <?php endforeach; ?>
@@ -29,12 +29,12 @@
                 <?php $alt_row = ($alt_row) ? '' : 'mp_users_subscriptions_list_alt'; ?>
           <li class="<?php echo $alt_row; ?>">
                 <?php echo esc_html($irow->membership); ?><br/>
-                <?php _ex('Expired', 'ui', 'memberpress'); ?> - <a href="<?php echo esc_url($irow->purchase_link); ?>"><?php _ex('Subscribe', 'ui', 'memberpress'); ?></a>
+                <?php echo esc_html_x('Expired', 'ui', 'memberpress'); ?> - <a href="<?php echo esc_url($irow->purchase_link); ?>"><?php echo esc_html_x('Subscribe', 'ui', 'memberpress'); ?></a>
           </li>
             <?php endforeach; ?>
         <?php endif; ?>
     </ul>
   <?php else : ?>
-  <p><?php _ex('You have no subscriptions', 'ui', 'memberpress'); ?></p>
+  <p><?php echo esc_html_x('You have no subscriptions', 'ui', 'memberpress'); ?></p>
   <?php endif; ?>
 </div>

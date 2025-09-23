@@ -1,4 +1,6 @@
-<?php if(!defined('ABSPATH')) { die('You are not allowed to call this page directly.'); } ?>
+<?php if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+} ?>
 <div id="mp-admin-header">
   <img class="mp-logo" src="<?php echo esc_url($logo_url); ?>" width="150" height="36" alt="MemberPress Courses logo" />
   <div class="mp-admin-header-actions">

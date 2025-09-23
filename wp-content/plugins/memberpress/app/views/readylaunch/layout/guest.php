@@ -1,12 +1,11 @@
 <?php
 
 /**
- * The layout for unauthenticated or guest pages
- *
- * @package memberpress-pro-template
+ * The layout for unauthenticated or guest pages.
  */
 
 ?>
+
 <!doctype html>
 <html <?php language_attributes(); ?>>
 <head>

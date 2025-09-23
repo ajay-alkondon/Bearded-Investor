@@ -1,15 +1,15 @@
 <?php
 
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     die('You are not allowed to call this page directly.');
 }
 
 class MeprDrmHelper
 {
-    const NO_LICENSE_EVENT      = 'no-license';
+    const NO_LICENSE_EVENT = 'no-license';
     const INVALID_LICENSE_EVENT = 'invalid-license';
 
-    const DRM_LOW    = 'low';
+    const DRM_LOW = 'low';
     const DRM_MEDIUM = 'medium';
     const DRM_LOCKED = 'locked';
 
@@ -18,25 +18,14 @@ class MeprDrmHelper
      *
      * @var string
      */
-    private static $drm_status     = '';
+    private static $drm_status = '';
 
     /**
      * Stores the DRM links for different statuses and purposes.
      *
      * @var array|null
      */
-    private static $drm_links      = null;
-
-    /**
-     * Fallback links to use when DRM links aren't available.
-     *
-     * @var array
-     */
-    private static $fallback_links = [
-        'account' => 'https://memberpress.com/account/',
-        'support' => 'https://memberpress.com/support/',
-        'pricing' => 'https://memberpress.com/pricing/',
-    ];
+    private static $drm_links = null;
 
     /**
      * Set the DRM status.
@@ -68,11 +57,11 @@ class MeprDrmHelper
     public static function has_key()
     {
         $mepr_options = MeprOptions::fetch();
-        $key          = '';
+        $key = '';
         if (isset($mepr_options->mothership_license)) {
             $key = $mepr_options->mothership_license;
         }
-        return ! empty($key);
+        return !empty($key);
     }
 
     /**
@@ -83,7 +72,7 @@ class MeprDrmHelper
     public static function get_key()
     {
         $mepr_options = MeprOptions::fetch();
-        $key          = '';
+        $key = '';
         if (isset($mepr_options->mothership_license)) {
             $key = $mepr_options->mothership_license;
         }
@@ -99,7 +88,7 @@ class MeprDrmHelper
     {
         $aov = get_option('mepr_activation_override');
 
-        if (! empty($aov)) {
+        if (!empty($aov)) {
             return true; // Valid license.
         }
 
@@ -118,17 +107,17 @@ class MeprDrmHelper
             return true; // Valid license.
         }
 
-        if (! self::has_key()) {
+        if (!self::has_key()) {
             return false;
         }
 
         $license = get_site_transient('mepr_license_info');
 
-        if (! isset($license['license_key'])) {
+        if (!isset($license['license_key'])) {
             return false;  // Invalid license.
         }
 
-        if ('enabled' != $license['license_key']['status']) {
+        if ('enabled' !== $license['license_key']['status']) {
             return false; // Invalid license.
         }
 
@@ -163,8 +152,8 @@ class MeprDrmHelper
             return 0; // Invalid timestamp.
         }
 
-        $start_date = new DateTime(date('Y-m-d'));
-        $end_date   = new DateTime(date('Y-m-d', $timestamp));
+        $start_date = new DateTime(gmdate('Y-m-d'));
+        $end_date = new DateTime(gmdate('Y-m-d', $timestamp));
         $difference = $end_date->diff($start_date);
 
         return absint($difference->format('%a'));
@@ -196,7 +185,7 @@ class MeprDrmHelper
      */
     public static function is_locked($drm_status = '')
     {
-        return ( self::DRM_LOCKED === self::maybe_drm_status($drm_status) );
+        return (self::DRM_LOCKED === self::maybe_drm_status($drm_status));
     }
 
     /**
@@ -208,7 +197,7 @@ class MeprDrmHelper
      */
     public static function is_medium($drm_status = '')
     {
-        return ( self::DRM_MEDIUM === self::maybe_drm_status($drm_status) );
+        return (self::DRM_MEDIUM === self::maybe_drm_status($drm_status));
     }
 
     /**
@@ -220,7 +209,7 @@ class MeprDrmHelper
      */
     public static function is_low($drm_status = '')
     {
-        return ( self::DRM_LOW === self::maybe_drm_status($drm_status) );
+        return (self::DRM_LOW === self::maybe_drm_status($drm_status));
     }
 
     /**
@@ -242,7 +231,7 @@ class MeprDrmHelper
                 break;
             case self::INVALID_LICENSE_EVENT:
                 $drm_info = self::drm_info_invalid_license($drm_status, $purpose);
-                $out      = MeprHooks::apply_filters('mepr_drm_invalid_license_info', $drm_info, $drm_status);
+                $out = MeprHooks::apply_filters('mepr_drm_invalid_license_info', $drm_info, $drm_status);
                 break;
             default:
         }
@@ -287,46 +276,46 @@ class MeprDrmHelper
 
         if (self::$drm_links === null) {
             self::$drm_links = [
-                self::DRM_LOW    => [
-                    'email'   => [
-                        'home'    => 'https://memberpress.com/drmlow/email',
-                        'account' => 'https://memberpress.com/drmlow/email/acct',
-                        'support' => 'https://memberpress.com/drmlow/email/support',
-                        'pricing' => 'https://memberpress.com/drmlow/email/pricing',
+                self::DRM_LOW => [
+                    'email' => [
+                        'home'    => MeprUtils::get_link_url('drm_low_email_home'),
+                        'account' => MeprUtils::get_link_url('drm_low_email_account'),
+                        'support' => MeprUtils::get_link_url('drm_low_email_support'),
+                        'pricing' => MeprUtils::get_link_url('drm_low_email_pricing'),
                     ],
                     'general' => [
-                        'home'    => 'https://memberpress.com/drmlow/ipm',
-                        'account' => 'https://memberpress.com/drmlow/ipm/account',
-                        'support' => 'https://memberpress.com/drmlow/ipm/support',
-                        'pricing' => 'https://memberpress.com/drmlow/ipm/pricing',
+                        'home'    => MeprUtils::get_link_url('drm_low_general_home'),
+                        'account' => MeprUtils::get_link_url('drm_low_general_account'),
+                        'support' => MeprUtils::get_link_url('drm_low_general_support'),
+                        'pricing' => MeprUtils::get_link_url('drm_low_general_pricing'),
                     ],
                 ],
                 self::DRM_MEDIUM => [
-                    'email'   => [
-                        'home'    => 'https://memberpress.com/drmmed/email',
-                        'account' => 'https://memberpress.com/drmmed/email/acct',
-                        'support' => 'https://memberpress.com/drmmed/email/support',
-                        'pricing' => 'https://memberpress.com/drmmed/email/pricing',
+                    'email' => [
+                        'home'    => MeprUtils::get_link_url('drm_medium_email_home'),
+                        'account' => MeprUtils::get_link_url('drm_medium_email_account'),
+                        'support' => MeprUtils::get_link_url('drm_medium_email_support'),
+                        'pricing' => MeprUtils::get_link_url('drm_medium_email_pricing'),
                     ],
                     'general' => [
-                        'home'    => 'https://memberpress.com/drmmed/ipm',
-                        'account' => 'https://memberpress.com/drmmed/ipm/account',
-                        'support' => 'https://memberpress.com/drmmed/ipm/support',
-                        'pricing' => 'https://memberpress.com/drmmed/ipm/pricing',
+                        'home'    => MeprUtils::get_link_url('drm_medium_general_home'),
+                        'account' => MeprUtils::get_link_url('drm_medium_general_account'),
+                        'support' => MeprUtils::get_link_url('drm_medium_general_support'),
+                        'pricing' => MeprUtils::get_link_url('drm_medium_general_pricing'),
                     ],
                 ],
                 self::DRM_LOCKED => [
-                    'email'   => [
-                        'home'    => 'https://memberpress.com/drmlock/email',
-                        'account' => 'https://memberpress.com/drmlock/email/acct',
-                        'support' => 'https://memberpress.com/drmlock/email/support',
-                        'pricing' => 'https://memberpress.com/drmlock/email/pricing',
+                    'email' => [
+                        'home'    => MeprUtils::get_link_url('drm_locked_email_home'),
+                        'account' => MeprUtils::get_link_url('drm_locked_email_account'),
+                        'support' => MeprUtils::get_link_url('drm_locked_email_support'),
+                        'pricing' => MeprUtils::get_link_url('drm_locked_email_pricing'),
                     ],
                     'general' => [
-                        'home'    => 'https://memberpress.com/drmlock/ipm',
-                        'account' => 'https://memberpress.com/drmlock/ipm/account',
-                        'support' => 'https://memberpress.com/drmlock/ipm/support',
-                        'pricing' => 'https://memberpress.com/drmlock/ipm/pricing',
+                        'home'    => MeprUtils::get_link_url('drm_locked_general_home'),
+                        'account' => MeprUtils::get_link_url('drm_locked_general_account'),
+                        'support' => MeprUtils::get_link_url('drm_locked_general_support'),
+                        'pricing' => MeprUtils::get_link_url('drm_locked_general_pricing'),
                     ],
                 ],
             ];
@@ -347,22 +336,28 @@ class MeprDrmHelper
     public static function get_drm_link($drm_status, $purpose, $type)
     {
         $drm_links = self::get_drm_links();
-        if (isset($drm_links[ $drm_status ])) {
-            if (! isset($drm_links[ $drm_status ][ $purpose ])) {
+        if (isset($drm_links[$drm_status])) {
+            if (!isset($drm_links[$drm_status][$purpose])) {
                 $purpose = 'general';
             }
 
-            if (isset($drm_links[ $drm_status ][ $purpose ])) {
-                $data = $drm_links[ $drm_status ][ $purpose ];
-                if (isset($data[ $type ])) {
-                    return $data[ $type ];
+            if (isset($drm_links[$drm_status][$purpose])) {
+                $data = $drm_links[$drm_status][$purpose];
+                if (isset($data[$type])) {
+                    return $data[$type];
                 }
             }
         }
 
+        $fallback_links = [
+            'account' => MeprUtils::get_link_url('account'),
+            'support' => MeprUtils::get_link_url('support'),
+            'pricing' => MeprUtils::get_link_url('pricing'),
+        ];
+
         // Fallback links.
-        if (isset(self::$fallback_links[$type])) {
-            return self::$fallback_links[$type];
+        if (isset($fallback_links[$type])) {
+            return $fallback_links[$type];
         }
 
         return '';
@@ -379,9 +374,9 @@ class MeprDrmHelper
     protected static function drm_info_no_license($drm_status, $purpose)
     {
 
-        $account_link            = self::get_drm_link($drm_status, $purpose, 'account');
-        $support_link            = self::get_drm_link($drm_status, $purpose, 'support');
-        $pricing_link            = self::get_drm_link($drm_status, $purpose, 'pricing');
+        $account_link = self::get_drm_link($drm_status, $purpose, 'account');
+        $support_link = self::get_drm_link($drm_status, $purpose, 'support');
+        $pricing_link = self::get_drm_link($drm_status, $purpose, 'pricing');
         $additional_instructions = sprintf(
             // Translators: %s: site URL.
             __('This is an automated message from %s.', 'memberpress'),
@@ -390,13 +385,13 @@ class MeprDrmHelper
         switch ($drm_status) {
             case self::DRM_LOW:
                 $admin_notice_view = 'low_warning';
-                $heading           = __('MemberPress: Did You Forget Something?', 'memberpress');
-                $color             = 'orange';
-                $simple_message    = __('Oops! It looks like your MemberPress license key is missing. Here\'s how to fix the problem fast and easy:', 'memberpress');
-                $help_message      = __('We’re here if you need any help.', 'memberpress');
-                $label             = __('Alert', 'memberpress');
-                $activation_link   = admin_url('admin.php?page=memberpress-options#mepr-license');
-                $message           = sprintf(
+                $heading = __('MemberPress: Did You Forget Something?', 'memberpress');
+                $color = 'orange';
+                $simple_message = __('Oops! It looks like your MemberPress license key is missing. Here\'s how to fix the problem fast and easy:', 'memberpress');
+                $help_message = __('We’re here if you need any help.', 'memberpress');
+                $label = __('Alert', 'memberpress');
+                $activation_link = admin_url('admin.php?page=memberpress-options#mepr-license');
+                $message = sprintf(
                     '<p>%s</p><ul><li>%s</li><li>%s</li><li>%s</li></ul>',
                     $simple_message,
                     sprintf(
@@ -416,13 +411,13 @@ class MeprDrmHelper
                 break;
             case self::DRM_MEDIUM:
                 $admin_notice_view = 'medium_warning';
-                $heading           = __('MemberPress: WARNING! Your Business is at Risk', 'memberpress');
-                $color             = 'orange';
-                $simple_message    = __('To continue using MemberPress without interruption, you need to enter your license key right away. Here’s how:', 'memberpress');
-                $help_message      = __('Let us know if you need assistance.', 'memberpress');
-                $label             = __('Critical', 'memberpress');
-                $activation_link   = admin_url('admin.php?page=memberpress-options#mepr-license');
-                $message           = sprintf(
+                $heading = __('MemberPress: WARNING! Your Business is at Risk', 'memberpress');
+                $color = 'orange';
+                $simple_message = __('To continue using MemberPress without interruption, you need to enter your license key right away. Here’s how:', 'memberpress');
+                $help_message = __('Let us know if you need assistance.', 'memberpress');
+                $label = __('Critical', 'memberpress');
+                $activation_link = admin_url('admin.php?page=memberpress-options#mepr-license');
+                $message = sprintf(
                     '<p>%s</p><ul><li>%s</li><li>%s</li><li>%s</li></ul>',
                     $simple_message,
                     sprintf(
@@ -442,13 +437,13 @@ class MeprDrmHelper
                 break;
             case self::DRM_LOCKED:
                 $admin_notice_view = 'locked_warning';
-                $heading           = __('ALERT! MemberPress Backend is Deactivated', 'memberpress');
-                $color             = 'red';
-                $simple_message    = __('Because your license key is inactive, you can no longer manage MemberPress on the backend (e.g., you can\'t do things like issue customer refunds or add new members). Fortunately, this problem is easy to fix!', 'memberpress');
-                $help_message      = __('We\'re here to help you get things up and running. Let us know if you need assistance.', 'memberpress');
-                $label             = __('Critical', 'memberpress');
-                $activation_link   = admin_url('admin.php?page=memberpress-members');
-                $message           = sprintf(
+                $heading = __('ALERT! MemberPress Backend is Deactivated', 'memberpress');
+                $color = 'red';
+                $simple_message = __('Because your license key is inactive, you can no longer manage MemberPress on the backend (e.g., you can\'t do things like issue customer refunds or add new members). Fortunately, this problem is easy to fix!', 'memberpress');
+                $help_message = __('We\'re here to help you get things up and running. Let us know if you need assistance.', 'memberpress');
+                $label = __('Critical', 'memberpress');
+                $activation_link = admin_url('admin.php?page=memberpress-members');
+                $message = sprintf(
                     '<p>%s</p><ul><li>%s</li><li>%s</li><li>%s</li></ul>',
                     $simple_message,
                     sprintf(
@@ -467,14 +462,14 @@ class MeprDrmHelper
                 );
                 break;
             default:
-                $heading                 = '';
-                $color                   = '';
-                $message                 = '';
-                $help_message            = '';
-                $label                   = '';
-                $activation_link         = '';
-                $admin_notice_view       = '';
-                $simple_message          = '';
+                $heading = '';
+                $color = '';
+                $message = '';
+                $help_message = '';
+                $label = '';
+                $activation_link = '';
+                $admin_notice_view = '';
+                $simple_message = '';
                 $additional_instructions = '';
         }
 
@@ -492,9 +487,9 @@ class MeprDrmHelper
     protected static function drm_info_invalid_license($drm_status, $purpose)
     {
 
-        $account_link            = self::get_drm_link($drm_status, $purpose, 'account');
-        $support_link            = self::get_drm_link($drm_status, $purpose, 'support');
-        $pricing_link            = self::get_drm_link($drm_status, $purpose, 'pricing');
+        $account_link = self::get_drm_link($drm_status, $purpose, 'account');
+        $support_link = self::get_drm_link($drm_status, $purpose, 'support');
+        $pricing_link = self::get_drm_link($drm_status, $purpose, 'pricing');
         $additional_instructions = sprintf(
             // Translators: %1$s: opening anchor tag, %2$s: closing anchor tag.
             __('This is an automated message from %1$s. If you continue getting these messages, please try deactivating and then re-activating your license key on %2$s.', 'memberpress'),
@@ -505,13 +500,13 @@ class MeprDrmHelper
         switch ($drm_status) {
             case self::DRM_MEDIUM:
                 $admin_notice_view = 'medium_warning';
-                $heading           = __('MemberPress: WARNING! Your Business is at Risk', 'memberpress');
-                $color             = 'orange';
-                $simple_message    = __('Your MemberPress license key is expired, but is required to continue using MemberPress. Fortunately, it’s easy to renew your license key. Just do the following:', 'memberpress');
-                $help_message      = __('Let us know if you need assistance.', 'memberpress');
-                $label             = __('Critical', 'memberpress');
-                $activation_link   = admin_url('admin.php?page=memberpress-options#mepr-license');
-                $message           = sprintf(
+                $heading = __('MemberPress: WARNING! Your Business is at Risk', 'memberpress');
+                $color = 'orange';
+                $simple_message = __('Your MemberPress license key is expired, but is required to continue using MemberPress. Fortunately, it’s easy to renew your license key. Just do the following:', 'memberpress');
+                $help_message = __('Let us know if you need assistance.', 'memberpress');
+                $label = __('Critical', 'memberpress');
+                $activation_link = admin_url('admin.php?page=memberpress-options#mepr-license');
+                $message = sprintf(
                     '<p>%s</p><ul><li>%s</li><li>%s</li><li>%s</li></ul>',
                     $simple_message,
                     sprintf(
@@ -531,12 +526,12 @@ class MeprDrmHelper
                 break;
             case self::DRM_LOCKED:
                 $admin_notice_view = 'locked_warning';
-                $label             = __('Critical', 'memberpress');
-                $heading           = __('ALERT! MemberPress Backend is Deactivated', 'memberpress');
-                $color             = 'red';
-                $simple_message    = __('Without an active license key, MemberPress cannot be managed on the backend. Your frontend will remain intact, but you can’t: Issue customer refunds, Add new members, Manage memberships. Fortunately, this problem is easy to fix by doing the following: ', 'memberpress');
-                $activation_link   = admin_url('admin.php?page=memberpress-members');
-                $message           = sprintf(
+                $label = __('Critical', 'memberpress');
+                $heading = __('ALERT! MemberPress Backend is Deactivated', 'memberpress');
+                $color = 'red';
+                $simple_message = __('Without an active license key, MemberPress cannot be managed on the backend. Your frontend will remain intact, but you can’t: Issue customer refunds, Add new members, Manage memberships. Fortunately, this problem is easy to fix by doing the following: ', 'memberpress');
+                $activation_link = admin_url('admin.php?page=memberpress-members');
+                $message = sprintf(
                     '<p>%s</p><ul><li>%s</li><li>%s</li><li>%s</li></ul>',
                     $simple_message,
                     sprintf(
@@ -553,17 +548,17 @@ class MeprDrmHelper
                     ),
                     __('That’s it!', 'memberpress')
                 );
-                $help_message      = __('We’re here to help you get things back up and running. Let us know if you need assistance.', 'memberpress');
+                $help_message = __('We’re here to help you get things back up and running. Let us know if you need assistance.', 'memberpress');
                 break;
             default:
-                $heading                 = '';
-                $color                   = '';
-                $message                 = '';
-                $help_message            = '';
-                $label                   = '';
-                $activation_link         = '';
-                $admin_notice_view       = '';
-                $simple_message          = '';
+                $heading = '';
+                $color = '';
+                $message = '';
+                $help_message = '';
+                $label = '';
+                $activation_link = '';
+                $admin_notice_view = '';
+                $simple_message = '';
                 $additional_instructions = '';
         }
 
@@ -605,9 +600,9 @@ class MeprDrmHelper
      */
     public static function is_dismissed($event_data, $notice_key)
     {
-        if (isset($event_data[ $notice_key ])) {
-            $diff = (int) abs(time() - $event_data[ $notice_key ]);
-            if ($diff <= ( HOUR_IN_SECONDS * 24 )) {
+        if (isset($event_data[$notice_key])) {
+            $diff = (int) abs(time() - $event_data[$notice_key]);
+            if ($diff <= (HOUR_IN_SECONDS * 24)) {
                 return true;
             }
         }
@@ -622,12 +617,12 @@ class MeprDrmHelper
      */
     public static function get_drm_transient_fee_data()
     {
-        $transient      =  get_transient('mepr_drm_app_fee');
+        $transient = get_transient('mepr_drm_app_fee');
         $transient_data = false;
         if (!empty($transient) && strstr($transient, '|')) {
-            $data           = explode('|', $transient);
+            $data = explode('|', $transient);
             $transient_data = [
-                'v'       => $data[0],
+                'v' => $data[0],
                 'a99_f33' => $data[1],
             ];
         }
@@ -678,8 +673,8 @@ class MeprDrmHelper
             return $app_fee;
         }
 
-        $url = 'https://memberpress.com/wp-json/caseproof/d7m/v1/f33';
-        if (defined('MEPR_STAGING_MP_URL') && ( defined('MPSTAGE') && MPSTAGE )) {
+        $url = rtrim(MeprUtils::get_link_url('home'), '/') . '/wp-json/caseproof/d7m/v1/f33';
+        if (defined('MEPR_STAGING_MP_URL') && (defined('MPSTAGE') && MPSTAGE)) {
             $url = MEPR_STAGING_MP_URL . '/wp-json/caseproof/d7m/v1/f33';
         }
 
@@ -691,10 +686,10 @@ class MeprDrmHelper
             'MEMBERPRESS-DR7-KEY' => 'BAY074X4F4C8UUARHZMV',
         ], $url);
 
-        $api_response    = wp_remote_get($url, $args);
-        $fee_percentage  = apply_filters('mepr_drm_application_fee_percentage', 3);
+        $api_response = wp_remote_get($url, $args);
+        $fee_percentage = MeprHooks::apply_filters('mepr_drm_application_fee_percentage', 3);
         $current_version = get_option('mepr_drm_application_fee_version', 0);
-        $transient_data  = $current_version . '|' . $fee_percentage;
+        $transient_data = $current_version . '|' . $fee_percentage;
 
         if (!is_wp_error($api_response)) {
             $data = json_decode($api_response['body'], true);
@@ -729,7 +724,17 @@ class MeprDrmHelper
      */
     public static function enable_app_fee()
     {
-        return update_option('mepr_drm_app_fee_enabled', time(), false);
+        $r = update_option('mepr_drm_app_fee_enabled', time(), false);
+        if ($r) {
+            $time = time();
+            update_option('mepr_drm_app_fee_enabled_data_' . $time, [
+                'time' => MeprUtils::ts_to_mysql_date($time),
+                'user_id' => MeprUtils::get_current_user_id(),
+                'domain' => MeprUtils::site_domain(),
+            ], false);
+        }
+
+        return $r;
     }
 
     /**
@@ -739,7 +744,17 @@ class MeprDrmHelper
      */
     public static function disable_app_fee()
     {
-        return delete_option('mepr_drm_app_fee_enabled');
+        $r = delete_option('mepr_drm_app_fee_enabled');
+        if ($r) {
+            $time = time();
+            update_option('mepr_drm_app_fee_disabled_data_' . $time, [
+                'time' => MeprUtils::ts_to_mysql_date($time),
+                'user_id' => MeprUtils::get_current_user_id(),
+                'domain' => MeprUtils::site_domain(),
+            ], false);
+        }
+
+        return $r;
     }
 
     /**
@@ -753,7 +768,7 @@ class MeprDrmHelper
 
         if ($dimissed_time) {
             $diff = (int) abs(time() - $dimissed_time);
-            if ($diff <= ( DAY_IN_SECONDS * 30 )) {
+            if ($diff <= (DAY_IN_SECONDS * 30)) {
                 return true;
             }
         }

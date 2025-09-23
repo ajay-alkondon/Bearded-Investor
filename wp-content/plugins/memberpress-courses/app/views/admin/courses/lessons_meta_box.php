@@ -1,4 +1,6 @@
-<?php if(!defined('ABSPATH')) { die('You are not allowed to call this page directly.'); } ?>
+<?php if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+} ?>
 
 <div class="wrap sort-scroll-container">
   <div id="builder-notice" class="builder-notice hidden">

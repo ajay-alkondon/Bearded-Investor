@@ -53,7 +53,6 @@ use Google\Site_Kit\Core\Storage\User_Options;
 use Google\Site_Kit\Core\Tags\Guards\Tag_Environment_Type_Guard;
 use Google\Site_Kit\Core\Tags\Guards\Tag_Verify_Guard;
 use Google\Site_Kit\Core\Util\BC_Functions;
-use Google\Site_Kit\Core\Util\Feature_Flags;
 use Google\Site_Kit\Core\Util\Method_Proxy_Trait;
 use Google\Site_Kit\Core\Util\Sort;
 use Google\Site_Kit\Core\Util\URL;
@@ -72,7 +71,6 @@ use Google\Site_Kit\Modules\Analytics_4\GoogleAnalyticsAdmin\PropertiesEnhancedM
 use Google\Site_Kit\Modules\Analytics_4\GoogleAnalyticsAdmin\Proxy_GoogleAnalyticsAdminProvisionAccountTicketRequest;
 use Google\Site_Kit\Modules\Analytics_4\Report\Request as Analytics_4_Report_Request;
 use Google\Site_Kit\Modules\Analytics_4\Report\Response as Analytics_4_Report_Response;
-use Google\Site_Kit\Modules\Analytics_4\Report\PivotRequest as Analytics_4_PivotReport_Request;
 use Google\Site_Kit\Modules\Analytics_4\Resource_Data_Availability_Date;
 use Google\Site_Kit\Modules\Analytics_4\Settings;
 use Google\Site_Kit\Modules\Analytics_4\Synchronize_AdsLinked;
@@ -93,7 +91,6 @@ use Google\Site_Kit_Dependencies\Google\Service\TagManager as Google_Service_Tag
 use Google\Site_Kit_Dependencies\Google_Service_TagManager_Container;
 use Google\Site_Kit_Dependencies\Psr\Http\Message\RequestInterface;
 use Google\Site_Kit\Core\REST_API\REST_Routes;
-use Google\Site_Kit\Core\Tags\Google_Tag_Gateway\Google_Tag_Gateway;
 use Google\Site_Kit\Modules\Analytics_4\Audience_Settings;
 use Google\Site_Kit\Modules\Analytics_4\Conversion_Reporting\Conversion_Reporting_Cron;
 use Google\Site_Kit\Modules\Analytics_4\Conversion_Reporting\Conversion_Reporting_Events_Sync;
@@ -199,10 +196,10 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 	 */
 	public function __construct(
 		Context $context,
-		Options $options = null,
-		User_Options $user_options = null,
-		Authentication $authentication = null,
-		Assets $assets = null
+		?Options $options = null,
+		?User_Options $user_options = null,
+		?Authentication $authentication = null,
+		?Assets $assets = null
 	) {
 		parent::__construct( $context, $options, $user_options, $authentication, $assets );
 		$this->custom_dimensions_data_available = new Custom_Dimensions_Data_Available( $this->transients );
@@ -585,11 +582,6 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 				'value' => $settings['useSnippet'] ? __( 'Yes', 'google-site-kit' ) : __( 'No', 'google-site-kit' ),
 				'debug' => $settings['useSnippet'] ? 'yes' : 'no',
 			),
-			'analytics_4_ads_conversion_id'           => array(
-				'label' => __( 'Analytics: Ads Conversion ID', 'google-site-kit' ),
-				'value' => $settings['adsConversionID'],
-				'debug' => Debug_Data::redact_debug_value( $settings['adsConversionID'] ),
-			),
 			'analytics_4_available_custom_dimensions' => array(
 				'label' => __( 'Analytics: Available Custom Dimensions', 'google-site-kit' ),
 				'value' => empty( $settings['availableCustomDimensions'] )
@@ -646,15 +638,6 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 				? 'none'
 				: join( ', ', $site_kit_audiences ),
 		);
-
-		// Add fields from Google tag gateway.
-		// Note: fields are added in both Analytics and Ads so that the debug fields will show if either module is enabled.
-		if ( Feature_Flags::enabled( 'googleTagGateway' ) ) {
-			$google_tag_gateway             = new Google_Tag_Gateway( $this->context );
-			$fields_from_google_tag_gateway = $google_tag_gateway->get_debug_fields();
-
-			$debug_fields = array_merge( $debug_fields, $fields_from_google_tag_gateway );
-		}
 
 		return $debug_fields;
 	}
@@ -715,10 +698,8 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 				'service'   => 'analyticsdata',
 				'shareable' => true,
 			),
-			'GET:pivot-report'                          => array(
-				'service'   => 'analyticsdata',
-				'shareable' => true,
-			),
+			'GET:non-shareable-report'                  => array( 'service' => 'analyticsdata' ),
+
 			'GET:webdatastreams'                        => array( 'service' => 'analyticsadmin' ),
 			'GET:webdatastreams-batch'                  => array( 'service' => 'analyticsadmin' ),
 			'GET:enhanced-measurement-settings'         => array( 'service' => 'analyticsenhancedmeasurement' ),
@@ -739,6 +720,9 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 				'service' => '',
 			),
 			'POST:set-google-tag-id-mismatch'           => array(
+				'service' => '',
+			),
+			'POST:set-is-web-data-stream-unavailable'   => array(
 				'service' => '',
 			),
 			'POST:create-audience'                      => array(
@@ -1281,6 +1265,7 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 
 				return $this->get_service( 'analyticsadmin' )->properties->get( self::normalize_property_id( $data['propertyID'] ) );
 			case 'GET:report':
+			case 'GET:non-shareable-report':
 				if ( empty( $data['metrics'] ) ) {
 					return new WP_Error(
 						'missing_required_param',
@@ -1309,44 +1294,7 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 				$request->setProperty( $property_id );
 
 				return $this->get_analyticsdata_service()->properties->runReport( $property_id, $request );
-			case 'GET:pivot-report':
-				if ( empty( $data['metrics'] ) ) {
-					return new WP_Error(
-						'missing_required_param',
-						/* translators: %s: Missing parameter name */
-						sprintf( __( 'Request parameter is empty: %s.', 'google-site-kit' ), 'metrics' ),
-						array( 'status' => 400 )
-					);
-				}
 
-				if ( empty( $data['pivots'] ) ) {
-					return new WP_Error(
-						'missing_required_param',
-						/* translators: %s: Missing parameter name */
-						sprintf( __( 'Request parameter is empty: %s.', 'google-site-kit' ), 'pivots' ),
-						array( 'status' => 400 )
-					);
-				}
-
-				$settings = $this->get_settings()->get();
-				if ( empty( $settings['propertyID'] ) ) {
-					return new WP_Error(
-						'missing_required_setting',
-						__( 'No connected Google Analytics property ID.', 'google-site-kit' ),
-						array( 'status' => 500 )
-					);
-				}
-
-				$report  = new Analytics_4_PivotReport_Request( $this->context );
-				$request = $report->create_request( $data, $this->is_shared_data_request( $data ) );
-				if ( is_wp_error( $request ) ) {
-					return $request;
-				}
-
-				$property_id = self::normalize_property_id( $settings['propertyID'] );
-				$request->setProperty( $property_id );
-
-				return $this->get_analyticsdata_service()->properties->runPivotReport( $property_id, $request );
 			case 'GET:enhanced-measurement-settings':
 				if ( ! isset( $data['propertyID'] ) ) {
 					return new WP_Error(
@@ -1759,8 +1707,8 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 				$property_id    = self::normalize_property_id( $settings['propertyID'] );
 
 				return $analyticsadmin
-				->properties_keyEvents // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-				->listPropertiesKeyEvents( $property_id );
+					->properties_keyEvents // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+					->listPropertiesKeyEvents( $property_id );
 			case 'POST:set-google-tag-id-mismatch':
 				if ( ! isset( $data['hasMismatchedTag'] ) ) {
 					throw new Missing_Required_Param_Exception( 'hasMismatchedTag' );
@@ -1768,12 +1716,34 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 
 				if ( false === $data['hasMismatchedTag'] ) {
 					return function () {
-						return $this->transients->delete( 'googlesitekit_inline_tag_id_mismatch' );
+						$this->transients->delete( 'googlesitekit_inline_tag_id_mismatch' );
+						return false;
 					};
 				}
 
 				return function () use ( $data ) {
-					return $this->transients->set( 'googlesitekit_inline_tag_id_mismatch', $data['hasMismatchedTag'] );
+					$this->transients->set( 'googlesitekit_inline_tag_id_mismatch', $data['hasMismatchedTag'] );
+					return $data['hasMismatchedTag'];
+				};
+			case 'POST:set-is-web-data-stream-unavailable':
+				if ( ! isset( $data['isWebDataStreamUnavailable'] ) ) {
+					throw new Missing_Required_Param_Exception( 'isWebDataStreamUnavailable' );
+				}
+
+				if ( true === $data['isWebDataStreamUnavailable'] ) {
+					return function () {
+						$settings      = $this->get_settings()->get();
+						$transient_key = 'googlesitekit_web_data_stream_unavailable_' . $settings['webDataStreamID'];
+						$this->transients->set( $transient_key, true );
+						return true;
+					};
+				}
+
+				return function () {
+					$settings      = $this->get_settings()->get();
+					$transient_key = 'googlesitekit_web_data_stream_unavailable_' . $settings['webDataStreamID'];
+					$this->transients->delete( $transient_key );
+					return false;
 				};
 		}
 
@@ -1838,9 +1808,7 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 			case 'GET:key-events':
 				return (array) $response->getKeyEvents();
 			case 'GET:report':
-				$report = new Analytics_4_Report_Response( $this->context );
-				return $report->parse_response( $data, $response );
-			case 'GET:pivot-report':
+			case 'GET:non-shareable-report':
 				$report = new Analytics_4_Report_Response( $this->context );
 				return $report->parse_response( $data, $response );
 			case 'POST:sync-audiences':
@@ -2075,10 +2043,6 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 			$tag->set_custom_dimensions( $custom_dimensions_data );
 		}
 
-		$tag->set_ads_conversion_id(
-			$this->get_settings()->get()['adsConversionID']
-		);
-
 		$tag->register();
 	}
 
@@ -2304,20 +2268,26 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 	 * @return boolean|WP_Error
 	 */
 	public function check_service_entity_access() {
-		$analyticsadmin = $this->get_service( 'analyticsadmin' );
-		$settings       = $this->settings->get();
+		// Create a basic report request with minimal parameters to test access.
+		$data = array(
+			'dimensions' => array( 'date' ),
+			'metrics'    => array( 'sessions' ),
+			'startDate'  => 'yesterday',
+			'endDate'    => 'today',
+			'limit'      => 0,
+		);
 
-		try {
-			$analyticsadmin
-			->properties_dataStreams // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-			->listPropertiesDataStreams(
-				self::normalize_property_id( $settings['propertyID'] )
-			);
-		} catch ( Exception $e ) {
-			if ( $e->getCode() === 403 ) {
+		// Use the 'non-shareable-report' datapoint to prevent user access assumption
+		// when using dashboard sharing.
+		$request = $this->get_data( 'non-shareable-report', $data );
+
+		if ( is_wp_error( $request ) ) {
+			// A 403 error implies that the user does not have access to the service entity.
+			if ( $request->get_error_code() === 403 ) {
 				return false;
 			}
-			return $this->exception_to_error( $e );
+
+			return $request;
 		}
 
 		return true;
@@ -2421,8 +2391,6 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 				'customDimensionsDataAvailable' => $this->custom_dimensions_data_available->get_data_availability(),
 			);
 		}
-
-		return array();
 	}
 
 	/**
@@ -2708,23 +2676,33 @@ final class Analytics_4 extends Module implements Module_With_Inline_Data, Modul
 	 * Gets required inline data for the module.
 	 *
 	 * @since 1.158.0
+	 * @since 1.160.0 Include $modules_data parameter to match the interface.
 	 *
+	 * @param array $modules_data Inline modules data.
 	 * @return array An array of the module's inline data.
 	 */
-	public function get_inline_data() {
+	public function get_inline_data( $modules_data ) {
+		if ( ! $this->is_connected() ) {
+			return $modules_data;
+		}
+
+		$inline_data = array();
+
+		// Web data stream availability data.
+		$settings                                  = $this->get_settings()->get();
+		$transient_key                             = 'googlesitekit_web_data_stream_unavailable_' . $settings['webDataStreamID'];
+		$is_web_data_stream_unavailable            = $this->transients->get( $transient_key );
+		$inline_data['isWebDataStreamUnavailable'] = (bool) $is_web_data_stream_unavailable;
+
 		$inline_data = array_merge(
+			$inline_data,
 			$this->get_inline_custom_dimensions_data(),
-			$this->get_inline_resource_availability_dates_data(),
 			$this->get_inline_tag_id_mismatch(),
+			$this->get_inline_resource_availability_dates_data(),
 			$this->get_inline_conversion_reporting_events_detection()
 		);
 
-		if ( empty( $inline_data ) ) {
-			return array();
-		}
-
-		return array(
-			self::MODULE_SLUG => $inline_data,
-		);
+		$modules_data[ self::MODULE_SLUG ] = $inline_data;
+		return $modules_data;
 	}
 }

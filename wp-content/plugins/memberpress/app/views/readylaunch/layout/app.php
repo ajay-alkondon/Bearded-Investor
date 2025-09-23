@@ -1,12 +1,11 @@
 <?php
 
 /**
- * The layout for authenticated or guest pages
- *
- * @package memberpress-pro-template
+ * The layout for authenticated or guest pages.
  */
 
 ?>
+
 <!doctype html>
 <html <?php language_attributes(); ?>>
 
@@ -30,8 +29,23 @@
       <?php if ($user) : ?>
       <div x-data="{open: false}" class="ml-3 profile-menu">
         <div class="profile-menu__button-group">
-          <button @click="open = !open" type="button" class="profile-menu__button --is-tablet" id="user-menu-button"
-            @click="onButtonClick()" aria-expanded="false" aria-haspopup="true">
+          <button
+            @click="open = !open"
+            type="button"
+            class="profile-menu__button --is-tablet"
+            id="user-menu-button"
+            @click="onButtonClick()"
+            aria-expanded="false"
+            aria-controls="profile-menu-dropdown"
+            aria-label="
+            <?php
+            printf(
+              // Translators: %s: user full name.
+                esc_html_x('Account Options for %s', 'ui', 'memberpress'),
+                $user->full_name()
+            ); ?>"
+            aria-haspopup="true"
+          >
             <img class="profile-menu__avatar h-8 w-8 rounded-full"
               src="<?php echo esc_url_raw(get_avatar_url($user->ID, ['size' => '51'])) ?>"
               alt="">
@@ -51,21 +65,38 @@
             </svg>
           </button>
 
-          <button x-data @click="$dispatch('toggle-menu')" class="profile-menu__button --is-mobile">
+          <button
+            x-data
+            @click="$dispatch('toggle-menu')"
+            class="profile-menu__button --is-mobile"
+            aria-label="
+            <?php
+            printf(
+              // Translators: %s: user full name.
+                esc_html_x('Account Options for %s', 'ui', 'memberpress'),
+                $user->full_name()
+            ); ?>"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" class="profile-menu__hamburger" fill="none" viewBox="0 0 24 24"
               stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
 
-          <div x-show="open" @click.away="open=false" x-cloak @toggle-menu.window="open=!open" class="profile-menu__dropdown dropdown">
-            <a class="profile-menu__dropdown-item dropdown__item"
-              href="<?php echo esc_url($account_url); ?>"><?php _ex('Account', 'ui', 'memberpress'); ?></a>
-            <a class="profile-menu__dropdown-item dropdown__item"
-              href="<?php echo esc_url($change_password_url); ?>"><?php echo _ex('Change Password', 'ui', 'memberpress'); ?></a>
-            <a class="profile-menu__dropdown-item dropdown__item"
-              href="<?php echo esc_url($logout_url); ?>"><?php _ex('Logout', 'ui', 'memberpress'); ?></a>
-          </div>
+          <ul x-show="open" @click.away="open=false" x-cloak @toggle-menu.window="open=!open" id="profile-menu-dropdown" class="profile-menu__dropdown dropdown">
+            <li>
+              <a class="profile-menu__dropdown-item dropdown__item"
+              href="<?php echo esc_url($account_url); ?>"><?php echo esc_html_x('Account', 'ui', 'memberpress'); ?></a>
+            </li>
+            <li>
+              <a class="profile-menu__dropdown-item dropdown__item"
+              href="<?php echo esc_url($change_password_url); ?>"><?php echo esc_html_x('Change Password', 'ui', 'memberpress'); ?></a>
+            </li>
+            <li>
+              <a class="profile-menu__dropdown-item dropdown__item"
+              href="<?php echo esc_url($logout_url); ?>"><?php echo esc_html_x('Logout', 'ui', 'memberpress'); ?></a>
+            </li>
+          </ul>
 
         </div>
       </div>

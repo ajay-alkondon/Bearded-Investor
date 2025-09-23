@@ -10,35 +10,36 @@ use memberpress\courses as base;
 use memberpress\courses\lib as lib;
 use memberpress\courses\helpers as helpers;
 
-class Addons extends lib\BaseCtrl {
+class Addons extends lib\BaseCtrl
+{
     public function load_hooks()
     {
         add_action('admin_menu', [$this, 'admin_menu'], 89);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_ajax_mpcs_addons_action', [$this, 'ajax_addons_action']);
-        add_action('admin_notices', array($this, 'activated_admin_notice'));
+        add_action('admin_notices', [$this, 'activated_admin_notice']);
     }
 
     public function activated_admin_notice()
     {
-        if ( ! empty( $_GET['mpcs_gradebook_activated'] ) && 'true' === $_GET['mpcs_gradebook_activated'] && helpers\App::is_gradebook_addon_active() ) :
-        ?>
+        if (! empty($_GET['mpcs_gradebook_activated']) && 'true' === $_GET['mpcs_gradebook_activated'] && helpers\App::is_gradebook_addon_active()) :
+            ?>
           <div class="notice notice-success is-dismissible">
-            <p><?php esc_html_e( 'MemberPress Course Gradebook has been activated successfully!', 'memberpress-courses' ) ?></p>
+            <p><?php esc_html_e('MemberPress Course Gradebook has been activated successfully!', 'memberpress-courses') ?></p>
           </div>
         <?php endif;
 
-        if ( ! empty( $_GET['mpcs_assignments_activated'] ) && 'true' === $_GET['mpcs_assignments_activated'] && helpers\App::is_assignments_addon_active()) :
-        ?>
+        if (! empty($_GET['mpcs_assignments_activated']) && 'true' === $_GET['mpcs_assignments_activated'] && helpers\App::is_assignments_addon_active()) :
+            ?>
           <div class="notice notice-success is-dismissible">
-            <p><?php esc_html_e( 'MemberPress Course Assignments has been activated successfully!', 'memberpress-courses' ) ?></p>
+            <p><?php esc_html_e('MemberPress Course Assignments has been activated successfully!', 'memberpress-courses') ?></p>
           </div>
         <?php endif;
 
-        if ( ! empty( $_GET['mpcs_quizzes_activated'] ) && 'true' === $_GET['mpcs_quizzes_activated'] && helpers\App::is_quizzes_addon_active() ) :
-        ?>
+        if (! empty($_GET['mpcs_quizzes_activated']) && 'true' === $_GET['mpcs_quizzes_activated'] && helpers\App::is_quizzes_addon_active()) :
+            ?>
           <div class="notice notice-success is-dismissible">
-            <p><?php esc_html_e( 'MemberPress Course Quizzes has been activated successfully!', 'memberpress-courses' ) ?></p>
+            <p><?php esc_html_e('MemberPress Course Quizzes has been activated successfully!', 'memberpress-courses') ?></p>
           </div>
         <?php endif;
     }
@@ -46,54 +47,54 @@ class Addons extends lib\BaseCtrl {
     public function admin_menu()
     {
         if (isset($_GET['page']) && strpos($_GET['page'], base\PLUGIN_NAME . '-addon') !== false) {
-            remove_all_actions( 'admin_notices' );
+            remove_all_actions('admin_notices');
         }
 
         $capability = \MeprUtils::get_mepr_admin_capability();
 
-        if(!helpers\App::is_gradebook_addon_active()){
+        if (!helpers\App::is_gradebook_addon_active()) {
             add_submenu_page(
-              base\PLUGIN_NAME,
-              __('Gradebook', 'memberpress-courses'),
-              __('Gradebook', 'memberpress-courses'),
-              $capability,
-              base\PLUGIN_NAME .'-addon-gradebook',
-              array($this,'route')
+                base\PLUGIN_NAME,
+                __('Gradebook', 'memberpress-courses'),
+                __('Gradebook', 'memberpress-courses'),
+                $capability,
+                base\PLUGIN_NAME . '-addon-gradebook',
+                [$this,'route']
             );
         }
 
-        if(!helpers\App::is_assignments_addon_active()){
+        if (!helpers\App::is_assignments_addon_active()) {
             add_submenu_page(
-              base\PLUGIN_NAME,
-              __('Assignments', 'memberpress-courses'),
-              __('Assignments', 'memberpress-courses'),
-              $capability,
-              base\PLUGIN_NAME .'-addon-assignments',
-              array($this,'route')
+                base\PLUGIN_NAME,
+                __('Assignments', 'memberpress-courses'),
+                __('Assignments', 'memberpress-courses'),
+                $capability,
+                base\PLUGIN_NAME . '-addon-assignments',
+                [$this,'route']
             );
         }
 
-        if(!helpers\App::is_quizzes_addon_active()){
+        if (!helpers\App::is_quizzes_addon_active()) {
             add_submenu_page(
-              base\PLUGIN_NAME,
-              __('Quizzes', 'memberpress-courses'),
-              __('Quizzes', 'memberpress-courses'),
-              $capability,
-              base\PLUGIN_NAME .'-addon-quizzes',
-              array($this,'route')
+                base\PLUGIN_NAME,
+                __('Quizzes', 'memberpress-courses'),
+                __('Quizzes', 'memberpress-courses'),
+                $capability,
+                base\PLUGIN_NAME . '-addon-quizzes',
+                [$this,'route']
             );
         }
     }
 
     public function route()
     {
-        $view_mapping = array(
+        $view_mapping = [
             'memberpress-courses-addon-gradebook'   => '/admin/addons/gradebook',
             'memberpress-courses-addon-quizzes'     => '/admin/addons/quizzes',
             'memberpress-courses-addon-assignments' => '/admin/addons/assignments',
-        );
+        ];
 
-        if( ! isset($_GET['page']) || ! isset($view_mapping[$_GET['page']]) ) {
+        if (! isset($_GET['page']) || ! isset($view_mapping[$_GET['page']])) {
             ?>
             <script>
               window.location.href="<?php echo Courses::fetch()->cpt_admin_url(); ?>";
@@ -102,7 +103,7 @@ class Addons extends lib\BaseCtrl {
             return;
         }
 
-        $view = $view_mapping[sanitize_text_field($_GET['page'])];
+        $view    = $view_mapping[sanitize_text_field($_GET['page'])];
         $plugins = get_plugins();
 
         \MeprView::render($view, get_defined_vars());
@@ -118,6 +119,7 @@ class Addons extends lib\BaseCtrl {
 
     /**
      * Handle actions for MemberPress Courses Addons
+     *
      * @todo
      *
      * @return void
@@ -130,7 +132,7 @@ class Addons extends lib\BaseCtrl {
                 'activated' => false,
                 'result'    => 'error',
                 'message'   => esc_html__('Invalid request.', 'memberpress-courses'),
-                'redirect'  => ''
+                'redirect'  => '',
             ]);
         }
 
@@ -140,7 +142,7 @@ class Addons extends lib\BaseCtrl {
                 'activated' => false,
                 'result'    => 'error',
                 'message'   => esc_html__('Sorry, you don\'t have permission to do this.', 'memberpress-courses'),
-                'redirect'  => ''
+                'redirect'  => '',
             ]);
         }
 
@@ -152,8 +154,7 @@ class Addons extends lib\BaseCtrl {
         $result     = 'error';
         $addon_data = $this->get_addons_data();
 
-        if( isset($addon_data[$addon]) && is_array($addon_data[$addon]) ) {
-
+        if (isset($addon_data[$addon]) && is_array($addon_data[$addon])) {
             $addon_slug  = $addon_data[$addon]['slug'];
             $addon_page  = $addon_data[$addon]['page'];
             $addon_key   = $addon_data[$addon]['key'];
@@ -163,17 +164,17 @@ class Addons extends lib\BaseCtrl {
                 case 'install-activate': // Install and activate courses
                     $installed = $this->install_courses_addon($addon_key, $addon_page, $addon_slug, true);
                     $activated = $installed ? $installed : $activated;
-                    $result = $installed ? 'success' : 'error';
-                    $message = $installed ? esc_html__('Add-on has been installed and activated successfully. Enjoy!', 'memberpress-courses') : wp_kses_post( sprintf(
-                        esc_html__('Add-on could not be installed. Please check your license settings, or %scontact%s MemberPress support for help.', 'memberpress-courses'),
+                    $result    = $installed ? 'success' : 'error';
+                    $message   = $installed ? esc_html__('Add-on has been installed and activated successfully. Enjoy!', 'memberpress-courses') : wp_kses_post(sprintf(
+                        esc_html__('Add-on could not be installed. Please check your license settings, or %1$scontact%2$s MemberPress support for help.', 'memberpress-courses'),
                         '<a href="https://memberpress.com/support/">',
                         '</a>',
                     ));
                     break;
                 case 'activate': // Just activate (already installed)
                     $activated = is_null(activate_plugin($addon_slug));
-                    $result = 'success';
-                    $message = esc_html__('Add-on has been activated successfully. Enjoy!', 'memberpress-courses');
+                    $result    = 'success';
+                    $message   = esc_html__('Add-on has been activated successfully. Enjoy!', 'memberpress-courses');
                     break;
                 default:
                     break;
@@ -194,17 +195,17 @@ class Addons extends lib\BaseCtrl {
             'activated' => $activated,
             'result'    => $result,
             'message'   => $message,
-            'redirect'  => $redirect
+            'redirect'  => $redirect,
         ]);
     }
 
     /**
      * Install the MemberPress Courses addon
      *
-     * @param string  $addon_key
-     * @param string  $addon_page
-     * @param string  $addon_main_file
-     * @param boolean $activate Whether to activate after installing
+     * @param  string  $addon_key
+     * @param  string  $addon_page
+     * @param  string  $addon_main_file
+     * @param  boolean $activate        Whether to activate after installing
      * @todo
      * @return boolean Whether the plugin was installed
      */
@@ -224,7 +225,7 @@ class Addons extends lib\BaseCtrl {
 
         // Fetch the license key
         $mepr_options = \MeprOptions::fetch();
-        $license = $mepr_options->mothership_license;
+        $license      = $mepr_options->mothership_license;
 
         if (empty($license)) {
             return false; // Exit if no license key is available
@@ -235,10 +236,9 @@ class Addons extends lib\BaseCtrl {
         }
 
         try {
-
             $domain = urlencode(\MeprUtils::site_domain());
-            $args = compact('domain');
-            $slug = $addon_key;
+            $args   = compact('domain');
+            $slug   = $addon_key;
 
             $addon = \MeprUpdateCtrl::send_mothership_request('/versions/info/' . $slug . "/{$license}", $args);
 
@@ -247,12 +247,11 @@ class Addons extends lib\BaseCtrl {
 
             // Request filesystem credentials
             $plugin_url = esc_url_raw(
-                add_query_arg(array(
-                        'page' => $addon_page
-                    ), admin_url('admin.php')
-                )
+                add_query_arg([
+                    'page' => $addon_page,
+                ], admin_url('admin.php'))
             );
-            $creds = request_filesystem_credentials($plugin_url, '', false, false, null);
+            $creds      = request_filesystem_credentials($plugin_url, '', false, false, null);
 
             // Check for filesystem credentials and initialize WP Filesystem
             if (false === $creds || !WP_Filesystem($creds)) {
@@ -279,7 +278,6 @@ class Addons extends lib\BaseCtrl {
             }
 
             return $installer->plugin_info();
-
         } catch (\Exception $e) {
             // Log any errors
             \MeprUtils::error_log('install_courses_addon: ' . $e->getMessage());
@@ -293,36 +291,37 @@ class Addons extends lib\BaseCtrl {
         return false;
     }
 
-    private function get_addons_data() {
-        $addon_data = array(
-            'gradebook'   => array(
+    private function get_addons_data()
+    {
+        $addon_data = [
+            'gradebook'   => [
                 'key'         => 'memberpress-course-gradebook',
                 'slug'        => 'memberpress-course-gradebook/main.php',
-                'page'        => base\PLUGIN_NAME .'-addon-gradebook',
+                'page'        => base\PLUGIN_NAME . '-addon-gradebook',
                 'redirect_to' => add_query_arg([
-                    'page' => 'memberpress-course-gradebook',
+                    'page'                     => 'memberpress-course-gradebook',
                     'mpcs_gradebook_activated' => 'true',
-                ], esc_url(admin_url('admin.php')))
-             ),
-            'assignments'   => array(
-                'key'  => 'memberpress-course-assignments',
-                'slug' => 'memberpress-course-assignments/main.php',
-                'page' => base\PLUGIN_NAME .'-addon-assignments',
+                ], esc_url(admin_url('admin.php'))),
+            ],
+            'assignments' => [
+                'key'         => 'memberpress-course-assignments',
+                'slug'        => 'memberpress-course-assignments/main.php',
+                'page'        => base\PLUGIN_NAME . '-addon-assignments',
                 'redirect_to' => add_query_arg([
-                    'post_type' => 'mpcs-assignment',
+                    'post_type'                  => 'mpcs-assignment',
                     'mpcs_assignments_activated' => 'true',
-                ], esc_url(admin_url('edit.php')))
-             ),
-            'quizzes'   => array(
-                'key'  => 'memberpress-course-quizzes',
-                'slug' => 'memberpress-course-quizzes/main.php',
-                'page' => base\PLUGIN_NAME .'-addon-quizzes',
+                ], esc_url(admin_url('edit.php'))),
+            ],
+            'quizzes'     => [
+                'key'         => 'memberpress-course-quizzes',
+                'slug'        => 'memberpress-course-quizzes/main.php',
+                'page'        => base\PLUGIN_NAME . '-addon-quizzes',
                 'redirect_to' => add_query_arg([
-                    'post_type' => 'mpcs-quiz',
+                    'post_type'              => 'mpcs-quiz',
                     'mpcs_quizzes_activated' => 'true',
-                ], esc_url(admin_url('edit.php')))
-             ),
-        );
+                ], esc_url(admin_url('edit.php'))),
+            ],
+        ];
 
         return $addon_data;
     }

@@ -73,7 +73,7 @@ class Cookie_Law_Info {
 		if ( defined( 'CLI_VERSION' ) ) {
 			$this->version = CLI_VERSION;
 		} else {
-			$this->version = '3.3.2';
+			$this->version = '3.3.5';
 		}
 		$this->plugin_name = 'cookie-law-info';
 
@@ -306,9 +306,9 @@ class Cookie_Law_Info {
 		}
 		foreach ( $out_arr as $k => $v ) {
 			if ( is_array( $v ) ) {
-				$v = ( isset( $v[2] ) ? $v[2] : '' ) . __( $v[0], 'cookie-law-info' ) . ' ' . ( isset( $v[1] ) ? $v[1] : '' );
+				$v = ( isset( $v[2] ) ? $v[2] : '' ) . __( $v[0], 'cookie-law-info' ) . ' ' . ( isset( $v[1] ) ? $v[1] : '' ); // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 			} else {
-				$v = __( $v, 'cookie-law-info' );
+				$v = __( $v, 'cookie-law-info' ); // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 			}
 			?>
 			<a class="nav-tab" href="#<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $v ); ?></a>
@@ -614,7 +614,7 @@ class Cookie_Law_Info {
 			'post_type'        => CLI_POST_TYPE,
 			'posts_per_page'   => -1,
 			'suppress_filters' => false,
-			'meta_query'       => array(
+			'meta_query'       => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				array(
 					'key'   => '_cli_cookie_sensitivity',
 					'value' => 'non-necessary',
@@ -938,7 +938,7 @@ class Cookie_Law_Info {
 	 */
 	public static function is_divi_enabled() {
 
-		return isset( $_GET['et_fb'] ) ? true : false;
+		return isset( $_GET['et_fb'] ) ? true : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	}
 
 	/**

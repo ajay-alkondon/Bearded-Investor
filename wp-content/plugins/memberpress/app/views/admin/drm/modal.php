@@ -11,21 +11,26 @@ $has_stripe_connect = MeprDrmHelper::is_country_unlockable_by_fee($country);
    <div class="mepr-notice-modal-wrapper">
     <a href='<?php echo admin_url(); ?>' class='mepr-notice-modal-close'></a>
     <div class="mepr-notice-modal-content">
-     <h3 class="mepr-notice-title"><?php _e('<span>ALERT!</span> MemberPress Backend is Deactivated', 'memberpress'); ?></h3>
+     <h3 class="mepr-notice-title"><?php printf(
+         // Translators: %1$s: opening span tag, %2$s: closing span tag.
+         esc_html__('%1$sALERT!%2$s MemberPress Backend is Deactivated', 'memberpress'),
+         '<span>',
+         '</span>'
+     ); ?></h3>
      <div class="mepr-notice-desc">
-      <p><?php _e('Your MemberPress license key is not found or is invalid. Without an active license key, your frontend is unaffected. However, you can no longer:', 'memberpress'); ?></p>
+      <p><?php esc_html_e('Your MemberPress license key is not found or is invalid. Without an active license key, your frontend is unaffected. However, you can no longer:', 'memberpress'); ?></p>
       <ul>
-         <li><?php _e('Issue customer refunds', 'memberpress'); ?></li>
-         <li><?php _e('Add new members', 'memberpress'); ?></li>
-         <li><?php _e('Manage memberships', 'memberpress'); ?></li>
+         <li><?php esc_html_e('Issue customer refunds', 'memberpress'); ?></li>
+         <li><?php esc_html_e('Add new members', 'memberpress'); ?></li>
+         <li><?php esc_html_e('Manage memberships', 'memberpress'); ?></li>
       </ul>
-      <p><?php _e('This problem is easy to fix!', 'memberpress'); ?></p>
+      <p><?php esc_html_e('This problem is easy to fix!', 'memberpress'); ?></p>
       <p>
       <?php if ($has_stripe_connect) : ?>
-        <a href="#" id="mepr-drm-btn-without-license" class="button button-secondary button-reactivate-fee mepr-drm-cta"><?php _e('Reactivate Backend Instantly*', 'memberpress'); ?></a>
-        <a target="_blank" href="<?php echo $account_link; ?>" class="button button-primary mepr-drm-cta"><?php _e('Buy or renew your license', 'memberpress'); ?></a>
+        <a href="#" id="mepr-drm-btn-without-license" class="button button-secondary button-reactivate-fee mepr-drm-cta"><?php esc_html_e('Reactivate Backend Instantly*', 'memberpress'); ?></a>
+        <a target="_blank" href="<?php echo $account_link; ?>" class="button button-primary mepr-drm-cta"><?php esc_html_e('Buy or renew your license', 'memberpress'); ?></a>
       <?php else : ?>
-        <a target="_blank" href="<?php echo $account_link; ?>" class="button button-primary"><?php _e('Click Here to purchase or renew your license key', 'memberpress'); ?></a>
+        <a target="_blank" href="<?php echo $account_link; ?>" class="button button-primary"><?php esc_html_e('Click Here to purchase or renew your license key', 'memberpress'); ?></a>
       <?php endif; ?>
       </p>
 

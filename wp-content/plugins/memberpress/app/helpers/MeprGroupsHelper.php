@@ -59,7 +59,7 @@ class MeprGroupsHelper
             <?php
         }
         ?>
-      <option value="custom" <?php selected('custom', $selected) ?>><?php _e('None / Custom', 'memberpress'); ?></option>
+      <option value="custom" <?php selected('custom', $selected) ?>><?php esc_html_e('None / Custom', 'memberpress'); ?></option>
     </select>
         <?php
     }
@@ -138,12 +138,12 @@ class MeprGroupsHelper
         $active = true; // Always true for now - that way users can click the button and see the custom "you don't have access" message now.
 
         $group_classes_str = ($product->is_highlighted) ? 'highlighted' : '';
-        $group_classes_str = MeprHooks::apply_filters('mepr-group-css-classes-string', $group_classes_str, $product, $group, $preview);
+        $group_classes_str = MeprHooks::apply_filters('mepr_group_css_classes_string', $group_classes_str, $product, $group, $preview);
 
         ?>
     <div id="mepr-price-box-<?php echo $product->ID; ?>" class="mepr-price-box <?php echo $group_classes_str; ?>">
         <?php if ($product->is_highlighted) : ?>
-        <div class="mepr-most-popular"><?php _e('Most Popular', 'memberpress'); ?></div>
+        <div class="mepr-most-popular"><?php esc_html_e('Most Popular', 'memberpress'); ?></div>
         <?php endif; ?>
       <div class="mepr-price-box-head">
         <div class="mepr-price-box-title"><?php echo $product->pricing_title; ?></div>
@@ -153,13 +153,13 @@ class MeprGroupsHelper
         <?php elseif ($product->pricing_display !== 'none') : ?>
           <div class="mepr-price-box-price">
             <?php
-            if (isset($_GET['coupon']) && !empty($_GET['coupon']) && MeprCoupon::is_valid_coupon_code($_GET['coupon'], $product->ID)) {
-                $mepr_coupon_code = htmlentities(sanitize_text_field($_GET['coupon']));
+            if (isset($_GET['coupon']) && !empty($_GET['coupon']) && MeprCoupon::is_valid_coupon_code(sanitize_text_field(wp_unslash($_GET['coupon'])), $product->ID)) {
+                $mepr_coupon_code = htmlentities(sanitize_text_field(wp_unslash($_GET['coupon'])));
             } else {
                 $mepr_coupon_code = null;
             }
 
-            if ($product->pricing_display == 'auto') {
+            if ($product->pricing_display === 'auto') {
                 echo MeprProductsHelper::format_currency($product, true, $mepr_coupon_code, false);
             } else {
                 echo $product->custom_price;
@@ -171,7 +171,7 @@ class MeprGroupsHelper
           <div class="mepr-price-box-heading"><?php echo $product->pricing_heading_txt; ?></div>
           <?php endif; ?>
           <?php
-            if (in_array($product->pricing_button_position, ['header','both'])) {
+            if (in_array($product->pricing_button_position, ['header','both'], true)) {
                 echo self::price_box_button($user, $group, $product, $active);
             }
             ?>
@@ -180,7 +180,7 @@ class MeprGroupsHelper
       <div class="mepr-price-box-foot">
         <div class="mepr-price-box-footer"><?php echo $product->pricing_footer_txt; ?></div>
         <?php
-        if (in_array($product->pricing_button_position, ['footer','both'])) {
+        if (in_array($product->pricing_button_position, ['footer','both'], true)) {
             echo self::price_box_button($user, $group, $product, $active);
         }
         ?>
@@ -188,7 +188,7 @@ class MeprGroupsHelper
     </div>
         <?php
         $output = ob_get_clean();
-        echo MeprHooks::apply_filters('mepr-group-page-item-output', $output, $product, $group, $preview);
+        echo MeprHooks::apply_filters('mepr_group_page_item_output', $output, $product, $group, $preview);
     }
 
     /**
@@ -240,7 +240,7 @@ class MeprGroupsHelper
             !empty($product->access_url)
         ) :
             ?>
-          <a <?php echo 'href="' . $product->access_url . '"'; ?> class="<?php echo self::price_box_button_classes($group, $product, true); ?>"><?php _e('View', 'memberpress'); ?></a>
+          <a <?php echo 'href="' . $product->access_url . '"'; ?> class="<?php echo self::price_box_button_classes($group, $product, true); ?>"><?php esc_html_e('View', 'memberpress'); ?></a>
         <?php else : ?>
           <a <?php echo $active ? 'href="' . $product->url() . '"' : ''; ?> class="<?php echo self::price_box_button_classes($group, $product, $active); ?>"><?php echo $product->pricing_button_txt; ?></a>
         <?php endif; ?>

@@ -157,7 +157,7 @@
           </td>
         </tr>
         <?php
-        MeprHooks::do_action('mepr-after-readylaunch-options');
+        MeprHooks::do_action('mepr_after_readylaunch_options');
         ?>
       </tbody>
     </table>
@@ -168,7 +168,7 @@
     <?php MeprView::render('/admin/readylaunch/thankyou', get_defined_vars()); ?>
     <?php MeprView::render('/admin/readylaunch/checkout', get_defined_vars()); ?>
     <?php
-    MeprHooks::do_action('mepr-after-readylaunch-options-table');
+    MeprHooks::do_action('mepr_after_readylaunch_options_table');
     ?>
   </div>
 </div>

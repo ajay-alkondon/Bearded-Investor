@@ -16,7 +16,7 @@ if (!empty($records)) {
             // Style attributes for each col.
             $class = "class=\"{$column_name} column-{$column_name}\"";
             $style = '';
-            if (in_array($column_name, $hidden)) {
+            if (in_array($column_name, $hidden, true)) {
                 $style = ' style="display:none;"';
             }
             $attributes = $class . $style;
@@ -24,7 +24,7 @@ if (!empty($records)) {
             // $editlink = admin_url('user-edit.php?user_id='.(int)$rec->ID);
             // $deletelink = admin_url('user-edit.php?user_id='.(int)$rec->ID);
             $deletelink = wp_nonce_url("users.php?action=delete&amp;user={$rec->ID}", 'bulk-users');
-            $editlink   = esc_url(add_query_arg('wp_http_referer', urlencode(wp_unslash($_SERVER['REQUEST_URI'])), get_edit_user_link($rec->ID)));
+            $editlink   = esc_url(add_query_arg('wp_http_referer', urlencode(esc_url_raw(wp_unslash($_SERVER['REQUEST_URI']))), get_edit_user_link($rec->ID)));
 
             // Display the cell.
             switch ($column_name) {
@@ -49,12 +49,12 @@ if (!empty($records)) {
             <span class="mepr-member-avatar"><?php echo get_avatar($rec->email, 32); ?></span>
             <span class="mepr-member-username-and-actions">
               <div class="mepr-member-username">
-                <a href="<?php echo $editlink; ?>" title="<?php _e("View member's profile", 'memberpress'); ?>"><?php echo ((int)$rec->ID) ? stripslashes($rec->username) : __('Deleted', 'memberpress'); ?></a>
+                <a href="<?php echo $editlink; ?>" title="<?php esc_attr_e("View member's profile", 'memberpress'); ?>"><?php echo ((int)$rec->ID) ? stripslashes($rec->username) : __('Deleted', 'memberpress'); ?></a>
               </div>
               <div class="mepr-member-actions mepr-hidden">
-                <a href="<?php echo $editlink; ?>" title="<?php _e("Edit member's profile", 'memberpress'); ?>"><?php _e('Edit', 'memberpress'); ?></a>
+                <a href="<?php echo $editlink; ?>" title="<?php esc_attr_e("Edit member's profile", 'memberpress'); ?>"><?php esc_html_e('Edit', 'memberpress'); ?></a>
                 |
-                <a href="<?php echo $deletelink; ?>" title="<?php _e('Delete member', 'memberpress'); ?>"><?php _e('Delete', 'memberpress'); ?></a>
+                <a href="<?php echo $deletelink; ?>" title="<?php esc_attr_e('Delete member', 'memberpress'); ?>"><?php esc_html_e('Delete', 'memberpress'); ?></a>
               </div>
             </span>
           </td>
@@ -68,15 +68,15 @@ if (!empty($records)) {
                 case 'col_status':
                     $mepr_user = new MeprUser($rec->ID);
                     if ($mepr_user->is_active()) {
-                        $status = '<span class="mepr-active">' . __('Active', 'memberpress') . '</span>';
+                        $member_status = '<span class="mepr-active">' . esc_html__('Active', 'memberpress') . '</span>';
                     } elseif ($mepr_user->has_expired()) {
-                        $status = '<span class="mepr-inactive">' . __('Inactive', 'memberpress') . '</span>';
+                        $member_status = '<span class="mepr-inactive">' . esc_html__('Inactive', 'memberpress') . '</span>';
                     } else {
-                        $status = '<span>' . __('None', 'memberpress') . '</span>';
+                        $member_status = '<span>' . esc_html__('None', 'memberpress') . '</span>';
                     }
 
                     ?>
-          <td <?php echo $attributes; ?>><?php echo $status; ?></td>
+          <td <?php echo $attributes; ?>><?php echo $member_status; ?></td>
                     <?php
                     break;
                 case 'col_txn_count':
@@ -110,11 +110,11 @@ if (!empty($records)) {
                     ?>
           <td <?php echo $attributes; ?>>
                     <?php
-                    foreach ($sub_counts as $label => $status) {
-                        $status_count = "{$status}_sub_count";
+                    foreach ($sub_counts as $label => $subscription_status) {
+                        $status_count = "{$subscription_status}_sub_count";
                         if ($rec->$status_count > 0) {
                             ?>
-                <div><a href="<?php echo $admin_sub_url . '&status=' . $status; ?>"><?php echo "{$rec->$status_count} {$label}"; ?></a></div>
+                <div><a href="<?php echo $admin_sub_url . '&status=' . $subscription_status; ?>"><?php echo "{$rec->$status_count} {$label}"; ?></a></div>
                             <?php
                         }
                     }
@@ -186,8 +186,8 @@ if (!empty($records)) {
                     $titles = [];
                     if (!empty($rec->memberships)) {
                         $ids = explode(',', $rec->memberships);
-                        foreach ($ids as $id) {
-                              $membership = new MeprProduct($id);
+                        foreach ($ids as $membership_id) {
+                              $membership = new MeprProduct($membership_id);
                               $titles[]   = esc_html($membership->post_title);
                         }
                     }
@@ -200,8 +200,8 @@ if (!empty($records)) {
                     if (!empty($rec->inactive_memberships)) {
                         $ids = explode(',', $rec->inactive_memberships);
 
-                        foreach ($ids as $id) {
-                              $membership        = new MeprProduct($id);
+                        foreach ($ids as $membership_id) {
+                              $membership        = new MeprProduct($membership_id);
                               $inactive_titles[] = esc_html($membership->post_title);
                         }
                     }

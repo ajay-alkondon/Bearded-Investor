@@ -24,7 +24,7 @@ class MeprAccountLinksWidget extends WP_Widget
      */
     public static function register_widget()
     {
-        if (MeprHooks::apply_filters('mepr-enable-legacy-widgets', !current_theme_supports('widgets-block-editor'))) {
+        if (MeprHooks::apply_filters('mepr_enable_legacy_widgets', !current_theme_supports('widgets-block-editor'))) {
             register_widget('MeprAccountLinksWidget');
         }
     }
@@ -43,7 +43,7 @@ class MeprAccountLinksWidget extends WP_Widget
     {
         $mepr_options = MeprOptions::fetch();
         extract($args);
-        $title = MeprHooks::apply_filters('mepr-login-title', $instance['title']);
+        $title = MeprHooks::apply_filters('mepr_login_title', $instance['title']);
 
         echo $before_widget;
         echo $before_title . $title . $after_title;
@@ -73,7 +73,7 @@ class MeprAccountLinksWidget extends WP_Widget
     public function update($new_instance, $old_instance)
     {
         $instance          = [];
-        $instance['title'] = (!empty($new_instance['title'])) ? strip_tags($new_instance['title']) : __('Login', 'memberpress');
+        $instance['title'] = (!empty($new_instance['title'])) ? wp_strip_all_tags($new_instance['title']) : __('Login', 'memberpress');
 
         return $instance;
     }
@@ -93,7 +93,7 @@ class MeprAccountLinksWidget extends WP_Widget
 
         ?>
     <p>
-      <label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:', 'memberpress'); ?></label>
+      <label for="<?php echo $this->get_field_id('title'); ?>"><?php esc_html_e('Title:', 'memberpress'); ?></label>
       <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" />
     </p>
         <?php

@@ -110,7 +110,7 @@ class MeprUsersHelper
         $required_attr = $line->required ? 'required' : '';
         $array_types   = ['multiselect', 'checkboxes']; // If we update this, we need make sure it doesn't break the {$usermeta:slug} stuff in MeprTransactionsHelper.
         $bool_types    = ['checkbox'];
-        $classes       = MeprHooks::apply_filters('mepr-custom-field-classes', $classes, $line);
+        $classes       = MeprHooks::apply_filters('mepr_custom_field_classes', $classes, $line);
         if (isset($line->placeholder)) {
             $placeholder_attr = (isset($line->required) && $line->required) ? 'placeholder="' . $line->placeholder . '*"' : 'placeholder="' . $line->placeholder . '"';
         } else {
@@ -120,17 +120,17 @@ class MeprUsersHelper
         $required_attr = $placeholder_attr . ' ' . $required_attr;
 
         // Figure out what type we have here.
-        $is_array  = in_array($line->field_type, $array_types);
-        $is_bool   = in_array($line->field_type, $bool_types);
+        $is_array  = in_array($line->field_type, $array_types, true);
+        $is_bool   = in_array($line->field_type, $bool_types, true);
         $is_string = ( !$is_array && !$is_bool );
 
         if (isset($_REQUEST[$line->field_key])) {
             if ($is_array) {
-                $value = $_REQUEST[$line->field_key];
+                $value = map_deep(wp_unslash($_REQUEST[$line->field_key]), 'sanitize_text_field');
             } elseif ($is_bool) {
                 $value = true;
             } else {
-                $value = stripslashes($_REQUEST[$line->field_key]);
+                $value = sanitize_text_field(wp_unslash($_REQUEST[$line->field_key]));
             }
         } elseif ($value === '') {
             if ($is_array && $line->field_type === 'multiselect') {
@@ -170,29 +170,29 @@ class MeprUsersHelper
         switch ($line->field_type) {
             case 'text':
             case 'email':
-                ?><input type="<?php echo $line->field_type; ?>" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-form-input <?php echo $class; ?>" value="<?php echo esc_attr($value); ?>" <?php echo $required_attr; ?> /><?php
+                ?><input type="<?php echo $line->field_type; ?>" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-form-input <?php echo $class; ?>" value="<?php echo esc_attr($value); ?>" aria-describedby="<?php echo $line->field_key; ?>_error" <?php echo $required_attr; ?> /><?php
                 break;
 
             case 'url':
-                ?><input type="<?php echo $line->field_type; ?>" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-form-input <?php echo $class; ?>" value="<?php echo esc_attr($value); ?>" title="<?php _e('A URL must be prefixed with a protocol (eg. http://)', 'memberpress'); ?>" <?php echo $required_attr; ?> /><?php
+                ?><input type="<?php echo $line->field_type; ?>" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-form-input <?php echo $class; ?>" value="<?php echo esc_attr($value); ?>" title="<?php esc_attr_e('A URL must be prefixed with a protocol (eg. https://)', 'memberpress'); ?>" aria-describedby="<?php echo $line->field_key; ?>_error" <?php echo $required_attr; ?> /><?php
                 break;
 
             case 'textarea':
-                ?><textarea name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-form-textarea mepr-form-input <?php echo $class; ?>" <?php echo $required_attr; ?>><?php echo esc_textarea($value); ?></textarea><?php
+                ?><textarea name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-form-textarea mepr-form-input <?php echo $class; ?>" aria-describedby="<?php echo $line->field_key; ?>_error" <?php echo $required_attr; ?>><?php echo esc_textarea($value); ?></textarea><?php
                 break;
 
             case 'checkbox':
                 $required = $line->required ? '*' : '';
                 ?>
         <label for="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-checkbox-field mepr-form-input <?php echo $class; ?>" <?php echo $required_attr; ?>>
-          <input type="checkbox" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" <?php checked($value); ?> />
+          <input type="checkbox" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" aria-describedby="<?php echo $line->field_key; ?>_error" <?php checked($value); ?> />
                 <?php echo MeprAppHelper::wp_kses(sprintf('%1$s%2$s', stripslashes($line->field_name), $required)); ?>
         </label>
                 <?php
                 break;
 
             case 'date':
-                ?><input type="text" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" value="<?php echo esc_attr(stripslashes($value)); ?>" class="mepr-date-picker mepr-form-input <?php echo $class; ?>" <?php echo $required_attr; ?> /><?php
+                ?><input type="text" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" value="<?php echo esc_attr(stripslashes($value)); ?>" class="mepr-date-picker mepr-form-input <?php echo $class; ?>" aria-describedby="<?php echo $line->field_key; ?>_error" <?php echo $required_attr; ?> /><?php
                 break;
 
             case 'file':
@@ -206,7 +206,7 @@ class MeprUsersHelper
                 break;
 
             case 'tel':
-                ?><input type="tel" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" value="<?php echo esc_attr(stripslashes($value)); ?>" class="mepr-tel-input mepr-form-input <?php echo $class; ?>" <?php echo $required_attr; ?> /><?php
+                ?><input type="tel" name="<?php echo $line->field_key; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" value="<?php echo esc_attr(stripslashes($value)); ?>" class="mepr-tel-input mepr-form-input <?php echo $class; ?>" aria-describedby="<?php echo $line->field_key; ?>_error" <?php echo $required_attr; ?> /><?php
                 break;
 
             case 'dropdown':
@@ -217,11 +217,11 @@ class MeprUsersHelper
                 $select_name = $is_multi ? "{$line->field_key}[]" : $line->field_key;
 
                 ?>
-        <select name="<?php echo $select_name; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-form-input mepr-select-field <?php echo $ms_class; ?> <?php echo $class; ?>" <?php echo $multiselect; ?> <?php echo $required_attr; ?>>
+        <select name="<?php echo $select_name; ?>" id="<?php echo $line->field_key . $unique_suffix; ?>" class="mepr-form-input mepr-select-field <?php echo $ms_class; ?> <?php echo $class; ?>" aria-describedby="<?php echo $line->field_key; ?>_error" <?php echo $multiselect; ?> <?php echo $required_attr; ?>>
                 <?php
                 foreach ($line->options as $o) {
                     if ($is_multi) {
-                        ?><option value="<?php echo $o->option_value; ?>" <?php selected(in_array($o->option_value, $value), true); ?>><?php echo stripslashes($o->option_name); ?></option><?php
+                        ?><option value="<?php echo $o->option_value; ?>" <?php selected(in_array($o->option_value, $value, true), true); ?>><?php echo stripslashes($o->option_name); ?></option><?php
                     } else {
                         ?><option value="<?php echo $o->option_value; ?>" <?php selected(esc_attr($o->option_value), esc_attr($value)); ?>><?php echo stripslashes($o->option_name); ?></option><?php
                     }
@@ -342,10 +342,10 @@ class MeprUsersHelper
         $custom_fields = MeprHooks::apply_filters('mepr_render_custom_fields', $custom_fields);
 
         foreach ($custom_fields as $line) {
-            if ('signup' == $from_page && !$line->show_on_signup) {
+            if ('signup' === $from_page && !$line->show_on_signup) {
                 continue;
             }
-            if ('account' == $from_page && isset($line->show_in_account) && !$line->show_in_account) {
+            if ('account' === $from_page && isset($line->show_in_account) && !$line->show_in_account) {
                 continue;
             }
 
@@ -371,7 +371,7 @@ class MeprUsersHelper
             case 'radios':
                 $options = $field->options;
                 foreach ($options as $option) {
-                    if ($option->option_value == $value) {
+                    if ($option->option_value === $value) {
                         $value = $option->option_name;
                     }
                 }
@@ -382,7 +382,7 @@ class MeprUsersHelper
                 $values  = [];
                 $value   = (array) $value;
                 foreach ($options as $option) {
-                    if (in_array($option->option_value, $value) || array_key_exists($option->option_value, $value)) {
+                    if (in_array($option->option_value, $value, true) || array_key_exists($option->option_value, $value)) {
                         $values[] = $option->option_name;
                     }
                 }
@@ -400,7 +400,17 @@ class MeprUsersHelper
 
       <dt>
         <?php echo esc_html(stripslashes($field->field_name)); ?>
-      <button data-name="<?php echo esc_attr($field->field_key) ?>" class="btn btn-link mepr-profile-details__button">
+      <button
+        data-name="<?php echo esc_attr($field->field_key) ?>"
+        class="btn btn-link mepr-profile-details__button"
+        data-label="
+            <?php
+            printf(
+              // Translators: %s: field name.
+                __('Edit %s', 'memberpress'),
+                esc_html(stripslashes($field->field_name))
+            ); ?>"
+      >
         <svg width="15" height="16" viewBox="0 0 15 16" fill="none"
           xmlns="http://www.w3.org/2000/svg">
           <path
@@ -589,7 +599,7 @@ class MeprUsersHelper
             return false;
         }
 
-        $path      = parse_url($url, PHP_URL_PATH);
+        $path      = wp_parse_url($url, PHP_URL_PATH);
         $filename  = pathinfo($path, PATHINFO_FILENAME);
         $extension = pathinfo($path, PATHINFO_EXTENSION);
 

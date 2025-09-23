@@ -9,7 +9,7 @@ foreach ($records as $email) : ?>
         <td class="title column-title has-row-actions column-primary page-title">
             <strong><a href="<?php echo esc_url($email->admin_url) ?>"><?php echo wp_kses_post($email->title); ?></a></strong>
             <div class="row-actions">
-                <span class="edit"><a href="<?php echo esc_url($email->admin_url) ?>"><?php echo esc_html('Edit', 'memberpress-courses' ) ?></a></span>
+                <span class="edit"><a href="<?php echo esc_url($email->admin_url) ?>"><?php echo esc_html('Edit', 'memberpress-courses') ?></a></span>
             </div>
         </td>
         <td><?php echo esc_html($email->type); ?></td>

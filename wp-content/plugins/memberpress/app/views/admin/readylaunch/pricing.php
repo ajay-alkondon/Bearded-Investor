@@ -22,7 +22,7 @@
           <td colspan="2">
           <label class="mepr-modal-options-pane-label" for="<?php echo esc_attr($mepr_options->design_pricing_title_str); ?>">
             <span>
-            <?php _e('Page Title', 'memberpress'); ?>
+            <?php esc_html_e('Page Title', 'memberpress'); ?>
             </span>
           </label>
           <input id="<?php echo esc_attr($mepr_options->design_pricing_title_str); ?>" name="<?php echo esc_attr($mepr_options->design_pricing_title_str); ?>" class="" type="text"
@@ -35,7 +35,7 @@
           <td colspan="2">
           <label class="mepr-modal-options-pane-label" for="<?php echo esc_attr($mepr_options->design_pricing_cta_color_str); ?>">
             <span>
-            <?php _e('CTA Button Color', 'memberpress'); ?>
+            <?php esc_html_e('CTA Button Color', 'memberpress'); ?>
             </span>
           </label>
           <input type="text" name="<?php echo esc_attr($mepr_options->design_pricing_cta_color_str); ?>"
@@ -48,7 +48,7 @@
           <td colspan="2">
           <label class="mepr-modal-options-pane-label" for="<?php echo esc_attr($mepr_options->design_pricing_subheadline_str); ?>">
             <span>
-            <?php _e('Subheadline', 'memberpress'); ?>
+            <?php esc_html_e('Subheadline', 'memberpress'); ?>
             </span>
           </label>
           <?php

@@ -5,7 +5,7 @@ License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: SEO, XML sitemap, Content analysis, Readability, Schema
 Tested up to: 6.8
-Stable tag: 25.6
+Stable tag: 26.0
 Requires PHP: 7.4
 
 Improve your SEO with real-time feedback, schema, and clear guidance. Upgrade for AI tools, Google Docs integration, and 24/7 support, no hidden fees.
@@ -197,41 +197,41 @@ Your question has most likely been answered on our help center: [yoast.com/help/
 
 == Changelog ==
 
-= 25.6 =
+= 26.0 =
 
-Release date: 2025-07-29
+Release date: 2025-09-23
 
-Yoast SEO 25.6 adds enhancements to the llms.txt feature, introducing manual personalization. [Read the release post here](https://yoa.st/release-29-7-25)!
-
-#### Enhancements
-
-* Adds a free preview of the AI features from Yoast SEO Premium.
-* Introduces a way to manually select the pages to be included in the llms.txt file.
-
-#### Bugfixes
-
-* Fixes a bug where the icon on search appearance would not be aligned when on a right-to-left locale.
-
-= 25.5 =
-
-Release date: 2025-07-15
-
-Yoast SEO 25.5 brings more enhancements and bugfixes. [Find more information about our software releases and updates here](https://yoa.st/releases).
+Yoast SEO 26.0 brings more enhancements and bugfixes. [Find more information about our software releases and updates here](https://yoa.st/releases).
 
 #### Enhancements
 
-* Enhances the UX of the llms.txt feature by informing users about potential issues with generating the file via Yoast’s alert center.
-* Changes post lists in the llms.txt file to use canonical URLs.
+* Opens the `Advanced` Settings' section when clicking the `Customize llms.txt file` button.
 
 #### Bugfixes
 
-* Fixes a bug where a request limit warning would be shown in the Semrush related keyphrases when no warning was applicable.
+* Fixes a bug where a string in the AI Generate usage counter tooltip was missing in RTL languages.
 
 #### Other
 
-* Adds an announcement for the Google Docs add-on.
-* Changes the `Upgrades` page to a `Plans` page.
-* Removes redundant flushing of cache groups when incoming links for posts change.
+* Adds an introduction which would show after 14 days of the plugin activation or update.
+* Adds safety check when accessing an array to avoid PHP warnings when getting the upgrade campaign for Wincher integration. Props to [@bor0](https://github.com/bor0).
+* Allow changing the main image ID through a filter `wpseo_schema_main_image_id`. Props to [@JoryHogeveen](https://github.com/JoryHogeveen).
+* Ensures compatibility with the recent Wincher API changes.
+
+= 25.9 =
+
+Release date: 2025-09-09
+
+Yoast SEO 25.9 brings more enhancements and bugfixes. [Find more information about our software releases and updates here](https://yoa.st/releases).
+
+#### Enhancements
+
+* Improves the UX of the llms.txt feature by displaying errors with generating the llms.txt file in the relevant settings page.
+* Improves the UX of onboarding new users by preventing irrelevant modals from displaying in the First Time Configuration.
+
+#### Other
+
+* Updates the copy of the consent modal for using the Yoast AI features.
 
 = Earlier versions =
 For the changelog of earlier versions, please refer to [the changelog on yoast.com](https://yoa.st/yoast-seo-changelog).

@@ -32,4 +32,4 @@
     </div>
   </div>
 </div>
-<?php MeprHooks::do_action('mepr-unauthorized-message-options', $unauthorized_message_type, $unauthorized_message); ?>
+<?php MeprHooks::do_action('mepr_unauthorized_message_options', $unauthorized_message_type, $unauthorized_message); ?>

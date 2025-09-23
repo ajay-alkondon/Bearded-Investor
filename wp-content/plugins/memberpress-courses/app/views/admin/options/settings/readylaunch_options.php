@@ -1,5 +1,8 @@
 <?php
-use memberpress\courses\helpers; ?>
+
+use memberpress\courses\helpers;
+
+?>
 <div x-show="courses.openModal" class="mepr_modal" aria-labelledby="mepr-courses-modal" id="mepr-courses-modal" role="dialog" aria-modal="true" x-cloak>
   <div class="mepr_modal__overlay"></div>
   <div class="mepr_modal__content_wrapper">
@@ -20,9 +23,9 @@ use memberpress\courses\helpers; ?>
                     <span class="mepr-modal-options-pane-label"><?php esc_html_e('Brand Color', 'memberpress-courses'); ?></span>
                     <?php
                     helpers\App::info_tooltip(
-                      'mpcs-complete-link-css',
-                      esc_html__('Brand Color', 'memberpress-courses'),
-                      esc_html__('Use this field to change Navbar background color', 'memberpress-courses')
+                        'mpcs-complete-link-css',
+                        esc_html__('Brand Color', 'memberpress-courses'),
+                        esc_html__('Use this field to change Navbar background color', 'memberpress-courses')
                     );
                     ?>
                   </label>
@@ -37,9 +40,9 @@ use memberpress\courses\helpers; ?>
                     <span class="mepr-modal-options-pane-label"><?php esc_html_e('Accent Color', 'memberpress-courses'); ?></span>
                     <?php
                     helpers\App::info_tooltip(
-                      'mpcs-complete-link-css',
-                      __('Accent Color', 'memberpress-courses'),
-                      __('Use this field to change accent color', 'memberpress-courses')
+                        'mpcs-complete-link-css',
+                        __('Accent Color', 'memberpress-courses'),
+                        __('Use this field to change accent color', 'memberpress-courses')
                     );
                     ?>
                   </label>
@@ -55,13 +58,13 @@ use memberpress\courses\helpers; ?>
                       <?php _e('Progress Color', 'memberpress-courses'); ?>
                     </span>
                     <?php helpers\App::info_tooltip(
-                      'mpcs-progress-color',
-                      __('Progress Color', 'memberpress-courses'),
-                      __('Use this field to change progress color.', 'memberpress-courses')
+                        'mpcs-progress-color',
+                        __('Progress Color', 'memberpress-courses'),
+                        __('Use this field to change progress color.', 'memberpress-courses')
                     );
-                    ?>
+?>
                   </label>
-                  <input name="mpcs-options[progress-color]" class="mpcs-color-field" type="text" value="<?php echo esc_attr(helpers\Options::val($courses_options, 'progress-color', '#1da69a')); ?>" data-default-color="#1da69a" />
+                  <input name="mpcs-options[progress-color]" class="mpcs-color-field" type="text" value="<?php echo esc_attr(helpers\Options::val($courses_options, 'progress-color', '#198077')); ?>" data-default-color="#198077" />
                 </td>
               </tr>
 
@@ -72,11 +75,11 @@ use memberpress\courses\helpers; ?>
                       <?php _e('Menu Text Color', 'memberpress-courses'); ?>
                     </span>
                     <?php helpers\App::info_tooltip(
-                      'mpcs-menu-text-color',
-                      __('Menu Text Color', 'memberpress-courses'),
-                      __('Use this field to change text color of menu items.', 'memberpress-courses')
+                        'mpcs-menu-text-color',
+                        __('Menu Text Color', 'memberpress-courses'),
+                        __('Use this field to change text color of menu items.', 'memberpress-courses')
                     );
-                    ?>
+?>
                   </label>
                   <input name="mpcs-options[menu-text-color]" class="mpcs-color-field" type="text" value="<?php echo esc_attr(helpers\Options::val($courses_options, 'menu-text-color', '#ffffff')); ?>" data-default-color="#ffffff" />
                 </td>
@@ -89,11 +92,11 @@ use memberpress\courses\helpers; ?>
                       <?php _e('Logo', 'memberpress-courses'); ?>
                     </span>
                     <?php helpers\App::info_tooltip(
-                      'mpcs-complete-link-css',
-                      __('Logo', 'memberpress-courses'),
-                      __('Use this field to add custom logo to your classroom header.', 'memberpress-courses')
+                        'mpcs-complete-link-css',
+                        __('Logo', 'memberpress-courses'),
+                        __('Use this field to add custom logo to your classroom header.', 'memberpress-courses')
                     );
-                    ?>
+?>
                   </label>
 
 
@@ -158,11 +161,11 @@ use memberpress\courses\helpers; ?>
                       <?php esc_html_e('Lesson Button Location', 'memberpress-courses'); ?>
                     </span>
                     <?php helpers\App::info_tooltip(
-                      'mpcs-lesson-button-location',
-                      __('Lesson Button Location', 'memberpress-courses'),
-                      __('Choose where to position the continue/back buttons when viewing a lesson.', 'memberpress-courses')
+                        'mpcs-lesson-button-location',
+                        __('Lesson Button Location', 'memberpress-courses'),
+                        __('Choose where to position the continue/back buttons when viewing a lesson.', 'memberpress-courses')
                     );
-                    ?>
+?>
                   </label>
 
                   <select id="mpcs-options[lesson-button-location]" name="mpcs-options[lesson-button-location]">
@@ -184,11 +187,11 @@ use memberpress\courses\helpers; ?>
                       <?php esc_html_e('Complete Link CSS', 'memberpress-courses'); ?>
                     </span>
                     <?php helpers\App::info_tooltip(
-                      'mpcs-complete-link-css',
-                      __('Complete Link CSS Classes', 'memberpress-courses'),
-                      __('Use this field to add custom CSS classes to the "Complete Lesson/Section/Course" link in each of your Lessons.', 'memberpress-courses')
+                        'mpcs-complete-link-css',
+                        __('Complete Link CSS Classes', 'memberpress-courses'),
+                        __('Use this field to add custom CSS classes to the "Complete Lesson/Section/Course" link in each of your Lessons.', 'memberpress-courses')
                     );
-                    ?>
+?>
                   </label>
 
                   <input type="text" name="mpcs-options[complete-link-css]" class="regular-text" value="<?php echo esc_attr(helpers\Options::val($courses_options, 'complete-link-css')); ?>" />
@@ -202,11 +205,11 @@ use memberpress\courses\helpers; ?>
                       <?php _e('Previous Link CSS', 'memberpress-courses'); ?>
                     </span>
                     <?php helpers\App::info_tooltip(
-                      'mpcs-previous-link-css',
-                      __('Previous Lesson/Section Link CSS Classes', 'memberpress-courses'),
-                      __('Use this field to add custom CSS classes to the "Previous Lesson/Section" link in each of your Lessons.', 'memberpress-courses')
+                        'mpcs-previous-link-css',
+                        __('Previous Lesson/Section Link CSS Classes', 'memberpress-courses'),
+                        __('Use this field to add custom CSS classes to the "Previous Lesson/Section" link in each of your Lessons.', 'memberpress-courses')
                     );
-                    ?>
+?>
                   </label>
                   <input type="text" name="mpcs-options[previous-link-css]" class="regular-text" value="<?php echo esc_attr(helpers\Options::val($courses_options, 'previous-link-css')); ?>" />
                 </td>
@@ -219,11 +222,11 @@ use memberpress\courses\helpers; ?>
                       <?php _e('Breadcrumb Link CSS', 'memberpress-courses'); ?>
                     </span>
                     <?php helpers\App::info_tooltip(
-                      'mpcs-breadcrumb-link-css',
-                      __('Breadcrumb Link CSS Classes', 'memberpress-courses'),
-                      __('Use this field to add custom CSS classes to the breadcrumb links in each of your Lessons.', 'memberpress-courses')
+                        'mpcs-breadcrumb-link-css',
+                        __('Breadcrumb Link CSS Classes', 'memberpress-courses'),
+                        __('Use this field to add custom CSS classes to the breadcrumb links in each of your Lessons.', 'memberpress-courses')
                     );
-                    ?>
+?>
                   </label>
                   <input type="text" name="mpcs-options[breadcrumb-link-css]" class="regular-text" value="<?php echo esc_attr(helpers\Options::val($courses_options, 'breadcrumb-link-css')); ?>" />
                 </td>
@@ -235,7 +238,7 @@ use memberpress\courses\helpers; ?>
           </table>
 
         </div>
-        <button class="mepr_modal__button button button-primary"><?php echo esc_html_x( 'Update', 'ui', 'memberpress-courses' ); ?></button>
+        <button class="mepr_modal__button button button-primary"><?php echo esc_html_x('Update', 'ui', 'memberpress-courses'); ?></button>
       </div>
     </div>
   </div>

@@ -44,11 +44,11 @@ class MeprApiCtrl extends MeprBaseCtrl
             $struct['transactions'][] = $txn_struct;
         }
 
-        if (!isset($_REQUEST['fmt']) or $_REQUEST['fmt'] == 'json') {
+        if (!isset($_REQUEST['fmt']) or $_REQUEST['fmt'] === 'json') {
             $this->render_json($struct, $filename);
-        } elseif ($_REQUEST['fmt'] == 'xml') {
+        } elseif ($_REQUEST['fmt'] === 'xml') {
             $this->render_xml($struct, $filename);
-        } elseif ($_REQUEST['fmt'] == 'csv') {
+        } elseif ($_REQUEST['fmt'] === 'csv') {
             $csv_struct = [];
 
             if (empty($txns)) {
@@ -90,6 +90,7 @@ class MeprApiCtrl extends MeprBaseCtrl
         if (!isset($_SERVER['PHP_AUTH_USER'])) {
             $this->unauthorized(__('No credentials have been provided.', 'memberpress'));
         } else {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $user = wp_authenticate($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
 
             if (is_wp_error($user)) {

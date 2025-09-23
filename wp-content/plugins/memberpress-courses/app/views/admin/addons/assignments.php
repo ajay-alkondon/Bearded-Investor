@@ -1,4 +1,5 @@
 <?php
+
 use memberpress\courses as base;
 
 if (!defined('ABSPATH')) {
@@ -18,7 +19,7 @@ if (!defined('ABSPATH')) {
     </div>
 
     <div class="mepr-sister-plugin-description">
-      <?php esc_html_e("The Assignments add-on within MemberPress Courses is designed to invigorate your teaching methods and provide your students with a richer, more interactive learning experience.", 'memberpress-courses'); ?>
+      <?php esc_html_e('The Assignments add-on within MemberPress Courses is designed to invigorate your teaching methods and provide your students with a richer, more interactive learning experience.', 'memberpress-courses'); ?>
     </div>
 
     <div class="mepr-sister-plugin-info mepr-clearfix">
@@ -29,23 +30,23 @@ if (!defined('ABSPATH')) {
       </div>
       <div class="mepr-sister-plugin-info-features">
         <?php
-        $bullets = array(
+        $bullets = [
             esc_html__('Essay Writing', 'memberpress-courses'),
             esc_html__('Document Uploads', 'memberpress-courses'),
             esc_html__('Video Submissions', 'memberpress-courses'),
             esc_html__('URL Submissions', 'memberpress-courses'),
             esc_html__('Diverse Assignment Types', 'memberpress-courses'),
-            esc_html__('Interactive Learning', 'memberpress-courses')
-        );
+            esc_html__('Interactive Learning', 'memberpress-courses'),
+        ];
         ?>
         <ul>
           <?php
-          foreach ($bullets as $bullet) {
-              echo '<li style="margin-bottom: 5px; font-size: 13px;"><i class="mp-icon mp-icon-right-big"></i>';
-              echo esc_html($bullet);
-              echo '</li>';
-          }
-          ?>
+            foreach ($bullets as $bullet) {
+                echo '<li style="margin-bottom: 5px; font-size: 13px;"><i class="mp-icon mp-icon-right-big"></i>';
+                echo esc_html($bullet);
+                echo '</li>';
+            }
+            ?>
         </ul>
       </div>
     </div>

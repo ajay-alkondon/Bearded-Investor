@@ -35,7 +35,7 @@
   color: #fff; }
 
 .mpcs-button .is-gray {
-  background-color: #787878;
+  background-color: #767676;
   border: 1px solid #4d4c4c;
   color: #fff; }
 
@@ -241,6 +241,11 @@ a.mpcs-bookmark-link:hover,
 a.mpcs-bookmark-link:hover .mpcs-bookmark-link-icon,
 a.mpcs-bookmark-link:hover .mpcs-bookmark-link-title {
   /* color: #68C976; */ }
+
+a.mpcs-bookmark-link:focus-visible .mpcs-bookmark-link-title {
+  outline: 1px solid #06429e;
+  outline-offset: 2px;
+}
 
 .mpcs-reset-course-progress, .mpcs-quiz-attempt{
   text-decoration: none;

@@ -3,7 +3,7 @@
 } ?>
 
 <div class="wrap">
-  <h2><?php _e('Edit Subscription', 'memberpress'); ?></h2>
+  <h2><?php esc_html_e('Edit Subscription', 'memberpress'); ?></h2>
 
   <?php MeprView::render('/admin/errors', get_defined_vars()); ?>
 
@@ -17,14 +17,14 @@
       <input type="hidden" name="limit_cycles_action" value="<?php echo $sub->limit_cycles_action; ?>" />
       <table class="form-table">
         <tbody>
-          <tr valign="top"><th scope="row"><label><?php _e('Subscription ID:', 'memberpress'); ?></label></th><td><?php echo $sub->id; ?></td></tr>
+          <tr valign="top"><th scope="row"><label><?php esc_html_e('Subscription ID:', 'memberpress'); ?></label></th><td><?php echo $sub->id; ?></td></tr>
           <?php MeprHooks::do_action('mepr_edit_subscription_table_before', $sub); ?>
           <?php MeprView::render('/admin/subscriptions/form', get_defined_vars()); ?>
           <?php MeprHooks::do_action('mepr_edit_subscription_table_after', $sub); ?>
         </tbody>
       </table>
       <p class="submit">
-        <input type="submit" id="submit" class="button button-primary" value="<?php _e('Update', 'memberpress'); ?>" />
+        <input type="submit" id="submit" class="button button-primary" value="<?php esc_attr_e('Update', 'memberpress'); ?>" />
       </p>
     </form>
   </div>

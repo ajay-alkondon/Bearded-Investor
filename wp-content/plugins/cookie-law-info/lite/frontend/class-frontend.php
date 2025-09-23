@@ -210,17 +210,17 @@ class Frontend {
 		}
 		if ( true === $this->gcm_settings->is_gcm_enabled() ) {
 			$gcm = $this->get_gcm_data();
-			$gcm_json = json_encode($gcm);
+			$gcm_json = wp_json_encode($gcm);
 			?>
 <script id="cookie-law-info-gcm-var-js">
-var _ckyGcm = <?php echo $gcm_json; ?>;
+var _ckyGcm = <?php echo $gcm_json; //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+?>
 </script>
 <?php
 			$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 			$script_url = plugin_dir_url( __FILE__ ) . 'js/gcm' . $suffix . '.js'; 
 ?>
-<script id="cookie-law-info-gcm-js" type="text/javascript" src="<?php echo esc_url( $script_url ); ?>"></script>
-<?php
+<script id="cookie-law-info-gcm-js" type="text/javascript" src="<?php echo esc_url( $script_url ); ?>"></script> <?php //phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 		}
 		echo '<script id="cookieyes" type="text/javascript" src="' . esc_url( $this->settings->get_script_url() ) . '"></script>'; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 	}

@@ -167,6 +167,18 @@ class Api extends Rest_Controller {
 		);
 		register_rest_route(
 			$this->namespace,
+			'/' . $this->rest_base . '/connect_notice',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_connect_notice' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => $this->get_collection_params(),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
 			'/' . $this->rest_base . '/reinstall',
 			array(
 				array(
@@ -340,6 +352,21 @@ class Api extends Rest_Controller {
 		$expand   = isset( $request['expand'] ) ? boolval( $request['expand'] ) : true;
 
 		Connect_Notice::get_instance()->save_state( $expand );
+		$response['status'] = true;
+		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Update the status of connect notice.
+	 *
+	 * @param object $request Request.
+	 * @return WP_Error|WP_REST_Response
+	 */
+
+	public function update_connect_notice( $request ) {
+		$response = array( 'status' => false );
+		$connect_notice = isset( $request['connect_notice'] ) ? boolval( $request['connect_notice'] ) : true;
+		Connect_Notice::get_instance()->save_connect_notice( $connect_notice );
 		$response['status'] = true;
 		return rest_ensure_response( $response );
 	}

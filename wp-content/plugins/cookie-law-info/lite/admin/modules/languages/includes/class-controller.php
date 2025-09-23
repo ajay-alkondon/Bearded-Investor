@@ -296,7 +296,7 @@ class Controller extends Cloud{
         if ( !is_wp_error( $tmpfile ) ) {
             //remove current file
             if ( file_exists( $file ) && strpos( realpath( $file ), realpath( $upload_dir ) ) === 0 ) {
-                unlink( $file );
+                wp_delete_file( $file );
             }
 
             //in case the server prevents deletion, we check it again.
@@ -308,7 +308,7 @@ class Controller extends Cloud{
         }
 
         if ( is_string( $tmpfile ) && file_exists( $tmpfile ) && strpos( realpath( $tmpfile ), realpath( sys_get_temp_dir() ) ) === 0 ) {
-            unlink( $tmpfile );
+            wp_delete_file( $tmpfile );
         }
     }
 

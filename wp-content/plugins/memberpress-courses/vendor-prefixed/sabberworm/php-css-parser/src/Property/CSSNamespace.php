@@ -9,12 +9,16 @@ namespace memberpress\courses\Sabberworm\CSS\Property;
 
 use memberpress\courses\Sabberworm\CSS\Comment\Comment;
 use memberpress\courses\Sabberworm\CSS\OutputFormat;
+use memberpress\courses\Sabberworm\CSS\Position\Position;
+use memberpress\courses\Sabberworm\CSS\Position\Positionable;
 
 /**
  * `CSSNamespace` represents an `@namespace` rule.
  */
-class CSSNamespace implements AtRule
+class CSSNamespace implements AtRule, Positionable
 {
+    use Position;
+
     /**
      * @var string
      */
@@ -32,6 +36,8 @@ class CSSNamespace implements AtRule
 
     /**
      * @var array<array-key, Comment>
+     *
+     * @internal since 8.8.0
      */
     protected $aComments;
 
@@ -44,20 +50,14 @@ class CSSNamespace implements AtRule
     {
         $this->mUrl = $mUrl;
         $this->sPrefix = $sPrefix;
-        $this->iLineNo = $iLineNo;
+        $this->setPosition($iLineNo);
         $this->aComments = [];
     }
 
     /**
-     * @return int
-     */
-    public function getLineNo()
-    {
-        return $this->iLineNo;
-    }
-
-    /**
      * @return string
+     *
+     * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
     public function __toString()
     {

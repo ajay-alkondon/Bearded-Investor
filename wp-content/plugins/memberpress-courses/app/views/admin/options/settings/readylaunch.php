@@ -1,9 +1,11 @@
-<?php if (!defined('ABSPATH')) { die('You are not allowed to call this page directly.'); } ?>
+<?php if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+} ?>
  <tr>
   <td>
-    <label class="mpcs-switch">
+    <label class="switch">
       <input x-model="courses.enableTemplate" type="checkbox" id="mpcs_options_classroom_mode" name="mpcs-options[classroom-mode]" value="1" class="mepr-template-enablers">
-      <span class="mpcs-slider round"></span>
+      <span class="slider round"></span>
     </label>
   </td>
 

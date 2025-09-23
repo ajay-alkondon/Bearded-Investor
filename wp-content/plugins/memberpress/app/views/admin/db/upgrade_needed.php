@@ -8,17 +8,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Type" content="<?php bloginfo('html_type'); ?>; charset=<?php echo get_option('blog_charset'); ?>" />
   <meta name="robots" content="noindex,nofollow" />
-  <title><?php _e('MemberPress needs to upgrade your database', 'memberpress'); ?></title>
-  <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-  <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-  <!-- Optional theme -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
-  <!-- Latest compiled and minified JavaScript -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+  <title><?php esc_html_e('MemberPress needs to upgrade your database', 'memberpress'); ?></title>
+  <?php
+    // Enqueue Bootstrap CSS.
+    wp_register_style('memberpress-bootstrap-css', MEPR_CSS_URL . '/vendor/bootstrap-3.3.6.min.css', [], '3.3.6');
+    // Optional theme.
+    wp_register_style('memberpress-bootstrap-theme', MEPR_CSS_URL . '/vendor/bootstrap-theme-3.3.6.min.css', ['memberpress-bootstrap-css'], '3.3.6');
+
+    // Load compatible version of jQuery for Bootstrap 3.3.6.
+    wp_register_script('memberpress-jquery', MEPR_JS_URL . '/vendor/jquery-1.12.4.min.js', [], '1.12.4', false);
+
+    // Enqueue Bootstrap JS.
+    wp_register_script('memberpress-bootstrap-js', MEPR_JS_URL . '/vendor/bootstrap-3.3.6.min.js', ['memberpress-jquery'], '3.3.6', false);
+
+    wp_print_styles(['memberpress-bootstrap-css', 'memberpress-bootstrap-theme']);
+    wp_print_scripts(['memberpress-jquery', 'memberpress-bootstrap-js']);
+    ?>
   <style>
-    body { background-color: #dedede; }
-    p { font-size: 120%; }
+    body { background-color: #dedede; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    p { font-size: 120%; font-weight: 400; }
+    h2 { font-size: 30px; font-weight: 500; }
+    h3 { font-size: 24px; font-weight: 500; }
+    a { text-decoration: none; }
   </style>
   <script>
     $(document).ready(function() {
@@ -65,7 +76,7 @@
         var wn = $('.progress-bar').text();
 
         if(wn=='' || wn==' ') {
-          $('.progress-bar').text('<?php _e('Upgrading...', 'memberpress'); ?>');
+          $('.progress-bar').text('<?php esc_html_e('Upgrading...', 'memberpress'); ?>');
         }
         else {
           $('.progress-bar').text(' ');
@@ -168,11 +179,11 @@
     <div class="row">
       <div class="col-md-10 col-md-offset-1">
         <div class="panel panel-primary">
-          <div class="panel-heading"><h2><?php _e('MemberPress needs to upgrade your database', 'memberpress'); ?></h2></div>
+          <div class="panel-heading"><h2><?php esc_html_e('MemberPress needs to upgrade your database', 'memberpress'); ?></h2></div>
           <div class="panel-body">
             <p>&nbsp;</p>
-            <p><?php _e('Before starting the upgrade process <strong>make sure your <em>database is backed up</em></strong>.', 'memberpress'); ?></p>
-            <p><?php _e('And please be patient, the upgrade process <em>may take a few minutes</em>.', 'memberpress'); ?></p>
+            <p><?php esc_html_e('Before starting the upgrade process <strong>make sure your <em>database is backed up</em></strong>.', 'memberpress'); ?></p>
+            <p><?php esc_html_e('And please be patient, the upgrade process <em>may take a few minutes</em>.', 'memberpress'); ?></p>
             <p>&nbsp;</p>
             <?php
               $update_ctrl = new MeprUpdateCtrl();
@@ -183,11 +194,11 @@
                   ['db_upgrade', 'mepr_db_upgrade_nonce'],
                   ['action' => 'mepr_db_upgrade']
               );
-                ?>"><?php _e('Upgrade', 'memberpress'); ?></a></p> -->
+                ?>"><?php esc_html_e('Upgrade', 'memberpress'); ?></a></p> -->
             <!-- Button trigger modal -->
             <p>
-              <button type="button" class="btn btn-primary btn-lg" id="upgrade_db_trigger"><?php _e('Upgrade', 'memberpress'); ?></button> or
-              <a href="<?php echo $update_ctrl->rollback_url(); ?>" onclick="return confirm('<?php _e('Are you sure? This will cancel the upgrade and roll MemberPress back to the previous version.', 'memberpress'); ?>');" target="_blank"><?php _e('Cancel', 'memberpress'); ?></a>
+              <button type="button" class="btn btn-primary btn-lg" id="upgrade_db_trigger"><?php esc_html_e('Upgrade', 'memberpress'); ?></button> or
+              <a href="<?php echo $update_ctrl->rollback_url(); ?>" onclick="return confirm('<?php echo esc_js(__('Are you sure? This will cancel the upgrade and roll MemberPress back to the previous version.', 'memberpress')); ?>');" target="_blank"><?php esc_html_e('Cancel', 'memberpress'); ?></a>
             </p>
           </div>
         </div>
@@ -198,15 +209,15 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-body">
-            <h2><?php _e('Your database is being upgraded', 'memberpress'); ?></h2>
-            <p><?php _e('Please be patient this could take a few minutes.', 'memberpress'); ?></p>
+            <h2><?php esc_html_e('Your database is being upgraded', 'memberpress'); ?></h2>
+            <p><?php esc_html_e('Please be patient this could take a few minutes.', 'memberpress'); ?></p>
             <p>&nbsp;</p>
             <div class="progress">
               <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"> </div>
             </div>
             <p class="progress-bar-status"> </p>
             <br/><br/>
-            <a href="<?php echo $update_ctrl->rollback_url(); ?>" onclick="return confirm('<?php _e('Are you sure? This will abort the upgrade and roll MemberPress back to the previous version.', 'memberpress'); ?>');" target="_blank"><?php _e('Cancel', 'memberpress'); ?></a>
+            <a href="<?php echo $update_ctrl->rollback_url(); ?>" onclick="return confirm('<?php echo esc_js(__('Are you sure? This will abort the upgrade and roll MemberPress back to the previous version.', 'memberpress')); ?>');" target="_blank"><?php esc_html_e('Cancel', 'memberpress'); ?></a>
           </div>
         </div>
       </div>

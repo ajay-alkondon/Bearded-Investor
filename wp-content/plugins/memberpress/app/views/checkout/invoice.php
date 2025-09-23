@@ -4,24 +4,25 @@
 <div class="mp_wrapper mp_invoice">
   <?php
     if (isset($_POST['errors']) && isset($_GET['action']) && $_GET['action'] === 'checkout') {
-        $errors = array_map('sanitize_text_field', $_POST['errors']);
+        // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+        $errors = array_map('sanitize_text_field', wp_unslash($_POST['errors']));
         MeprView::render('/shared/errors', get_defined_vars());
     }
     ?>
   <?php if (isset($sub_price_str)) : ?>
   <div class="mp_price_str">
-    <strong><?php _ex('Terms:', 'ui', 'memberpress'); ?></strong> <?php echo $sub_price_str; ?>
+    <strong><?php echo esc_html_x('Terms:', 'ui', 'memberpress'); ?></strong> <?php echo $sub_price_str; ?>
   </div>
   <div class="mp-spacer">&nbsp;</div>
   <?php endif; ?>
   <table class="mp-table">
     <thead>
       <tr>
-        <th><?php _ex('Description', 'ui', 'memberpress'); ?></th>
+        <th><?php echo esc_html_x('Description', 'ui', 'memberpress'); ?></th>
         <?php if ($show_quantity) : ?>
-          <th><?php _ex('Quantity', 'ui', 'memberpress'); ?></th>
+          <th><?php echo esc_html_x('Quantity', 'ui', 'memberpress'); ?></th>
         <?php endif; ?>
-        <th class="mp-currency-cell"><?php _ex('Amount', 'ui', 'memberpress'); ?></th>
+        <th class="mp-currency-cell"><?php echo esc_html_x('Amount', 'ui', 'memberpress'); ?></th>
       </tr>
     </thead>
     <tbody>
@@ -34,7 +35,7 @@
           <td class="mp-currency-cell"><?php echo MeprAppHelper::format_currency($item['amount'], true, false); ?></td>
         </tr>
       <?php endforeach; ?>
-      <?php if (isset($invoice['coupon']) && !empty($invoice['coupon']) && $invoice['coupon']['id'] != 0) : ?>
+      <?php if (isset($invoice['coupon']) && !empty($invoice['coupon']) && (int) $invoice['coupon']['id'] !== 0) : ?>
         <tr>
           <td><?php echo $invoice['coupon']['desc']; ?></td>
             <?php if ($show_quantity) : ?>
@@ -56,7 +57,7 @@
             <?php if ($show_quantity) : ?>
             <th>&nbsp;</th>
             <?php endif; ?>
-          <th><?php _ex('Sub-Total', 'ui', 'memberpress'); ?></th>
+          <th><?php echo esc_html_x('Sub-Total', 'ui', 'memberpress'); ?></th>
           <th class="mp-currency-cell"><?php echo MeprAppHelper::format_currency($subtotal, true, false); ?></th>
         </tr>
         <tr>
@@ -71,7 +72,7 @@
         <?php if ($show_quantity) : ?>
           <th>&nbsp;</th>
         <?php endif; ?>
-        <th><?php _ex('Total', 'ui', 'memberpress'); ?></th>
+        <th><?php echo esc_html_x('Total', 'ui', 'memberpress'); ?></th>
         <th class="mp-currency-cell"><?php echo MeprAppHelper::format_currency($total, true, false); ?></th>
       </tr>
     </tfoot>

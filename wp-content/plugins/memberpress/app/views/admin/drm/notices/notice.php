@@ -2,7 +2,7 @@
     die('You are not allowed to call this page directly.');
 }
 $notice = MeprView::get_string(MeprHooks::apply_filters('mepr_drm_admin_notice_view_path', '/admin/drm/notices/' . $drm_info['notice_view'], $drm_info['notice_view']), get_defined_vars());
-if ($notice == '') {
+if ($notice === '') {
     return;
 }
 ?>

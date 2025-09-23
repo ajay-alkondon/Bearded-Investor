@@ -1,6 +1,6 @@
 $button-link-color: #fff;
 $primary-color: #2c3637;
-$green: #1fa69a;
+$green: #008579;
 
 @import "../../node_modules/spectre.css/src/_variables.scss";
 @import "../../node_modules/spectre.css/src/_mixins.scss";
@@ -63,11 +63,13 @@ body {
     width: 100%;
   }
 
-  button:not(#mpcs-classroom-previous-lesson-link) {
+  button:not(#mpcs-classroom-previous-lesson-link),
+  #mpcs-lesson-navigation a:not(#mpcs-classroom-previous-lesson-link) {
     @include button-variant($green);
   }
 
-  button#mpcs-classroom-previous-lesson-link {
+  button#mpcs-classroom-previous-lesson-link,
+  #mpcs-lesson-navigation a#mpcs-classroom-previous-lesson-link {
     @include button-variant($primary-color);
   }
 
@@ -87,6 +89,10 @@ body {
 
     &.nav-back {
       font-size: 1rem;
+
+      &:focus-visible i {
+        outline: 1px dashed #44b5ee;
+      }
     }
   }
 
@@ -129,19 +135,53 @@ body {
   }
 }
 
+#mpcs-navbar .navbar-section button.dropdown-toggle:not(#mpcs-classroom-previous-lesson-link) {
+  background: transparent;
+  border-color: transparent;
+}
+
 div#mpcs-lesson-navigation {
-  button {
+  button,
+  a {
     border: 0;
     cursor: pointer;
     padding: 15px 25px;
   }
 
-  button:not(#previous_lesson_link) {
+  button:not(#previous_lesson_link),
+  a:not(#previous_lesson_link),
+  a:not(#mpcs-classroom-previous-lesson-link) {
     @include button-variant($green);
   }
 
-  button#next_lesson_link {
+  button#next_lesson_link,
+  a#next_lesson_link,
+  a#mpcs-classroom-next-lesson-link {
     @include button-variant($primary-color);
+  }
+}
+
+#mpcs-lesson-navigation {
+  > a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #fff;
+
+    &:hover {
+      cursor: pointer;
+      text-decoration: none;
+    }
+  }
+
+  > a:not(#mpcs-classroom-previous-lesson-link) {
+    background: $green;
+
+    &:hover {
+      background: lighten($green, 3%);
+    }
   }
 }
 
@@ -162,7 +202,7 @@ div#mpcs-lesson-navigation {
   .user-progress {
     text-align: center;
     white-space: nowrap;
-    background-color: #1da69a;
+    background-color: #198077;
     height: 100%;
     display: block;
     width: 0%;
@@ -170,7 +210,7 @@ div#mpcs-lesson-navigation {
   }
 
   .progress-text {
-    color: #1da69a;
+    color: #198077;
     text-align: center;
 
     span {
@@ -183,8 +223,16 @@ div#mpcs-lesson-navigation {
   }
 }
 
+.mpcs-sidebar-wrapper .widget-area {
+  padding: 2em 1em 2em;
+}
+
 .mpcs-classroom a {
   color: #007cba;
+}
+
+.mpcs-classroom a.navbar-brand.site-branding {
+  color: #fff;
 }
 
 #mpcs-sidebar-navbar .btn {
@@ -200,6 +248,17 @@ div#mpcs-lesson-navigation {
   li {
     display: inline;
   }
+}
+
+.mpcs-classroom .navbar-section .mpcs-nav-menu a:focus-visible,
+.mpcs-classroom a.navbar-brand.site-branding:focus-visible {
+  color: #007cba !important;
+  outline: 1px dashed #44b5ee;
+}
+
+#mpcs-navbar .navbar-section .dropdown.active #preview-dropdown-button,
+#mpcs-navbar .navbar-section #preview-dropdown-button:focus-visible {
+  background: #44b5ee;
 }
 
 .mpcs-nav-menu-mobile {
@@ -352,12 +411,17 @@ div#mpcs-lesson-navigation {
   .mpcs-sidebar-menu {
     a {
       padding: 0.6em 1em;
-      text-decoration: none;
       border-left: 5px solid transparent;
+      color: #0074af;
+      text-decoration: none;
 
       &.is-active {
         background: #fff;
         border-left: 5px solid #2b3637;
+      }
+
+      &:focus-visible {
+        outline: 1px dashed #44b5ee;
       }
     }
   }
@@ -382,6 +446,14 @@ div#mpcs-lesson-navigation {
   .mpcs-sidebar-content {
     overflow-y: auto;
     // height: calc(100% - 180px); now added dynamically with JS
+
+    ul, li {
+      margin: 0;
+    }
+
+    ul {
+      list-style: none;
+    }
   }
 
   .tile {
@@ -425,6 +497,10 @@ div#mpcs-lesson-navigation {
     padding: 1.5rem 3rem;
   }
 
+  h2 {
+    font-size: 2rem;
+  }
+
   .entry-title {
     i {
       position: relative;
@@ -437,6 +513,21 @@ div#mpcs-lesson-navigation {
       margin: 0;
     }
   }
+
+  .mpcs-lessons {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .mpcs-lessons li {
+    margin: 0;
+  }
+
+  .mpcs-section-title {
+    padding: 0.5rem 1rem;
+  }
+  
 
   .mepr-rl-footer-widgets {
     margin-top: 1.2rem;
@@ -577,13 +668,23 @@ div#mpcs-lesson-navigation {
 }
 
 .mpcs-section-title {
+  padding: 1em;
   background: #e8e8e8;
-  padding: 0.5em 1em;
 }
 
 .mpcs-section-title-text {
   font-size: 0.9rem;
   font-weight: bold;
+  line-height: 24px;
+}
+
+.mpcs-section button {
+  width: 100%;
+  padding: 0;
+  margin: 0; 
+  border: none;
+  background: none;
+  text-align: left;
 }
 
 .mpcs-lesson {
@@ -593,6 +694,11 @@ div#mpcs-lesson-navigation {
 
   .mpcs-lesson-button {
     margin-left: auto;
+
+    button.mpcs-button {
+      padding: 0;
+      border: none;
+    }
   }
 
   .mpcs-lesson-row-link {
@@ -605,6 +711,10 @@ div#mpcs-lesson-navigation {
 
     &:hover {
       text-decoration: none;
+    }
+
+    &:focus-visible {
+      outline: 1px dashed #44b5ee;
     }
   }
 
@@ -639,7 +749,7 @@ div#mpcs-lesson-navigation {
     i,
     a,
     >span {
-      color: #999 !important;
+      color: #707070 !important;
 
       span:hover {
         background: none;
@@ -652,7 +762,7 @@ div#mpcs-lesson-navigation {
     i,
     a,
     >span {
-      color: #999 !important;
+      color: #707070 !important;
 
       span:hover {
         background: none;
@@ -795,10 +905,25 @@ div#mpcs-lesson-navigation {
 .mpcs-course-filter {
   padding: 1.5em 0;
 
-  .btn {
+  button.btn {
+    height: 2.2rem;
     background: #fff;
     color: #66758c;
     border: 0.05rem solid #bcc3ce;
+
+    &.input-group-btn:focus-visible {
+      outline: 1px dashed #007cba;
+      border: 1px solid #007cba !important;
+    }
+  }
+
+  .input-group input[type="text"].form-input {
+    height: 2.2rem;
+
+    &:focus-visible {
+      outline: 1px dashed #007cba;
+      border: 1px solid #007cba !important;
+    }
   }
 
   .dropdown {
@@ -832,6 +957,11 @@ div#mpcs-lesson-navigation {
     .btn i {
       color: $green;
       font-weight: 500;
+    }
+
+    &.active button.dropdown-toggle {
+      border: 1px solid #007cba;
+      outline: dashed #007cba
     }
   }
 
@@ -1456,7 +1586,7 @@ li.mp_users_subscriptions_list_alt {
   cursor: pointer;
   font-size: 0.7rem;
   @include button-variant($green);
-
+  background: darken($green, 10%);
   i {
     margin-left: 8px;
 
@@ -1538,19 +1668,25 @@ li.mp_users_subscriptions_list_alt {
 }
 
 .mpcs-course-with-accordion #mpcs-main .mpcs-section-title {
-  padding: 1em;
+  padding: 0.5rem 1rem;
 }
 
 .mpcs-course-with-accordion #mpcs-main .mpcs-section-header {
-  border-bottom: 1px solid rgba(255, 255, 255, .15);
   position: relative;
+  width: 100%;
+  padding: 0;
+  border-width: 0 0 1px;
+  border-bottom: 1px solid rgba(255, 255, 255, .15);
+  text-align: left;
+  font-weight: 400;
+  color: #3b4351;
 }
 
 .mpcs-course-with-accordion #mpcs-main .mpcs-section-header:after {
   content: '';
   position: absolute;
   right: 20px;
-  top: 28px;
+  top: 20px;
   width: 0;
   height: 0;
   border-left: 6px solid transparent;
@@ -1590,6 +1726,10 @@ li.mp_users_subscriptions_list_alt {
     flex-grow: 1;
     padding: 0;
     margin-left: 1em;
+
+    h2 {
+      font-size: 16px;
+    }
   }
 }
 
@@ -1634,4 +1774,10 @@ a.text-black{
 
 .mpcs-share-tooltip {
   font-size: 13px;
+}
+
+.mpcs-instructor .tile-subtitle {
+  font-size: 16px;
+  font-family: $base-font-family;
+  font-weight: 400;
 }

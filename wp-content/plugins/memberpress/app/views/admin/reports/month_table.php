@@ -5,15 +5,15 @@
 <table class="widefat" style="margin-top:25px;">
   <thead>
     <tr>
-      <th width="15.11%"><?php _e('Date', 'memberpress'); ?></th>
-      <th width="11.11%"><?php _e('Pending', 'memberpress'); ?></th>
-      <th width="11.11%"><?php _e('Failed', 'memberpress'); ?></th>
-      <th width="11.11%"><?php _e('Complete', 'memberpress'); ?></th>
-      <th width="11.11%"><?php _e('Refunded', 'memberpress'); ?></th>
-      <th width="11.11%"><?php _e('Collected', 'memberpress'); ?></th>
-      <th width="11.11%"><?php _e('Refunded', 'memberpress'); ?></th>
-      <th width="6.11%"><?php _e('Tax', 'memberpress'); ?></th>
-      <th width="11.11%"><?php _e('Net Total', 'memberpress'); ?></th>
+      <th width="15.11%"><?php esc_html_e('Date', 'memberpress'); ?></th>
+      <th width="11.11%"><?php esc_html_e('Pending', 'memberpress'); ?></th>
+      <th width="11.11%"><?php esc_html_e('Failed', 'memberpress'); ?></th>
+      <th width="11.11%"><?php esc_html_e('Complete', 'memberpress'); ?></th>
+      <th width="11.11%"><?php esc_html_e('Refunded', 'memberpress'); ?></th>
+      <th width="11.11%"><?php esc_html_e('Collected', 'memberpress'); ?></th>
+      <th width="11.11%"><?php esc_html_e('Refunded', 'memberpress'); ?></th>
+      <th width="6.11%"><?php esc_html_e('Tax', 'memberpress'); ?></th>
+      <th width="11.11%"><?php esc_html_e('Net Total', 'memberpress'); ?></th>
     </tr>
   </thead>
   <tbody>
@@ -87,7 +87,7 @@ $tax_total += $taxes; ?></td>
     </tbody>
     <tfoot>
       <tr>
-        <th><?php _e('Totals', 'memberpress'); ?></th>
+        <th><?php esc_html_e('Totals', 'memberpress'); ?></th>
         <th><?php echo $p_total; ?></th>
         <th><?php echo $f_total; ?></th>
         <th><?php echo $c_total; ?></th>
@@ -119,7 +119,7 @@ $tax_total += $taxes; ?></td>
         ],
         true, // $include_query_string
         ['page','main-view'] // $exclude_params
-    ); ?>"><?php _e('Export as CSV', 'memberpress'); ?></a>
-  <?php MeprHooks::do_action('mepr-report-footer', 'monthly'); ?>
+    ); ?>"><?php esc_html_e('Export as CSV', 'memberpress'); ?></a>
+  <?php MeprHooks::do_action('mepr_report_footer', 'monthly'); ?>
 </div>
 

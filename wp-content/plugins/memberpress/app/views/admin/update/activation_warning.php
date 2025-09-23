@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 <?php else : ?>
     <?php
     $settings_page_url = admin_url('admin.php?page=memberpress-options');
-    if (MeprDrmHelper::is_locked()) {
+    if (class_exists('MeprDrmHelper') && MeprDrmHelper::is_locked()) {
         $settings_page_url = admin_url('admin.php?page=memberpress-drm');
     }
     ?>
@@ -27,7 +27,7 @@ if (!defined('ABSPATH')) {
             __('<b>MemberPress doesn\'t have a valid license key installed.</b> Go to the MemberPress %1$ssettings page%2$s to activate your license or go to %3$smemberpress.com%4$s to get one.', 'memberpress'),
             '<a href="' . esc_url($settings_page_url) . '">',
             '</a>',
-            '<a href="https://memberpress.com/">',
+            '<a href="' . esc_url(MeprUtils::get_link_url('home')) . '">',
             '</a>'
         );
         ?>

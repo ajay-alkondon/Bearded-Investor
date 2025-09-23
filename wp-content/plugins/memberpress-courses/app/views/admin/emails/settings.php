@@ -1,5 +1,7 @@
 <?php
+
 use memberpress\courses\helpers as helpers;
+
 ?>
 <div class="page" id="emails">
   <h3><?php esc_html_e('Send Mail From', 'memberpress-courses'); ?></h3>
@@ -32,10 +34,10 @@ use memberpress\courses\helpers as helpers;
           <label for="mpcs_options_courses_from_name">
             <?php esc_html_e('Admin Email Addresses:', 'memberpress-courses'); ?>
             <?php helpers\App::info_tooltip(
-              'mepr-admin-email-addresses',
-              __('Notification Email Addresses', 'memberpress-courses'),
-              __('This is a comma separated list of email addresses that will receive admin notifications. This defaults to your admin email set in "Settings" -> "General" -> "E-mail Address"', 'memberpress-courses')
-          ); ?>
+                'mepr-admin-email-addresses',
+                __('Notification Email Addresses', 'memberpress-courses'),
+                __('This is a comma separated list of email addresses that will receive admin notifications. This defaults to your admin email set in "Settings" -> "General" -> "E-mail Address"', 'memberpress-courses')
+            ); ?>
           </label>
         </td>
         <td>
@@ -52,9 +54,9 @@ use memberpress\courses\helpers as helpers;
         <td>
         <label for="bkg_email_jobs_enabled"><?php _e('Asynchronous Emails', 'memberpress-courses'); ?></label>
           <?php helpers\App::info_tooltip(
-            'mepr-asynchronous-emails',
-            __('Send Emails Asynchronously in the Background', 'memberpress-courses'),
-            __('This option will allow you to send all MemberPress Courses emails asynchronously. This option can increase the speed & performance of the checkout process but may also result in a delay in when emails are received. <strong>Note:</strong> This option requires wp-cron to be enabled and working.', 'memberpress-courses')
+              'mepr-asynchronous-emails',
+              __('Send Emails Asynchronously in the Background', 'memberpress-courses'),
+              __('This option will allow you to send all MemberPress Courses emails asynchronously. This option can increase the speed & performance of the checkout process but may also result in a delay in when emails are received. <strong>Note:</strong> This option requires wp-cron to be enabled and working.', 'memberpress-courses')
           ); ?>
         </td>
         <td>

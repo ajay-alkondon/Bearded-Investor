@@ -88,7 +88,7 @@ class MeprSubscriptionsHelper
             }
         }
 
-        if ($sub->expires_at == MeprUtils::db_lifetime()) {
+        if ($sub->expires_at === MeprUtils::db_lifetime()) {
             $expires_at = __('Never', 'memberpress');
         } else {
             $expires_at = MeprAppHelper::format_date($sub->expires_at, '');
@@ -109,7 +109,7 @@ class MeprSubscriptionsHelper
             'user_full_name'             => $usr->full_name(),
             'user_address'               => $usr->formatted_address(),
             'user_registered'            => $usr->user_registered,
-            'user_remote_addr'           => $_SERVER['REMOTE_ADDR'],
+            'user_remote_addr'           => isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '',
             'membership_type'            => preg_replace('~\$~', '\\\$', $prd->post_title),
             'product_name'               => preg_replace('~\$~', '\\\$', $prd->post_title),
             'coupon_code'                => $cpn,
@@ -195,7 +195,7 @@ class MeprSubscriptionsHelper
 
         $pms = array_keys($mepr_options->integrations);
 
-        $value = isset($_POST[$field_name]) ? $_POST[$field_name] : $value;
+        $value = isset($_POST[$field_name]) ? sanitize_text_field(wp_unslash($_POST[$field_name])) : $value;
 
         ?>
     <select name="<?php echo $field_name; ?>" id="<?php echo $field_name; ?>" class="mepr-multi-select mepr-payment-methods-select">

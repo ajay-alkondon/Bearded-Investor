@@ -60,6 +60,52 @@ class Dashboard_Widget extends Modules {
      */
     public function __construct() {
         parent::__construct('dashboard_widget');
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
+    }
+
+    /**
+     * Enqueue required scripts
+     */
+    public function enqueue_scripts($hook) {
+        if ('index.php' !== $hook) {
+            return;
+        }
+
+        // Check if we have any consents logged before loading Chart.js
+        $has_consents = $this->has_consent_logs();
+        if ($has_consents) {
+            $script_suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+            wp_enqueue_script(
+                'cky-chart',
+                plugin_dir_url(__FILE__) . 'assets/js/chart' . $script_suffix . '.js',
+                array(),
+                '4.4.1',
+                true
+            );
+        }
+    }
+
+    /**
+     * Check if there are any consent logs
+     *
+     * @return boolean
+     */
+    private function has_consent_logs() {
+        $response = rest_do_request(new \WP_REST_Request('GET', '/cky/v1/consent_logs/statistics'));
+        if ($response->is_error()) {
+            return false;
+        }
+        $data = $response->get_data();
+        if (!is_array($data)) {
+            return false;
+        }
+        $total = 0;
+        foreach ($data as $item) {
+            if (isset($item['count'])) {
+                $total += intval($item['count']);
+            }
+        }
+        return $total > 0;
     }
 
     /**
@@ -174,19 +220,18 @@ class Dashboard_Widget extends Modules {
      * Render the widget for connected state.
      */
     private function render_dashboard_widget_connected() {
+        $has_consents = $this->has_consent_logs();
         ?>
         <div class="cky-consent-chart-widget" id="cky-dashboard-widget-chart">
             <div class="cky-chart-container" id="cky-dashboard-widget-chart-container">
-                <canvas id="cky-pie-chart-widget" width="320" height="320" style="display:none;width:100%;height:auto;"></canvas>
-                <div class="cky-center-total-consents" style="display:none;">
-                    <span class="cky-center-total-consents-value"></span>
-                    <div class="cky-center-total-consents-label">Total Consents</div>
-                </div>
-                <div id="cky-consent-tooltip" class="cky-consent-tooltip">
-                    <span id="cky-tooltip-percent" class="cky-tooltip-percent">0%</span>
-                    <span id="cky-tooltip-label" class="cky-tooltip-label">Label: 0</span>
-                </div>
-                <div id="cky-no-consents-placeholder" style="display:none;text-align:center;padding:40px 0;">
+                <?php if ($has_consents): ?>
+                    <canvas id="cky-pie-chart-widget" width="320" height="320" style="display:none;width:100%;height:auto;"></canvas>
+                    <div class="cky-center-total-consents" style="display:none;">
+                        <span class="cky-center-total-consents-value"></span>
+                        <div class="cky-center-total-consents-label">Total Consents</div>
+                    </div>
+                <?php endif; ?>
+                <div id="cky-no-consents-placeholder" style="display:<?php echo $has_consents ? 'none' : 'block'; ?>;text-align:center;padding:40px 0;">
                     <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="55" cy="55" r="55" fill="#E5E7EA"/>
                         <circle cx="38" cy="54" r="9" fill="#FFFFFF"/>
@@ -198,13 +243,15 @@ class Dashboard_Widget extends Modules {
                     <p style="font-size:20px;color:#656178;margin-top:20px;">No consents were logged</p>
                 </div>
             </div>
-            <div class="cky-consent-legend" id="cky-consent-legend" style="display:none;">
-                <div class="cky-legend-item"><span class="cky-legend-color cky-legend-accepted"></span>Accepted</div>
-                <div class="cky-legend-item"><span class="cky-legend-color cky-legend-rejected"></span>Rejected</div>
-                <div class="cky-legend-item"><span class="cky-legend-color cky-legend-partial"></span>Partially Accepted</div>
-            </div>
+            <?php if ($has_consents): ?>
+                <div class="cky-consent-legend" id="cky-consent-legend" style="display:none;">
+                    <div class="cky-legend-item"><span class="cky-legend-color cky-legend-accepted"></span>Accepted</div>
+                    <div class="cky-legend-item"><span class="cky-legend-color cky-legend-rejected"></span>Rejected</div>
+                    <div class="cky-legend-item"><span class="cky-legend-color cky-legend-partial"></span>Partially Accepted</div>
+                </div>
+            <?php endif; ?>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <?php if ($has_consents): ?>
         <script>
         (async function(){
             try {
@@ -227,7 +274,7 @@ class Dashboard_Widget extends Modules {
                 const accepted = getCount(data, 'accepted');
                 const rejected = getCount(data, 'rejected');
                 const partial = getCount(data, 'partial');
-                const responseArr = [accepted, rejected, partial].filter(function(value){ return value !== 0; });
+                const responseArr = [accepted, rejected, partial];
                 const total = accepted + rejected + partial;
 
                 if (total === 0) {
@@ -254,93 +301,30 @@ class Dashboard_Widget extends Modules {
                             plugins: {
                                 legend: { display: false },
                                 tooltip: {
-                                    enabled: false,
-                                    external: function(context) {
-                                        const tooltipModel = context.tooltip;
-                                        const tooltip = document.getElementById('cky-consent-tooltip');
-
-                                        if (tooltipModel.opacity === 0) {
-                                            tooltip.style.display = 'none';
-                                            return;
+                                    enabled: true,
+                                    backgroundColor: '#656178',
+                                    titleFont: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    },
+                                    bodyFont: {
+                                        size: 13
+                                    },
+                                    padding: 12,
+                                    cornerRadius: 8,
+                                    displayColors: false,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = context.raw;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${context.label}: ${value} (${percentage}%)`;
                                         }
-
-                                        // Get the active tooltip data
-                                        const dataPoint = tooltipModel.dataPoints[0];
-                                        const dataIndex = dataPoint.dataIndex;
-                                        const label = dataPoint.label;
-                                        const value = dataPoint.parsed;
-                                        const total = responseArr.reduce(function(a, b) { return a + b; }, 0);
-                                        const percent = total ? Math.round((value / total) * 100) : 0;
-
-                                        // Define colors array to match dataset backgroundColor
-                                        const colors = ['#33A881', '#EC4A5E', '#4493F9'];
-                                        const color = colors[dataIndex];
-
-                                        // Update tooltip content
-                                        const tooltipPercent = document.getElementById('cky-tooltip-percent');
-                                        tooltipPercent.style.color = color;
-                                        tooltipPercent.textContent = percent + '%';
-                                        document.getElementById('cky-tooltip-label').textContent = label + ': ' + value;
-
-                                        // Position tooltip
-                                        const canvas = context.chart.canvas;
-                                        const position = canvas.getBoundingClientRect();
-                                        const x = tooltipModel.caretX;
-                                        const y = tooltipModel.caretY;
-
-                                        tooltip.style.opacity = 1;
-                                        tooltip.style.position = 'absolute';
-                                        tooltip.style.left = x + 'px';
-                                        tooltip.style.top = y + 'px';
-                                        tooltip.style.display = 'block';
                                     }
                                 }
                             },
                             responsive: true,
-                            maintainAspectRatio: false,
-                            onHover: function(event, elements) {
-                                const tooltip = document.getElementById('cky-consent-tooltip');
-                                if (elements && elements.length) {
-                                    tooltip.style.opacity = 1;
-                                } else {
-                                    tooltip.style.opacity = 0;
-                                }
-                            }
-                        }
-                    });
-
-                    const canvas = document.getElementById('cky-pie-chart-widget');
-                    canvas.addEventListener('mouseleave', function() {
-                        document.getElementById('cky-consent-tooltip').style.display = 'none';
-                    });
-
-                    // Update mousemove event handler
-                    canvas.removeEventListener('mousemove', null); // Remove any existing handler
-                    canvas.addEventListener('mousemove', function(e) {
-                        const tooltip = document.getElementById('cky-consent-tooltip');
-                        if (tooltip.style.display === 'block') {
-                            const rect = canvas.getBoundingClientRect();
-                            const x = e.clientX - rect.left;
-                            const y = e.clientY - rect.top;
-                            
-                            // Adjust tooltip position based on available space
-                            let left = x;
-                            let top = y;
-                            
-                            if (left + tooltip.offsetWidth > canvas.width) {
-                                left = left - tooltip.offsetWidth - 10;
-                            } else {
-                                left = left + 10;
-                            }
-                            
-                            if (top + tooltip.offsetHeight > canvas.height) {
-                                top = top - tooltip.offsetHeight - 10;
-                            } else {
-                                top = top + 10;
-                            }
-
-                            tooltip.style.left = left + 'px';
-                            tooltip.style.top = top + 'px';
+                            maintainAspectRatio: false
                         }
                     });
                 }
@@ -352,6 +336,7 @@ class Dashboard_Widget extends Modules {
             }
         })();
         </script>
+        <?php endif; ?>
         <style>
     .cky-consent-chart-widget {
         display: flex;
@@ -404,29 +389,6 @@ class Dashboard_Widget extends Modules {
         color: #111;
         white-space: nowrap;
     }
-    .cky-consent-tooltip {
-        display: none;
-        position: absolute;
-        pointer-events: none;
-        z-index: 100;
-        background: #656178;
-        border-radius: 8px;
-        padding: 7px 12px;
-        color: #fff;
-        min-width: 90px;
-        font-family: inherit;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .cky-tooltip-percent {
-        color: #e05a7a;
-        font-size: 1.1em;
-        font-weight: 600;
-        display: block;
-        line-height: 1;
-    }
-    .cky-tooltip-label {
-        font-size: 0.95em;
-    }
     .cky-consent-legend {
     margin-left: 48px;
     display: flex;
@@ -443,15 +405,16 @@ class Dashboard_Widget extends Modules {
         width: 20px;
         height: 20px;
         margin-right: 10px;
+        flex-shrink: 0;
     }
     .cky-legend-accepted {
-        background: #a7dbc8;
+        background: rgba(51, 168, 129, 0.5);
     }
     .cky-legend-rejected {
-        background: #f3bcbc;
+        background: rgba(236, 74, 94, 0.5);
     }
     .cky-legend-partial {
-        background: #bcd7f3;
+        background: rgba(68, 147, 249, 0.5);
     }
 </style> 
         <?php

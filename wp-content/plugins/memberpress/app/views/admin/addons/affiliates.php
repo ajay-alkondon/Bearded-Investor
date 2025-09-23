@@ -48,7 +48,7 @@ $check_mark_svg = file_get_contents(MEPR_IMAGES_PATH . '/Check_Mark.svg');
           <?php esc_html_e('Go to EasyAffiliate.com to get started on your MemberPress affiliate program.', 'memberpress'); ?>
         </div>
         <div class="mepr-sister-plugin-step-button">
-          <a href="https://memberpress.com/memberpress_plugin/affiliates_menu/easy_affiliate_pricing" class="button button-primary button-hero<?php echo !$plugin['active'] && !$plugin['installed'] && empty($plugin['url']) ? '' : ' disabled'; ?>" target="_blank"><?php esc_html_e('Get Easy Affiliate', 'memberpress'); ?></a>
+          <a href="<?php echo esc_url(MeprUtils::get_link_url('affiliates_ea_pricing')) ?>" class="button button-primary button-hero<?php echo !$plugin['active'] && !$plugin['installed'] && empty($plugin['url']) ? '' : ' disabled'; ?>" target="_blank"><?php esc_html_e('Get Easy Affiliate', 'memberpress'); ?></a>
         </div>
       </div>
     </div>

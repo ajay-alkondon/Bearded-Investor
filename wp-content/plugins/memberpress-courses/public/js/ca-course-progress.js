@@ -1,10 +1,31 @@
 (function($) {
   $(document).ready(function() {
+    let lastFocusedElement;
 
     $(document).on('keyup', function(e) {
-      var key = event.key || event.keyCode;
-      if (key === 'Escape' || key === 'Esc' || key === 27) {
-          $('.course-progress-close-button').trigger('click');
+      if (e.key === 'Escape' && $('#course-progress-modal').hasClass('on')) {
+        $('.course-progress-close-button').trigger('click');
+      }
+    });
+
+    // Handle focus trap in modal
+    $('#course-progress-modal').on('keydown', function(e) {
+      if (e.key === 'Tab') {
+        const focusableElements = $(this).find('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        const firstFocusableElement = focusableElements[0];
+        const lastFocusableElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) { // Shift + Tab
+          if (document.activeElement === firstFocusableElement) {
+            e.preventDefault();
+            lastFocusableElement.focus();
+          }
+        } else { // Tab
+          if (document.activeElement === lastFocusableElement) {
+            e.preventDefault();
+            firstFocusableElement.focus();
+          }
+        }
       }
     });
 
@@ -12,6 +33,10 @@
       let course_progress_modal = $('#course-progress-modal');
       course_progress_modal.removeClass('on');
       $('body').removeClass('mpca_progress_on');
+      // Restore focus to the last focused element
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+      }
     });
 
     $('.mpca-course-sub-account-progress').on('click', function(e) {
@@ -19,6 +44,9 @@
 
       var oThis = $(this);
       let course_progress_modal = $('#course-progress-modal');
+
+      // Store the last focused element
+      lastFocusedElement = document.activeElement;
 
       let mpca_subaccount_progress = $('#mpca-subaccount-progress');
       let params = {
@@ -32,6 +60,7 @@
         mpca_subaccount_progress.html(res);
         course_progress_modal.addClass('on');
         $('body').addClass('mpca_progress_on');
+
         $('.course-progress').each(function(i, e) {
           var progress_bar = $('.ca-user-progress', e);
           var progress = 0;
@@ -49,6 +78,13 @@
         });
       });
 
+      // Set focus to the first focusable element in the modal
+      setTimeout(function() {
+        const focusableElements = course_progress_modal.find('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusableElements.length > 0) {
+          focusableElements.first().focus();
+        }
+      }, 500);
     });
   });
 })(jQuery);

@@ -32,7 +32,7 @@ class MeprCouponsHelper
         <?php
         foreach ($contents as $curr_type => $curr_label) {
             ?>
-          <option value="<?php echo $curr_type; ?>" <?php echo (in_array($curr_type, $access)) ? 'selected="selected"' : ''; ?>><?php echo $curr_label; ?>&nbsp;</option>
+          <option value="<?php echo $curr_type; ?>" <?php echo (in_array($curr_type, array_map('intval', $access), true)) ? 'selected="selected"' : ''; ?>><?php echo $curr_label; ?>&nbsp;</option>
             <?php
         }
         ?>
@@ -69,7 +69,7 @@ class MeprCouponsHelper
         foreach ($months as $i => $month) :
             $val = $i + 1;
             ?>
-      <option value="<?php echo $val; ?>" <?php echo (MeprUtils::get_date_from_ts($ts, 'n') == $val) ? 'selected="selected"' : ''; ?>><?php echo $month ?></option>
+      <option value="<?php echo $val; ?>" <?php echo ((int) MeprUtils::get_date_from_ts($ts, 'n') === $val) ? 'selected="selected"' : ''; ?>><?php echo $month ?></option>
             <?php
         endforeach;
     }

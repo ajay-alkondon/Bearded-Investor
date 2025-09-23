@@ -1,6 +1,6 @@
 <h2><?php esc_html_e('Create Content', 'memberpress'); ?></h2>
 <?php
-$courses_plugin_active = is_plugin_active('memberpress-courses/main.php');
+$courses_plugin_active = MeprUtils::is_addon_active(MeprUtils::ADDON_COURSES);
 ?>
   <div class="mepr-wizard-create-content-type" <?php echo ! $courses_plugin_active  ? ' style="display:none;"' : ''; ?>>
     <div>

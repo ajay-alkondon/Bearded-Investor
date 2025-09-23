@@ -134,7 +134,7 @@ class MeprSquareForm {
                 formData.delete('mepr_process_payment_form');
 
                 const response = await fetch(
-                    MeprSquareGateway.ajax_url,
+                    MeprSquarePaymentsGateway.ajax_url,
                     {
                         method: 'POST',
                         body: formData
@@ -152,7 +152,7 @@ class MeprSquareForm {
                     this.handlePaymentError(selectedPaymentMethod, data.data);
                 }
             } catch (e) {
-                this.handlePaymentError(selectedPaymentMethod, MeprSquareGateway.request_failed);
+                this.handlePaymentError(selectedPaymentMethod, MeprSquarePaymentsGateway.request_failed);
                 console.error(e.message);
             }
         }
@@ -223,7 +223,7 @@ class MeprSquareForm {
 
                     fieldName.forEach(fieldName => {
                         const field = this.form.querySelector(`input[name="${fieldName}"]`);
-                        let value = field ? field.value : MeprSquareGateway.userinfo[fieldName];
+                        let value = field ? field.value : MeprSquarePaymentsGateway.userinfo[fieldName];
 
                         if (typeof value === 'string' && value.length) {
                             values.push(value);
@@ -234,7 +234,7 @@ class MeprSquareForm {
                 }
 
                 const field = this.form.querySelector(`input[name="${fieldName}"]`);
-                let value = field ? field.value : MeprSquareGateway.userinfo[fieldName];
+                let value = field ? field.value : MeprSquarePaymentsGateway.userinfo[fieldName];
 
                 return typeof value === 'string' && value.length ? value : null;
             };
@@ -306,7 +306,7 @@ class MeprSquareForm {
 
             for (const error of topErrors) {
                 const listItem = document.createElement('li');
-                listItem.innerHTML = MeprSquareGateway.top_error.replace('%s', error);
+                listItem.innerHTML = MeprSquarePaymentsGateway.top_error.replace('%s', error);
                 list.appendChild(listItem);
             }
 

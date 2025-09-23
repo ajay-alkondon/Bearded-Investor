@@ -52,19 +52,19 @@
             <th scope="row"><label for="description"><?php esc_html_e('Description', 'memberpress-courses') ?></label></th>
             <td>
               <?php
-              $content   = $email->body();
-              $editor_id = 'mpcs-email-content';
-              $args = array(
-                'tinymce'       => array(
-                  'toolbar1'      => 'bold,italic,underline,separator,alignleft,aligncenter,alignright,separator,link,unlink,undo,redo',
-                  'toolbar2'      => '',
-                  'toolbar3'      => '',
-                ),
-                'textarea_name' => 'mpcs-email[body]',
-                'textarea_rows' => 10
-              );
-              wp_editor($content, $editor_id, $args);
-              ?>
+                $content   = $email->body();
+                $editor_id = 'mpcs-email-content';
+                $args      = [
+                    'tinymce'       => [
+                        'toolbar1' => 'bold,italic,underline,separator,alignleft,aligncenter,alignright,separator,link,unlink,undo,redo',
+                        'toolbar2' => '',
+                        'toolbar3' => '',
+                    ],
+                    'textarea_name' => 'mpcs-email[body]',
+                    'textarea_rows' => 10,
+                ];
+                wp_editor($content, $editor_id, $args);
+                ?>
             </td>
           </tr>
           <tr>
@@ -95,10 +95,10 @@
 
             <ul id="mpcs-email-tag-list">
               <?php
-              foreach ($email->variables as $key => $value) {
-                echo "<li><span>{\$$key}</span><span>$value</span></li>";
-              }
-              ?>
+                foreach ($email->variables as $key => $value) {
+                    echo "<li><span>{\$$key}</span><span>$value</span></li>";
+                }
+                ?>
             </ul>
 
           </div>

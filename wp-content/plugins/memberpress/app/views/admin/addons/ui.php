@@ -34,19 +34,19 @@
             $active    = isset($info->extra_info->main_file) && is_plugin_active($info->extra_info->main_file);
 
             if ($installed && $active) {
-                $status       = 'active';
+                $addon_status       = 'active';
                 $status_label = esc_html__('Active', 'memberpress');
             } elseif (!$installed && $info->installable) {
-                $status       = 'download';
+                $addon_status       = 'download';
                 $status_label = esc_html__('Not Installed', 'memberpress');
             } elseif ($installed && !$active) {
-                $status       = 'inactive';
+                $addon_status       = 'inactive';
                 $status_label = esc_html__('Inactive', 'memberpress');
             } else {
-                $status = 'upgrade';
+                $addon_status = 'upgrade';
             }
             ?>
-          <div class="mepr-addon mepr-addon-status-<?php echo esc_attr($status); ?>">
+          <div class="mepr-addon mepr-addon-status-<?php echo esc_attr($addon_status); ?>">
             <div class="mepr-addon-inner">
 
               <div class="mepr-addon-details">
@@ -57,7 +57,7 @@
 
               <div class="mepr-addon-actions mepr-clearfix">
 
-              <?php if ($status != 'upgrade') : ?>
+              <?php if ($addon_status !== 'upgrade') : ?>
                   <div class="mepr-addon-status">
                     <strong>
                       <?php
@@ -80,17 +80,17 @@
 
                 <div class="<?php echo esc_attr($action_class); ?>">
 
-                  <?php if ($status == 'active') : ?>
+                  <?php if ($addon_status === 'active') : ?>
                     <button type="button" data-plugin="<?php echo esc_attr($info->extra_info->main_file); ?>" data-type="add-on"><i class="mp-icon mp-icon-toggle-on"></i><?php esc_html_e('Deactivate', 'memberpress'); ?></button>
 
-                  <?php elseif ($status == 'inactive') : ?>
+                  <?php elseif ($addon_status === 'inactive') : ?>
                     <button type="button" data-plugin="<?php echo esc_attr($info->extra_info->main_file); ?>" data-type="add-on"><i class="mp-icon mp-icon-toggle-on mp-flip-horizontal"></i><?php esc_html_e('Activate', 'memberpress'); ?></button>
 
-                  <?php elseif ($status == 'download') : ?>
+                  <?php elseif ($addon_status === 'download') : ?>
                     <button type="button" data-plugin="<?php echo esc_attr($info->url); ?>" data-type="add-on"><i class="mp-icon mp-icon-download-cloud"></i><?php esc_html_e('Install Add-on', 'memberpress'); ?></button>
 
                   <?php else : ?>
-                    <a href="https://memberpress.com/sign-in/?redirect_to=%2Fplans%2Fpricing" target="_blank"><?php esc_html_e('Upgrade Now', 'memberpress'); ?></a>
+                    <a href="<?php echo esc_url(MeprUtils::get_link_url('login_redirect_pricing')); ?>" target="_blank"><?php esc_html_e('Upgrade Now', 'memberpress'); ?></a>
 
                   <?php endif; ?>
 

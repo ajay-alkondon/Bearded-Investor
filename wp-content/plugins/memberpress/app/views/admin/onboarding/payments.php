@@ -74,7 +74,7 @@ if (empty($onboarding_gateway) && $existing_gateway instanceof MeprBaseGateway) 
   </div>
 </div>
 
-<?php if ($existing_gateway instanceof MeprStripeGateway && !get_option('mepr_tax_stripe_enabled') && isset($_GET['step']) && $_GET['step'] == '6') : ?>
+<?php if ($existing_gateway instanceof MeprStripeGateway && !get_option('mepr_tax_stripe_enabled') && isset($_GET['step']) && $_GET['step'] === '6') : ?>
   <div id="mepr-wizard-enable-stripe-tax-popup" class="mepr-wizard-popup mfp-hide">
     <h2><?php esc_html_e('Do you need to collect taxes?', 'memberpress'); ?></h2>
     <p>

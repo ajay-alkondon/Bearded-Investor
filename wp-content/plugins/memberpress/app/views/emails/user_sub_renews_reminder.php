@@ -23,8 +23,8 @@
         '<a href="{$account_url}">',
         '</a>'
     ); ?></div>
-    <div class="section" style="display: block; margin-bottom: 24px;"><?php _ex('Cheers!', 'ui', 'memberpress'); ?></div>
-    <div class="section" style="display: block; margin-bottom: 24px;"><?php _ex('The {$blog_name} Team', 'ui', 'memberpress'); ?></div>
+    <div class="section" style="display: block; margin-bottom: 24px;"><?php echo esc_html_x('Cheers!', 'ui', 'memberpress'); ?></div>
+    <div class="section" style="display: block; margin-bottom: 24px;"><?php echo esc_html_x('The {$blog_name} Team', 'ui', 'memberpress'); ?></div>
   </div>
 </div>
 

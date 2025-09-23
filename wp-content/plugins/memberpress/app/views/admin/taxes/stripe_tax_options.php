@@ -44,8 +44,8 @@
                   <?php if (!array_key_exists($selected_payment_method, $stripe_payment_methods)) : ?>
                     <option value=""><?php esc_html_e('Please select', 'memberpress'); ?></option>
                   <?php endif; ?>
-                  <?php foreach ($stripe_payment_methods as $id => $label) : ?>
-                    <option value="<?php echo esc_attr($id); ?>" <?php echo selected($selected_payment_method, $id); ?>><?php echo esc_html($label); ?></option>
+                  <?php foreach ($stripe_payment_methods as $payment_method_id => $label) : ?>
+                    <option value="<?php echo esc_attr($payment_method_id); ?>" <?php echo selected($selected_payment_method, $payment_method_id); ?>><?php echo esc_html($label); ?></option>
                   <?php endforeach; ?>
                 </select>
                 <img src="<?php echo esc_url(MEPR_IMAGES_URL . '/square-loader.gif'); ?>" alt="<?php esc_attr_e('Loading...', 'memberpress'); ?>" id="mepr-loader-validate-stripe-tax" class="mepr_loader">

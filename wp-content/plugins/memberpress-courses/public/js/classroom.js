@@ -1,6 +1,8 @@
 (function ($) {
 
   $(document).ready(function () {
+    const dropdown = $('.dropdown');
+
     if ($('.mpcs-share').length) {
       new ClipboardJS('.mpcs-share');
 
@@ -66,6 +68,39 @@
       $closest.toggleClass("active");
     });
 
+    // Focus search input when dropdown is open and tab key is pressed
+    dropdown.on('keyup', function (event) {
+      const isTabPressed = (event.key === 'Tab' || event.keyCode === 9);
+
+      if (!isTabPressed) {
+        return;
+      }
+
+      const dropdownToggle = $(this).find('.dropdown-toggle');
+      const firstFocusableEl = dropdownToggle.next().find('input:not([disabled]):first-child, a:first-child');
+
+      if (document.activeElement === dropdownToggle.get(0)) {
+        dropdownToggle.trigger('click');
+        firstFocusableEl.get(0).focus();
+        event.preventDefault();
+      }
+    });
+
+    // Close dropdown when last link loses focus
+    $('.form-input-search').on('keyup', function (event) {
+      if (event.key === 'Tab' || event.keyCode === 9) {
+        $('.dropdown').removeClass('active');
+      }
+    });
+
+    // Close dropdown when escape key is pressed
+    dropdown.on('keyup', function (event) {
+      if (event.key === 'Escape' || event.keyCode === 27) {
+        $(this).removeClass('active');
+      }
+    });
+
+    // Close dropdown when click outside
     $(document).on("click", function (event) {
       let $target = $(event.target);
       if (!$target.closest(".dropdown").length) {

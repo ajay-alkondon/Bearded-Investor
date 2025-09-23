@@ -5,8 +5,8 @@
 <?php if (isset($errors) && is_array($errors) && !empty($errors)) : ?>
   <div class="error notice is-dismissible below-h2">
     <ul>
-      <?php foreach ($errors as $error) : ?>
-        <li><strong><?php _e('ERROR:', 'memberpress'); ?></strong> <?php print $error; ?></li>
+      <?php foreach ($errors as $single_error) : ?>
+        <li><strong><?php echo esc_html_x('ERROR', 'ui', 'memberpress'); ?></strong>: <?php echo MeprAppHelper::wp_kses($single_error); ?></li>
       <?php endforeach; ?>
     </ul>
   </div>

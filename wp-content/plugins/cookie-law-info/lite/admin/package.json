@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --mode development --watch",
-    "build:production": "vue-cli-service build && yarn run build-webpack-lite && node build.js --mode production",
+    "build": "node build-dev.js",
+    "build:production": "node build.js",
     "lint": "vue-cli-service lint",
     "build-webpack-lite": "webpack-cli --config webpack/lite.config.js --mode production"
   },

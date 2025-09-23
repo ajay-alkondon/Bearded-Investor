@@ -12,7 +12,7 @@ if (! isset($_GET['display-keys']) && ! isset($_COOKIE['mepr_stripe_display_keys
   <tbody>
     <?php if (MeprStripeGateway::is_stripe_connect($id) || MeprStripeGateway::keys_are_set($id)) : ?>
       <tr valign="top">
-        <th scope="row"><label for="<?php echo $test_mode_str; ?>"><?php _e('Test Mode', 'memberpress'); ?></label></th>
+        <th scope="row"><label for="<?php echo $test_mode_str; ?>"><?php esc_html_e('Test Mode', 'memberpress'); ?></label></th>
         <td><input class="mepr-stripe-testmode" data-integration="<?php echo $id; ?>" type="checkbox" name="<?php echo $test_mode_str; ?>"<?php echo checked($test_mode); ?> <?php disabled((defined('MEMBERPRESS_STRIPE_TESTING') && MEMBERPRESS_STRIPE_TESTING));?> /></td>
       </tr>
         <?php if (count($payment_methods)) : ?>
@@ -37,7 +37,7 @@ if (! isset($_GET['display-keys']) && ! isset($_COOKIE['mepr_stripe_display_keys
                               printf(
                                 // Translators: %1$s: open link tag, %2$s: close link tag.
                                   esc_html__('Some of these payment methods have limitations. %1$sClick here%2$s to learn more.', 'memberpress'),
-                                  '<a href="https://docs.memberpress.com/article/35-stripe" target="_blank">',
+                                  '<a href="' . esc_url(MeprUtils::get_link_url('docs_stripe')) . '" target="_blank">',
                                   '</a>'
                               );
                             ?>
@@ -50,7 +50,7 @@ if (! isset($_GET['display-keys']) && ! isset($_COOKIE['mepr_stripe_display_keys
                               </label>
                               <label for="<?php echo esc_attr(sanitize_key("$payment_methods_str-{$payment_method['key']}")); ?>"><?php echo esc_html($payment_method['name']); ?></label>
                             </div>
-                                <?php if ($key == 0) : ?>
+                                <?php if ($key === 0) : ?>
                                     <?php
                                     // These payment methods require domain verification, but aren't separate payment method types
                                     // that can be activated like the others, nor can they be deactivated.
@@ -86,15 +86,15 @@ if (! isset($_GET['display-keys']) && ! isset($_COOKIE['mepr_stripe_display_keys
         <?php endif; ?>
     <?php endif; ?>
     <tr valign="top" <?php echo MeprStripeGateway::is_stripe_connect($id) || empty($live_public_key) ? 'style="display:none;"' : ''; ?>>
-      <th scope="row"><label for="<?php echo $force_ssl_str; ?>"><?php _e('Force SSL', 'memberpress'); ?></label></th>
+      <th scope="row"><label for="<?php echo $force_ssl_str; ?>"><?php esc_html_e('Force SSL', 'memberpress'); ?></label></th>
       <td><input type="checkbox" name="<?php echo $force_ssl_str; ?>"<?php echo checked($force_ssl); ?> /></td>
     </tr>
     <tr valign="top" <?php echo MeprStripeGateway::is_stripe_connect($id) || empty($live_public_key) ? 'style="display:none;"' : ''; ?>>
-      <th scope="row"><label for="<?php echo $debug_str; ?>"><?php _e('Send Debug Emails', 'memberpress'); ?></label></th>
+      <th scope="row"><label for="<?php echo $debug_str; ?>"><?php esc_html_e('Send Debug Emails', 'memberpress'); ?></label></th>
       <td><input type="checkbox" name="<?php echo $debug_str; ?>"<?php echo checked($debug); ?> /></td>
     </tr>
     <tr valign="top" <?php echo $classes; ?>>
-      <th scope="row"><label><?php _e('Stripe Webhook URL:', 'memberpress'); ?></label></th>
+      <th scope="row"><label><?php esc_html_e('Stripe Webhook URL:', 'memberpress'); ?></label></th>
       <td>
         <?php MeprAppHelper::clipboard_input($whk_url); ?>
       </td>

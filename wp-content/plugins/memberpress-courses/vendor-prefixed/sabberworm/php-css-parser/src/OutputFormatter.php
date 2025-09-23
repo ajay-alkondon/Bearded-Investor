@@ -10,6 +10,9 @@ namespace memberpress\courses\Sabberworm\CSS;
 use memberpress\courses\Sabberworm\CSS\Comment\Commentable;
 use memberpress\courses\Sabberworm\CSS\Parsing\OutputException;
 
+/**
+ * @internal since 8.8.0
+ */
 class OutputFormatter
 {
     /**
@@ -122,6 +125,11 @@ class OutputFormatter
      */
     public function spaceBeforeListArgumentSeparator($sSeparator)
     {
+        $spaceForSeparator = $this->oFormat->getSpaceBeforeListArgumentSeparators();
+        if (isset($spaceForSeparator[$sSeparator])) {
+            return $spaceForSeparator[$sSeparator];
+        }
+
         return $this->space('BeforeListArgumentSeparator', $sSeparator);
     }
 
@@ -132,6 +140,11 @@ class OutputFormatter
      */
     public function spaceAfterListArgumentSeparator($sSeparator)
     {
+        $spaceForSeparator = $this->oFormat->getSpaceAfterListArgumentSeparators();
+        if (isset($spaceForSeparator[$sSeparator])) {
+            return $spaceForSeparator[$sSeparator];
+        }
+
         return $this->space('AfterListArgumentSeparator', $sSeparator);
     }
 
@@ -255,6 +268,6 @@ class OutputFormatter
      */
     private function indent()
     {
-        return str_repeat($this->oFormat->sIndentation, $this->oFormat->level());
+        return str_repeat($this->oFormat->sIndentation, $this->oFormat->getIndentationLevel());
     }
 }

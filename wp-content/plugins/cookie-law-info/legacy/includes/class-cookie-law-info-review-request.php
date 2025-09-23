@@ -14,7 +14,7 @@ class Cookie_Law_Info_Review_Request {
 	 * config options
 	 */
 	private $plugin_title        = 'GDPR Cookie Consent (CCPA Ready)';
-	private $review_url          = 'https://wordpress.org/support/plugin/cookie-law-info/reviews/?filter=5#new-post';
+	private $review_url          = 'https://wordpress.org/support/plugin/cookie-law-info/reviews/#new-post';
 	private $plugin_prefix       = 'wt_cli'; /* must be unique name */
 	private $days_to_show_banner = 15; /* when did the banner to show */
 	private $remind_days         = 15; /* remind interval in days */
@@ -46,18 +46,23 @@ class Cookie_Law_Info_Review_Request {
 		register_deactivation_hook( CLI_PLUGIN_FILENAME, array( $this, 'on_deactivate' ) );
 
 		if ( $this->check_condition() ) { /* checks the banner is active now */
-			$this->banner_message = sprintf( __( 'Hey, we at %1$sCookieYes%2$s would like to thank you for using our plugin. We would really appreciate if you could take a moment to drop a quick review that will inspire us to keep going.', 'cookie-law-info' ), '<b>', '</b>' );
-
-			/* button texts */
-			$this->later_btn_text  = __( 'Remind me later', 'cookie-law-info' );
-			$this->never_btn_text  = __( 'Not interested', 'cookie-law-info' );
-			$this->review_btn_text = __( 'Review now', 'cookie-law-info' );
-
+			
+			add_action( 'init', array( $this, 'init' ) );
 			add_action( 'admin_notices', array( $this, 'show_banner' ) ); /* show banner */
 			add_action( 'admin_print_footer_scripts', array( $this, 'add_banner_scripts' ) ); /* add banner scripts */
 			add_action( 'wp_ajax_' . $this->ajax_action_name, array( $this, 'process_user_action' ) ); /* process banner user action */
 		}
 		add_filter( 'admin_footer_text', array( $this, 'add_footer_review_link' ) );
+	}
+
+	public function init() {
+		/* translators: %1$s: opening bold tag, %2$s: closing bold tag */
+		$this->banner_message = sprintf( __( 'Hey, we at %1$sCookieYes%2$s would like to thank you for using our plugin. We would really appreciate if you could take a moment to drop a quick review that will inspire us to keep going.', 'cookie-law-info' ), '<b>', '</b>' );
+
+		/* button texts */
+		$this->later_btn_text  = __( 'Remind me later', 'cookie-law-info' );
+		$this->never_btn_text  = __( 'Not interested', 'cookie-law-info' );
+		$this->review_btn_text = __( 'Review now', 'cookie-law-info' );
 	}
 
 	/**
@@ -254,6 +259,7 @@ class Cookie_Law_Info_Review_Request {
 				);
 
 				return sprintf(
+					/* translators: %1$s: plugin name in bold, %2$s: star rating link, %3$s: WordPress.org link */
 					esc_html__(
 						'Please rate %1$s %2$s on %3$s to help us spread the word. Thank you from the team CookieYes!',
 						'cookie-law-info'

@@ -19,7 +19,7 @@ if (empty($button_color)) {
 $group_theme    = preg_replace('~\.css$~', '', (is_null($theme) ? $group->group_theme : $theme));
 $group_template = 'pro-template';
 $group          = null;
-$preview        = false;
+$preview        = false; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 ?>
 <div class="mepr-price-menu <?php echo $group_theme; ?> <?php echo $group_template; ?>">
 
@@ -61,21 +61,21 @@ $preview        = false;
             $active = true; // Always true for now - that way users can click the button and see the custom "you don't have access" message now.
 
             $group_classes_str = ($product->is_highlighted) ? 'highlighted' : '';
-            $group_classes_str = MeprHooks::apply_filters('mepr-group-css-classes-string', $group_classes_str, $product, $group, $preview);
+            $group_classes_str = MeprHooks::apply_filters('mepr_group_css_classes_string', $group_classes_str, $product, $group, $preview);
 
             ?>
         <div id="mepr-price-box-<?php echo $product->ID; ?>" class="mepr-price-box <?php echo $group_classes_str; ?>">
             <?php if ($product->is_highlighted) : ?>
             <div class="mepr-most-popular">
-                <?php _e('Most Popular', 'memberpress'); ?>
+                <?php esc_html_e('Most Popular', 'memberpress'); ?>
             </div>
             <?php endif ?>
           <div class="mepr-price-box-content">
 
             <div class="mepr-price-box-head">
-              <div class="mepr-price-box-title">
+              <h2 class="mepr-price-box-title">
                 <?php echo $product->pricing_title; ?>
-              </div>
+              </h2>
               <?php if ($preview) : ?>
                 <div class="mepr-price-box-price"></div>
                 <span class="mepr-price-box-price-loading"><img src="<?php echo admin_url('/images/wpspin_light.gif'); ?>" /></span>
@@ -86,7 +86,7 @@ $preview        = false;
                         $mepr_coupon_code = null;
                     }
 
-                    if ($product->pricing_display == 'auto') {
+                    if ($product->pricing_display === 'auto') {
                         $mepr_options = MeprOptions::fetch();
 
                         $price = preg_replace('/\/(.*)/', "<span class='mepr-price-box-price-term'>$0</span>", MeprProductsHelper::format_currency($product, true, $mepr_coupon_code, false));
@@ -110,10 +110,14 @@ $preview        = false;
                         !empty($product->access_url)
                     ) :
                         ?>
-                  <a <?php echo 'href="' . $product->access_url . '"'; ?> class="<?php echo MeprGroupsHelper::price_box_button_classes($group, $product, true); ?>"><?php _e('View', 'memberpress'); ?></a>
+                  <a <?php echo 'href="' . $product->access_url . '"'; ?> class="<?php echo MeprGroupsHelper::price_box_button_classes($group, $product, true); ?>">
+                        <?php esc_html_e('View', 'memberpress'); ?>
+                      <span class="screen-reader-text"><?php echo $product->post_title; ?></span>
+                  </a>
                     <?php else : ?>
                   <a <?php echo $active ? 'href="' . $product->url() . '"' : ''; ?> class="<?php echo MeprGroupsHelper::price_box_button_classes($group, $product, $active); ?>" style="--tooltip-color: <?php echo esc_attr($button_color) ?>;">
                         <?php echo $product->pricing_button_txt; ?>
+                      <span class="screen-reader-text"><?php echo $product->post_title; ?></span>
                   </a>
                     <?php endif; ?>
               </div>
@@ -139,7 +143,7 @@ $preview        = false;
         </div>
             <?php
             $output = ob_get_clean();
-            echo MeprHooks::apply_filters('mepr-group-page-item-output', $output, $product, $group, $preview);
+            echo MeprHooks::apply_filters('mepr_group_page_item_output', $output, $product, $group, $preview);
         }
     }
     ?>

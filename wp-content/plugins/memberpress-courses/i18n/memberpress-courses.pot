@@ -2,21 +2,21 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: MemberPress Courses 1.4.2\n"
+"Project-Id-Version: MemberPress Courses 1.4.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/memberpress-courses\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-05-19T22:14:05+00:00\n"
+"POT-Creation-Date: 2025-08-22T15:56:09+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: memberpress-courses\n"
 
 #. Plugin Name of the plugin
 #: main.php
-#: app/controllers/App.php:190
+#: app/controllers/App.php:238
 msgid "MemberPress Courses"
 msgstr ""
 
@@ -40,140 +40,140 @@ msgstr ""
 msgid "https://caseproof.com/"
 msgstr ""
 
-#: app/controllers/Account.php:58
-#: app/controllers/admin/Courses.php:393
-#: app/views/admin/options/settings/readylaunch.php:11
+#: app/controllers/Account.php:71
+#: app/controllers/admin/Courses.php:416
+#: app/views/admin/options/settings/readylaunch.php:13
 msgid "Courses"
 msgstr ""
 
-#: app/controllers/admin/Addons.php:27
+#: app/controllers/admin/Addons.php:28
 msgid "MemberPress Course Gradebook has been activated successfully!"
 msgstr ""
 
-#: app/controllers/admin/Addons.php:34
+#: app/controllers/admin/Addons.php:35
 msgid "MemberPress Course Assignments has been activated successfully!"
 msgstr ""
 
-#: app/controllers/admin/Addons.php:41
+#: app/controllers/admin/Addons.php:42
 msgid "MemberPress Course Quizzes has been activated successfully!"
 msgstr ""
 
-#: app/controllers/admin/Addons.php:57
 #: app/controllers/admin/Addons.php:58
+#: app/controllers/admin/Addons.php:59
 msgid "Gradebook"
 msgstr ""
 
-#: app/controllers/admin/Addons.php:68
 #: app/controllers/admin/Addons.php:69
+#: app/controllers/admin/Addons.php:70
 #: public/build/main.js:1
 #: public/src/views/Assignments.jsx:85
 #: public/src/views/Settings.jsx:320
 msgid "Assignments"
 msgstr ""
 
-#: app/controllers/admin/Addons.php:79
 #: app/controllers/admin/Addons.php:80
+#: app/controllers/admin/Addons.php:81
 #: public/build/main.js:1
 #: public/src/views/Quizzes.jsx:86
 #: public/src/views/Settings.jsx:311
 msgid "Quizzes"
 msgstr ""
 
-#: app/controllers/admin/Addons.php:132
-#: app/controllers/admin/Addons.php:151
-#: app/controllers/CourseProgress.php:67
+#: app/controllers/admin/Addons.php:134
+#: app/controllers/admin/Addons.php:153
+#: app/controllers/CourseProgress.php:78
 msgid "Invalid request."
 msgstr ""
 
-#: app/controllers/admin/Addons.php:142
+#: app/controllers/admin/Addons.php:144
 msgid "Sorry, you don't have permission to do this."
 msgstr ""
 
-#: app/controllers/admin/Addons.php:167
+#: app/controllers/admin/Addons.php:168
 msgid "Add-on has been installed and activated successfully. Enjoy!"
 msgstr ""
 
-#: app/controllers/admin/Addons.php:168
-msgid "Add-on could not be installed. Please check your license settings, or %scontact%s MemberPress support for help."
+#: app/controllers/admin/Addons.php:169
+msgid "Add-on could not be installed. Please check your license settings, or %1$scontact%2$s MemberPress support for help."
 msgstr ""
 
-#: app/controllers/admin/Addons.php:176
+#: app/controllers/admin/Addons.php:177
 msgid "Add-on has been activated successfully. Enjoy!"
 msgstr ""
 
-#: app/controllers/admin/CourseCategories.php:26
-#: app/controllers/admin/CourseCategories.php:28
-#: app/controllers/admin/CourseCategories.php:29
+#: app/controllers/admin/CourseCategories.php:33
+#: app/controllers/admin/CourseCategories.php:35
+#: app/controllers/admin/CourseCategories.php:36
 msgid "Course Categories"
 msgstr ""
 
-#: app/controllers/admin/CourseCategories.php:30
+#: app/controllers/admin/CourseCategories.php:37
 msgid "Add New Course Category"
 msgstr ""
 
-#: app/controllers/admin/CourseCategories.php:31
-#: app/controllers/admin/CurriculumCategories.php:29
+#: app/controllers/admin/CourseCategories.php:38
+#: app/controllers/admin/CurriculumCategories.php:36
 msgid "Search Categories"
 msgstr ""
 
-#: app/controllers/admin/CourseCategories.php:32
-#: app/controllers/admin/CurriculumCategories.php:30
+#: app/controllers/admin/CourseCategories.php:39
+#: app/controllers/admin/CurriculumCategories.php:37
 msgid "Edit Category"
 msgstr ""
 
-#: app/controllers/admin/CourseCategories.php:33
-#: app/controllers/admin/CurriculumCategories.php:31
+#: app/controllers/admin/CourseCategories.php:40
+#: app/controllers/admin/CurriculumCategories.php:38
 msgid "View Category"
 msgstr ""
 
-#: app/controllers/admin/CourseCategories.php:34
-#: app/controllers/admin/CurriculumCategories.php:32
+#: app/controllers/admin/CourseCategories.php:41
+#: app/controllers/admin/CurriculumCategories.php:39
 msgid "Update Category"
 msgstr ""
 
-#: app/controllers/admin/CourseCategories.php:35
+#: app/controllers/admin/CourseCategories.php:42
 msgid "Back to Categories"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:41
+#: app/controllers/admin/Courses.php:47
 msgid "&larr; Back to Courses"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:57
-#: app/controllers/admin/Lessons.php:186
+#: app/controllers/admin/Courses.php:64
+#: app/controllers/admin/Lessons.php:203
 msgid "Categories"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:61
-#: app/controllers/admin/Lessons.php:190
+#: app/controllers/admin/Courses.php:68
+#: app/controllers/admin/Lessons.php:207
 msgid "Tags"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:85
+#: app/controllers/admin/Courses.php:93
 msgid "Participants"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:86
-#: app/helpers/Courses.php:710
-#: app/helpers/Lessons.php:255
-#: app/views/courses/courses_bookmark_link.php:4
-#: app/views/courses/courses_bookmark_link.php:12
+#: app/controllers/admin/Courses.php:94
+#: app/helpers/Courses.php:729
+#: app/helpers/Lessons.php:284
+#: app/views/courses/courses_bookmark_link.php:10
+#: app/views/courses/courses_bookmark_link.php:18
 msgid "Completed"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:87
+#: app/controllers/admin/Courses.php:95
 msgid "Completion Rate"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:325
+#: app/controllers/admin/Courses.php:342
 #: public/build/main.js:1
 #: public/src/views/Header.jsx:189
 #: public/src/views/Header.jsx:205
 msgid "Back to Courses"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:394
-#: app/controllers/admin/Lessons.php:177
+#: app/controllers/admin/Courses.php:417
+#: app/controllers/admin/Lessons.php:193
 #: public/build/main.js:1
 #: public/src/components/Assignment.jsx:251
 #: public/src/components/Lesson.jsx:238
@@ -181,157 +181,157 @@ msgstr ""
 msgid "Course"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:395
-#: app/controllers/admin/Lessons.php:32
+#: app/controllers/admin/Courses.php:418
+#: app/controllers/admin/Lessons.php:38
 msgid "Add New"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:396
+#: app/controllers/admin/Courses.php:419
 msgid "Add New Course"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:397
+#: app/controllers/admin/Courses.php:420
 msgid "Edit Course"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:398
+#: app/controllers/admin/Courses.php:421
 msgid "New Course"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:399
+#: app/controllers/admin/Courses.php:422
 msgid "View Course"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:400
+#: app/controllers/admin/Courses.php:423
 msgid "Search Courses"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:401
+#: app/controllers/admin/Courses.php:424
 msgid "No Courses found"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:402
+#: app/controllers/admin/Courses.php:425
 msgid "No Courses found in Trash"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:403
+#: app/controllers/admin/Courses.php:426
 msgid "Parent Course:"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:431
+#: app/controllers/admin/Courses.php:457
 msgid "Curriculum Builder"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:432
+#: app/controllers/admin/Courses.php:458
 msgid "Course Setting"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:433
-#: app/views/classroom/courses_sidebar.php:55
-#: app/views/classroom/courses_sidebar.php:83
+#: app/controllers/admin/Courses.php:459
+#: app/views/classroom/courses_sidebar.php:57
+#: app/views/classroom/courses_sidebar.php:88
 #: app/views/courses/course-resources.php:1
 #: public/build/main.js:1
 #: public/src/views/Header.jsx:243
 msgid "Resources"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:434
+#: app/controllers/admin/Courses.php:460
 msgid "Course Certificates"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:435
+#: app/controllers/admin/Courses.php:461
 msgid "Page Options"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:493
+#: app/controllers/admin/Courses.php:525
 msgid "Facebook URL"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:494
+#: app/controllers/admin/Courses.php:526
 msgid "Twitter URL"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:495
+#: app/controllers/admin/Courses.php:527
 msgid "Instagram URL"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:496
+#: app/controllers/admin/Courses.php:528
 msgid "Youtube URL"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:519
+#: app/controllers/admin/Courses.php:551
 msgid "You are not allowed to delete user's progress"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:537
+#: app/controllers/admin/Courses.php:568
 msgid "Progress was deleted for this User and Course"
 msgstr ""
 
-#: app/controllers/admin/Courses.php:586
-#: app/controllers/admin/Lessons.php:230
+#: app/controllers/admin/Courses.php:620
+#: app/controllers/admin/Lessons.php:248
 msgid "Show all %s"
 msgstr ""
 
-#: app/controllers/admin/CourseTags.php:26
-#: app/controllers/admin/CourseTags.php:28
+#: app/controllers/admin/CourseTags.php:33
+#: app/controllers/admin/CourseTags.php:35
 msgid "Course Tags"
 msgstr ""
 
-#: app/controllers/admin/CourseTags.php:29
+#: app/controllers/admin/CourseTags.php:36
 msgid "Course Tag"
 msgstr ""
 
-#: app/controllers/admin/CourseTags.php:30
+#: app/controllers/admin/CourseTags.php:37
 msgid "Add New Course Tag"
 msgstr ""
 
-#: app/controllers/admin/CurriculumCategories.php:24
-#: app/controllers/admin/CurriculumCategories.php:26
+#: app/controllers/admin/CurriculumCategories.php:31
+#: app/controllers/admin/CurriculumCategories.php:33
 msgid "Curriculum Categories"
 msgstr ""
 
-#: app/controllers/admin/CurriculumCategories.php:27
+#: app/controllers/admin/CurriculumCategories.php:34
 msgid "Curriculum Category"
 msgstr ""
 
-#: app/controllers/admin/CurriculumCategories.php:28
+#: app/controllers/admin/CurriculumCategories.php:35
 msgid "Add New Category"
 msgstr ""
 
-#: app/controllers/admin/CurriculumCategories.php:33
+#: app/controllers/admin/CurriculumCategories.php:40
 msgid "Back to Curriculum Categories"
 msgstr ""
 
-#: app/controllers/admin/CurriculumTags.php:24
-#: app/controllers/admin/CurriculumTags.php:26
+#: app/controllers/admin/CurriculumTags.php:31
+#: app/controllers/admin/CurriculumTags.php:33
 msgid "Curriculum Tags"
 msgstr ""
 
-#: app/controllers/admin/CurriculumTags.php:27
+#: app/controllers/admin/CurriculumTags.php:34
 msgid "Curriculum Tag"
 msgstr ""
 
-#: app/controllers/admin/CurriculumTags.php:28
+#: app/controllers/admin/CurriculumTags.php:35
 msgid "Add New Tag"
 msgstr ""
 
-#: app/controllers/admin/CurriculumTags.php:29
+#: app/controllers/admin/CurriculumTags.php:36
 msgid "Search Tag"
 msgstr ""
 
-#: app/controllers/admin/CurriculumTags.php:30
+#: app/controllers/admin/CurriculumTags.php:37
 msgid "Edit Tag"
 msgstr ""
 
-#: app/controllers/admin/CurriculumTags.php:31
+#: app/controllers/admin/CurriculumTags.php:38
 msgid "View Tag"
 msgstr ""
 
-#: app/controllers/admin/CurriculumTags.php:32
+#: app/controllers/admin/CurriculumTags.php:39
 msgid "Update Tag"
 msgstr ""
 
-#: app/controllers/admin/CurriculumTags.php:33
+#: app/controllers/admin/CurriculumTags.php:40
 msgid "Back to Curriculum Tags"
 msgstr ""
 
@@ -362,454 +362,462 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:256
+#: app/controllers/admin/Emails.php:259
 msgid "You do not have access to send a test email."
 msgstr ""
 
-#: app/controllers/admin/Emails.php:260
+#: app/controllers/admin/Emails.php:263
 msgid "Can't send your email ... refresh the page and try it again."
 msgstr ""
 
-#: app/controllers/admin/Emails.php:280
+#: app/controllers/admin/Emails.php:283
 msgid "John"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:281
+#: app/controllers/admin/Emails.php:284
 msgid "Doe"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:282
+#: app/controllers/admin/Emails.php:285
 msgid "John Doe"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:284
+#: app/controllers/admin/Emails.php:287
 msgid "111 Cool Avenue"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:285
+#: app/controllers/admin/Emails.php:288
 msgid "New York, NY 10005"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:286
+#: app/controllers/admin/Emails.php:289
 msgid "United States"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:287
-#: app/controllers/admin/Emails.php:293
+#: app/controllers/admin/Emails.php:290
+#: app/controllers/admin/Emails.php:296
 msgid "2024-09-24"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:292
+#: app/controllers/admin/Emails.php:295
 msgid "User Meta Field: *"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:294
+#: app/controllers/admin/Emails.php:297
 msgid "Admin Name"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:296
+#: app/controllers/admin/Emails.php:299
 msgid "User Profile Link"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:300
+#: app/controllers/admin/Emails.php:303
 msgid "Course Title"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:316
+#: app/controllers/admin/Emails.php:319
 msgid "Your test email was successfully sent."
 msgstr ""
 
-#: app/controllers/admin/Emails.php:329
+#: app/controllers/admin/Emails.php:332
 msgid "You do not have access to enable this email."
 msgstr ""
 
-#: app/controllers/admin/Emails.php:359
+#: app/controllers/admin/Emails.php:361
 msgid "Cannot update email"
 msgstr ""
 
-#: app/controllers/admin/Emails.php:363
+#: app/controllers/admin/Emails.php:365
 msgid "Email updated"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:30
-#: app/helpers/Courses.php:30
-#: app/helpers/Courses.php:83
+#: app/controllers/admin/Lessons.php:36
+#: app/helpers/Courses.php:35
+#: app/helpers/Courses.php:90
 #: public/build/main.js:1
 #: public/src/views/Lessons.jsx:83
 #: public/src/views/Settings.jsx:303
 msgid "Lessons"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:31
+#: app/controllers/admin/Lessons.php:37
 msgid "Lesson"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:33
+#: app/controllers/admin/Lessons.php:39
 msgid "Add New Lesson"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:34
+#: app/controllers/admin/Lessons.php:40
 #: public/build/main.js:1
 #: public/src/components/Lesson.jsx:201
 msgid "Edit Lesson"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:35
-#: app/helpers/Courses.php:139
+#: app/controllers/admin/Lessons.php:41
+#: app/helpers/Courses.php:150
 msgid "New Lesson"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:36
+#: app/controllers/admin/Lessons.php:42
 #: public/build/main.js:1
 #: public/src/components/Lesson.jsx:193
 msgid "View Lesson"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:37
+#: app/controllers/admin/Lessons.php:43
 #: public/build/main.js:1
 #: public/src/views/Lessons.jsx:91
 msgid "Search Lessons"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:38
+#: app/controllers/admin/Lessons.php:44
 msgid "No Lessons found"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:39
+#: app/controllers/admin/Lessons.php:45
 msgid "No Lessons found in Trash"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:40
+#: app/controllers/admin/Lessons.php:46
 msgid "Parent Lesson:"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:89
+#: app/controllers/admin/Lessons.php:101
 #: public/build/main.js:1
 #: public/src/lib/helpers.js:80
 msgid "Duplicate"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:134
+#: app/controllers/admin/Lessons.php:149
 msgid "Back to Lessons"
 msgstr ""
 
-#: app/controllers/admin/Lessons.php:137
+#: app/controllers/admin/Lessons.php:152
 msgid "Back to %s"
 msgstr ""
 
-#: app/controllers/admin/Options.php:58
+#: app/controllers/admin/Options.php:96
 msgid "MemberPress Courses - Settings"
 msgstr ""
 
-#: app/controllers/admin/Options.php:59
-#: app/views/admin/options/settings.php:4
+#: app/controllers/admin/Options.php:97
+#: app/views/admin/options/settings.php:6
 #: public/build/main.js:1
 #: public/src/views/Header.jsx:251
 msgid "Settings"
 msgstr ""
 
-#: app/controllers/admin/Options.php:87
+#: app/controllers/admin/Options.php:126
 msgid "Options saved."
 msgstr ""
 
-#: app/controllers/App.php:81
+#: app/controllers/App.php:121
 msgid "MemberPress Courses has been activated successfully!"
 msgstr ""
 
-#: app/controllers/App.php:89
+#: app/controllers/App.php:130
 msgid "MemberPress Courses requires WordPress 5.0 and above to run smoothly. Please upgrade!"
 msgstr ""
 
-#: app/controllers/App.php:195
+#: app/controllers/App.php:243
 msgid "MP Courses"
 msgstr ""
 
-#: app/controllers/App.php:278
+#: app/controllers/App.php:334
 msgid "Allowed Files"
 msgstr ""
 
-#: app/controllers/App.php:677
+#: app/controllers/App.php:767
 msgid "Course Section"
 msgstr ""
 
-#: app/controllers/App.php:797
+#: app/controllers/App.php:892
 msgid "Pingback:"
 msgstr ""
 
-#: app/controllers/App.php:797
+#: app/controllers/App.php:892
 msgid "(Edit)"
 msgstr ""
 
-#: app/controllers/App.php:812
+#: app/controllers/App.php:907
 msgid "<div class=\"course-comment-cite-wrap\"><cite class=\"fn\">%s</cite> </div>"
 msgstr ""
 
-#: app/controllers/App.php:813
+#: app/controllers/App.php:909
 msgid "<div class=\"course-comment-time\"><span class=\"timendate\"><a href=\"%1$s\"><time datetime=\"%2$s\">%3$s</time></a></span></div>"
 msgstr ""
 
-#: app/controllers/App.php:816
+#: app/controllers/App.php:912
 msgid "%1$s at %2$s"
 msgstr ""
 
-#: app/controllers/App.php:823
-#: app/helpers/Courses.php:155
+#: app/controllers/App.php:920
+#: app/helpers/Courses.php:167
 msgid "Edit"
 msgstr ""
 
-#: app/controllers/App.php:829
+#: app/controllers/App.php:926
 msgid "Reply"
 msgstr ""
 
-#: app/controllers/App.php:841
+#: app/controllers/App.php:938
 msgid "Your comment is awaiting moderation."
 msgstr ""
 
-#: app/controllers/Classroom.php:97
+#: app/controllers/App.php:981
+msgid "Course Completed"
+msgstr ""
+
+#: app/controllers/Classroom.php:103
 msgid "MemberPress Courses Thumbnail"
 msgstr ""
 
-#: app/controllers/Classroom.php:147
+#: app/controllers/Classroom.php:156
 msgid "Courses ReadyLaunch™"
 msgstr ""
 
-#: app/controllers/Classroom.php:170
-#: app/views/admin/options/settings/readylaunch_options.php:20
-#: app/views/admin/options/settings/readylaunch_options.php:24
+#: app/controllers/Classroom.php:180
+#: app/views/admin/options/settings/readylaunch_options.php:23
+#: app/views/admin/options/settings/readylaunch_options.php:27
 msgid "Brand Color"
 msgstr ""
 
-#: app/controllers/Classroom.php:178
-#: app/views/admin/options/settings/readylaunch_options.php:37
-#: app/views/admin/options/settings/readylaunch_options.php:41
+#: app/controllers/Classroom.php:188
+#: app/views/admin/options/settings/readylaunch_options.php:40
+#: app/views/admin/options/settings/readylaunch_options.php:44
 msgid "Accent Color"
 msgstr ""
 
-#: app/controllers/Classroom.php:186
-#: app/views/admin/options/settings/readylaunch_options.php:55
-#: app/views/admin/options/settings/readylaunch_options.php:59
+#: app/controllers/Classroom.php:196
+#: app/views/admin/options/settings/readylaunch_options.php:58
+#: app/views/admin/options/settings/readylaunch_options.php:62
 msgid "Progress Color"
 msgstr ""
 
-#: app/controllers/Classroom.php:194
-#: app/views/admin/options/settings/readylaunch_options.php:72
-#: app/views/admin/options/settings/readylaunch_options.php:76
+#: app/controllers/Classroom.php:204
+#: app/views/admin/options/settings/readylaunch_options.php:75
+#: app/views/admin/options/settings/readylaunch_options.php:79
 msgid "Menu Text Color"
 msgstr ""
 
-#: app/controllers/Classroom.php:210
-#: app/views/admin/options/settings/readylaunch_options.php:89
-#: app/views/admin/options/settings/readylaunch_options.php:93
+#: app/controllers/Classroom.php:220
+#: app/views/admin/options/settings/readylaunch_options.php:92
+#: app/views/admin/options/settings/readylaunch_options.php:96
 msgid "Logo"
 msgstr ""
 
-#: app/controllers/Classroom.php:240
-#: app/views/classroom/courses_header.php:110
+#: app/controllers/Classroom.php:250
+#: app/views/classroom/courses_header.php:119
 msgid "My Courses"
 msgstr ""
 
-#: app/controllers/Classroom.php:246
+#: app/controllers/Classroom.php:256
 msgid "All Courses"
 msgstr ""
 
-#: app/controllers/Classroom.php:261
+#: app/controllers/Classroom.php:272
 msgctxt "ui"
 msgid "ReadyLaunch™️ Courses Sidebar"
 msgstr ""
 
-#: app/controllers/Classroom.php:262
+#: app/controllers/Classroom.php:273
 msgid "Widgets in this area will be shown on MemberPress Courses classroom sidebar."
 msgstr ""
 
-#: app/controllers/Classroom.php:270
+#: app/controllers/Classroom.php:281
 msgctxt "ui"
 msgid "Readylaunch™️ Courses Overview Footer"
 msgstr ""
 
-#: app/controllers/Classroom.php:271
+#: app/controllers/Classroom.php:282
 msgid "Widgets in this area will be shown on MemberPress Courses overview page."
 msgstr ""
 
-#: app/controllers/Classroom.php:279
+#: app/controllers/Classroom.php:290
 msgctxt "ui"
 msgid "Readylaunch™️ Lesson/Quiz Header"
 msgstr ""
 
-#: app/controllers/Classroom.php:280
+#: app/controllers/Classroom.php:291
 msgid "Widgets in this area will be shown on MemberPress Courses lesson and quiz headers."
 msgstr ""
 
-#: app/controllers/Classroom.php:288
+#: app/controllers/Classroom.php:299
 msgctxt "ui"
 msgid "Readylaunch™️ Lesson/Quiz Footer"
 msgstr ""
 
-#: app/controllers/Classroom.php:289
+#: app/controllers/Classroom.php:300
 msgid "Widgets in this area will be shown on MemberPress Courses lesson and quiz footers."
 msgstr ""
 
-#: app/controllers/CourseProgress.php:30
-#: app/controllers/CourseProgress.php:105
+#: app/controllers/CourseProgress.php:36
+#: app/controllers/CourseProgress.php:120
 msgid "Course Progress"
 msgstr ""
 
-#: app/controllers/CourseProgress.php:38
+#: app/controllers/CourseProgress.php:45
 msgid "Your session has timedout. Please login."
 msgstr ""
 
-#: app/controllers/CourseProgress.php:43
+#: app/controllers/CourseProgress.php:50
 msgid "Oops! Unable to complete the request."
 msgstr ""
 
-#: app/controllers/Courses.php:268
+#: app/controllers/CourseProgress.php:114
+msgid "Close Course Progress"
+msgstr ""
+
+#: app/controllers/Courses.php:276
 msgid "Enroll"
 msgstr ""
 
-#: app/controllers/Courses.php:345
+#: app/controllers/Courses.php:361
 msgid "Download Certificate"
 msgstr ""
 
-#: app/controllers/Courses.php:659
-#: app/controllers/Courses.php:664
+#: app/controllers/Courses.php:690
+#: app/controllers/Courses.php:695
 msgid "Course is not complete"
 msgstr ""
 
-#: app/controllers/CoursesApi.php:131
+#: app/controllers/CoursesApi.php:142
 msgid "Post not found"
 msgstr ""
 
-#: app/controllers/CoursesApi.php:155
+#: app/controllers/CoursesApi.php:166
 msgid "Could not create duplicate post"
 msgstr ""
 
-#: app/controllers/CoursesApi.php:219
+#: app/controllers/CoursesApi.php:232
 msgid "Please enter valid URL"
 msgstr ""
 
-#: app/controllers/Drip.php:169
-#: app/helpers/Courses.php:693
+#: app/controllers/Drip.php:176
+#: app/helpers/Courses.php:712
 msgid "F j, Y, g:i a"
 msgstr ""
 
-#: app/controllers/Lessons.php:274
+#: app/controllers/Lessons.php:288
 msgid "Forbidden"
 msgstr ""
 
-#: app/controllers/Lessons.php:278
+#: app/controllers/Lessons.php:292
 msgid "Unauthorized"
 msgstr ""
 
-#: app/controllers/Lessons.php:298
+#: app/controllers/Lessons.php:311
 msgid "This lesson has already been completed"
 msgstr ""
 
-#: app/controllers/Lessons.php:303
+#: app/controllers/Lessons.php:316
 msgid "Progress was recorded for this User and Lesson"
 msgstr ""
 
-#: app/emails/AdminCourseCompletedEmail.php:20
+#: app/emails/AdminCourseCompletedEmail.php:24
 #: app/views/emails/admin_course_completed_email.php:2
 msgid "Admin Course Completed Notice"
 msgstr ""
 
-#: app/emails/AdminCourseCompletedEmail.php:21
+#: app/emails/AdminCourseCompletedEmail.php:25
 msgid "This email is sent to you when a user completes a course."
 msgstr ""
 
-#: app/emails/AdminCourseCompletedEmail.php:25
+#: app/emails/AdminCourseCompletedEmail.php:29
 msgid "{$course_name} - A User Has Completed a Course"
 msgstr ""
 
-#: app/emails/AdminCourseStartedEmail.php:21
+#: app/emails/AdminCourseStartedEmail.php:24
 #: app/views/emails/admin_course_started_email.php:2
 msgid "Admin Course Started Notice"
 msgstr ""
 
-#: app/emails/AdminCourseStartedEmail.php:22
+#: app/emails/AdminCourseStartedEmail.php:25
 msgid "This email is sent to you when a user starts a course."
 msgstr ""
 
-#: app/emails/AdminCourseStartedEmail.php:26
+#: app/emails/AdminCourseStartedEmail.php:29
 msgid "{$user_full_name} Started Course: {$course_name}"
 msgstr ""
 
-#: app/emails/AdminLessonCompletedEmail.php:20
+#: app/emails/AdminLessonCompletedEmail.php:24
 #: app/views/emails/admin_lesson_completed_email.php:2
 msgid "Admin Lesson Completed Notice"
 msgstr ""
 
-#: app/emails/AdminLessonCompletedEmail.php:21
+#: app/emails/AdminLessonCompletedEmail.php:25
 msgid "This email is sent to you when a user completes a lesson."
 msgstr ""
 
-#: app/emails/AdminLessonCompletedEmail.php:25
+#: app/emails/AdminLessonCompletedEmail.php:29
 msgid "{$lesson_name} - A User Has Completed a Lesson"
 msgstr ""
 
-#: app/emails/UserCourseCompletedEmail.php:18
+#: app/emails/UserCourseCompletedEmail.php:22
 msgid "Course Completion Notice"
 msgstr ""
 
-#: app/emails/UserCourseCompletedEmail.php:19
+#: app/emails/UserCourseCompletedEmail.php:23
 msgid "This email is sent to the user when they successfully complete a course."
 msgstr ""
 
-#: app/emails/UserCourseCompletedEmail.php:23
+#: app/emails/UserCourseCompletedEmail.php:27
 msgid "Course Completed: {$course_name}"
 msgstr ""
 
-#: app/helpers/Courses.php:22
-#: app/helpers/Courses.php:75
+#: app/helpers/Courses.php:27
+#: app/helpers/Courses.php:82
 msgid "Remove Section"
 msgstr ""
 
-#: app/helpers/Courses.php:62
+#: app/helpers/Courses.php:68
 msgid "Choose Lesson"
 msgstr ""
 
-#: app/helpers/Courses.php:116
+#: app/helpers/Courses.php:125
 #: public/build/main.js:1
 #: public/src/views/Settings.jsx:73
 #: public/src/views/Settings.jsx:75
 msgid "Lesson Title"
 msgstr ""
 
-#: app/helpers/Courses.php:118
+#: app/helpers/Courses.php:127
 msgid "Remove Lesson"
 msgstr ""
 
-#: app/helpers/Courses.php:120
+#: app/helpers/Courses.php:129
 msgid "A new Lesson with this title will be created when the Course is saved"
 msgstr ""
 
-#: app/helpers/Courses.php:130
+#: app/helpers/Courses.php:140
 #: public/build/main.js:1
 #: public/src/components/Section.jsx:211
 #: public/src/components/Section.jsx:224
 msgid "Section Title"
 msgstr ""
 
-#: app/helpers/Courses.php:130
+#: app/helpers/Courses.php:140
 msgid "Section Title cannot be blank and must be between 1-60 characters."
 msgstr ""
 
-#: app/helpers/Courses.php:131
+#: app/helpers/Courses.php:141
 msgid "Section Description"
 msgstr ""
 
-#: app/helpers/Courses.php:138
+#: app/helpers/Courses.php:149
 msgid "Add Lesson"
 msgstr ""
 
-#: app/helpers/Courses.php:154
+#: app/helpers/Courses.php:166
 #: app/views/courses/course-resources.php:21
-#: app/views/courses/courses_classroom_section_lessons.php:60
-#: app/views/courses/courses_section_lesson_list.php:44
+#: app/views/courses/courses_classroom_section_lessons.php:75
+#: app/views/courses/courses_section_lesson_list.php:52
 msgid "View"
 msgstr ""
 
-#: app/helpers/Courses.php:156
-#: app/views/admin/options/settings/readylaunch_options.php:114
+#: app/helpers/Courses.php:168
+#: app/views/admin/options/settings/readylaunch_options.php:117
 #: public/build/main.js:1
 #: public/src/views/Certificates.jsx:157
 #: public/src/views/Certificates.jsx:192
@@ -817,7 +825,7 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
-#: app/helpers/Courses.php:400
+#: app/helpers/Courses.php:414
 #: app/views/courses/course-resources.php:7
 #: public/build/main.js:1
 #: public/src/views/Resources.jsx:167
@@ -825,7 +833,7 @@ msgstr ""
 msgid "Downloads"
 msgstr ""
 
-#: app/helpers/Courses.php:405
+#: app/helpers/Courses.php:419
 #: app/views/courses/course-resources.php:36
 #: public/build/main.js:1
 #: public/src/views/Resources.jsx:247
@@ -833,299 +841,299 @@ msgstr ""
 msgid "Links"
 msgstr ""
 
-#: app/helpers/Courses.php:619
+#: app/helpers/Courses.php:639
 msgid "Return home"
 msgstr ""
 
 #. Translators: %1$s is the course post object singular name; %2$s is the title of the course.
-#: app/helpers/Courses.php:632
+#: app/helpers/Courses.php:652
 msgid "Return to %1$s: %2$s"
 msgstr ""
 
 #. Translators: %s is the course post object plural name.
-#: app/helpers/Courses.php:639
+#: app/helpers/Courses.php:659
 msgid "Return to all %s"
 msgstr ""
 
-#: app/helpers/Courses.php:652
+#: app/helpers/Courses.php:671
 msgid "User ID"
 msgstr ""
 
-#: app/helpers/Courses.php:653
+#: app/helpers/Courses.php:672
 msgid "User login name"
 msgstr ""
 
-#: app/helpers/Courses.php:654
+#: app/helpers/Courses.php:673
 msgid "Username"
 msgstr ""
 
-#: app/helpers/Courses.php:655
+#: app/helpers/Courses.php:674
 msgid "User email address"
 msgstr ""
 
-#: app/helpers/Courses.php:656
+#: app/helpers/Courses.php:675
 msgid "User first name"
 msgstr ""
 
-#: app/helpers/Courses.php:657
+#: app/helpers/Courses.php:676
 msgid "User last name"
 msgstr ""
 
-#: app/helpers/Courses.php:658
+#: app/helpers/Courses.php:677
 msgid "User full name"
 msgstr ""
 
-#: app/helpers/Courses.php:659
+#: app/helpers/Courses.php:678
 msgid "User address"
 msgstr ""
 
-#: app/helpers/Courses.php:660
+#: app/helpers/Courses.php:679
 msgid "User registration date"
 msgstr ""
 
-#: app/helpers/Courses.php:661
+#: app/helpers/Courses.php:680
 msgid "Name of the blog"
 msgstr ""
 
-#: app/helpers/Courses.php:662
+#: app/helpers/Courses.php:681
 msgid "URL of the login page"
 msgstr ""
 
-#: app/helpers/Courses.php:663
+#: app/helpers/Courses.php:682
 msgid "URL to the user’s account"
 msgstr ""
 
-#: app/helpers/Courses.php:664
+#: app/helpers/Courses.php:683
 msgid "Login URL"
 msgstr ""
 
-#: app/helpers/Courses.php:665
+#: app/helpers/Courses.php:684
 msgid "URL to view the user’s profile"
 msgstr ""
 
-#: app/helpers/Courses.php:666
+#: app/helpers/Courses.php:685
 msgid "Name of the site"
 msgstr ""
 
-#: app/helpers/Courses.php:667
+#: app/helpers/Courses.php:686
 msgid "URL of the site"
 msgstr ""
 
-#: app/helpers/Courses.php:668
+#: app/helpers/Courses.php:687
 msgid "URL to the course"
 msgstr ""
 
-#: app/helpers/Courses.php:669
+#: app/helpers/Courses.php:688
 msgid "Course name (post title)"
 msgstr ""
 
-#: app/helpers/Courses.php:670
+#: app/helpers/Courses.php:689
 msgid "Post ID of the course"
 msgstr ""
 
-#: app/helpers/Courses.php:671
+#: app/helpers/Courses.php:690
 msgid "Start date of the course"
 msgstr ""
 
-#: app/helpers/Courses.php:672
+#: app/helpers/Courses.php:691
 msgid "Course status (Not Started, In Progress, Completed, Passed, or Failed)"
 msgstr ""
 
-#: app/helpers/Courses.php:673
+#: app/helpers/Courses.php:692
 msgid "URL to view the course resources page"
 msgstr ""
 
-#: app/helpers/Courses.php:674
+#: app/helpers/Courses.php:693
 msgid "URL to view the course instructor page"
 msgstr ""
 
-#: app/helpers/Courses.php:675
+#: app/helpers/Courses.php:694
 msgid "URL to view the course certificate page"
 msgstr ""
 
-#: app/helpers/Courses.php:676
+#: app/helpers/Courses.php:695
 msgid "URL to view the course grades"
 msgstr ""
 
-#: app/helpers/Courses.php:677
+#: app/helpers/Courses.php:696
 msgid "Admin only, should link to the gradebook filtered by this user for this course. If gradebook is not installed, should default to the WP User Profile for the student."
 msgstr ""
 
-#: app/helpers/Courses.php:707
-#: app/helpers/Lessons.php:255
+#: app/helpers/Courses.php:726
+#: app/helpers/Lessons.php:284
 msgid "Not Started"
 msgstr ""
 
-#: app/helpers/Courses.php:712
-#: app/views/courses/courses_bookmark_link.php:9
+#: app/helpers/Courses.php:731
+#: app/views/courses/courses_bookmark_link.php:15
 msgid "In Progress"
 msgstr ""
 
-#: app/helpers/Drip.php:179
+#: app/helpers/Drip.php:190
 msgid "%s Day(s)"
 msgid_plural "%s Days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/helpers/Drip.php:180
+#: app/helpers/Drip.php:191
 msgid "%s Week(s)"
 msgid_plural "%s Weeks"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/helpers/Drip.php:181
+#: app/helpers/Drip.php:192
 msgid "%s Month(s)"
 msgid_plural "%s Months"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/helpers/Lessons.php:235
+#: app/helpers/Lessons.php:264
 msgid "Should output the URL to the Lesson"
 msgstr ""
 
-#: app/helpers/Lessons.php:236
+#: app/helpers/Lessons.php:265
 msgid "Should output the Lesson Name (post_title)"
 msgstr ""
 
-#: app/helpers/Lessons.php:237
+#: app/helpers/Lessons.php:266
 msgid "Should output the Lesson ID (post_ID)"
 msgstr ""
 
-#: app/helpers/Lessons.php:238
+#: app/helpers/Lessons.php:267
 msgid "Not Started, In-Progress, Completed"
 msgstr ""
 
-#: app/jobs/EmailJob.php:17
+#: app/jobs/EmailJob.php:16
 msgid "\"class\" cannot be blank"
 msgstr ""
 
-#: app/jobs/EmailJob.php:21
+#: app/jobs/EmailJob.php:20
 msgid "\"to\" cannot be blank"
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:36
+#: app/lib/BaseCptCtrl.php:45
 msgid "%1$s updated. <a href=\"%2$s\">View %3$s</a>"
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:40
+#: app/lib/BaseCptCtrl.php:51
 msgid "%1$s updated."
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:43
+#: app/lib/BaseCptCtrl.php:54
 msgid "Custom field updated."
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:44
+#: app/lib/BaseCptCtrl.php:55
 msgid "Custom field deleted."
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:45
+#: app/lib/BaseCptCtrl.php:56
 msgid "%s updated."
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:46
+#: app/lib/BaseCptCtrl.php:57
 msgid "%1$s restored to revision from %2$s"
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:49
+#: app/lib/BaseCptCtrl.php:61
 msgid "%1$s published. <a href=\"%2$s\">View %3$s</a>"
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:53
+#: app/lib/BaseCptCtrl.php:67
 msgid "%1$s published."
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:56
+#: app/lib/BaseCptCtrl.php:70
 msgid "%s saved."
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:59
+#: app/lib/BaseCptCtrl.php:74
 msgid "%1$s submitted. <a target=\"_blank\" href=\"%2$s\">Preview %3$s</a>"
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:61
+#: app/lib/BaseCptCtrl.php:80
 msgid "%1$s scheduled for: <strong>%2$s</strong>. <a target=\"_blank\" href=\"%3$s\">Preview %4$s</a>"
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:64
+#: app/lib/BaseCptCtrl.php:87
 msgid "%1$s draft updated. <a target=\"_blank\" href=\"%2$s\">Preview %3$s</a>"
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:69
+#: app/lib/BaseCptCtrl.php:93
 msgid "%s submitted."
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:70
+#: app/lib/BaseCptCtrl.php:95
 msgid "%1$s scheduled for: <strong>%2$s</strong>."
 msgstr ""
 
-#: app/lib/BaseCptCtrl.php:72
+#: app/lib/BaseCptCtrl.php:99
 msgid "%s draft updated."
 msgstr ""
 
-#: app/lib/BaseCptModel.php:192
-#: app/lib/BaseCtaxModel.php:165
+#: app/lib/BaseCptModel.php:232
+#: app/lib/BaseCtaxModel.php:205
 msgid "This was unable to be deleted."
 msgstr ""
 
-#: app/lib/BaseCtaxModel.php:108
-#: app/lib/BaseCtaxModel.php:130
-msgid "%s was unable to be saved: %s"
+#: app/lib/BaseCtaxModel.php:149
+#: app/lib/BaseCtaxModel.php:170
+msgid "%1$s was unable to be saved: %2$s"
 msgstr ""
 
-#: app/lib/BaseEmail.php:216
+#: app/lib/BaseEmail.php:230
 msgid "No email recipient has been set."
 msgstr ""
 
-#: app/lib/BaseEmail.php:420
+#: app/lib/BaseEmail.php:434
 msgid "Privacy Policy"
 msgstr ""
 
-#: app/lib/Config.php:15
+#: app/lib/Config.php:22
 msgid "A config file for %s wasn\\'t found"
 msgstr ""
 
-#: app/lib/CtrlFactory.php:28
+#: app/lib/CtrlFactory.php:34
 msgid "Ctrl: %s wasn't found"
 msgstr ""
 
-#: app/lib/Drip.php:105
+#: app/lib/Drip.php:112
 msgid "Drip type must be valid."
 msgstr ""
 
-#: app/lib/Drip.php:109
+#: app/lib/Drip.php:116
 msgid "Drip amount must be numeric."
 msgstr ""
 
-#: app/lib/Drip.php:113
+#: app/lib/Drip.php:120
 msgid "Frequency and Frequency Type must be valid."
 msgstr ""
 
-#: app/lib/Drip.php:145
+#: app/lib/Drip.php:156
 msgid "Drip base date is invalid."
 msgstr ""
 
-#: app/lib/Drip.php:196
+#: app/lib/Drip.php:209
 msgid "Invalid drip frequency."
 msgstr ""
 
-#: app/lib/Drip/BaseDateFactory.php:21
+#: app/lib/Drip/BaseDateFactory.php:25
 msgid "Invalid drip frequency type."
 msgstr ""
 
-#: app/lib/Drip/ItemInfoProviderFactory.php:19
+#: app/lib/Drip/ItemInfoProviderFactory.php:23
 msgid "Invalid drip type."
 msgstr ""
 
-#: app/lib/EmailManager.php:41
+#: app/lib/EmailManager.php:42
 msgid "Email key %1$s is already registered"
 msgstr ""
 
-#: app/lib/EmailManager.php:93
+#: app/lib/EmailManager.php:95
 msgid "Email wasn't found"
 msgstr ""
 
-#: app/lib/EmailManager.php:100
+#: app/lib/EmailManager.php:102
 msgid "Not a valid email object: %1$s is not an instance of %2$s"
 msgstr ""
 
@@ -1139,7 +1147,7 @@ msgstr ""
 msgid "subject"
 msgstr ""
 
-#: app/lib/Utils.php:407
+#: app/lib/Utils.php:411
 msgid ""
 "*** MemberPress Courses Error\n"
 "==========\n"
@@ -1148,276 +1156,281 @@ msgid ""
 ""
 msgstr ""
 
-#: app/lib/Utils.php:418
+#: app/lib/Utils.php:422
 msgid "*** MemberPress Courses Debug: %s"
 msgstr ""
 
-#: app/lib/Utils.php:1013
+#: app/lib/Utils.php:1021
 msgid "Bad request"
 msgstr ""
 
-#: app/lib/Utils.php:1017
+#: app/lib/Utils.php:1025
 msgid "Insufficient permissions"
 msgstr ""
 
-#: app/lib/Utils.php:1021
+#: app/lib/Utils.php:1029
 msgid "Security check failed"
 msgstr ""
 
-#: app/lib/Validate.php:11
-#: app/lib/Validate.php:17
+#: app/lib/Validate.php:16
 #: app/lib/Validate.php:23
+#: app/lib/Validate.php:30
 msgid "%s must not be empty"
 msgstr ""
 
-#: app/lib/Validate.php:29
+#: app/lib/Validate.php:37
 msgid "%s must be true or false"
 msgstr ""
 
-#: app/lib/Validate.php:35
+#: app/lib/Validate.php:44
 msgid "%s must be an array"
 msgstr ""
 
-#: app/lib/Validate.php:41
+#: app/lib/Validate.php:51
 msgid "%1$s must be %2$s NOT %3$s"
 msgstr ""
 
-#: app/lib/Validate.php:41
+#: app/lib/Validate.php:51
 #: public/build/main.js:1
 #: public/src/components/Section.jsx:336
 #: public/src/components/Section.jsx:356
 msgid "or"
 msgstr ""
 
-#: app/lib/Validate.php:47
+#: app/lib/Validate.php:58
 msgid "%1$s (%2$s) must be a valid url"
 msgstr ""
 
-#: app/lib/Validate.php:53
+#: app/lib/Validate.php:65
 msgid "%1$s (%2$s) must be a valid representation of currency"
 msgstr ""
 
-#: app/lib/Validate.php:59
+#: app/lib/Validate.php:72
 msgid "%1$s (%2$s) must be a valid number"
 msgstr ""
 
-#: app/lib/Validate.php:65
+#: app/lib/Validate.php:79
 msgid "%1$s (%2$s) must be a valid email"
 msgstr ""
 
-#: app/lib/Validate.php:71
+#: app/lib/Validate.php:86
 msgid "%1$s (%2$s) must be a valid phone number"
 msgstr ""
 
-#: app/lib/Validate.php:77
+#: app/lib/Validate.php:93
 msgid "%1$s (%2$s) must be a valid IP Address"
 msgstr ""
 
-#: app/lib/Validate.php:83
+#: app/lib/Validate.php:100
 msgid "%1$s (%2$s) must be a valid date"
 msgstr ""
 
-#: app/lib/Validate.php:90
+#: app/lib/Validate.php:108
 msgid "%1$s (%2$s) must be a valid timestamp"
 msgstr ""
 
-#: app/lib/Validate.php:96
+#: app/lib/Validate.php:115
 msgid "%1$s (%2$s) must match the regex pattern: %3$s"
 msgstr ""
 
-#: app/models/Course.php:138
+#: app/models/Course.php:270
 msgid "Curriculum is released every {mpcs_drip_schedule}. As such, this {mpcs_item_type} will not be available to you until {mpcs_drip_date}."
 msgstr ""
 
-#: app/models/Lesson.php:115
+#: app/models/Lesson.php:141
 msgid "Copy"
 msgstr ""
 
-#: app/views/account/ca/courses_progress.php:5
+#: app/views/account/ca/courses_progress.php:9
 msgid "Course Progress for"
 msgstr ""
 
-#: app/views/account/ca/courses_progress.php:24
+#: app/views/account/ca/courses_progress.php:27
 msgid "No records found."
 msgstr ""
 
-#: app/views/account/courses_list.php:23
-#: app/views/courses/courses_list.php:45
-#: app/views/readylaunch/account/courses_list.php:27
-msgid "&laquo; Previous"
+#: app/views/account/courses_list.php:15
+#: app/views/courses/courses_progress.php:6
+msgid "Course Progress: %s"
 msgstr ""
 
 #: app/views/account/courses_list.php:26
-#: app/views/courses/courses_list.php:48
-#: app/views/readylaunch/account/courses_list.php:33
+#: app/views/courses/courses_list.php:47
+#: app/views/readylaunch/account/courses_list.php:29
+msgid "&laquo; Previous"
+msgstr ""
+
+#: app/views/account/courses_list.php:29
+#: app/views/courses/courses_list.php:50
+#: app/views/readylaunch/account/courses_list.php:35
 msgid "Next &raquo;"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:17
+#: app/views/admin/addons/assignments.php:18
 msgid "Enhance your teaching with MemberPress Courses’ new Assignments add-on"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:21
+#: app/views/admin/addons/assignments.php:22
 msgid "The Assignments add-on within MemberPress Courses is designed to invigorate your teaching methods and provide your students with a richer, more interactive learning experience."
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:33
+#: app/views/admin/addons/assignments.php:34
 msgid "Essay Writing"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:34
+#: app/views/admin/addons/assignments.php:35
 msgid "Document Uploads"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:35
+#: app/views/admin/addons/assignments.php:36
 msgid "Video Submissions"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:36
+#: app/views/admin/addons/assignments.php:37
 msgid "URL Submissions"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:37
+#: app/views/admin/addons/assignments.php:38
 msgid "Diverse Assignment Types"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:38
+#: app/views/admin/addons/assignments.php:39
 msgid "Interactive Learning"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:57
+#: app/views/admin/addons/assignments.php:58
 msgid "Enable MemberPress Course Assignments"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:59
+#: app/views/admin/addons/assignments.php:60
 msgid "Install and Activate MemberPress Course Assignments"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:64
-#: app/views/admin/addons/gradebook.php:64
-#: app/views/admin/addons/quizzes.php:64
+#: app/views/admin/addons/assignments.php:65
+#: app/views/admin/addons/gradebook.php:65
+#: app/views/admin/addons/quizzes.php:65
 msgid "Activate Add-On"
 msgstr ""
 
-#: app/views/admin/addons/assignments.php:66
-#: app/views/admin/addons/gradebook.php:66
+#: app/views/admin/addons/assignments.php:67
+#: app/views/admin/addons/gradebook.php:67
 msgid "Install & Activate Add-On"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:17
+#: app/views/admin/addons/gradebook.php:18
 msgid "Stay organized with everything you need to manage your course grades all in one place"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:21
+#: app/views/admin/addons/gradebook.php:22
 msgid "The Gradebook add-on within MemberPress Courses simplifies how you interact with and assess your students' progress."
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:33
+#: app/views/admin/addons/gradebook.php:34
 msgid "Centralized Grade Management"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:34
+#: app/views/admin/addons/gradebook.php:35
 msgid "Real-Time Progress Tracking"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:35
+#: app/views/admin/addons/gradebook.php:36
 msgid "Efficient Feedback System"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:36
+#: app/views/admin/addons/gradebook.php:37
 msgid "Require Minimum Score to Pass Course"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:37
+#: app/views/admin/addons/gradebook.php:38
 msgid "Instant access to grades for your students"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:38
+#: app/views/admin/addons/gradebook.php:39
 msgid "Give Bonus Points on Assignments & Quizzes"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:57
+#: app/views/admin/addons/gradebook.php:58
 msgid "Enable MemberPress Course Gradebook"
 msgstr ""
 
-#: app/views/admin/addons/gradebook.php:59
+#: app/views/admin/addons/gradebook.php:60
 msgid "Install and Activate MemberPress Course Gradebook"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:17
+#: app/views/admin/addons/quizzes.php:18
 msgid "Create an engaging learning environment by adding Quizzes"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:21
+#: app/views/admin/addons/quizzes.php:22
 msgid "The Quizzes add-on makes it simple to add quizzes to your MemberPress Courses, providing an effective way to measure student learning and keep your courses interactive."
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:33
+#: app/views/admin/addons/quizzes.php:34
 msgid "Encourage Active Participation"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:34
+#: app/views/admin/addons/quizzes.php:35
 msgid "Enhance Material Retention"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:35
+#: app/views/admin/addons/quizzes.php:36
 msgid "Boost Engagement"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:36
+#: app/views/admin/addons/quizzes.php:37
 msgid "Increase Course Completion Rates"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:37
+#: app/views/admin/addons/quizzes.php:38
 msgid "Flexible Completion Requirements"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:38
+#: app/views/admin/addons/quizzes.php:39
 msgid "Require Passing Scores"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:57
+#: app/views/admin/addons/quizzes.php:58
 msgid "Enable MemberPress Course Quizzes"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:59
+#: app/views/admin/addons/quizzes.php:60
 msgid "Install and Activate MemberPress Course Quizzes"
 msgstr ""
 
-#: app/views/admin/addons/quizzes.php:66
+#: app/views/admin/addons/quizzes.php:67
 msgid "Install & Activate Quizzes Add-On"
 msgstr ""
 
-#: app/views/admin/courses/courses_page_options_meta_box.php:5
+#: app/views/admin/courses/courses_page_options_meta_box.php:7
 msgid "Page Template"
 msgstr ""
 
-#: app/views/admin/courses/courses_page_options_meta_box.php:7
+#: app/views/admin/courses/courses_page_options_meta_box.php:10
 msgid "Default Template"
 msgstr ""
 
-#: app/views/admin/courses/lessons_meta_box.php:5
+#: app/views/admin/courses/lessons_meta_box.php:7
 msgid "Warning: Your lessons and sections will only be saved after you publish or update the course."
 msgstr ""
 
-#: app/views/admin/courses/lessons_meta_box.php:8
+#: app/views/admin/courses/lessons_meta_box.php:10
 msgid "Tip: To get started enter your section title then add or create new lessons. You can easily add sections using the \"New Section\" button."
 msgstr ""
 
-#: app/views/admin/courses/lessons_meta_box.php:14
+#: app/views/admin/courses/lessons_meta_box.php:16
 msgid "New Section"
 msgstr ""
 
-#: app/views/admin/courses/options_meta_box.php:8
 #: app/views/admin/courses/options_meta_box.php:10
+#: app/views/admin/courses/options_meta_box.php:13
 msgid "Course Visibility"
 msgstr ""
 
-#: app/views/admin/courses/options_meta_box.php:11
+#: app/views/admin/courses/options_meta_box.php:14
 msgid "The visibility of the course as displayed on the courses page. Hidden courses will not be displayed, but their content and lessons will remain available to enrolled users."
 msgstr ""
 
-#: app/views/admin/courses/options_meta_box.php:27
+#: app/views/admin/courses/options_meta_box.php:31
 msgid "Course Order"
 msgstr ""
 
@@ -1426,7 +1439,7 @@ msgid "Send Test"
 msgstr ""
 
 #: app/views/admin/emails/edit.php:13
-#: app/views/admin/options/settings/readylaunch_options.php:134
+#: app/views/admin/options/settings/readylaunch_options.php:137
 msgid "Loading..."
 msgstr ""
 
@@ -1446,322 +1459,337 @@ msgstr ""
 msgid "Save Changes"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:5
+#: app/views/admin/emails/settings.php:7
 msgid "Send Mail From"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:10
+#: app/views/admin/emails/settings.php:12
 msgid "From Name:"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:18
+#: app/views/admin/emails/settings.php:20
 msgid "From Email:"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:27
+#: app/views/admin/emails/settings.php:29
 msgid "Admin Emails"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:33
+#: app/views/admin/emails/settings.php:35
 msgid "Admin Email Addresses:"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:36
+#: app/views/admin/emails/settings.php:38
 msgid "Notification Email Addresses"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:37
+#: app/views/admin/emails/settings.php:39
 msgid "This is a comma separated list of email addresses that will receive admin notifications. This defaults to your admin email set in \"Settings\" -> \"General\" -> \"E-mail Address\""
 msgstr ""
 
-#: app/views/admin/emails/settings.php:48
+#: app/views/admin/emails/settings.php:50
 msgid "Background Job"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:53
+#: app/views/admin/emails/settings.php:55
 msgid "Asynchronous Emails"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:56
+#: app/views/admin/emails/settings.php:58
 msgid "Send Emails Asynchronously in the Background"
 msgstr ""
 
-#: app/views/admin/emails/settings.php:57
+#: app/views/admin/emails/settings.php:59
 msgid "This option will allow you to send all MemberPress Courses emails asynchronously. This option can increase the speed & performance of the checkout process but may also result in a delay in when emails are received. <strong>Note:</strong> This option requires wp-cron to be enabled and working."
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:13
+#: app/views/admin/options/courses_general.php:17
 msgid "Show Protected Courses in Listing"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:15
+#: app/views/admin/options/courses_general.php:20
 msgctxt "ui"
 msgid "Show Protected Courses in Listing"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:16
+#: app/views/admin/options/courses_general.php:21
 msgctxt "ui"
 msgid "By default, protected courses are displayed in Course Listing page with a padlock icon appearing before the title. Use this field to show/hide protected courses in Course Listing"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:30
+#: app/views/admin/options/courses_general.php:36
 msgid "Remove your instructor link"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:32
+#: app/views/admin/options/courses_general.php:39
 msgctxt "ui"
 msgid "Remove instructor link in classroom mode"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:33
+#: app/views/admin/options/courses_general.php:40
 msgctxt "ui"
 msgid "By default, a link to instructor of the course will be displayed in Course Listing page. Use this field to show/hide the link"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:47
+#: app/views/admin/options/courses_general.php:55
 msgid "Show Comments Settings on Course and Lesson Pages"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:49
+#: app/views/admin/options/courses_general.php:58
 msgctxt "ui"
 msgid "Show Comments Settings on Course and Lesson Pages"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:50
+#: app/views/admin/options/courses_general.php:59
 msgctxt "ui"
 msgid "Select this option to display comment settings in the sidebar of main course and lesson pages. To display comments on specific course or lesson you will have to check Allow comments option in Discussion section of that course or lesson."
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:64
+#: app/views/admin/options/courses_general.php:74
 msgid "Courses Per Page"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:66
+#: app/views/admin/options/courses_general.php:77
 msgctxt "ui"
 msgid "Courses Per Page"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:67
+#: app/views/admin/options/courses_general.php:78
 msgctxt "ui"
 msgid "This setting will alter how many courses are shown in the Course Listing page and in the user's Account > Courses tab"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:77
+#: app/views/admin/options/courses_general.php:89
 msgid "Courses Sort Order"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:79
+#: app/views/admin/options/courses_general.php:92
 msgctxt "ui"
 msgid "Courses Sort Order"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:80
+#: app/views/admin/options/courses_general.php:93
 msgctxt "ui"
 msgid "This setting will alter the way courses are sorted in the Course Listing page and in the user's Account > Courses tab"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:85
+#: app/views/admin/options/courses_general.php:99
 msgid "Alphabetically"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:86
+#: app/views/admin/options/courses_general.php:100
 msgid "Last Updated"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:87
+#: app/views/admin/options/courses_general.php:101
 msgid "Publish Date"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:90
+#: app/views/admin/options/courses_general.php:104
 msgid "Sort order direction"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:91
+#: app/views/admin/options/courses_general.php:105
 msgid "ASC"
 msgstr ""
 
-#: app/views/admin/options/courses_general.php:92
+#: app/views/admin/options/courses_general.php:106
 msgid "DESC"
 msgstr ""
 
-#: app/views/admin/options/pages_slugs.php:12
+#: app/views/admin/options/pages_slugs.php:16
 msgid "Classroom Slug:"
 msgstr ""
 
-#: app/views/admin/options/pages_slugs.php:16
+#: app/views/admin/options/pages_slugs.php:20
 msgid "Classroom Slug"
 msgstr ""
 
-#: app/views/admin/options/pages_slugs.php:17
+#: app/views/admin/options/pages_slugs.php:21
 msgid "Use this field to change the permalink base of your courses to something other than /courses/"
 msgstr ""
 
-#: app/views/admin/options/pages_slugs.php:27
+#: app/views/admin/options/pages_slugs.php:31
 msgid "Lesson Slug:"
 msgstr ""
 
-#: app/views/admin/options/pages_slugs.php:31
+#: app/views/admin/options/pages_slugs.php:35
 msgid "Lesson Slug"
 msgstr ""
 
-#: app/views/admin/options/pages_slugs.php:32
+#: app/views/admin/options/pages_slugs.php:36
 msgid "Use this field to change the permalink base of your lessons to something other than /lessons/"
 msgstr ""
 
-#: app/views/admin/options/settings.php:4
+#: app/views/admin/options/settings.php:6
 msgid "User Manual"
 msgstr ""
 
-#: app/views/admin/options/settings.php:23
+#: app/views/admin/options/settings.php:25
 msgid "General"
 msgstr ""
 
-#: app/views/admin/options/settings.php:24
+#: app/views/admin/options/settings.php:26
 msgid "Page Slugs"
 msgstr ""
 
-#: app/views/admin/options/settings.php:45
+#: app/views/admin/options/settings.php:47
 msgid "Update Options"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch.php:15
+#: app/views/admin/options/settings/readylaunch.php:17
 msgid "Customize"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:11
+#: app/views/admin/options/settings/readylaunch_options.php:14
 msgid "Courses Settings"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:25
+#: app/views/admin/options/settings/readylaunch_options.php:28
 msgid "Use this field to change Navbar background color"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:42
+#: app/views/admin/options/settings/readylaunch_options.php:45
 msgid "Use this field to change accent color"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:60
+#: app/views/admin/options/settings/readylaunch_options.php:63
 msgid "Use this field to change progress color."
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:77
+#: app/views/admin/options/settings/readylaunch_options.php:80
 msgid "Use this field to change text color of menu items."
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:94
+#: app/views/admin/options/settings/readylaunch_options.php:97
 msgid "Use this field to add custom logo to your classroom header."
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:130
+#: app/views/admin/options/settings/readylaunch_options.php:133
 msgid "Upload Image"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:139
+#: app/views/admin/options/settings/readylaunch_options.php:142
 msgctxt "Uploader: Upload Image - or - Select Image"
 msgid "or"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:142
+#: app/views/admin/options/settings/readylaunch_options.php:145
 msgid "Select Image"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:158
-#: app/views/admin/options/settings/readylaunch_options.php:162
+#: app/views/admin/options/settings/readylaunch_options.php:161
+#: app/views/admin/options/settings/readylaunch_options.php:165
 msgid "Lesson Button Location"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:163
+#: app/views/admin/options/settings/readylaunch_options.php:166
 msgid "Choose where to position the continue/back buttons when viewing a lesson."
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:170
+#: app/views/admin/options/settings/readylaunch_options.php:173
 msgid "Top"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:172
+#: app/views/admin/options/settings/readylaunch_options.php:175
 msgid "Bottom"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:174
+#: app/views/admin/options/settings/readylaunch_options.php:177
 msgid "Both"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:184
+#: app/views/admin/options/settings/readylaunch_options.php:187
 msgid "Complete Link CSS"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:188
+#: app/views/admin/options/settings/readylaunch_options.php:191
 msgid "Complete Link CSS Classes"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:189
+#: app/views/admin/options/settings/readylaunch_options.php:192
 msgid "Use this field to add custom CSS classes to the \"Complete Lesson/Section/Course\" link in each of your Lessons."
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:202
+#: app/views/admin/options/settings/readylaunch_options.php:205
 msgid "Previous Link CSS"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:206
+#: app/views/admin/options/settings/readylaunch_options.php:209
 msgid "Previous Lesson/Section Link CSS Classes"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:207
+#: app/views/admin/options/settings/readylaunch_options.php:210
 msgid "Use this field to add custom CSS classes to the \"Previous Lesson/Section\" link in each of your Lessons."
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:219
+#: app/views/admin/options/settings/readylaunch_options.php:222
 msgid "Breadcrumb Link CSS"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:223
+#: app/views/admin/options/settings/readylaunch_options.php:226
 msgid "Breadcrumb Link CSS Classes"
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:224
+#: app/views/admin/options/settings/readylaunch_options.php:227
 msgid "Use this field to add custom CSS classes to the breadcrumb links in each of your Lessons."
 msgstr ""
 
-#: app/views/admin/options/settings/readylaunch_options.php:238
+#: app/views/admin/options/settings/readylaunch_options.php:241
 msgctxt "ui"
 msgid "Update"
 msgstr ""
 
-#: app/views/admin/shared/courses_admin_header.php:5
+#: app/views/admin/rules/courses_input.php:22
+msgid "Begin Typing Title"
+msgstr ""
+
+#: app/views/admin/rules/courses_input.php:24
+msgid "Content cannot be blank"
+msgstr ""
+
+#: app/views/admin/rules/courses_input.php:39
+#: app/views/admin/rules/courses_input.php:75
+msgid "ID: "
+msgstr ""
+
+#: app/views/admin/shared/courses_admin_header.php:7
 msgid "Support"
 msgstr ""
 
-#: app/views/admin/users/courses_profile_fields.php:3
+#: app/views/admin/users/courses_profile_fields.php:9
 msgid "Course Information"
 msgstr ""
 
-#: app/views/admin/users/courses_profile_fields.php:16
+#: app/views/admin/users/courses_profile_fields.php:22
 msgid "Reset Progress"
 msgstr ""
 
-#: app/views/classroom/courses_archive_course.php:29
+#: app/views/classroom/courses_archive_course.php:30
 msgid "Category"
 msgstr ""
 
-#: app/views/classroom/courses_archive_course.php:35
-#: app/views/classroom/courses_archive_course.php:54
+#: app/views/classroom/courses_archive_course.php:36
+#: app/views/classroom/courses_archive_course.php:55
 msgid "Search"
 msgstr ""
 
-#: app/views/classroom/courses_archive_course.php:37
-#: app/views/classroom/courses_archive_course.php:56
+#: app/views/classroom/courses_archive_course.php:38
+#: app/views/classroom/courses_archive_course.php:57
 msgid "All"
 msgstr ""
 
-#: app/views/classroom/courses_archive_course.php:47
+#: app/views/classroom/courses_archive_course.php:48
 msgid "Author"
 msgstr ""
 
-#: app/views/classroom/courses_archive_course.php:77
+#: app/views/classroom/courses_archive_course.php:78
+#: app/views/classroom/courses_archive_course.php:79
+#: app/views/classroom/courses_archive_course.php:80
 msgid "Find a course"
 msgstr ""
 
-#: app/views/classroom/courses_archive_course.php:150
+#: app/views/classroom/courses_archive_course.php:153
 msgid "No Course found"
 msgstr ""
 
@@ -1776,52 +1804,66 @@ msgid "Comments are closed"
 msgstr ""
 
 #. Translators: %s is the site's title option value.
-#: app/views/classroom/courses_header.php:16
+#: app/views/classroom/courses_header.php:18
 msgctxt "Site logo alternative text"
 msgid "%s logo"
 msgstr ""
 
-#: app/views/classroom/courses_header.php:88
+#: app/views/classroom/courses_header.php:79
+#: app/views/classroom/courses_header.php:103
+msgid "Toggle menu"
+msgstr ""
+
+#: app/views/classroom/courses_header.php:90
 msgid "Preview as"
 msgstr ""
 
-#: app/views/classroom/courses_header.php:92
+#: app/views/classroom/courses_header.php:94
 msgid "Logged in"
 msgstr ""
 
-#: app/views/classroom/courses_header.php:93
+#: app/views/classroom/courses_header.php:95
 msgid "Logged out"
 msgstr ""
 
-#: app/views/classroom/courses_header.php:109
+#: app/views/classroom/courses_header.php:112
+msgid "Photo of %s."
+msgstr ""
+
+#: app/views/classroom/courses_header.php:118
 msgid "Account"
 msgstr ""
 
-#: app/views/classroom/courses_header.php:112
+#: app/views/classroom/courses_header.php:121
 msgid "WP Dashboard"
 msgstr ""
 
-#: app/views/classroom/courses_header.php:114
+#: app/views/classroom/courses_header.php:123
 msgid "Logout"
 msgstr ""
 
-#: app/views/classroom/courses_sidebar.php:71
-#: app/views/lessons/courses_classroom_buttons.php:63
-#: app/views/lessons/courses_navigation.php:43
+#: app/views/classroom/courses_header.php:129
+#: app/views/lessons/courses_classroom_buttons.php:80
+msgid "Toggle sidebar"
+msgstr ""
+
+#: app/views/classroom/courses_sidebar.php:74
+#: app/views/lessons/courses_classroom_buttons.php:73
+#: app/views/lessons/courses_navigation.php:53
 msgid "Course Overview"
 msgstr ""
 
-#: app/views/classroom/courses_sidebar.php:110
+#: app/views/classroom/courses_sidebar.php:117
 #: public/build/main.js:1
 #: public/src/views/Header.jsx:259
 msgid "Certificate"
 msgstr ""
 
-#: app/views/classroom/courses_sidebar.php:111
+#: app/views/classroom/courses_sidebar.php:119
 msgid "Copied Shareable Certificate Link"
 msgstr ""
 
-#: app/views/classroom/courses_sidebar.php:122
+#: app/views/classroom/courses_sidebar.php:133
 msgid "Your Instructor"
 msgstr ""
 
@@ -1829,50 +1871,51 @@ msgstr ""
 msgid "Visit"
 msgstr ""
 
-#: app/views/courses/courses_bookmark_link.php:7
-#: app/views/courses/courses_classroom_section_lessons.php:65
-#: app/views/courses/courses_section_lesson_list.php:48
+#: app/views/courses/courses_bookmark_link.php:13
+#: app/views/courses/courses_classroom_section_lessons.php:80
+#: app/views/courses/courses_section_lesson_list.php:56
 msgid "Start"
 msgstr ""
 
-#: app/views/courses/courses_certificate.php:207
+#: app/views/courses/courses_certificate.php:181
 msgid "Certificate of Completion"
 msgstr ""
 
-#: app/views/courses/courses_certificate.php:223
+#: app/views/courses/courses_certificate.php:198
 msgid "COMPLETED"
 msgstr ""
 
-#: app/views/courses/courses_certificate.php:224
+#: app/views/courses/courses_certificate.php:201
 msgid "EXPIRES"
 msgstr ""
 
-#: app/views/courses/courses_certificate.php:233
+#: app/views/courses/courses_certificate.php:211
 msgid "Signature"
 msgstr ""
 
-#: app/views/courses/courses_classroom_bookmark.php:4
+#: app/views/courses/courses_classroom_bookmark.php:5
 msgid "Course Curriculum"
 msgstr ""
 
-#: app/views/courses/courses_classroom_bookmark.php:9
+#: app/views/courses/courses_classroom_bookmark.php:10
 msgid "Start Next Lesson"
 msgstr ""
 
-#: app/views/courses/courses_classroom_section_lessons.php:76
+#: app/views/courses/courses_classroom_section_lessons.php:91
 msgid "Lesson unavailable. You must complete all previous lessons and quizzes before you start this lesson."
 msgstr ""
 
 #: app/views/courses/courses_classroom_sidebar_progress.php:16
+#: app/views/courses/courses_progress.php:5
+msgid "Course Progress: %d%%"
+msgstr ""
+
+#: app/views/courses/courses_classroom_sidebar_progress.php:22
 msgid "COMPLETE"
 msgstr ""
 
-#: app/views/courses/courses_instructor.php:32
+#: app/views/courses/courses_instructor.php:37
 msgid "Course Instructor"
-msgstr ""
-
-#: app/views/courses/courses_progress.php:3
-msgid "Course Progress: %d%%"
 msgstr ""
 
 #: app/views/emails/admin_course_completed_email.php:5
@@ -1894,67 +1937,67 @@ msgstr ""
 msgid "Access helpful resources here:"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:13
-#: app/views/lessons/courses_navigation.php:10
+#: app/views/lessons/courses_classroom_buttons.php:17
+#: app/views/lessons/courses_navigation.php:14
 msgid "Previous Lesson"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:14
-#: app/views/lessons/courses_classroom_buttons.php:20
+#: app/views/lessons/courses_classroom_buttons.php:18
+#: app/views/lessons/courses_classroom_buttons.php:24
 msgid "Previous"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:21
+#: app/views/lessons/courses_classroom_buttons.php:25
 msgid "Previous Section"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:33
-#: app/views/lessons/courses_classroom_buttons.php:48
+#: app/views/lessons/courses_classroom_buttons.php:39
+#: app/views/lessons/courses_classroom_buttons.php:56
 #: public/build/main.js:1
 #: public/src/components/Pagination.jsx:40
 msgid "Next"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:34
-#: app/views/lessons/courses_navigation.php:19
+#: app/views/lessons/courses_classroom_buttons.php:40
+#: app/views/lessons/courses_navigation.php:25
 msgid "Next Lesson"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:36
-#: app/views/lessons/courses_classroom_buttons.php:51
+#: app/views/lessons/courses_classroom_buttons.php:42
+#: app/views/lessons/courses_classroom_buttons.php:59
 msgid "Complete and Continue"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:37
-#: app/views/lessons/courses_classroom_buttons.php:52
+#: app/views/lessons/courses_classroom_buttons.php:43
+#: app/views/lessons/courses_classroom_buttons.php:60
 msgid "Complete"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:49
-#: app/views/lessons/courses_navigation.php:31
+#: app/views/lessons/courses_classroom_buttons.php:57
+#: app/views/lessons/courses_navigation.php:39
 msgid "Next Section"
 msgstr ""
 
-#: app/views/lessons/courses_classroom_buttons.php:65
-#: app/views/lessons/courses_navigation.php:21
-#: app/views/lessons/courses_navigation.php:33
-#: app/views/lessons/courses_navigation.php:45
+#: app/views/lessons/courses_classroom_buttons.php:75
+#: app/views/lessons/courses_navigation.php:27
+#: app/views/lessons/courses_navigation.php:41
+#: app/views/lessons/courses_navigation.php:55
 msgid "Complete Lesson"
 msgstr ""
 
-#: app/views/lessons/lesson_locked.php:4
+#: app/views/lessons/lesson_locked.php:6
 msgid "Lesson Unavailable"
 msgstr ""
 
-#: app/views/lessons/lesson_locked.php:7
+#: app/views/lessons/lesson_locked.php:9
 msgid "You must complete all previous lessons and quizzes before you start this lesson."
 msgstr ""
 
-#: app/views/lessons/lesson_locked.php:11
+#: app/views/lessons/lesson_locked.php:13
 msgid "Back to Course"
 msgstr ""
 
-#: app/views/readylaunch/account/courses_list.php:5
+#: app/views/readylaunch/account/courses_list.php:7
 msgctxt "ui"
 msgid "My Courses"
 msgstr ""

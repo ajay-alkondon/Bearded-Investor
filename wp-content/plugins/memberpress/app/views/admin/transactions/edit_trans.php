@@ -3,7 +3,7 @@
 } ?>
 
 <div class="wrap">
-  <h2><?php _e('Edit Transaction', 'memberpress'); ?></h2>
+  <h2><?php esc_html_e('Edit Transaction', 'memberpress'); ?></h2>
 
   <?php
     MeprView::render('/admin/errors', get_defined_vars());
@@ -24,14 +24,14 @@
       <?php endif; ?>
       <table class="form-table">
         <tbody>
-          <tr valign="top"><th scope="row"><label><?php _e('Transaction ID:', 'memberpress'); ?></label></th><td><?php echo $txn->id; ?></td></tr>
+          <tr valign="top"><th scope="row"><label><?php esc_html_e('Transaction ID:', 'memberpress'); ?></label></th><td><?php echo $txn->id; ?></td></tr>
           <?php MeprHooks::do_action('mepr_edit_transaction_table_before', $txn); ?>
           <?php MeprView::render('/admin/transactions/trans_form', get_defined_vars()); ?>
           <?php MeprHooks::do_action('mepr_edit_transaction_table_after', $txn); ?>
         </tbody>
       </table>
       <p class="submit">
-        <input type="submit" id="submit" class="button button-primary" value="<?php _e('Update', 'memberpress'); ?>" />
+        <input type="submit" id="submit" class="button button-primary" value="<?php esc_attr_e('Update', 'memberpress'); ?>" />
       </p>
     </form>
   </div>

@@ -52,11 +52,11 @@
                     <div x-show="account.showWelcomeImage && !account.welcomeImageId" class="upload-ui hide-if-no-js">
                       <div class="drag-drop-area">
                         <div class="drag-drop-inside">
-                          <p class="drag-drop-info"><?php _e('Upload Welcome Image', 'memberpress'); ?></p>
+                          <p class="drag-drop-info"><?php esc_html_e('Upload Welcome Image', 'memberpress'); ?></p>
 
                           <!-- Progress Indicator -->
                           <p class="drag-drop-loader">
-                            <img src="<?php echo MEPR_IMAGES_URL . '/square-loader.gif'; ?>" alt="<?php _e('Loading...', 'memberpress'); ?>" class="mepr_loader" />
+                            <img src="<?php echo MEPR_IMAGES_URL . '/square-loader.gif'; ?>" alt="<?php esc_attr_e('Loading...', 'memberpress'); ?>" class="mepr_loader" />
                           </p>
 
                           <div class="drag-drop-buttons">

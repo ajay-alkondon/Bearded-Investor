@@ -1,81 +1,116 @@
 <?php
-namespace memberpress\courses\helpers;
-use memberpress\courses\helpers as helpers;
-if(!defined('ABSPATH')) {die('You are not allowed to call this page directly.');}
 
-class App {
-  public static function info_tooltip($id, $title, $info) {
-    ?>
+namespace memberpress\courses\helpers;
+
+use memberpress\courses\helpers as helpers;
+
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
+
+class App
+{
+    public static function info_tooltip($id, $title, $info)
+    {
+        ?>
     <span id="admin-tooltip-<?php echo esc_attr($id); ?>" class="admin-tooltip">
       <i class="mpcs-icon mpcs-info-circled mpcs-info-icon"></i>
       <span class="data-title hidden"><?php echo $title; ?></span>
       <span class="data-info hidden"><?php echo $info; ?></span>
     </span>
-    <?php
-  }
-
-  /**
-   * Checks if we are in Classroom Mode
-   *
-   * @return bool
-   */
-  public static function is_classroom(){
-    $options = \get_option('mpcs-options');
-    $classroom_mode = helpers\Options::val($options,'classroom-mode');
-    return $classroom_mode == '1';
-  }
-
-  /**
-   * Determine if current post uses Gutenberg
-   *
-   * @return bool
-   */
-  public static function is_gutenberg_page() {
-    if ( function_exists( 'is_gutenberg_page' ) &&
-      is_gutenberg_page()
-    ) {
-      // The Gutenberg plugin is on.
-      return true;
-    }
-    $current_screen = get_current_screen();
-    if ( method_exists( $current_screen, 'is_block_editor' ) &&
-      $current_screen->is_block_editor()
-    ) {
-      // Gutenberg page on 5+.
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Checks if we are in Classroom mode and WP Footer hook is enabled
-   *
-   * @return bool
-   */
-  public static function is_classroom_wp_footer(){
-
-    if( ! self::is_classroom() ){
-      return false; // bail.
+        <?php
     }
 
-    $mepr_options = \MeprOptions::fetch();
-    return \MeprHooks::apply_filters('mepr-classroom-enable-wp-footer', isset($mepr_options->rl_enable_wp_footer) && 'enabled' === $mepr_options->rl_enable_wp_footer);
+    /**
+     * Checks if we are in Classroom Mode
+     *
+     * @return boolean
+     */
+    public static function is_classroom()
+    {
+        $options        = \get_option('mpcs-options');
+        $classroom_mode = helpers\Options::val($options, 'classroom-mode');
+        return $classroom_mode == '1';
+    }
 
-  }
+    /**
+     * Determine if current post uses Gutenberg
+     *
+     * @return boolean
+     */
+    public static function is_gutenberg_page()
+    {
+        if (
+            function_exists('is_gutenberg_page') &&
+            is_gutenberg_page()
+        ) {
+            // The Gutenberg plugin is on.
+            return true;
+        }
+        $current_screen = get_current_screen();
+        if (
+            method_exists($current_screen, 'is_block_editor') &&
+            $current_screen->is_block_editor()
+        ) {
+            // Gutenberg page on 5+.
+            return true;
+        }
+        return false;
+    }
 
-  public  static function is_downloads_addon_active(){
-    return is_plugin_active('memberpress-downloads/main.php');
-  }
+    /**
+     * Checks if we are in Classroom mode and WP Footer hook is enabled
+     *
+     * @return boolean
+     */
+    public static function is_classroom_wp_footer()
+    {
 
-  public static function is_gradebook_addon_active(){
-    return defined('\memberpress\gradebook\CTRLS_NAMESPACE');
-  }
+        if (! self::is_classroom()) {
+            return false; // bail.
+        }
 
-  public static function is_assignments_addon_active(){
-    return defined('\memberpress\assignments\CTRLS_NAMESPACE');
-  }
+        $mepr_options = \MeprOptions::fetch();
 
-  public static function is_quizzes_addon_active(){
-    return defined('\memberpress\quizzes\CTRLS_NAMESPACE');
-  }
+        $enabled = \apply_filters_deprecated(
+            'mepr-classroom-enable-wp-footer',
+            [isset($mepr_options->rl_enable_wp_footer) && 'enabled' === $mepr_options->rl_enable_wp_footer],
+            '1.4.3',
+            'mpcs_classroom_enable_wp_footer'
+        );
+        $enabled = \apply_filters('mpcs_classroom_enable_wp_footer', $enabled);
+
+        return $enabled;
+    }
+
+    public static function is_downloads_addon_active()
+    {
+        return is_plugin_active('memberpress-downloads/main.php');
+    }
+
+    public static function is_gradebook_addon_active()
+    {
+        return defined('\memberpress\gradebook\CTRLS_NAMESPACE');
+    }
+
+    public static function is_assignments_addon_active()
+    {
+        return defined('\memberpress\assignments\CTRLS_NAMESPACE');
+    }
+
+    public static function is_quizzes_addon_active()
+    {
+        return defined('\memberpress\quizzes\CTRLS_NAMESPACE');
+    }
+
+    /**
+     * Checks if a text contains non-ASCII characters
+     *
+     * @param  string $text The text to check
+     * @return boolean True if the text contains non-ASCII characters, false otherwise
+     */
+    public static function is_non_ascii_text($text)
+    {
+        return preg_match('/[^\x00-\x7F]/', $text);
+    }
 }

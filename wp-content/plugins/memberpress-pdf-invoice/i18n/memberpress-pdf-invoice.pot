@@ -1,0 +1,644 @@
+# Copyright (C) 2025 Caseproof, LLC
+# This file is distributed under the same license as the MemberPress PDF Invoice plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: MemberPress PDF Invoice 1.2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/memberpress-pdf-invoice\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-08-20T18:51:39+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.11.0\n"
+"X-Domain: memberpress-pdf-invoice\n"
+
+#. Plugin Name of the plugin
+#: memberpress-pdf-invoice.php
+msgid "MemberPress PDF Invoice"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: memberpress-pdf-invoice.php
+msgid "https://memberpress.com/"
+msgstr ""
+
+#. Description of the plugin
+#: memberpress-pdf-invoice.php
+msgid "Allows your customers to download PDF Invoice of their Payments"
+msgstr ""
+
+#. Author of the plugin
+#: memberpress-pdf-invoice.php
+msgid "Caseproof, LLC"
+msgstr ""
+
+#. Author URI of the plugin
+#: memberpress-pdf-invoice.php
+msgid "https://caseproof.com/"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:83
+msgid "Invoice Number is lower than the last Transaction ID"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:83
+msgid "Are you sure you want to continue?"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:100
+#: app/controllers/MePdfInvoicesCtrl.php:113
+msgctxt "ui"
+msgid "Download"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:123
+msgctxt "ui"
+msgid "PDF"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:162
+msgid "Business Logo must have a valid image extension. Valid extensions are JPG, PNG, and GIF"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:168
+msgid "Invalid Business Email Format"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:252
+msgid "Forbidden"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:258
+msgid "No transaction specified"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:267
+msgid "Invalid Transaction"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:271
+msgid "Forbidden Transaction"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:324
+msgid "This is a pending invoice for renewal of your subscription. Payment is due by %s."
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:329
+msgid "Please log in to your account to complete payment or contact us for assistance."
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:339
+msgid "PAYMENT INSTRUCTIONS"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:421
+msgid "Coupon Code '%s'"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:789
+msgid "Invoice Number already exists. Invoice number is a unique incremental ID. The next Invoice number is "
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:796
+msgid "Wrong Invoice Number. Invoice number is a unique incremental ID. Select a number equal to or lower than the Next Invoice number which is "
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:800
+msgid "<strong>Invoice Number:</strong> Please add Next Invoice number in <em>MemberPress > Settings > Info</em>"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:842
+msgid "John Doe"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:843
+msgid "111 Cool Avenue"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:844
+msgid "New York, NY 10005"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:845
+msgid "United States"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:848
+msgid "Bronze Edition"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:848
+#: app/controllers/MePdfInvoicesCtrl.php:1049
+msgid "Initial Payment"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:879
+msgid "Invoice Number*:"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:882
+msgid "A unique Invoice ID for this Transaction. Only edit this if you absolutely have to."
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:1052
+msgid "Subscription Payment"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:1056
+msgid "Payment"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:1060
+msgid "Refund"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:1112
+msgid "PDF Invoice"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:1127
+msgid "Send Proforma Invoice"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:1135
+msgid "PDF Proforma Invoice"
+msgstr ""
+
+#: app/controllers/MePdfInvoicesCtrl.php:1176
+msgctxt "ui"
+msgid "Print"
+msgstr ""
+
+#: app/controllers/MePdfRenewalCtrl.php:100
+msgid "Every 30 Minutes"
+msgstr ""
+
+#: app/emails/MeprPdfAdminRenewalInvoiceEmail.php:19
+#: app/emails/MeprPdfUserRenewalInvoiceEmail.php:19
+msgid "<b>Offline Payment Request Proforma Invoice</b>"
+msgstr ""
+
+#: app/emails/MeprPdfAdminRenewalInvoiceEmail.php:20
+msgid "This email is sent to the administrator when a renewal invoice is generated for an offline payment subscription."
+msgstr ""
+
+#: app/emails/MeprPdfAdminRenewalInvoiceEmail.php:24
+msgid "[{$blog_name}] Offline Payment Renewal Invoice Generated - {$firstname} {$lastname}"
+msgstr ""
+
+#: app/emails/MeprPdfUserRenewalInvoiceEmail.php:20
+msgid "This email is sent to the user when a renewal invoice is generated for an offline payment subscription."
+msgstr ""
+
+#: app/emails/MeprPdfUserRenewalInvoiceEmail.php:24
+msgid "Your subscription payment is due - Invoice #{$invoice_num}"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:45
+msgid "<h3>{$biz_name}</h3><br/>{$biz_address1}<br/>{$biz_address2}<br/>{$biz_city}, {$biz_state}<br/>{$biz_postcode} {$biz_country}"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:49
+msgid "{$user_full_name}<br/>{$user_address_single}<br/>{$user_email}"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:53
+msgid "<h3>NOTES:</h3><br/>Thank you for choosing %1$s"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:57
+msgid "Invoice was created on a computer and is valid without the signature and seal.<br/>%1$s"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:146
+msgid "A0 (841 x 1189mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:147
+msgid "A1 (594 x 841mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:148
+msgid "A2 (420 x 594mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:149
+msgid "A3 (297 x 420mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:150
+msgid "A4 (210 x 297mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:151
+msgid "A5 (148 x 210mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:152
+msgid "A6 (105 x 148mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:153
+msgid "A7 (74 x 105mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:154
+msgid "A8 (52 x 74mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:155
+msgid "A9 (37 x 52mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:156
+msgid "A10 (26 x 37mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:157
+msgid "B0 (1414 x 1000mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:158
+msgid "B1 (1000 x 707mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:159
+msgid "B2 (707 x 500mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:160
+msgid "B3 (500 x 353mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:161
+msgid "B4 (353 x 250mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:162
+msgid "B5 (250 x 176mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:163
+msgid "B6 (176 x 125mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:164
+msgid "B7 (125 x 88mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:165
+msgid "B8 (88 x 62mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:166
+msgid "B9 (62 x 44mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:167
+msgid "B10 (44 x 31mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:168
+msgid "C0 (1297 x 917mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:169
+msgid "C1 (917 x 648mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:170
+msgid "C2 (648 x 458mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:171
+msgid "C3 (458 x 324mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:172
+msgid "C4 (324 x 229mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:173
+msgid "C5 (229 x 162mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:174
+msgid "C6 (162 x 114mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:175
+msgid "C7 (114 x 81mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:176
+msgid "C8 (81 x 57mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:177
+msgid "C9 (57 x 40mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:178
+msgid "C10 (40 x 28mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:179
+msgid "RA0 (860 x 1220mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:180
+msgid "RA1 (610 x 860mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:181
+msgid "RA2 (430 x 610mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:182
+msgid "RA3 (305 x 430mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:183
+msgid "RA4 (215 x 305mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:184
+msgid "SRA0 (900 x 1280mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:185
+msgid "SRA1 (640 x 900mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:186
+msgid "SRA2 (450 x 640mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:187
+msgid "SRA3 (320 x 450mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:188
+msgid "SRA4 (225 x 320mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:189
+msgid "Letter (216 x 279mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:190
+msgid "Legal (216 x 356mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:191
+msgid "Executive (184 x 267mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:192
+msgid "Folio (210 x 330mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:193
+msgid "Ledger (279 x 432mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:194
+msgid "Tabloid (279 x 432mm)"
+msgstr ""
+
+#: app/helpers/MePdfInvoicesHelper.php:219
+msgid "System Fonts"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:170
+msgid "Bill To:"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:177
+msgid "Order NO"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:180
+#: app/views/account/invoice/simple.php:31
+#: app/views/account/invoice/simple.php:37
+msgid "CREDIT NOTE NO"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:181
+msgid "ORIG. Invoice NO"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:183
+msgid "Invoice NO"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:187
+#: app/views/account/invoice/simple.php:57
+msgid "Issue Date"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:191
+#: app/views/account/invoice/simple.php:60
+msgid "Due Date"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:201
+msgid "Credit Note"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:203
+msgid "Proforma Invoice"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:205
+msgid "Invoice"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:210
+#: app/views/account/invoice/simple.php:84
+msgid "DESCRIPTION"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:212
+#: app/views/account/invoice/simple.php:86
+msgid "QUANTITY"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:214
+#: app/views/account/invoice/simple.php:88
+msgid "AMOUNT"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:253
+#: app/views/account/invoice/simple.php:126
+msgid "SUBTOTAL"
+msgstr ""
+
+#: app/views/account/invoice/modern.php:277
+#: app/views/account/invoice/simple.php:145
+msgid "GRAND TOTAL"
+msgstr ""
+
+#: app/views/account/invoice/simple.php:31
+#: app/views/account/invoice/simple.php:33
+msgid " ORDER NO"
+msgstr ""
+
+#: app/views/account/invoice/simple.php:31
+#: app/views/account/invoice/simple.php:37
+msgid "ORIG. INVOICE NO"
+msgstr ""
+
+#: app/views/account/invoice/simple.php:33
+#: app/views/account/invoice/simple.php:41
+msgid "INVOICE NO"
+msgstr ""
+
+#: app/views/account/invoice/simple.php:43
+msgid "PROFORMA INVOICE NO"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:8
+#: app/views/admin/options/invoice.php:12
+msgid "PDF Invoice Settings"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:13
+msgid "Enter more of your business's details and invoice preferences. Used to generate PDF invoices."
+msgstr ""
+
+#: app/views/admin/options/invoice.php:22
+msgid "Template"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:34
+msgid "Paper"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:73
+msgid "Phone"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:81
+msgid "Email"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:89
+msgid "Logo"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:97
+msgid "Remove Logo"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:97
+msgid "&times; Remove"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:106
+msgid "Invoice No. Format"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:118
+#: app/views/admin/options/invoice.php:161
+#: app/views/admin/options/invoice.php:179
+#: app/views/admin/options/invoice.php:198
+#: app/views/admin/options/invoice.php:216
+msgid "Insert &uarr;"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:124
+msgid "Next Invoice No."
+msgstr ""
+
+#: app/views/admin/options/invoice.php:137
+msgid "Next Proforma Invoice No."
+msgstr ""
+
+#: app/views/admin/options/invoice.php:142
+msgid "NOTICE: Updating this field will reset the pro-forma invoice number to the updated number. Please keep in mind that you can’t reset the pro-forma invoice number to a smaller value than the current one."
+msgstr ""
+
+#: app/views/admin/options/invoice.php:148
+msgid "Business Address Format"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:167
+msgid "Customer Address Format"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:186
+msgid "Notes"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:204
+msgid "Footnotes"
+msgstr ""
+
+#: app/views/admin/options/invoice.php:222
+msgid "Color"
+msgstr ""
+
+#: app/views/admin/update/missing-starting-num.php:2
+msgid "<b>MemberPress PDF Invoice doesn't have a Next Invoice Number set.</b> Go to the MemberPress %1$ssettings page%2$s to add one so that invoice numbers can be generated."
+msgstr ""
+
+#: app/views/emails/AdminRenewalInvoiceEmail.php:7
+#: app/views/emails/UserRenewalInvoiceEmail.php:8
+msgid "{$trans_num} – {$blog_name}"
+msgstr ""
+
+#: app/views/emails/AdminRenewalInvoiceEmail.php:11
+msgid "Hello,"
+msgstr ""
+
+#: app/views/emails/AdminRenewalInvoiceEmail.php:14
+msgid "A renewal proforma invoice has been automatically generated for an offline payment subscription."
+msgstr ""
+
+#: app/views/emails/AdminRenewalInvoiceEmail.php:19
+#: app/views/emails/UserRenewalInvoiceEmail.php:21
+msgid "Proforma Invoice Number:"
+msgstr ""
+
+#: app/views/emails/AdminRenewalInvoiceEmail.php:20
+#: app/views/emails/UserRenewalInvoiceEmail.php:22
+msgid "{$invoice_num}"
+msgstr ""
+
+#: app/views/emails/AdminRenewalInvoiceEmail.php:23
+#: app/views/emails/UserRenewalInvoiceEmail.php:25
+msgid "Amount:"
+msgstr ""
+
+#: app/views/emails/AdminRenewalInvoiceEmail.php:24
+#: app/views/emails/UserRenewalInvoiceEmail.php:26
+msgid "{$payment_amount}"
+msgstr ""
+
+#: app/views/emails/AdminRenewalInvoiceEmail.php:29
+msgid "The member has been notified about this invoice and asked to make a payment."
+msgstr ""
+
+#: app/views/emails/UserRenewalInvoiceEmail.php:7
+msgid "Subscription Payment Reminder"
+msgstr ""
+
+#: app/views/emails/UserRenewalInvoiceEmail.php:12
+msgid "Hello {$user_first_name},"
+msgstr ""
+
+#: app/views/emails/UserRenewalInvoiceEmail.php:13
+msgid "This is a reminder that your subscription for {$product_name} will expire on {$subscr_expires_at}."
+msgstr ""
+
+#: app/views/emails/UserRenewalInvoiceEmail.php:16
+msgid "A new proforma invoice has been generated for you:"
+msgstr ""
+
+#: app/views/emails/UserRenewalInvoiceEmail.php:31
+msgid "Please send in your renewal payment before due date. If you have any questions about your subscription or need assistance with payment, please contact us."
+msgstr ""

@@ -109,7 +109,7 @@ class MeprMigratorLearnDash extends MeprMigrator
             }
         }
 
-        if ($this->is_courses_addon_active()) {
+        if (MeprUtils::is_addon_active(MeprUtils::ADDON_COURSES)) {
             if (version_compare(memberpress\courses\VERSION, '1.3.6', '<=')) {
                 wp_send_json_error(
                     // phpcs:ignore Generic.Files.LineLength.TooLong
@@ -118,13 +118,13 @@ class MeprMigratorLearnDash extends MeprMigrator
             } else {
                 if (
                     empty($data['retry-quizzes']) &&
-                    !$this->is_course_quizzes_addon_active() &&
+                    !MeprUtils::is_addon_active(MeprUtils::ADDON_COURSE_QUIZZES) &&
                     file_exists(WP_PLUGIN_DIR . '/memberpress-course-quizzes/main.php')
                 ) {
                     activate_plugin('memberpress-course-quizzes/main.php');
 
                     if (
-                        $this->is_course_quizzes_addon_active() &&
+                        MeprUtils::is_addon_active(MeprUtils::ADDON_COURSE_QUIZZES) &&
                         function_exists('memberpress\\quizzes\\init') &&
                         defined('LEARNDASH_VERSION') &&
                         class_exists('LearnDash_Settings_Section') &&
@@ -141,7 +141,7 @@ class MeprMigratorLearnDash extends MeprMigrator
 
                         memberpress\quizzes\init();
 
-                        if ($quizzes_slug == App::get_quizzes_permalink_base()) {
+                        if ($quizzes_slug === App::get_quizzes_permalink_base()) {
                             $options['quizzes-slug'] = 'mp-quizzes';
                             $update                  = true;
                         }
@@ -164,7 +164,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                     activate_plugin('memberpress-courses/main.php');
 
                     if (
-                        $this->is_courses_addon_active() &&
+                        MeprUtils::is_addon_active(MeprUtils::ADDON_COURSES) &&
                         version_compare(memberpress\courses\VERSION, '1.3.6', '>') &&
                         defined('LEARNDASH_VERSION') &&
                         class_exists('LearnDash_Settings_Section') &&
@@ -186,12 +186,12 @@ class MeprMigratorLearnDash extends MeprMigrator
                         $options = is_array($options) ? $options : [];
                         $update  = false;
 
-                        if ($courses_slug == Courses::get_permalink_base()) {
+                        if ($courses_slug === Courses::get_permalink_base()) {
                             $options['courses-slug'] = 'learn';
                             $update                  = true;
                         }
 
-                        if ($lessons_slug == Lessons::get_permalink_base()) {
+                        if ($lessons_slug === Lessons::get_permalink_base()) {
                             $options['lessons-slug'] = 'mp-lessons';
                             $update                  = true;
                         }
@@ -232,19 +232,19 @@ class MeprMigratorLearnDash extends MeprMigrator
         $taxonomies = [];
 
         if (is_array($settings)) {
-            if (!empty($settings['ld_course_category']) && $settings['ld_course_category'] == 'yes') {
+            if (!empty($settings['ld_course_category']) && $settings['ld_course_category'] === 'yes') {
                 $taxonomies['ld_course_category'] = CourseCategories::$tax;
             }
 
-            if (!empty($settings['wp_post_category']) && $settings['wp_post_category'] == 'yes') {
+            if (!empty($settings['wp_post_category']) && $settings['wp_post_category'] === 'yes') {
                 $taxonomies['category'] = CourseCategories::$tax;
             }
 
-            if (!empty($settings['ld_course_tag']) && $settings['ld_course_tag'] == 'yes') {
+            if (!empty($settings['ld_course_tag']) && $settings['ld_course_tag'] === 'yes') {
                 $taxonomies['ld_course_tag'] = CourseTags::$tax;
             }
 
-            if (!empty($settings['wp_post_tag']) && $settings['wp_post_tag'] == 'yes') {
+            if (!empty($settings['wp_post_tag']) && $settings['wp_post_tag'] === 'yes') {
                 $taxonomies['post_tag'] = CourseTags::$tax;
             }
         }
@@ -337,7 +337,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                 ORDER BY ID ASC
                 LIMIT %d OFFSET %d";
 
-            $courses = $wpdb->get_results($wpdb->prepare($query, $limit, $offset));
+            $courses = $wpdb->get_results($wpdb->prepare($query, $limit, $offset)); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
             return is_array($courses) ? $courses : [];
         };
@@ -363,7 +363,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                 if (is_array($settings)) {
                     if (
                         !empty($settings['sfwd-courses_course_materials_enabled']) &&
-                        $settings['sfwd-courses_course_materials_enabled'] == 'on' &&
+                        $settings['sfwd-courses_course_materials_enabled'] === 'on' &&
                         !empty($settings['sfwd-courses_course_materials'])
                     ) {
                         $resources = Courses::get_default_resources();
@@ -385,7 +385,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                     }
 
                     $disable_progression = !empty($settings['sfwd-courses_course_disable_lesson_progression']) &&
-                                 $settings['sfwd-courses_course_disable_lesson_progression'] == 'on';
+                                 $settings['sfwd-courses_course_disable_lesson_progression'] === 'on';
 
                     $course_data['require_previous'] = $disable_progression ? 'disabled' : 'enabled';
                 }
@@ -461,9 +461,9 @@ class MeprMigratorLearnDash extends MeprMigrator
               AND p.post_status = 'publish'
               AND pm.meta_value = %d";
 
-        $query = $wpdb->prepare($query, Course::$cpt, $ld_course_id);
+        $query = $wpdb->prepare($query, Course::$cpt, $ld_course_id); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-        return (int) $wpdb->get_var($query);
+        return (int) $wpdb->get_var($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
@@ -564,7 +564,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                     if ($ld_lesson instanceof WP_Post) {
                         $post_types = ['sfwd-lessons', 'sfwd-topic'];
 
-                        if ($this->is_course_quizzes_addon_active()) {
+                        if (MeprUtils::is_addon_active(MeprUtils::ADDON_COURSE_QUIZZES)) {
                             $post_types[] = 'sfwd-quiz';
                         }
 
@@ -596,11 +596,11 @@ class MeprMigratorLearnDash extends MeprMigrator
 
                         try {
                             $model = $this->migrate_model(
-                                $ld_lesson->post_type == 'sfwd-quiz' ? Quiz::class : Lesson::class,
+                                $ld_lesson->post_type === 'sfwd-quiz' ? Quiz::class : Lesson::class,
                                 $this->get_existing_lesson_id(
                                     $ld_course->ID,
                                     $ld_lesson->ID,
-                                    $ld_lesson->post_type == 'sfwd-quiz' ? Quiz::$cpt : Lesson::$cpt
+                                    $ld_lesson->post_type === 'sfwd-quiz' ? Quiz::$cpt : Lesson::$cpt
                                 ),
                                 $lesson_data
                             );
@@ -621,7 +621,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                             }
 
                             $this->logs[] = $this->model_migration_failed_log(
-                                $ld_lesson->post_type == 'sfwd-quiz' ? Quiz::class : Lesson::class,
+                                $ld_lesson->post_type === 'sfwd-quiz' ? Quiz::class : Lesson::class,
                                 $title,
                                 $ld_lesson->ID,
                                 $e->getMessage()
@@ -670,7 +670,7 @@ class MeprMigratorLearnDash extends MeprMigrator
 
             if (
                 !empty($settings["{$key}_materials_enabled"]) &&
-                $settings["{$key}_materials_enabled"] == 'on' &&
+                $settings["{$key}_materials_enabled"] === 'on' &&
                 !empty($settings["{$key}_materials"])
             ) {
                 return $settings["{$key}_materials"];
@@ -899,9 +899,9 @@ class MeprMigratorLearnDash extends MeprMigrator
               AND pm1.meta_value = %d
               AND pm2.meta_value = %d";
 
-        $query = $wpdb->prepare($query, $post_type, $ld_course_id, $ld_lesson_id);
+        $query = $wpdb->prepare($query, $post_type, $ld_course_id, $ld_lesson_id); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-        return (int) $wpdb->get_var($query);
+        return (int) $wpdb->get_var($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
@@ -1006,7 +1006,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                 foreach ($ld_lesson['sfwd-topic'] as $topic_post_id => $topic) {
                     $sections[$key]['children'][] = $topic_post_id;
 
-                    if ($this->is_course_quizzes_addon_active()) {
+                    if (MeprUtils::is_addon_active(MeprUtils::ADDON_COURSE_QUIZZES)) {
                         // Quiz that is a child of this topic.
                         if (isset($topic['sfwd-quiz']) && is_array($topic['sfwd-quiz'])) {
                             foreach ($topic['sfwd-quiz'] as $quiz_post_id => $quiz) {
@@ -1017,7 +1017,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                 }
             }
 
-            if ($this->is_course_quizzes_addon_active()) {
+            if (MeprUtils::is_addon_active(MeprUtils::ADDON_COURSE_QUIZZES)) {
                 // Quiz that is a child of this ld_lesson.
                 if (isset($ld_lesson['sfwd-quiz']) && is_array($ld_lesson['sfwd-quiz'])) {
                     foreach ($ld_lesson['sfwd-quiz'] as $quiz_post_id => $quiz) {
@@ -1027,7 +1027,7 @@ class MeprMigratorLearnDash extends MeprMigrator
             }
         }
 
-        if ($this->is_course_quizzes_addon_active()) {
+        if (MeprUtils::is_addon_active(MeprUtils::ADDON_COURSE_QUIZZES)) {
             // End of course quiz(zes).
             $quizzes = isset($steps['sfwd-quiz']) && is_array($steps['sfwd-quiz']) ? $steps['sfwd-quiz'] : [];
 
@@ -1245,7 +1245,7 @@ class MeprMigratorLearnDash extends MeprMigrator
 
             $user_activity = $wpdb->get_results(
                 $wpdb->prepare(
-                    $query,
+                    $query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                     Lesson::$cpt,
                     Course::$cpt,
                     Lesson::$cpt,
@@ -1291,7 +1291,7 @@ class MeprMigratorLearnDash extends MeprMigrator
             ]);
         }
 
-        if (!$this->is_course_quizzes_addon_active()) {
+        if (!MeprUtils::is_addon_active(MeprUtils::ADDON_COURSE_QUIZZES)) {
             update_option('mepr_migrator_learndash_completed', true);
 
             $this->send_success_response($data, [
@@ -1387,7 +1387,7 @@ class MeprMigratorLearnDash extends MeprMigrator
 
             $user_activity = $wpdb->get_results(
                 $wpdb->prepare(
-                    $query,
+                    $query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                     Quiz::$cpt,
                     Course::$cpt,
                     Lesson::$cpt,
@@ -1531,12 +1531,13 @@ class MeprMigratorLearnDash extends MeprMigrator
     {
         global $wpdb;
 
-        $query = "SELECT activity_meta_key, activity_meta_value
-              FROM {$wpdb->prefix}learndash_user_activity_meta
-              WHERE activity_id = %d";
-
         $metadata = $wpdb->get_results(
-            $wpdb->prepare($query, $activity_id),
+            $wpdb->prepare(
+                "SELECT activity_meta_key, activity_meta_value
+                FROM {$wpdb->prefix}learndash_user_activity_meta
+                WHERE activity_id = %d",
+                $activity_id
+            ),
             ARRAY_A
         );
 
@@ -1560,7 +1561,7 @@ class MeprMigratorLearnDash extends MeprMigrator
         if (is_array($answer_data)) {
             switch ($answer['answer_type']) {
                 case 'single':
-                    $index = array_search(1, $answer_data);
+                    $index = array_search(1, $answer_data, true);
 
                     if (is_int($index)) {
                         $value = (string) $index;
@@ -1591,7 +1592,7 @@ class MeprMigratorLearnDash extends MeprMigrator
 
                         foreach ($question->options as $key => $value) {
                                 $answer_hash = md5($user_id . $answer['question_id'] . $key);
-                                $index       = array_search($answer_hash, $answer_data);
+                                $index       = array_search($answer_hash, $answer_data, true);
 
                             if (is_int($index)) {
                                 $answer_data[$index] = $value;
@@ -1599,7 +1600,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                             }
                         }
 
-                        if ($updated == count($answer_data)) {
+                        if ($updated === count($answer_data)) {
                               $value = $answer_data;
                         }
                     }
@@ -1612,7 +1613,7 @@ class MeprMigratorLearnDash extends MeprMigrator
 
                         foreach ($question->options as $key => $value) {
                                 $answer_hash = md5($user_id . $answer['question_id'] . $key);
-                                $index       = array_search($answer_hash, $answer_data);
+                                $index       = array_search($answer_hash, $answer_data, true);
 
                             if (is_int($index) && isset($question->answer[$key])) {
                                 $answer_data[$index] = $question->answer[$key];
@@ -1620,7 +1621,7 @@ class MeprMigratorLearnDash extends MeprMigrator
                             }
                         }
 
-                        if ($updated == count($answer_data)) {
+                        if ($updated === count($answer_data)) {
                               $value = $answer_data;
                         }
                     }
@@ -1707,25 +1708,5 @@ class MeprMigratorLearnDash extends MeprMigrator
         $result = $ld_course_exists && $ld_table_exists;
 
         return $result;
-    }
-
-    /**
-     * Is the Courses add-on active?
-     *
-     * @return boolean
-     */
-    protected function is_courses_addon_active(): bool
-    {
-        return defined('memberpress\\courses\\VERSION');
-    }
-
-    /**
-     * Is the Course Quizzes add-on active?
-     *
-     * @return boolean
-     */
-    protected function is_course_quizzes_addon_active(): bool
-    {
-        return defined('memberpress\\quizzes\\VERSION');
     }
 }

@@ -111,7 +111,7 @@ class Upgrade extends Modules {
 			);
 			$terms = get_terms( $args );
 		} else {
-			$terms = get_terms( $taxonomy, array( 'hide_empty' => false ) );
+			$terms = get_terms( $taxonomy, array( 'hide_empty' => false ) ); // phpcs:ignore WordPress.WP.DeprecatedParameters.Get_termsParam2Found
 		}
 		return $this->order_term_by_key( $terms );
 	}
@@ -212,7 +212,7 @@ class Upgrade extends Modules {
 		$args    = array(
 			'posts_per_page' => -1,
 			'post_type'      => 'cookielawinfo',
-			'tax_query'      => array(
+			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 				array(
 					'taxonomy' => 'cookielawinfo-category',
 					'field'    => 'slug',

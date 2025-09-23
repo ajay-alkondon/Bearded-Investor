@@ -11,6 +11,9 @@ use memberpress\courses\Sabberworm\CSS\Parsing\ParserState;
 use memberpress\courses\Sabberworm\CSS\Parsing\UnexpectedEOFException;
 use memberpress\courses\Sabberworm\CSS\Parsing\UnexpectedTokenException;
 
+/**
+ * Support for `-webkit-calc` and `-moz-calc` is deprecated in version 8.8.0, and will be removed in version 9.0.0.
+ */
 class CalcFunction extends CSSFunction
 {
     /**
@@ -35,6 +38,8 @@ class CalcFunction extends CSSFunction
      *
      * @throws UnexpectedTokenException
      * @throws UnexpectedEOFException
+     *
+     * @internal since V8.8.0
      */
     public static function parse(ParserState $oParserState, $bIgnoreCase = false)
     {

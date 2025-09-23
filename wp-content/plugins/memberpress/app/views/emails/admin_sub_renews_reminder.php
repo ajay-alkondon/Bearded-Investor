@@ -18,15 +18,15 @@
       '{$username}'
   ); ?></div>
   <table style="clear: both;" class="transaction">
-    <tr><th style="text-align: left;"><?php _ex('Membership:', 'ui', 'memberpress'); ?></th><td>{$product_name}</td></tr>
-    <tr><th style="text-align: left;"><?php _ex('Subscription:', 'ui', 'memberpress'); ?></th><td>{$subscr_num}</td></tr>
-    <tr><th style="text-align: left;"><?php _ex('Created:', 'ui', 'memberpress'); ?></th><td>{$subscr_date}</td></tr>
-    <tr><th style="text-align: left;"><?php _ex('Renews:', 'ui', 'memberpress'); ?></th><td>{$subscr_next_billing_at}</td></tr>
-    <tr><th style="text-align: left;"><?php _ex('CC Expires:', 'ui', 'memberpress'); ?></th><td>{$subscr_cc_month_exp}/{$subscr_cc_year_exp}</td></tr>
-    <tr><th style="text-align: left;"><?php _ex('Name:', 'ui', 'memberpress'); ?></th><td>{$user_full_name}</td></tr>
-    <tr><th style="text-align: left;"><?php _ex('Email:', 'ui', 'memberpress'); ?></th><td>{$user_email}</td></tr>
-    <tr><th style="text-align: left;"><?php _ex('Login:', 'ui', 'memberpress'); ?></th><td>{$user_login}</td></tr>
-    <tr><th style="text-align: left;"><?php _ex('User ID:', 'ui', 'memberpress'); ?></th><td>{$user_id}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('Membership:', 'ui', 'memberpress'); ?></th><td>{$product_name}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('Subscription:', 'ui', 'memberpress'); ?></th><td>{$subscr_num}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('Created:', 'ui', 'memberpress'); ?></th><td>{$subscr_date}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('Renews:', 'ui', 'memberpress'); ?></th><td>{$subscr_next_billing_at}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('CC Expires:', 'ui', 'memberpress'); ?></th><td>{$subscr_cc_month_exp}/{$subscr_cc_year_exp}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('Name:', 'ui', 'memberpress'); ?></th><td>{$user_full_name}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('Email:', 'ui', 'memberpress'); ?></th><td>{$user_email}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('Login:', 'ui', 'memberpress'); ?></th><td>{$user_login}</td></tr>
+    <tr><th style="text-align: left;"><?php echo esc_html_x('User ID:', 'ui', 'memberpress'); ?></th><td>{$user_id}</td></tr>
   </table>
 </div>
 

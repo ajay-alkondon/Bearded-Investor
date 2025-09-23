@@ -2,7 +2,7 @@
 /**
  * View: admin/gateways/square/options.php
  *
- * @var MeprSquareGateway $gateway
+ * @var MeprSquarePaymentsGateway $gateway
  * @var MeprOptions $options
  */
 

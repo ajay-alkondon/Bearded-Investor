@@ -5,6 +5,7 @@ telInputs.forEach(input => {
     initialCountry: meprTel.defaultCountry,
     utilsScript: meprTel.utilsUrl,
     onlyCountries: meprTel.onlyCountries ? meprTel.onlyCountries : [],
+    i18n: 'fr',
   });
 
   adjustPadding(input); // On load

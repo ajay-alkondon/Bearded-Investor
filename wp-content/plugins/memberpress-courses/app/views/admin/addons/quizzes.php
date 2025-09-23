@@ -1,4 +1,5 @@
 <?php
+
 use memberpress\courses as base;
 
 if (!defined('ABSPATH')) {
@@ -18,7 +19,7 @@ if (!defined('ABSPATH')) {
     </div>
 
     <div class="mepr-sister-plugin-description">
-      <?php esc_html_e("The Quizzes add-on makes it simple to add quizzes to your MemberPress Courses, providing an effective way to measure student learning and keep your courses interactive.", 'memberpress-courses'); ?>
+      <?php esc_html_e('The Quizzes add-on makes it simple to add quizzes to your MemberPress Courses, providing an effective way to measure student learning and keep your courses interactive.', 'memberpress-courses'); ?>
     </div>
 
     <div class="mepr-sister-plugin-info mepr-clearfix">
@@ -29,23 +30,23 @@ if (!defined('ABSPATH')) {
       </div>
       <div class="mepr-sister-plugin-info-features">
         <?php
-        $bullets = array(
+        $bullets = [
             esc_html__('Encourage Active Participation', 'memberpress-courses'),
             esc_html__('Enhance Material Retention', 'memberpress-courses'),
             esc_html__('Boost Engagement', 'memberpress-courses'),
             esc_html__('Increase Course Completion Rates', 'memberpress-courses'),
             esc_html__('Flexible Completion Requirements', 'memberpress-courses'),
-            esc_html__('Require Passing Scores', 'memberpress-courses')
-        );
+            esc_html__('Require Passing Scores', 'memberpress-courses'),
+        ];
         ?>
         <ul>
           <?php
-          foreach ($bullets as $bullet) {
-              echo '<li style="margin-bottom: 5px; font-size: 13px;"><i class="mp-icon mp-icon-right-big"></i>';
-              echo esc_html($bullet);
-              echo '</li>';
-          }
-          ?>
+            foreach ($bullets as $bullet) {
+                echo '<li style="margin-bottom: 5px; font-size: 13px;"><i class="mp-icon mp-icon-right-big"></i>';
+                echo esc_html($bullet);
+                echo '</li>';
+            }
+            ?>
         </ul>
       </div>
     </div>

@@ -18,21 +18,21 @@
         if (!empty($order_by)) {
             $subs_sorted = [];
             foreach ($subs as $prd) {
-                if ($order_by == 'date') {
+                if ($order_by === 'date') {
                     $created_at            = MeprUser::get_user_product_signup_date($user->ID, $prd->ID);
                     $subs_sorted[$prd->ID] = $created_at;
-                } elseif ($order_by == 'title') {
+                } elseif ($order_by === 'title') {
                     $subs_sorted[$prd->ID] = $prd->post_title;
                 }
             }
-            if ($order_by == 'date') {
-                if ($order == 'asc') {
+            if ($order_by === 'date') {
+                if ($order === 'asc') {
                     asort($subs_sorted);
                 } else {
                     arsort($subs_sorted);
                 }
-            } elseif ($order_by == 'title') {
-                if ($order == 'desc') {
+            } elseif ($order_by === 'title') {
+                if ($order === 'desc') {
                     arsort($subs_sorted);
                 } else {
                     asort($subs_sorted);
@@ -49,7 +49,7 @@
 
     <ul class="mepr-subscriptions-widget-list">
         <?php foreach ($subs as $prd) {
-            if (empty($prev_dups) || !in_array($prd->ID, $prev_dups, false)) {
+            if (empty($prev_dups) || !in_array($prd->ID, $prev_dups, true)) {
                 $prev_dups[] = $prd->ID;
 
                 if ($use_access_url && !empty($prd->access_url)) { ?>

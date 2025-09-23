@@ -43,7 +43,7 @@ class Review_Feedback extends Modules {
 	 *
 	 * @var string
 	 */
-	protected $review_url = 'https://wordpress.org/support/plugin/cookie-law-info/reviews/?filter=5#new-post';
+	protected $review_url = 'https://wordpress.org/support/plugin/cookie-law-info/reviews/#new-post';
 
 	/**
 	 * Constructor.
@@ -81,8 +81,11 @@ class Review_Feedback extends Modules {
 				<div class="cky-admin-notice-message">
 					<div class="cky-row cky-align-center">
 						<div class="cky-col-12">
-							<h4 class="cky-admin-notice-header"><img width="100" src="<?php echo esc_attr( $assets_path ) . 'logo.svg'; ?>" alt=""></h4>
-							<p style="margin-top: 15px; margin-bottom:5px;"><?php echo wp_kses_post( sprintf( __( 'Hey, we at %1$s CookieYes %2$s would like to thank you for using our plugin. We would really appreciate if you could take a moment to drop a quick review that will inspire us to keep going.', 'cookie-law-info' ), '<b>', '</b>' ) ); ?></p>
+							<h4 class="cky-admin-notice-header"><img width="100" src="<?php echo esc_url( $assets_path . 'logo.svg' ); ?>" alt="<?php esc_attr_e( 'CookieYes Logo', 'cookie-law-info' ); ?>"></h4> <?php //phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage ?>
+							<p style="margin-top: 15px; margin-bottom:5px;"><?php 
+								/* translators: %1$s: opening bold tag, %2$s: closing bold tag */
+								echo wp_kses_post( sprintf( __( 'Hey, we at %1$s CookieYes %2$s would like to thank you for using our plugin. We would really appreciate if you could take a moment to drop a quick review that will inspire us to keep going.', 'cookie-law-info' ), '<b>', '</b>' ) ); 
+							?></p>
 						</div>
 						<div class="cky-col-12">
 							<div class="cky-flex" style="margin-top: 10px;">
@@ -253,6 +256,7 @@ class Review_Feedback extends Modules {
 			);
 
 			return sprintf(
+				/* translators: %1$s: CookieYes plugin name in bold, %2$s: star rating link, %3$s: WordPress.org link */
 				esc_html__(
 					'Please rate %1$s %2$s on %3$s to help us spread the word. Thank you from the team CookieYes!',
 					'cookie-law-info'

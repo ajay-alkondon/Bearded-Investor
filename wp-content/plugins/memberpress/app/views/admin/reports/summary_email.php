@@ -12,7 +12,7 @@
       <tr>
         <td align="center" valign="top">
           <table border="0" cellspacing="0" cellpadding="0" width="600">
-            <?php do_action('mepr-weekly-summary-email-inner-table-top-tr'); ?>
+            <?php MeprHooks::do_action('mepr_weekly_summary_email_inner_table_top_tr'); ?>
             <tr>
               <td valign="top">
                 <div style="text-align:center;padding:60px 0;">
@@ -124,17 +124,6 @@
                     </tr>
                   </table>
                 </div>
-                <?php if ($ad) : ?>
-                  <div style="padding:0 0 30px 0;">
-                    <table border="0" cellspacing="0" cellpadding="0" width="100%">
-                      <tr>
-                        <td valign="top" align="center">
-                          <?php echo $ad; ?>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-                <?php endif; ?>
                 <div style="padding:0 0 30px 0;">
                   <p style="font-family:Helvetica,Arial,sans-serif;font-size:13px;">
                     <?php

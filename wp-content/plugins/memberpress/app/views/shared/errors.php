@@ -2,12 +2,12 @@
     die('You are not allowed to call this page directly.');
 } ?>
 
-<?php if (isset($errors) && $errors != null && count($errors) > 0) : ?>
+<?php if (isset($errors) && is_array($errors) && count($errors) > 0) : ?>
 <div class="mp_wrapper">
   <div class="mepr_error" id="mepr_jump">
     <ul>
-      <?php foreach ($errors as $error) : ?>
-        <li><strong><?php _ex('ERROR', 'ui', 'memberpress'); ?></strong>: <?php print MeprAppHelper::wp_kses($error); ?></li>
+      <?php foreach ($errors as $single_error) : ?>
+        <li><strong><?php echo esc_html_x('ERROR', 'ui', 'memberpress'); ?></strong>: <?php echo MeprAppHelper::wp_kses($single_error); ?></li>
       <?php endforeach; ?>
     </ul>
   </div>

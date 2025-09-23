@@ -1,14 +1,16 @@
-<?php if(!defined('ABSPATH')) {die('You are not allowed to call this page directly.');} ?>
+<?php if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+} ?>
 
 <div class="wrap">
   <h2><?php _e('Settings', 'memberpress-courses'); ?><a href="https://memberpress.com/doc-categories/courses/" class="add-new-h2" target="_blank"><?php _e('User Manual', 'memberpress-courses'); ?></a></h2>
 
   <?php
-    do_action( 'mpcs_admin_overview_before_table' );
+    do_action('mpcs_admin_overview_before_table');
     MeprView::render('/admin/errors', get_defined_vars());
-    do_action( 'mpcs_before_options_form' );
+    do_action('mpcs_before_options_form');
     $form_url = admin_url('admin.php?page=memberpress-courses-options');
-  ?>
+    ?>
 
   <form name="mpcs_options_form" id="mpcs_options_form" class="mpcs-form" method="post" action="<?php echo esc_url($form_url); ?>" data-raw-url="<?php echo esc_url($form_url); ?>" enctype="multipart/form-data">
     <input type="hidden" name="action" value="process-mpcs-form">

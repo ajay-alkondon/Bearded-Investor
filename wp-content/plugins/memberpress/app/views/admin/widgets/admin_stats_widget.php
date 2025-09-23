@@ -4,40 +4,40 @@
 
 <div id="widget-info-blocks">
   <img src="<?php echo esc_url(MEPR_BRAND_URL . '/images/logo.svg'); ?>" id="mepr-stats-logo" />
-  <p><?php _e('Your 7-Day membership activity:', 'memberpress'); ?></span></p>
+  <p><?php esc_html_e('Your 7-Day membership activity:', 'memberpress'); ?></span></p>
 
   <div class="widget_info_block">
-    <span class="info_block_title"><?php _e('Pending Transactions', 'memberpress'); ?></span>
+    <span class="info_block_title"><?php esc_html_e('Pending Transactions', 'memberpress'); ?></span>
     <h4><?php echo $pending_transactions; ?></h4>
   </div>
 
   <div class="widget_info_block">
-    <span class="info_block_title"><?php _e('Failed Transactions', 'memberpress'); ?></span>
+    <span class="info_block_title"><?php esc_html_e('Failed Transactions', 'memberpress'); ?></span>
     <h4><?php echo $failed_transactions; ?></h4>
   </div>
 
   <div class="widget_info_block">
-    <span class="info_block_title"><?php _e('Refunded Transactions', 'memberpress'); ?></span>
+    <span class="info_block_title"><?php esc_html_e('Refunded Transactions', 'memberpress'); ?></span>
     <h4><?php echo $refunded_transactions; ?></h4>
   </div>
 
   <div class="widget_info_block">
-    <span class="info_block_title"><?php _e('Completed Transactions', 'memberpress'); ?></span>
+    <span class="info_block_title"><?php esc_html_e('Completed Transactions', 'memberpress'); ?></span>
     <h4><?php echo $completed_transactions; ?></h4>
   </div>
 
   <div class="widget_info_block">
-    <span class="info_block_title"><?php _e('Amount Collected', 'memberpress'); ?></span>
+    <span class="info_block_title"><?php esc_html_e('Amount Collected', 'memberpress'); ?></span>
     <h4><?php echo MeprAppHelper::format_currency(($revenue + $refunds), true, false); ?></h4>
   </div>
 
   <div class="widget_info_block">
-    <span class="info_block_title"><?php _e('Amount Refunded', 'memberpress'); ?></span>
+    <span class="info_block_title"><?php esc_html_e('Amount Refunded', 'memberpress'); ?></span>
     <h4><?php echo MeprAppHelper::format_currency($refunds, true, false); ?></h4>
   </div>
 
   <div class="widget_info_block">
-    <span class="info_block_title"><?php _e('Total Income', 'memberpress'); ?></span>
+    <span class="info_block_title"><?php esc_html_e('Total Income', 'memberpress'); ?></span>
     <h4><?php echo MeprAppHelper::format_currency($revenue, true, false); ?></h4>
   </div>
 </div>
@@ -58,11 +58,11 @@
                   'export' => 'widget',
               ]
           );
-            ?>"><?php _e('Export as CSV', 'memberpress'); ?></a>
+            ?>"><?php esc_html_e('Export as CSV', 'memberpress'); ?></a>
 </div>
 
 <div>
-  <a href="<?php echo admin_url('admin.php?page=memberpress-reports'); ?>" class="button"><?php _e('View More MemberPress Reports', 'memberpress'); ?></a>
+  <a href="<?php echo admin_url('admin.php?page=memberpress-reports'); ?>" class="button"><?php esc_html_e('View More MemberPress Reports', 'memberpress'); ?></a>
 </div>
 
 <!-- Widget JS Helpers -->

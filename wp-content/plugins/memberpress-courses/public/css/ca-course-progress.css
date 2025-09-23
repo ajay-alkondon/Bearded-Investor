@@ -15,18 +15,34 @@ body.mpca_progress_on{overflow: hidden;}
   visibility: visible;
 }
 .course-progress-modal-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #fff;
-    padding: 47px 42px 20px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 47px 42px 20px;
   width: 695px;
   height: 539px;
-    max-width: 90%;
+  max-width: 90%;
   max-height: 75%;
   overflow-y: auto;
-    border-radius: 15px;
+  border-radius: 15px;
+}
+
+.course-progress-close-button {
+  width: 12px;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.course-progress-close-button:focus-visible {
+  outline: dashed #006be5;
+  outline-offset: 2px;
+  border: 0;
 }
 
 .course-progress-close-button { cursor: pointer; position: absolute; top: 10px; right: 20px; width: 12px; }

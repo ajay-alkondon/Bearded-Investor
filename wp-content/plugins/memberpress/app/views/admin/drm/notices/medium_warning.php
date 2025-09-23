@@ -5,7 +5,7 @@
    <h3 class="mepr-notice-title"><?php echo $drm_info['heading']; ?></h3>
    <p class="mepr-notice-desc"><?php echo $drm_info['simple_message']; ?></p>
 
-   <?php if ($drm_info['event_name'] == MeprDrmHelper::INVALID_LICENSE_EVENT) : ?>
+   <?php if ($drm_info['event_name'] === MeprDrmHelper::INVALID_LICENSE_EVENT) : ?>
      <ul class="mepr-drm-action-items">
        <li>
            <?php echo sprintf(
@@ -21,7 +21,7 @@
                 $drm_info['activation_link']
             ); ?>
        </li>
-       <li><?php _e('That’s it!', 'memberpress'); ?></li>
+       <li><?php esc_html_e('That’s it!', 'memberpress'); ?></li>
      </ul>
    <?php else : ?>
      <ul class="mepr-drm-action-items">
@@ -39,7 +39,7 @@
                $drm_info['activation_link']
            ); ?>
        </li>
-       <li><?php _e('That’s it!', 'memberpress'); ?></li>
+       <li><?php esc_html_e('That’s it!', 'memberpress'); ?></li>
      </ul>
    <?php endif; ?>
 </div>

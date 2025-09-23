@@ -17,12 +17,12 @@ if (!defined('ABSPATH')) {
     <input name="<?php echo MeprProduct::$price_str; ?>" id="<?php echo MeprProduct::$price_str; ?>" type="text" value="<?php echo MeprUtils::format_currency_float($product->price); ?>" />
   </p>
   <p>
-    <strong><?php _e('Billing Type:', 'memberpress'); ?></strong>
+    <strong><?php esc_html_e('Billing Type:', 'memberpress'); ?></strong>
   </p>
   <p>
     <select id="mepr-product-billing-type">
-      <option value="recurring"<?php echo (($product->period_type != 'lifetime') ? ' selected="selected"' : ''); ?>><?php _e('Recurring', 'memberpress'); ?></option>
-      <option value="single"<?php echo (($product->period_type == 'lifetime') ? ' selected="selected"' : ''); ?>><?php _e('One-Time', 'memberpress'); ?></option>
+      <option value="recurring"<?php echo (($product->period_type !== 'lifetime') ? ' selected="selected"' : ''); ?>><?php esc_html_e('Recurring', 'memberpress'); ?></option>
+      <option value="single"<?php echo (($product->period_type === 'lifetime') ? ' selected="selected"' : ''); ?>><?php esc_html_e('One-Time', 'memberpress'); ?></option>
     </select>
   </p>
 
@@ -37,20 +37,20 @@ if (!defined('ABSPATH')) {
 
   <div id="mepr-non-recurring-options" class="mepr-hidden">
     <p>
-      <strong><?php _e('Access:', 'memberpress'); ?></strong>
+      <strong><?php esc_html_e('Access:', 'memberpress'); ?></strong>
     </p>
     <p>
-      <label class="screen-reader-text" for="<?php echo MeprProduct::$expire_type_str; ?>"><?php _e('Access:', 'memberpress'); ?></label>
+      <label class="screen-reader-text" for="<?php echo MeprProduct::$expire_type_str; ?>"><?php esc_html_e('Access:', 'memberpress'); ?></label>
       <select name="<?php echo MeprProduct::$expire_type_str; ?>" id="<?php echo MeprProduct::$expire_type_str; ?>">
-        <option value="none"<?php selected($product->expire_type, 'none'); ?>><?php _e('Lifetime', 'memberpress'); ?>&nbsp;</option>
-        <option value="delay"<?php selected($product->expire_type, 'delay'); ?>><?php _e('Expire', 'memberpress'); ?>&nbsp;</option>
-        <option value="fixed"<?php selected($product->expire_type, 'fixed'); ?>><?php _e('Fixed Expire', 'memberpress'); ?>&nbsp;</option>
+        <option value="none"<?php selected($product->expire_type, 'none'); ?>><?php esc_html_e('Lifetime', 'memberpress'); ?>&nbsp;</option>
+        <option value="delay"<?php selected($product->expire_type, 'delay'); ?>><?php esc_html_e('Expire', 'memberpress'); ?>&nbsp;</option>
+        <option value="fixed"<?php selected($product->expire_type, 'fixed'); ?>><?php esc_html_e('Fixed Expire', 'memberpress'); ?>&nbsp;</option>
       </select>
     </p>
     <div class="mepr-product-expire-delay mepr-sub-box">
       <div class="mepr-arrow mepr-gray mepr-up mepr-sub-box-arrow"> </div>
       <p class="mepr-clear-top">
-        <strong><?php _e('Expire After:', 'memberpress'); ?></strong>
+        <strong><?php esc_html_e('Expire After:', 'memberpress'); ?></strong>
       </p>
       <p>
         <input type="text" size="2"
@@ -59,10 +59,10 @@ if (!defined('ABSPATH')) {
                value="<?php echo $product->expire_after; ?>" />
         <select name="<?php echo MeprProduct::$expire_unit_str; ?>"
                 id="<?php echo MeprProduct::$expire_unit_str; ?>">
-          <option value="days"<?php selected($product->expire_unit, 'days'); ?>><?php _e('days', 'memberpress'); ?></option>
-          <option value="weeks"<?php selected($product->expire_unit, 'weeks'); ?>><?php _e('weeks', 'memberpress'); ?></option>
-          <option value="months"<?php selected($product->expire_unit, 'months'); ?>><?php _e('months', 'memberpress'); ?></option>
-          <option value="years"<?php selected($product->expire_unit, 'years'); ?>><?php _e('years', 'memberpress'); ?></option>
+          <option value="days"<?php selected($product->expire_unit, 'days'); ?>><?php esc_html_e('days', 'memberpress'); ?></option>
+          <option value="weeks"<?php selected($product->expire_unit, 'weeks'); ?>><?php esc_html_e('weeks', 'memberpress'); ?></option>
+          <option value="months"<?php selected($product->expire_unit, 'months'); ?>><?php esc_html_e('months', 'memberpress'); ?></option>
+          <option value="years"<?php selected($product->expire_unit, 'years'); ?>><?php esc_html_e('years', 'memberpress'); ?></option>
         </select>
       </p>
       <p>
@@ -71,14 +71,14 @@ if (!defined('ABSPATH')) {
                name="<?php echo MeprProduct::$allow_renewal_str; ?>"
                <?php checked($product->allow_renewal); ?> />
         <label for="<?php echo MeprProduct::$allow_renewal_str; ?>">
-          <?php _e('Allow Early Renewals', 'memberpress'); ?>
+          <?php esc_html_e('Allow Early Renewals', 'memberpress'); ?>
         </label>
       </p>
     </div>
     <div class="mepr-product-expire-fixed mepr-sub-box">
       <div class="mepr-arrow mepr-gray mepr-up mepr-sub-box-arrow"> </div>
       <p class="mepr-clear-top">
-        <strong><?php _e('Expire On:', 'memberpress'); ?></strong>
+        <strong><?php esc_html_e('Expire On:', 'memberpress'); ?></strong>
       </p>
       <p>
         <input type="text"
@@ -93,7 +93,7 @@ if (!defined('ABSPATH')) {
                name="<?php echo MeprProduct::$allow_renewal_str; ?>-fixed"
                <?php checked($product->allow_renewal); ?> />
         <label for="<?php echo MeprProduct::$allow_renewal_str; ?>-fixed">
-          <?php _e('Allow Early Annual Renewals', 'memberpress'); ?>
+          <?php esc_html_e('Allow Early Annual Renewals', 'memberpress'); ?>
         </label>
       </p>
     </div>
@@ -101,7 +101,7 @@ if (!defined('ABSPATH')) {
 
   <div id="mepr-recurring-options" class="mepr-hidden">
     <p>
-      <strong><?php _e('Interval:', 'memberpress'); ?></strong>
+      <strong><?php esc_html_e('Interval:', 'memberpress'); ?></strong>
     </p>
     <p>
       <?php echo MeprProductsHelper::preset_period_dropdown(
@@ -119,18 +119,18 @@ if (!defined('ABSPATH')) {
     <div class="mepr-product-trial-box">
       <?php $checked = (isset($product->trial) && $product->trial) ? 'checked="checked"' : ''; ?>
       <p>
-        <input type="checkbox" name="<?php echo MeprProduct::$trial_str; ?>" id="<?php echo MeprProduct::$trial_str; ?>" <?php echo $checked; ?> /> <label for="_mepr_product_trial"><?php _e('Trial Period', 'memberpress'); ?></label>
+        <input type="checkbox" name="<?php echo MeprProduct::$trial_str; ?>" id="<?php echo MeprProduct::$trial_str; ?>" <?php echo $checked; ?> /> <label for="_mepr_product_trial"><?php esc_html_e('Trial Period', 'memberpress'); ?></label>
         <?php MeprAppHelper::info_tooltip(
             'mepr-product-trial-days',
             __('Trial Period Info', 'memberpress'),
             __('The trial period is the number of days listed in the "Trial Duration" field. A 1 month trial would be 30 days, 2 months would be 60. Similarly, 1 year would be 365.', 'memberpress')
         ); ?>
-        <div id="disable-trial-notice" class="mepr-meta-sub-pane" data-value="<?php _e('Price must be greater than 0.00 to choose recurring subscriptions.', 'memberpress'); ?>" class="mepr_hidden"></div>
+        <div id="disable-trial-notice" class="mepr-meta-sub-pane" data-value="<?php esc_attr_e('Price must be greater than 0.00 to choose recurring subscriptions.', 'memberpress'); ?>" class="mepr_hidden"></div>
       </p>
       <div class="mepr-product-trial-hidden mepr-sub-box">
         <div class="mepr-arrow mepr-gray mepr-up mepr-sub-box-arrow"> </div>
         <p class="mepr-clear-top">
-          <strong><?php _e('Trial Duration (Days):', 'memberpress'); ?></strong>
+          <strong><?php esc_html_e('Trial Duration (Days):', 'memberpress'); ?></strong>
         </p>
         <p>
           <input name="<?php echo MeprProduct::$trial_days_str; ?>" id="<?php echo MeprProduct::$trial_days_str; ?>" type="text" size="2" value="<?php echo $product->trial_days; ?>" />
@@ -146,7 +146,7 @@ if (!defined('ABSPATH')) {
           <input name="<?php echo MeprProduct::$trial_amount_str; ?>" id="<?php echo MeprProduct::$trial_amount_str; ?>" size="7" type="text" value="<?php echo MeprUtils::format_currency_float($product->trial_amount); ?>" />
         </p>
         <p>
-          <input type="checkbox" name="<?php echo MeprProduct::$trial_once_str; ?>" id="<?php echo MeprProduct::$trial_once_str; ?>" <?php checked($product->trial_once); ?> /> <label for="<?php echo MeprProduct::$trial_once_str; ?>"><?php _e('Allow Only One Trial', 'memberpress'); ?></label>
+          <input type="checkbox" name="<?php echo MeprProduct::$trial_once_str; ?>" id="<?php echo MeprProduct::$trial_once_str; ?>" <?php checked($product->trial_once); ?> /> <label for="<?php echo MeprProduct::$trial_once_str; ?>"><?php esc_html_e('Allow Only One Trial', 'memberpress'); ?></label>
           <?php MeprAppHelper::info_tooltip(
               'mepr-product-trial-once',
               __('Restrict Trial to One Per Member', 'memberpress'),
@@ -158,24 +158,24 @@ if (!defined('ABSPATH')) {
     <div class="mepr-product-cycles-box">
       <?php $checked = (isset($product->limit_cycles) && $product->limit_cycles) ? 'checked="checked"' : ''; ?>
       <p>
-        <input type="checkbox" name="<?php echo MeprProduct::$limit_cycles_str; ?>" id="<?php echo MeprProduct::$limit_cycles_str; ?>" <?php echo $checked; ?> /> <label for="_mepr_product_limit_cycles"><?php _e('Limit Payment Cycles', 'memberpress'); ?></label>
+        <input type="checkbox" name="<?php echo MeprProduct::$limit_cycles_str; ?>" id="<?php echo MeprProduct::$limit_cycles_str; ?>" <?php echo $checked; ?> /> <label for="_mepr_product_limit_cycles"><?php esc_html_e('Limit Payment Cycles', 'memberpress'); ?></label>
       </p>
       <div class="mepr-product-limit-cycles-hidden mepr-sub-box">
         <div class="mepr-arrow mepr-gray mepr-up mepr-sub-box-arrow"> </div>
         <p class="mepr-clear-top">
-          <strong><?php _e('Max # of Payments:', 'memberpress'); ?></strong>
+          <strong><?php esc_html_e('Max # of Payments:', 'memberpress'); ?></strong>
         </p>
         <p>
           <input name="<?php echo MeprProduct::$limit_cycles_num_str; ?>" id="<?php echo MeprProduct::$limit_cycles_num_str ?>" type="text" size="2" value="<?php echo $product->limit_cycles_num; ?>" />
         </p>
         <p>
-          <strong><?php _e('Access After Last Cycle:', 'memberpress'); ?></strong>
+          <strong><?php esc_html_e('Access After Last Cycle:', 'memberpress'); ?></strong>
         </p>
         <p>
           <select name="<?php echo MeprProduct::$limit_cycles_action_str; ?>" id="<?php echo MeprProduct::$limit_cycles_action_str; ?>">
-            <option value="expire" <?php selected('expire', $product->limit_cycles_action); ?>><?php _e('Expire Access', 'memberpress'); ?></option>
-            <option value="lifetime" <?php selected('lifetime', $product->limit_cycles_action); ?>><?php _e('Lifetime Access', 'memberpress'); ?></option>
-            <option value="expires_after" <?php selected('expires_after', $product->limit_cycles_action); ?>><?php _e('Expire Access After', 'memberpress'); ?></option>
+            <option value="expire" <?php selected('expire', $product->limit_cycles_action); ?>><?php esc_html_e('Expire Access', 'memberpress'); ?></option>
+            <option value="lifetime" <?php selected('lifetime', $product->limit_cycles_action); ?>><?php esc_html_e('Lifetime Access', 'memberpress'); ?></option>
+            <option value="expires_after" <?php selected('expires_after', $product->limit_cycles_action); ?>><?php esc_html_e('Expire Access After', 'memberpress'); ?></option>
           </select>
         </p>
 
@@ -187,10 +187,10 @@ if (!defined('ABSPATH')) {
                 value="<?php echo $product->limit_cycles_expires_after; ?>" />
           <select name="<?php echo MeprProduct::$limit_cycles_expires_type_str; ?>"
                   id="<?php echo MeprProduct::$limit_cycles_expires_type_str; ?>">
-            <option value="days"<?php selected($product->limit_cycles_expires_type, 'days'); ?>><?php _e('days', 'memberpress'); ?></option>
-            <option value="weeks"<?php selected($product->limit_cycles_expires_type, 'weeks'); ?>><?php _e('weeks', 'memberpress'); ?></option>
-            <option value="months"<?php selected($product->limit_cycles_expires_type, 'months'); ?>><?php _e('months', 'memberpress'); ?></option>
-            <option value="years"<?php selected($product->limit_cycles_expires_type, 'years'); ?>><?php _e('years', 'memberpress'); ?></option>
+            <option value="days"<?php selected($product->limit_cycles_expires_type, 'days'); ?>><?php esc_html_e('days', 'memberpress'); ?></option>
+            <option value="weeks"<?php selected($product->limit_cycles_expires_type, 'weeks'); ?>><?php esc_html_e('weeks', 'memberpress'); ?></option>
+            <option value="months"<?php selected($product->limit_cycles_expires_type, 'months'); ?>><?php esc_html_e('months', 'memberpress'); ?></option>
+            <option value="years"<?php selected($product->limit_cycles_expires_type, 'years'); ?>><?php esc_html_e('years', 'memberpress'); ?></option>
           </select>
 
         </div>

@@ -1,85 +1,93 @@
 <?php
+
 namespace memberpress\courses\lib;
 
-if(!defined('ABSPATH')) {die('You are not allowed to call this page directly.');}
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 use memberpress\courses as base;
 
-class Db {
-  public $prefix, $sections, $user_progress, $questions, $attempts, $answers, $submissions, $emails;
+class Db
+{
+    public $prefix, $sections, $user_progress, $questions, $attempts, $answers, $submissions, $emails;
 
-  public function __construct() {
-    global $wpdb;
+    public function __construct()
+    {
+        global $wpdb;
 
-    $this->prefix = $wpdb->prefix . base\SLUG_KEY . '_';
+        $this->prefix = $wpdb->prefix . base\SLUG_KEY . '_';
 
-    // Tables
-    $this->sections = "{$this->prefix}sections";
-    $this->user_progress = "{$this->prefix}user_progress";
-    $this->questions = "{$this->prefix}questions";
-    $this->attempts = "{$this->prefix}attempts";
-    $this->answers = "{$this->prefix}answers";
-    $this->submissions = "{$this->prefix}submissions";
-    $this->emails = "{$this->prefix}emails";
-  }
-
-  /**
-   * Get the Db instance
-   *
-   * @param bool $force Force creation of a fresh instance
-   * @return Db
-   */
-  public static function fetch($force = false) {
-    static $db;
-
-    if(!isset($db) || $force) {
-      $db = new Db();
+        // Tables
+        $this->sections      = "{$this->prefix}sections";
+        $this->user_progress = "{$this->prefix}user_progress";
+        $this->questions     = "{$this->prefix}questions";
+        $this->attempts      = "{$this->prefix}attempts";
+        $this->answers       = "{$this->prefix}answers";
+        $this->submissions   = "{$this->prefix}submissions";
+        $this->emails        = "{$this->prefix}emails";
     }
 
-    return apply_filters(base\SLUG_KEY.'_fetch_db', $db);
-  }
+    /**
+     * Get the Db instance
+     *
+     * @param  boolean $force Force creation of a fresh instance
+     * @return Db
+     */
+    public static function fetch($force = false)
+    {
+        static $db;
 
-  public function upgrade() {
-    global $wpdb;
-
-    static $upgrade_already_running;
-
-    if(isset($upgrade_already_running) && true===$upgrade_already_running) {
-      return;
-    }
-    else {
-      $upgrade_already_running = true;
-    }
-    // delete_option(base\SLUG_KEY.'_db_version');
-    $old_db_version = get_option(base\SLUG_KEY.'_db_version');
-
-    if(base\DB_VERSION > $old_db_version) {
-      // Ensure our big queries can run in an upgrade
-      $wpdb->query('SET SQL_BIG_SELECTS=1'); //This may be getting set back to 0 when SET MAX_JOIN_SIZE is executed
-      $wpdb->query('SET MAX_JOIN_SIZE=18446744073709551615');
-
-      $this->before_upgrade($old_db_version);
-
-      // This was introduced in WordPress 3.5
-      // $char_col = $wpdb->get_charset_collate(); //This doesn't work for most non english setups
-      $char_col = "";
-      $collation = $wpdb->get_row("SHOW FULL COLUMNS FROM {$wpdb->posts} WHERE field = 'post_content'");
-
-      if(isset($collation->Collation)) {
-        $charset = explode('_', $collation->Collation);
-
-        if(is_array($charset) && count($charset) > 1) {
-          $charset = $charset[0]; //Get the charset from the collation
-          $char_col = "DEFAULT CHARACTER SET {$charset} COLLATE {$collation->Collation}";
+        if (!isset($db) || $force) {
+            $db = new Db();
         }
-      }
 
-      //Fine we'll try it your way this time
-      if(empty($char_col)) { $char_col = $wpdb->get_charset_collate(); }
+        return apply_filters(base\SLUG_KEY . '_fetch_db', $db);
+    }
 
-      require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    public function upgrade()
+    {
+        global $wpdb;
 
-      $sections = "
+        static $upgrade_already_running;
+
+        if (isset($upgrade_already_running) && true === $upgrade_already_running) {
+            return;
+        } else {
+            $upgrade_already_running = true;
+        }
+        // delete_option(base\SLUG_KEY.'_db_version');
+        $old_db_version = get_option(base\SLUG_KEY . '_db_version');
+
+        if (base\DB_VERSION > $old_db_version) {
+            // Ensure our big queries can run in an upgrade
+            $wpdb->query('SET SQL_BIG_SELECTS=1'); // This may be getting set back to 0 when SET MAX_JOIN_SIZE is executed
+            $wpdb->query('SET MAX_JOIN_SIZE=18446744073709551615');
+
+            $this->before_upgrade($old_db_version);
+
+            // This was introduced in WordPress 3.5
+            // $char_col = $wpdb->get_charset_collate(); //This doesn't work for most non english setups
+            $char_col  = '';
+            $collation = $wpdb->get_row("SHOW FULL COLUMNS FROM {$wpdb->posts} WHERE field = 'post_content'");
+
+            if (isset($collation->Collation)) {
+                $charset = explode('_', $collation->Collation);
+
+                if (is_array($charset) && count($charset) > 1) {
+                    $charset  = $charset[0]; // Get the charset from the collation
+                    $char_col = "DEFAULT CHARACTER SET {$charset} COLLATE {$collation->Collation}";
+                }
+            }
+
+            // Fine we'll try it your way this time
+            if (empty($char_col)) {
+                $char_col = $wpdb->get_charset_collate();
+            }
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+            $sections = "
       CREATE TABLE {$this->sections} (
           `id` bigint(20) NOT NULL auto_increment,
           `title` text NOT NULL,
@@ -93,9 +101,9 @@ class Db {
           KEY `section_order` (`section_order`),
           KEY `uuid` (`uuid`)
         ) {$char_col};";
-      dbDelta($sections);
+            dbDelta($sections);
 
-      $user_progress = "
+            $user_progress = "
       CREATE TABLE {$this->user_progress} (
           `id` bigint(20) NOT NULL auto_increment,
           `user_id` bigint(20) NOT NULL,
@@ -111,9 +119,9 @@ class Db {
           KEY `completed_at` (`completed_at`),
           UNIQUE KEY `user_lesson_course` (`user_id`,`lesson_id`,`course_id`)
         ) {$char_col};";
-      dbDelta($user_progress);
+            dbDelta($user_progress);
 
-      $questions = "
+            $questions = "
       CREATE TABLE {$this->questions} (
           `id` bigint(20) unsigned NOT NULL auto_increment,
           `quiz_id` bigint(20) unsigned,
@@ -130,9 +138,9 @@ class Db {
           KEY `quiz_id` (`quiz_id`),
           UNIQUE KEY `quiz_question` (`quiz_id`,`id`)
         ) $char_col;";
-      dbDelta($questions);
+            dbDelta($questions);
 
-      $attempts = "
+            $attempts = "
       CREATE TABLE {$this->attempts} (
           `id` bigint(20) unsigned NOT NULL auto_increment,
           `quiz_id` bigint(20) unsigned,
@@ -151,9 +159,9 @@ class Db {
           KEY `user_id` (`user_id`),
           KEY `status` (`status`)
         ) $char_col;";
-      dbDelta($attempts);
+            dbDelta($attempts);
 
-      $answers = "
+            $answers = "
       CREATE TABLE {$this->answers} (
           `id` bigint(20) unsigned NOT NULL auto_increment,
           `attempt_id` bigint(20) unsigned,
@@ -169,9 +177,9 @@ class Db {
           KEY `question_id` (`question_id`),
           UNIQUE KEY `attempt_question` (`attempt_id`,`question_id`)
         ) $char_col;";
-      dbDelta($answers);
+            dbDelta($answers);
 
-      $submissions = "
+            $submissions = "
       CREATE TABLE {$this->submissions} (
           `id` bigint(20) unsigned NOT NULL auto_increment,
           `assignment_id` bigint(20) unsigned,
@@ -193,9 +201,9 @@ class Db {
           KEY `user_id` (`user_id`),
           UNIQUE KEY `assignment_user` (`assignment_id`,`user_id`)
         ) $char_col;";
-      dbDelta($submissions);
+            dbDelta($submissions);
 
-      $emails = "
+            $emails = "
       CREATE TABLE {$this->emails} (
           `id` bigint(20) unsigned NOT NULL auto_increment,
           `email_key` varchar(255),
@@ -207,466 +215,488 @@ class Db {
           PRIMARY KEY  (id),
           KEY `email_key` (`email_key`)
         ) $char_col;";
-      dbDelta($emails);
+            dbDelta($emails);
 
-      $this->after_upgrade($old_db_version);
+            $this->after_upgrade($old_db_version);
 
-      /***** SAVE DB VERSION *****/
-      //Let's only run this query if we're actually updating
-      update_option(base\SLUG_KEY.'_db_version', base\DB_VERSION);
-    }
-  }
-
-  public function before_upgrade($curr_db_version) {
-    // Nothing yet
-  }
-
-  public function after_upgrade($curr_db_version) {
-    flush_rewrite_rules();
-  }
-
-  public function create_record($table, $args, $record_created_at = true) {
-    global $wpdb;
-    $cols = array();
-    $vars = array();
-    $values = array();
-
-    $i = 0;
-    foreach($args as $key => $value) {
-      if ($key == 'id' && empty($value)) {
-        // To prevent issue with SQL MODE NO_AUTO_VALUE_ON_ZERO
-        continue;
-      }
-
-      if($key == 'created_at' && $record_created_at && empty($value)) { continue; }
-
-      $cols[$i] = $key;
-      if(is_numeric($value) and preg_match('!\.!',$value)) {
-        $vars[$i] = '%f';
-      }
-      else if(is_int($value) or is_numeric($value) or is_bool($value)) {
-        $vars[$i] = '%d';
-      }
-      else {
-        $vars[$i] = '%s';
-      }
-
-      if(is_bool($value)) {
-        $values[$i] = $value ? 1 : 0;
-      }
-      else {
-        $values[$i] = $value;
-      }
-
-      $i++;
+            // Save DB version.
+            // Let's only run this query if we're actually updating.
+            update_option(base\SLUG_KEY . '_db_version', base\DB_VERSION);
+        }
     }
 
-    if($record_created_at && (!isset($args['created_at']) || empty($args['created_at']))) {
-      $cols[$i] = 'created_at';
-      $vars[$i] = $wpdb->prepare('%s',Utils::db_now());
-      $i++;
-    }
-
-    if(empty($cols)) {
-      return false;
-    }
-
-    $cols_str = implode(',',$cols);
-    $vars_str = implode(',',$vars);
-
-    $query = "INSERT INTO {$table} ( {$cols_str} ) VALUES ( {$vars_str} )";
-    if(empty($values)) {
-      $query = esc_sql( $query );
-    }
-    else {
-      $query = $wpdb->prepare( $query, $values );
-    }
-
-    $query_results = $wpdb->query($query);
-
-    if($query_results)
-      return $wpdb->insert_id;
-    else
-      return false;
-  }
-
-  public function update_record( $table, $id, $args )
-  {
-    global $wpdb;
-
-    if(empty($args) or empty($id))
-      return false;
-
-    $set = '';
-    $values = array();
-    foreach($args as $key => $value)
+    public function before_upgrade($curr_db_version)
     {
-      if(empty($set))
-        $set .= ' SET';
-      else
-        $set .= ',';
-
-      $set .= " {$key}=";
-
-      if(is_numeric($value) and preg_match('!\.!',$value))
-        $set .= "%f";
-      else if(is_int($value) or is_numeric($value) or is_bool($value))
-        $set .= "%d";
-      else
-        $set .= "%s";
-
-      if(is_bool($value))
-        $values[] = $value ? 1 : 0;
-      else if (is_array($value))
-        $values[] = maybe_serialize($value);
-      else
-        $values[] = $value;
+        // Nothing yet
     }
 
-    $values[] = $id;
-    $query = "UPDATE {$table}{$set} WHERE id=%d";
-
-    if( empty($values) ) {
-      $query = esc_sql( $query );
-    }
-    else {
-      $query = $wpdb->prepare( $query, $values );
-    }
-
-    if($wpdb->query($query)) {
-      return $id;
-    }
-    else {
-      return false;
-    }
-  }
-
-  public function delete_records($table, $args)
-  {
-    global $wpdb;
-
-    extract(Db::get_where_clause_and_values( $args ));
-
-    $query = "DELETE FROM {$table}{$where}";
-
-    if( empty($values) ) {
-      $query = esc_sql( $query );
-    }
-    else {
-      $query = $wpdb->prepare( $query, $values );
-    }
-
-    return $wpdb->query($query);
-  }
-
-  public function get_count($table, $args=array(), $joins=array()) {
-    global $wpdb;
-    $join = '';
-
-    if(!empty($joins)) {
-      foreach($joins as $join_clause) {
-        $join .= " {$join_clause}";
-      }
-    }
-
-    extract(Db::get_where_clause_and_values( $args ));
-
-    $query = "SELECT COUNT(*) FROM {$table}{$join}{$where}";
-
-    if( empty($values) ) {
-      $query = esc_sql( $query );
-    }
-    else {
-      $query = $wpdb->prepare( $query, $values );
-    }
-
-    return $wpdb->get_var($query);
-  }
-
-  public function get_where_clause_and_values( $args, $like = false ) {
-    $args = (array)$args;
-
-    $where = '';
-    $values = array();
-    foreach($args as $key => $value)
+    public function after_upgrade($curr_db_version)
     {
-      if(!empty($where))
-        $where .= ' AND';
-      else
-        $where .= ' WHERE';
-
-      if($like) {
-        $where .= " {$key} LIKE ";
-      } else {
-        $where .= " {$key}=";
-      }
-
-      if(is_numeric($value) and preg_match('!\.!',$value))
-        $where .= "%f";
-      else if(is_int($value) or is_numeric($value) or is_bool($value))
-        $where .= "%d";
-      else
-        $where .= "%s";
-
-      if(is_bool($value))
-        $values[] = $value ? 1 : 0;
-      else
-        $values[] = $like ? '%' . $value . '%' : $value;
+        flush_rewrite_rules();
     }
 
-    return compact('where','values');
-  }
+    public function create_record($table, $args, $record_created_at = true)
+    {
+        global $wpdb;
+        $cols   = [];
+        $vars   = [];
+        $values = [];
 
-  public function get_one_model($model, $args=array()) {
-    $table = $this->get_table_for_model($model);
+        $i = 0;
+        foreach ($args as $key => $value) {
+            if ($key == 'id' && empty($value)) {
+                // To prevent issue with SQL MODE NO_AUTO_VALUE_ON_ZERO
+                continue;
+            }
 
-    $rec = $this->get_one_record($table, $args);
+            if ($key == 'created_at' && $record_created_at && empty($value)) {
+                continue;
+            }
 
-    if(!empty($rec)) {
-      $obj = new $model();
-      $obj->load_from_array($rec);
-      return $obj;
+            $cols[$i] = $key;
+            if (is_numeric($value) and preg_match('!\.!', $value)) {
+                $vars[$i] = '%f';
+            } elseif (is_int($value) or is_numeric($value) or is_bool($value)) {
+                $vars[$i] = '%d';
+            } else {
+                $vars[$i] = '%s';
+            }
+
+            if (is_bool($value)) {
+                $values[$i] = $value ? 1 : 0;
+            } else {
+                $values[$i] = $value;
+            }
+
+            ++$i;
+        }
+
+        if ($record_created_at && (!isset($args['created_at']) || empty($args['created_at']))) {
+            $cols[$i] = 'created_at';
+            $vars[$i] = $wpdb->prepare('%s', Utils::db_now());
+            ++$i;
+        }
+
+        if (empty($cols)) {
+            return false;
+        }
+
+        $cols_str = implode(',', $cols);
+        $vars_str = implode(',', $vars);
+
+        $query = "INSERT INTO {$table} ( {$cols_str} ) VALUES ( {$vars_str} )";
+        if (empty($values)) {
+            $query = esc_sql($query);
+        } else {
+            $query = $wpdb->prepare($query, $values);
+        }
+
+        $query_results = $wpdb->query($query);
+
+        if ($query_results) {
+            return $wpdb->insert_id;
+        } else {
+            return false;
+        }
     }
 
-    return $rec;
-  }
+    public function update_record($table, $id, $args)
+    {
+        global $wpdb;
 
-  public function get_one_record($table, $args=array())
-  {
-    global $wpdb;
+        if (empty($args) or empty($id)) {
+            return false;
+        }
 
-    extract(Db::get_where_clause_and_values( $args ));
+        $set    = '';
+        $values = [];
+        foreach ($args as $key => $value) {
+            if (empty($set)) {
+                $set .= ' SET';
+            } else {
+                $set .= ',';
+            }
 
-    $query = "SELECT * FROM {$table}{$where} LIMIT 1";
+            $set .= " {$key}=";
 
-    if( empty($values) ) {
-      $query = esc_sql( $query );
-    }
-    else {
-      $query = $wpdb->prepare( $query, $values );
-    }
+            if (is_numeric($value) and preg_match('!\.!', $value)) {
+                $set .= '%f';
+            } elseif (is_int($value) or is_numeric($value) or is_bool($value)) {
+                $set .= '%d';
+            } else {
+                $set .= '%s';
+            }
 
-    return $wpdb->get_row($query);
-  }
+            if (is_bool($value)) {
+                $values[] = $value ? 1 : 0;
+            } elseif (is_array($value)) {
+                $values[] = maybe_serialize($value);
+            } else {
+                $values[] = $value;
+            }
+        }
 
-  public function get_models($model, $order_by='', $limit='', $args=array()) {
-    $table = $this->get_table_for_model($model);
-    $recs = $this->get_records($table, $args, $order_by, $limit);
+        $values[] = $id;
+        $query    = "UPDATE {$table}{$set} WHERE id=%d";
 
-    $models = array();
-    foreach($recs as $rec) {
-      $obj = new $model();
-      $obj->load_from_array($rec);
-      $models[] = $obj;
-    }
+        if (empty($values)) {
+            $query = esc_sql($query);
+        } else {
+            $query = $wpdb->prepare($query, $values);
+        }
 
-    return $models;
-  }
-
-  public function get_records($table, $args=array(), $order_by='', $limit='', $joins=array(), $return_type=OBJECT, $like = false) {
-    global $wpdb;
-
-    extract(Db::get_where_clause_and_values( $args, $like ));
-    $join = '';
-
-    if(!empty($order_by)) {
-      $order_by = " ORDER BY {$order_by}";
-    }
-
-    if(!empty($limit)) {
-      $limit = " LIMIT {$limit}";
-    }
-
-    if(!empty($joins)) {
-      foreach($joins as $join_clause) {
-        $join .= " {$join_clause}";
-      }
+        if ($wpdb->query($query)) {
+            return $id;
+        } else {
+            return false;
+        }
     }
 
-    $query = "SELECT * FROM {$table}{$join}{$where}{$order_by}{$limit}";
+    public function delete_records($table, $args)
+    {
+        global $wpdb;
 
-    if(empty($values)) {
-      $query = esc_sql($query);
-    }
-    else {
-      $query = $wpdb->prepare($query, $values);
-    }
+        extract(Db::get_where_clause_and_values($args));
 
-    return $wpdb->get_results($query, $return_type);
-  }
+        $query = "DELETE FROM {$table}{$where}";
 
-  public function get_col($table, $col, $args=array(), $order_by='', $limit='') {
-    global $wpdb;
+        if (empty($values)) {
+            $query = esc_sql($query);
+        } else {
+            $query = $wpdb->prepare($query, $values);
+        }
 
-    extract(Db::get_where_clause_and_values($args));
-    if(!empty($order_by)) { $order_by = " ORDER BY {$order_by}"; }
-    if(!empty($limit)) { $limit = " LIMIT {$limit}"; }
-
-    $query = "SELECT {$table}.{$col} FROM {$table}{$where}{$order_by}{$limit}";
-
-    if(!empty($values)) {
-      $query = $wpdb->prepare($query, $values);
-    }
-    return $wpdb->get_col($query);
-  }
-
-  public function prepare_array($item_type,$values) {
-    return implode(
-      ',',
-      array_map(
-        function($value) use ($item_type) {
-          global $wpdb;
-          return $wpdb->prepare($item_type, $value);
-        },
-        $values
-      )
-    );
-  }
-
-  /* Built to work with WordPress' built in WP_List_Table class */
-  public static function list_table( $cols,
-                                     $from,
-                                     $joins=array(),
-                                     $args=array(),
-                                     $order_by='',
-                                     $order='',
-                                     $paged='',
-                                     $search='',
-                                     $perpage=10,
-                                     $search_cols=array()) {
-    global $wpdb;
-
-    // Setup selects
-    $col_str_array = array();
-    foreach( $cols as $col => $code ) {
-      $col_str_array[] = "{$code} AS {$col}";
+        return $wpdb->query($query);
     }
 
-    $col_str = implode(", ",$col_str_array);
+    public function get_count($table, $args = [], $joins = [])
+    {
+        global $wpdb;
+        $join = '';
 
-    // Setup Joins
-    if(!empty($joins)) {
-      $join_str = " " . implode( " ", $joins );
-    }
-    else {
-      $join_str = '';
-    }
+        if (!empty($joins)) {
+            foreach ($joins as $join_clause) {
+                $join .= " {$join_clause}";
+            }
+        }
 
-    $args_str = implode(' AND ', $args);
+        extract(Db::get_where_clause_and_values($args));
 
-    /* -- Ordering parameters -- */
-    //Parameters that are going to be used to order the result
-    $order_by = (!empty($order_by) and !empty($order)) ? ( $order_by = ' ORDER BY ' . $order_by . ' ' . $order ) : '';
+        $query = "SELECT COUNT(*) FROM {$table}{$join}{$where}";
 
-    //Page Number
-    if(empty($paged) or !is_numeric($paged) or $paged<=0 ){ $paged=1; }
+        if (empty($values)) {
+            $query = esc_sql($query);
+        } else {
+            $query = $wpdb->prepare($query, $values);
+        }
 
-    $limit = '';
-    //adjust the query to take pagination into account
-    if(!empty($paged) and !empty($perpage)) {
-      $offset=($paged-1)*$perpage;
-      $limit = ' LIMIT '.(int)$offset.','.(int)$perpage;
+        return $wpdb->get_var($query);
     }
 
-    // Searching
-    $search_str = "";
-    $searches = array();
-    if(!empty($search)) {
-      if(empty($search_cols)) {
-        $search_cols = $cols;
-      }
+    public function get_where_clause_and_values($args, $like = false)
+    {
+        $args = (array)$args;
 
-      foreach($search_cols as $code) {
-        $like = '%' . $wpdb->esc_like($search) . '%';
-        $searches[] = $wpdb->prepare("{$code} LIKE %s", $like);
-      }
+        $where  = '';
+        $values = [];
+        foreach ($args as $key => $value) {
+            if (!empty($where)) {
+                $where .= ' AND';
+            } else {
+                $where .= ' WHERE';
+            }
 
-      if(!empty($searches)) {
-        $search_str = implode(' OR ', $searches);
-      }
+            if ($like) {
+                $where .= " {$key} LIKE ";
+            } else {
+                $where .= " {$key}=";
+            }
+
+            if (is_numeric($value) and preg_match('!\.!', $value)) {
+                $where .= '%f';
+            } elseif (is_int($value) or is_numeric($value) or is_bool($value)) {
+                $where .= '%d';
+            } else {
+                $where .= '%s';
+            }
+
+            if (is_bool($value)) {
+                $values[] = $value ? 1 : 0;
+            } else {
+                $values[] = $like ? '%' . $value . '%' : $value;
+            }
+        }
+
+        return compact('where', 'values');
     }
 
-    $conditions = "";
+    public function get_one_model($model, $args = [])
+    {
+        $table = $this->get_table_for_model($model);
 
-    // Pull Searching into where
-    if(!empty($args)) {
-      if(!empty($searches)) {
-        $conditions = " WHERE $args_str AND ({$search_str})";
-      }
-      else {
-        $conditions = " WHERE $args_str";
-      }
-    }
-    else {
-      if(!empty($searches)) {
-        $conditions = " WHERE {$search_str}";
-      }
+        $rec = $this->get_one_record($table, $args);
+
+        if (!empty($rec)) {
+            $obj = new $model();
+            $obj->load_from_array($rec);
+            return $obj;
+        }
+
+        return $rec;
     }
 
-    $query = "SELECT {$col_str} FROM {$from}{$join_str}{$conditions}{$order_by}{$limit}";
-    $total_query = "SELECT COUNT(*) FROM {$from}{$join_str}{$conditions}";
+    public function get_one_record($table, $args = [])
+    {
+        global $wpdb;
 
-    //Allows us to run the bazillion JOINS we use on the list tables
-    $wpdb->query("SET SQL_BIG_SELECTS=1");
+        extract(Db::get_where_clause_and_values($args));
 
-    $results = $wpdb->get_results($query);
-    $count = $wpdb->get_var($total_query);
+        $query = "SELECT * FROM {$table}{$where} LIMIT 1";
 
-    return array( 'results' => $results, 'count' => $count );
-  }
+        if (empty($values)) {
+            $query = esc_sql($query);
+        } else {
+            $query = $wpdb->prepare($query, $values);
+        }
 
-  public function get_table_for_model($model) {
-    global $wpdb;
-    $models_namespace = apply_filters( 'mpcs_models_namespace', [ base\MODELS_NAMESPACE ] );
-    $class_name = wp_unslash( preg_replace('/^' . implode('|', array_map('preg_quote', $models_namespace)) . '/', '', $model));
-    $table = Utils::snakecase($class_name);
-
-    // TODO: We need to get true inflections working here eventually ...
-    // Only append an s if it doesn't end in s
-    if(!preg_match('/s$/', $table))
-      $table .= 's';
-
-    return "{$this->prefix}{$table}";
-  }
-
-  /**
-  * Light weight query to check if record exists
-  * @return true|false
-  */
-  public function record_exists($table, $args = array()) {
-    global $wpdb;
-
-    extract(Db::get_where_clause_and_values($args));
-
-    $query = "SELECT 1 AS `exists` FROM {$table}{$where} LIMIT 1";
-
-    if( empty($values) ) {
-      $query = esc_sql( $query );
-    }
-    else {
-      $query = $wpdb->prepare( $query, $values );
+        return $wpdb->get_row($query);
     }
 
-    $record_exists = $wpdb->get_var($query);
+    public function get_models($model, $order_by = '', $limit = '', $args = [])
+    {
+        $table = $this->get_table_for_model($model);
+        $recs  = $this->get_records($table, $args, $order_by, $limit);
 
-    return $record_exists === "1" ? true : false;
-  }
+        $models = [];
+        foreach ($recs as $rec) {
+            $obj = new $model();
+            $obj->load_from_array($rec);
+            $models[] = $obj;
+        }
 
-  public function table_exists($table) {
-    global $wpdb;
-    $q = $wpdb->prepare('SHOW TABLES LIKE %s', $table);
-    $table_res = $wpdb->get_var($q);
-    return ($table_res == $table);
-  }
+        return $models;
+    }
 
-  public function table_empty($table) {
-    return ($this->get_count($table) <= 0);
-  }
+    public function get_records($table, $args = [], $order_by = '', $limit = '', $joins = [], $return_type = OBJECT, $like = false)
+    {
+        global $wpdb;
 
-  public function column_exists($table, $column) {
-    global $wpdb;
-    $q = $wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column);
-    $res = $wpdb->get_col($q);
-    return (count($res) > 0);
-  }
+        extract(Db::get_where_clause_and_values($args, $like));
+        $join = '';
+
+        if (!empty($order_by)) {
+            $order_by = " ORDER BY {$order_by}";
+        }
+
+        if (!empty($limit)) {
+            $limit = " LIMIT {$limit}";
+        }
+
+        if (!empty($joins)) {
+            foreach ($joins as $join_clause) {
+                $join .= " {$join_clause}";
+            }
+        }
+
+        $query = "SELECT * FROM {$table}{$join}{$where}{$order_by}{$limit}";
+
+        if (empty($values)) {
+            $query = esc_sql($query);
+        } else {
+            $query = $wpdb->prepare($query, $values);
+        }
+
+        return $wpdb->get_results($query, $return_type);
+    }
+
+    public function get_col($table, $col, $args = [], $order_by = '', $limit = '')
+    {
+        global $wpdb;
+
+        extract(Db::get_where_clause_and_values($args));
+        if (!empty($order_by)) {
+            $order_by = " ORDER BY {$order_by}";
+        }
+        if (!empty($limit)) {
+            $limit = " LIMIT {$limit}";
+        }
+
+        $query = "SELECT {$table}.{$col} FROM {$table}{$where}{$order_by}{$limit}";
+
+        if (!empty($values)) {
+            $query = $wpdb->prepare($query, $values);
+        }
+        return $wpdb->get_col($query);
+    }
+
+    public function prepare_array($item_type, $values)
+    {
+        return implode(
+            ',',
+            array_map(
+                function ($value) use ($item_type) {
+                    global $wpdb;
+                    return $wpdb->prepare($item_type, $value);
+                },
+                $values
+            )
+        );
+    }
+
+    // Built to work with WordPress' built in WP_List_Table class
+    public static function list_table(
+        $cols,
+        $from,
+        $joins = [],
+        $args = [],
+        $order_by = '',
+        $order = '',
+        $paged = '',
+        $search = '',
+        $perpage = 10,
+        $search_cols = []
+    ) {
+        global $wpdb;
+
+        // Setup selects
+        $col_str_array = [];
+        foreach ($cols as $col => $code) {
+            $col_str_array[] = "{$code} AS {$col}";
+        }
+
+        $col_str = implode(', ', $col_str_array);
+
+        // Setup Joins
+        if (!empty($joins)) {
+            $join_str = ' ' . implode(' ', $joins);
+        } else {
+            $join_str = '';
+        }
+
+        $args_str = implode(' AND ', $args);
+
+        // Ordering parameters
+        // Parameters that are going to be used to order the result
+        $order_by = (!empty($order_by) and !empty($order)) ? ( $order_by = ' ORDER BY ' . $order_by . ' ' . $order ) : '';
+
+        // Page Number
+        if (empty($paged) or !is_numeric($paged) or $paged <= 0) {
+            $paged = 1;
+        }
+
+        $limit = '';
+        // Adjust the query to take pagination into account
+        if (!empty($paged) and !empty($perpage)) {
+            $offset = ($paged - 1) * $perpage;
+            $limit  = ' LIMIT ' . (int)$offset . ',' . (int)$perpage;
+        }
+
+        // Searching
+        $search_str = '';
+        $searches   = [];
+        if (!empty($search)) {
+            if (empty($search_cols)) {
+                $search_cols = $cols;
+            }
+
+            foreach ($search_cols as $code) {
+                $like       = '%' . $wpdb->esc_like($search) . '%';
+                $searches[] = $wpdb->prepare("{$code} LIKE %s", $like);
+            }
+
+            if (!empty($searches)) {
+                $search_str = implode(' OR ', $searches);
+            }
+        }
+
+        $conditions = '';
+
+        // Pull Searching into where
+        if (!empty($args)) {
+            if (!empty($searches)) {
+                $conditions = " WHERE $args_str AND ({$search_str})";
+            } else {
+                $conditions = " WHERE $args_str";
+            }
+        } else {
+            if (!empty($searches)) {
+                $conditions = " WHERE {$search_str}";
+            }
+        }
+
+        $query       = "SELECT {$col_str} FROM {$from}{$join_str}{$conditions}{$order_by}{$limit}";
+        $total_query = "SELECT COUNT(*) FROM {$from}{$join_str}{$conditions}";
+
+        // Allows us to run the bazillion JOINS we use on the list tables
+        $wpdb->query('SET SQL_BIG_SELECTS=1');
+
+        $results = $wpdb->get_results($query);
+        $count   = $wpdb->get_var($total_query);
+
+        return [
+            'results' => $results,
+            'count'   => $count,
+        ];
+    }
+
+    public function get_table_for_model($model)
+    {
+        global $wpdb;
+        $models_namespace = apply_filters('mpcs_models_namespace', [base\MODELS_NAMESPACE]);
+        $class_name       = wp_unslash(preg_replace('/^' . implode('|', array_map('preg_quote', $models_namespace)) . '/', '', $model));
+        $table            = Utils::snakecase($class_name);
+
+        // TODO: We need to get true inflections working here eventually ...
+        // Only append an s if it doesn't end in s
+        if (!preg_match('/s$/', $table)) {
+            $table .= 's';
+        }
+
+        return "{$this->prefix}{$table}";
+    }
+
+    /**
+     * Light weight query to check if record exists
+     *
+     * @return true|false
+     */
+    public function record_exists($table, $args = [])
+    {
+        global $wpdb;
+
+        extract(Db::get_where_clause_and_values($args));
+
+        $query = "SELECT 1 AS `exists` FROM {$table}{$where} LIMIT 1";
+
+        if (empty($values)) {
+            $query = esc_sql($query);
+        } else {
+            $query = $wpdb->prepare($query, $values);
+        }
+
+        $record_exists = $wpdb->get_var($query);
+
+        return $record_exists === '1' ? true : false;
+    }
+
+    public function table_exists($table)
+    {
+        global $wpdb;
+        $q         = $wpdb->prepare('SHOW TABLES LIKE %s', $table);
+        $table_res = $wpdb->get_var($q);
+        return ($table_res == $table);
+    }
+
+    public function table_empty($table)
+    {
+        return ($this->get_count($table) <= 0);
+    }
+
+    public function column_exists($table, $column)
+    {
+        global $wpdb;
+        $q   = $wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column);
+        $res = $wpdb->get_col($q);
+        return (count($res) > 0);
+    }
 }

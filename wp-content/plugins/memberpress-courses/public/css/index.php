@@ -1,2 +1,3 @@
-<?php /* Silence will fall */ ?>
+<?php
 
+// Silence will fall

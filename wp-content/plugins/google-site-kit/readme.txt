@@ -4,7 +4,7 @@ Contributors:      google
 Requires at least: 5.2
 Tested up to:      6.8
 Requires PHP:      7.4
-Stable tag:        1.158.0
+Stable tag:        1.162.0
 License:           Apache License 2.0
 License URI:       https://www.apache.org/licenses/LICENSE-2.0
 Tags:              google, search-console, analytics, adsense, pagespeed-insights
@@ -109,29 +109,28 @@ Please create a new topic on our [WordPress.org support forum](https://wordpress
 
 == Changelog ==
 
-= 1.158.0 =
-
-**Added**
-
-* Add unique descriptor to report requests. See [#7348](https://github.com/google/site-kit-wp/issues/7348).
+= 1.162.0 =
 
 **Enhanced**
 
-* Update Google tag gateway for advertisers to work as expected in various tagging scenarios. See [#11122](https://github.com/google/site-kit-wp/issues/11122).
-* Fix bug that could cause some WooCommerce events to have inaccurate prices. See [#10974](https://github.com/google/site-kit-wp/issues/10974).
-* Update heading styles. See [#10905](https://github.com/google/site-kit-wp/issues/10905).
-* Update the style for generic notification banners received from Site Kit service. See [#10425](https://github.com/google/site-kit-wp/issues/10425).
-* Update the "successful setup" banner notification styles. See [#10388](https://github.com/google/site-kit-wp/issues/10388).
-* Remove active consumers and activity metrics tracking functionality. See [#10189](https://github.com/google/site-kit-wp/issues/10189).
-* Set a max-width for Site Kit content. See [#9599](https://github.com/google/site-kit-wp/issues/9599).
-* Update button font weight to be consistent with the design system. See [#8856](https://github.com/google/site-kit-wp/issues/8856).
-* Update AdSense settings view layout to move “Account Status” below “Publisher ID” and “Site Status” for better alignment with other modules. See [#7958](https://github.com/google/site-kit-wp/issues/7958).
+* Use the GTag script via the first-party domain proxy `gtg/measurement.php` for Tag Manager containers when Google tag gateway for advertisers is active. See [#11417](https://github.com/google/site-kit-wp/issues/11417).
+* Display the Google tag gateway for advertisers status in the Tag Manager settings view. See [#11416](https://github.com/google/site-kit-wp/issues/11416).
+* Add Google Tag Gateway toggle to Tag Manager settings edit screen. See [#11415](https://github.com/google/site-kit-wp/issues/11415).
+* Improved phone number detection for Enhanced Conversions to avoid mistakenly identifying hidden form tokens or hashes as valid phone numbers. See [#11357](https://github.com/google/site-kit-wp/issues/11357).
+* Update the redirect URL to the setup flow pages to use the 3rd version when the `setupFlowRefresh` feature flag is enabled. See [#11340](https://github.com/google/site-kit-wp/issues/11340).
+* Add integration for Popup Maker with Enhanced Conversions. See [#11187](https://github.com/google/site-kit-wp/issues/11187).
+* Add the base class for PUE integration. See [#11153](https://github.com/google/site-kit-wp/issues/11153).
+* Implement PUE REST controller classes. See [#11151](https://github.com/google/site-kit-wp/issues/11151).
+* Add Enhanced Conversions support for Ninja Forms by capturing and sending user data. See [#11009](https://github.com/google/site-kit-wp/issues/11009).
+* Add Enhanced Conversions support for Contact Form 7 by capturing and sending user data. See [#11008](https://github.com/google/site-kit-wp/issues/11008).
+* Add Enhanced Conversions support for WPForms by capturing and sending user data. See [#11007](https://github.com/google/site-kit-wp/issues/11007).
 
 **Fixed**
 
-* Update Sign in with Google setup banner CTA to show spinner when in progress. See [#10962](https://github.com/google/site-kit-wp/issues/10962).
-* Prevent flicker when Setup CTA is clicked and notification should not re-appear when you cancel setup. See [#10961](https://github.com/google/site-kit-wp/issues/10961).
-* Fix issue when a React component has been updated after unmount. See [#10845](https://github.com/google/site-kit-wp/issues/10845).
-* Fix error resolution behaviour in search funnel widget. See [#8434](https://github.com/google/site-kit-wp/issues/8434).
+* Ensure Google tag gateway debug information appears in Site Health when either Analytics, Ads, or Tag Manager is connected. See [#11467](https://github.com/google/site-kit-wp/issues/11467).
+* Prevent requests to the Reader Revenue Manager settings endpoint from being triggered when the Reader Revenue Manager module is inactive. See [#11346](https://github.com/google/site-kit-wp/issues/11346).
+* Fix tracking opt-in checkbox losing focus when actioned. See [#11291](https://github.com/google/site-kit-wp/issues/11291).
+* Fix KMW widget errors that appeared when chrome translation is used. See [#11232](https://github.com/google/site-kit-wp/issues/11232).
+* Fix bug that could make tooltips unreadable during page scroll. See [#7321](https://github.com/google/site-kit-wp/issues/7321).
 
 [See changelog for all versions](https://raw.githubusercontent.com/google/site-kit-wp/main/changelog.txt).

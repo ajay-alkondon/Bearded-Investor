@@ -21,6 +21,8 @@ class Settings
      * and `mb_strpos` functions. Otherwise, the normal (ASCII-Only) functions will be used.
      *
      * @var bool
+     *
+     * @internal since 8.8.0, will be made private in 9.0.0
      */
     public $bMultibyteSupport;
 
@@ -28,6 +30,8 @@ class Settings
      * The default charset for the CSS if no `@charset` declaration is found. Defaults to utf-8.
      *
      * @var string
+     *
+     * @internal since 8.8.0, will be made private in 9.0.0
      */
     public $sDefaultCharset = 'utf-8';
 
@@ -35,6 +39,8 @@ class Settings
      * Whether the parser silently ignore invalid rules instead of choking on them.
      *
      * @var bool
+     *
+     * @internal since 8.8.0, will be made private in 9.0.0
      */
     public $bLenientParsing = true;
 

@@ -7,7 +7,7 @@
     <tbody>
       <tr valign="top">
         <th scope="row">
-          <label for="<?php echo MeprGroup::$is_upgrade_path_str; ?>"><?php _e('Upgrade Path', 'memberpress'); ?></label>
+          <label for="<?php echo MeprGroup::$is_upgrade_path_str; ?>"><?php esc_html_e('Upgrade Path', 'memberpress'); ?></label>
           <?php
             MeprAppHelper::info_tooltip(
                 'mepr-group-page-upgrade-path',
@@ -29,7 +29,7 @@
       <tbody>
         <tr valign="top">
           <th scope="row">
-            <label for="<?php echo MeprGroup::$upgrade_path_reset_period_str; ?>"><?php _e('Reset billing period', 'memberpress'); ?></label>
+            <label for="<?php echo MeprGroup::$upgrade_path_reset_period_str; ?>"><?php esc_html_e('Reset billing period', 'memberpress'); ?></label>
             <?php
               MeprAppHelper::info_tooltip(
                   'mepr-group-upgrade-path-reset-period',
@@ -46,7 +46,7 @@
     </table>
   </div>
 
-  <h4><strong><?php _e('Downgrade Path', 'memberpress'); ?></strong>
+  <h4><strong><?php esc_html_e('Downgrade Path', 'memberpress'); ?></strong>
   <?php
     MeprAppHelper::info_tooltip(
         'mepr-group-page-downgrade-path',
@@ -55,7 +55,7 @@
     );
     ?>
   <?php MeprGroupsHelper::get_product_fallback_dropdown($group); ?>
-  <h4><strong><?php _e('Memberships:', 'memberpress'); ?></strong>
+  <h4><strong><?php esc_html_e('Memberships:', 'memberpress'); ?></strong>
   <?php
     MeprAppHelper::info_tooltip(
         'mepr-group-products-list',
@@ -75,7 +75,7 @@
   <ol id="sortable-products" class="mepr-sortable">
     <?php MeprGroupsHelper::get_existing_products_list($group); ?>
   </ol>
-  <a href="" id="add-new-product" title="<?php _e('Add Membership', 'memberpress'); ?>"><i class="mp-icon mp-icon-plus-circled mp-24"></i></a>
+  <a href="" id="add-new-product" title="<?php esc_attr_e('Add Membership', 'memberpress'); ?>"><i class="mp-icon mp-icon-plus-circled mp-24"></i></a>
   <div id="hidden-line-item">
     <li class="product-item">
       <?php MeprGroupsHelper::get_products_dropdown(); ?>
@@ -87,7 +87,7 @@
 
   <br/><br/>
   <input type="checkbox" id="<?php echo MeprGroup::$disable_change_plan_popup_str; ?>" name="<?php echo MeprGroup::$disable_change_plan_popup_str; ?>" <?php checked($group->disable_change_plan_popup); ?> />
-  <label for="<?php echo MeprGroup::$disable_change_plan_popup_str; ?>"><?php _e('Disable Change Plan Pop-Up', 'memberpress'); ?></label>
+  <label for="<?php echo MeprGroup::$disable_change_plan_popup_str; ?>"><?php esc_html_e('Disable Change Plan Pop-Up', 'memberpress'); ?></label>
   <?php
     MeprAppHelper::info_tooltip(
         'mepr-disable-change-plan-pop-up',
@@ -97,7 +97,7 @@
     ?>
   <br/><br/>
   <input type="checkbox" id="<?php echo MeprGroup::$pricing_page_disabled_str; ?>" name="<?php echo MeprGroup::$pricing_page_disabled_str; ?>" <?php checked($group->pricing_page_disabled); ?> />
-  <label for="<?php echo MeprGroup::$pricing_page_disabled_str; ?>"><?php _e('Disable Pricing Page', 'memberpress'); ?></label>
+  <label for="<?php echo MeprGroup::$pricing_page_disabled_str; ?>"><?php esc_html_e('Disable Pricing Page', 'memberpress'); ?></label>
   <?php
     MeprAppHelper::info_tooltip(
         'mepr-group-disable-pricing-page',
@@ -109,31 +109,31 @@
   <div class="<?php echo isset($mepr_options->design_enable_pricing_template) && $mepr_options->design_enable_pricing_template ? 'mepr_hidden' : '' ?>">
     <div id="mepr_hidden_pricing_page_theme">
       <label for="<?php echo MeprGroup::$group_theme_str; ?>">
-        <?php _e('Pricing Page Theme:', 'memberpress') . ' ' . $group->group_theme; ?>
+        <?php esc_html_e('Pricing Page Theme:', 'memberpress') . ' ' . $group->group_theme; ?>
       </label>
       <?php echo MeprGroupsHelper::theme_dropdown($group->group_theme); ?>
       <br/><br/>
 
-      <label><?php _e('Custom Button CSS classes (optional):', 'memberpress'); ?></label><br/>
+      <label><?php esc_html_e('Custom Button CSS classes (optional):', 'memberpress'); ?></label><br/>
       <input type="text" class="mepr-group-button-css" name="<?php echo MeprGroup::$page_button_class_str; ?>" id="<?php echo MeprGroup::$page_button_class_str; ?>" value="<?php echo $group->page_button_class; ?>" />
       <br/><br/>
 
-      <label><?php _e('Custom Highlighted Button CSS classes (optional):', 'memberpress'); ?></label><br/>
+      <label><?php esc_html_e('Custom Highlighted Button CSS classes (optional):', 'memberpress'); ?></label><br/>
       <input type="text" class="mepr-group-button-css" name="<?php echo MeprGroup::$page_button_highlighted_class_str; ?>" id="<?php echo MeprGroup::$page_button_highlighted_class_str; ?>" value="<?php echo $group->page_button_highlighted_class; ?>" />
       <br/><br/>
 
-      <label><?php _e('Custom Disabled Button CSS classes (optional):', 'memberpress'); ?></label><br/>
+      <label><?php esc_html_e('Custom Disabled Button CSS classes (optional):', 'memberpress'); ?></label><br/>
       <input type="text" class="mepr-group-button-css" name="<?php echo MeprGroup::$page_button_disabled_class_str; ?>" id="<?php echo MeprGroup::$page_button_disabled_class_str; ?>" value="<?php echo $group->page_button_disabled_class; ?>" />
     </div>
   </div>
 
   <div id="mepr_hidden_alternate_group_url">
-    <label><?php _e('Alternate Group URL:', 'memberpress'); ?></label><br/>
+    <label><?php esc_html_e('Alternate Group URL:', 'memberpress'); ?></label><br/>
     <input type="text" class="mepr-group-button-css" name="<?php echo MeprGroup::$alternate_group_url_str; ?>" id="<?php echo MeprGroup::$alternate_group_url_str; ?>" value="<?php echo $group->alternate_group_url; ?>" />
   </div>
   <br/>
   <div id="mepr-manually-place-group-boxes">
-    <a href="#" data-target="#mepr-group-price-box-shortcodes" class="mepr-slide-toggle"><?php _e('Group Price Boxes Shortcodes', 'memberpress'); ?></a>
+    <a href="#" data-target="#mepr-group-price-box-shortcodes" class="mepr-slide-toggle"><?php esc_html_e('Group Price Boxes Shortcodes', 'memberpress'); ?></a>
     <?php
       MeprAppHelper::info_tooltip(
           'mepr-group-manual-place-pricing-boxes',
@@ -142,10 +142,10 @@
       );
         ?>
     <div id="mepr-group-price-box-shortcodes" class="mepr-radius-border">
-      <p class="description"><?php _e('Shortcode to be used on this group page.', 'memberpress'); ?></p>
-      [mepr-group-price-boxes]<br/><br/>
-      <p class="description"><?php _e('Shortcode which can be used on any other WordPress page, post or custom post type.', 'memberpress'); ?></p>
-      [mepr-group-price-boxes group_id="<?php echo $group->ID; ?>"]
+      <p class="description"><?php esc_html_e('Shortcode to be used on this group page.', 'memberpress'); ?></p>
+      [mepr_group_price_boxes]<br/><br/>
+      <p class="description"><?php esc_html_e('Shortcode which can be used on any other WordPress page, post or custom post type.', 'memberpress'); ?></p>
+      [mepr_group_price_boxes group_id="<?php echo $group->ID; ?>"]
     </div>
   </div>
 

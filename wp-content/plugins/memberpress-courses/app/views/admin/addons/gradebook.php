@@ -1,4 +1,5 @@
 <?php
+
 use memberpress\courses as base;
 
 if (!defined('ABSPATH')) {
@@ -29,23 +30,23 @@ if (!defined('ABSPATH')) {
       </div>
       <div class="mepr-sister-plugin-info-features">
         <?php
-        $bullets = array(
+        $bullets = [
             esc_html__('Centralized Grade Management', 'memberpress-courses'),
             esc_html__('Real-Time Progress Tracking', 'memberpress-courses'),
             esc_html__('Efficient Feedback System', 'memberpress-courses'),
             esc_html__('Require Minimum Score to Pass Course', 'memberpress-courses'),
             esc_html__('Instant access to grades for your students', 'memberpress-courses'),
-            esc_html__('Give Bonus Points on Assignments & Quizzes', 'memberpress-courses')
-        );
+            esc_html__('Give Bonus Points on Assignments & Quizzes', 'memberpress-courses'),
+        ];
         ?>
         <ul>
           <?php
-          foreach ($bullets as $bullet) {
-              echo '<li style="margin-bottom: 5px; font-size: 13px;"><i class="mp-icon mp-icon-right-big"></i>';
-              echo esc_html($bullet);
-              echo '</li>';
-          }
-          ?>
+            foreach ($bullets as $bullet) {
+                echo '<li style="margin-bottom: 5px; font-size: 13px;"><i class="mp-icon mp-icon-right-big"></i>';
+                echo esc_html($bullet);
+                echo '</li>';
+            }
+            ?>
         </ul>
       </div>
     </div>

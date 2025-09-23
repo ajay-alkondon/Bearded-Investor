@@ -39,7 +39,7 @@ class MeprEmailsCtrl extends MeprBaseCtrl
         }
 
         try {
-            $email = MeprEmailFactory::fetch(wp_unslash($_POST['e']), 'MeprBaseEmail', $_POST['a']);
+            $email = MeprEmailFactory::fetch(sanitize_text_field(wp_unslash($_POST['e'])), 'MeprBaseEmail', array_map('sanitize_text_field', wp_unslash($_POST['a'])));
         } catch (Exception $e) {
             die(json_encode(['error' => $e->getMessage()]));
         }
@@ -74,7 +74,7 @@ class MeprEmailsCtrl extends MeprBaseCtrl
         }
 
         try {
-            $email = MeprEmailFactory::fetch(wp_unslash($_POST['e']), 'MeprBaseEmail', $_POST['a']);
+            $email = MeprEmailFactory::fetch(sanitize_text_field(wp_unslash($_POST['e'])), 'MeprBaseEmail', array_map('sanitize_text_field', wp_unslash($_POST['a'])));
         } catch (Exception $e) {
             die(json_encode(['error' => $e->getMessage()]));
         }
@@ -128,7 +128,7 @@ class MeprEmailsCtrl extends MeprBaseCtrl
                 'trans_date'                 => MeprAppHelper::format_date(gmdate('c', time())),
                 'trans_expires_at'           => MeprAppHelper::format_date(gmdate('c', time() + MeprUtils::months(1))),
                 'trans_gateway'              => __('Credit Card (Stripe)', 'memberpress'),
-                'user_remote_addr'           => $_SERVER['REMOTE_ADDR'],
+                'user_remote_addr'           => sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])),
                 'payment_amount'             => $amount,
                 'subscr_num'                 => '1a2b3c4d5e',
                 'subscr_date'                => MeprAppHelper::format_date(gmdate('c', time())),
@@ -175,7 +175,7 @@ class MeprEmailsCtrl extends MeprBaseCtrl
             $email->test_vars
         );
 
-        $use_template = ( $_POST['t'] == 'true' );
+        $use_template = ( $_POST['t'] === 'true' );
         $email->send($params, sanitize_text_field(wp_unslash($_POST['s'])), wp_kses_post(wp_unslash($_POST['b'])), $use_template);
 
         die(json_encode(['message' => __('Your test email was successfully sent.', 'memberpress')]));

@@ -598,10 +598,10 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
         }
 
         $this->validate_is_in_array($this->expire_type, $this->expire_types, 'expire_type');
-        if ($this->expire_type == 'delay') {
+        if ($this->expire_type === 'delay') {
             $this->validate_is_numeric($this->expire_after, 1, null, 'expire_after');
             $this->validate_is_in_array($this->expire_unit, $this->expire_units, 'expire_unit');
-        } elseif ($this->expire_type == 'fixed') {
+        } elseif ($this->expire_type === 'fixed') {
             $this->validate_is_date($this->expire_fixed, 'expire_fixed');
         }
 
@@ -753,18 +753,14 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
     {
         global $wpdb;
 
-        $q = $wpdb->prepare(
-            "
-        SELECT ID
-          FROM {$wpdb->posts}
-         WHERE post_type=%s
-           AND post_status=%s
-      ",
+        $ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT ID
+            FROM {$wpdb->posts}
+            WHERE post_type=%s
+            AND post_status=%s",
             self::$cpt,
             'publish'
-        );
-
-        $ids = $wpdb->get_col($q);
+        ));
 
         $memberships = [];
         foreach ($ids as $id) {
@@ -783,12 +779,10 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
     {
         global $wpdb;
 
-        $query = $wpdb->prepare(
+        return (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
             self::$cpt
-        );
-
-        return (int) $wpdb->get_var($query);
+        ));
     }
 
     /**
@@ -835,7 +829,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
             if ($old_sub) {
                 $lt = $old_sub->latest_txn();
 
-                if ($lt != false && $lt instanceof MeprTransaction && $lt->id > 0) {
+                if ($lt instanceof MeprTransaction && $lt->id > 0) {
                     $r = MeprUtils::calculate_proration(
                         $lt->amount,
                         $product_price,
@@ -944,7 +938,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
                 $expires_at += MeprUtils::years($period, $created_at) + MeprUtils::days($mepr_options->grace_expire_days);
                 break;
             default: // One-time payment.
-                if ($this->expire_type == 'delay') {
+                if ($this->expire_type === 'delay') {
                     if ($check_user && MeprUtils::is_user_logged_in()) {
                         // Handle renewals.
                         if ($this->is_renewal()) {
@@ -968,7 +962,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
                         case 'years':
                             $expires_at += MeprUtils::years($this->expire_after, $created_at);
                     }
-                } elseif ($this->expire_type == 'fixed') {
+                } elseif ($this->expire_type === 'fixed') {
                     $expires_at = strtotime($this->expire_fixed);
                     $now        = time();
                     // Make sure we adjust the year if the membership is a renewable type and the user forgot to bump up the year.
@@ -1008,14 +1002,15 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
     {
         global $wpdb;
 
-        $q = "SELECT p.ID, p.menu_order
+        return $wpdb->get_col($wpdb->prepare(
+            "SELECT p.ID, p.menu_order
             FROM {$wpdb->postmeta} AS m INNER JOIN {$wpdb->posts} AS p
-              ON p.ID = m.post_id
+            ON p.ID = m.post_id
             WHERE m.meta_key = %s
-              AND m.meta_value = 1
-          ORDER BY p.menu_order, p.ID";
-
-        return $wpdb->get_col($wpdb->prepare($q, self::$show_on_pricing_str));
+            AND m.meta_value = 1
+            ORDER BY p.menu_order, p.ID",
+            self::$show_on_pricing_str
+        ));
     }
 
     /**
@@ -1025,7 +1020,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
      */
     public function is_one_time_payment()
     {
-        return MeprHooks::apply_filters('mepr_product_is_one_time_payment', $this->period_type == 'lifetime' || $this->price == 0.00);
+        return MeprHooks::apply_filters('mepr_product_is_one_time_payment', $this->period_type === 'lifetime' || (float) $this->price === 0.00);
     }
 
     /**
@@ -1035,7 +1030,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
      */
     public function is_renewable()
     {
-        return (($this->expire_type == 'delay' || $this->expire_type == 'fixed') && $this->allow_renewal);
+        return (($this->expire_type === 'delay' || $this->expire_type === 'fixed') && $this->allow_renewal);
     }
 
     /**
@@ -1053,7 +1048,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
 
         return (MeprUtils::is_user_logged_in() &&
             $user->is_already_subscribed_to($this->ID) &&
-            ($this->expire_type == 'delay' || $this->expire_type == 'fixed') &&
+            ($this->expire_type === 'delay' || $this->expire_type === 'fixed') &&
             $this->allow_renewal);
     }
 
@@ -1064,7 +1059,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
      */
     public function can_you_buy_me()
     {
-        $override = MeprHooks::apply_filters('mepr-can-you-buy-me-override', null, $this);
+        $override = MeprHooks::apply_filters('mepr_can_you_buy_me_override', null, $this);
         if (!is_null($override)) {
             return $override;
         }
@@ -1096,7 +1091,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
             if ($group !== false) {
                 $sub_in_group = $user->subscription_in_group($group->ID);
                 if ($sub_in_group !== false && $sub_in_group->prorated_trial && $sub_in_group->in_trial()) {
-                    return MeprHooks::apply_filters('mepr-allow-multiple-upgrades-downgrades', false, $user, $sub_in_group, $this);
+                    return MeprHooks::apply_filters('mepr_allow_multiple_upgrades_downgrades', false, $user, $sub_in_group, $this);
                 }
             }
         }
@@ -1105,25 +1100,25 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
             // Give Developers a chance to hook in here
             // Return true or false if you run your own custom handling here
             // Otherwise return string 'no_custom' if MemberPress should handle the processing.
-            $custom = MeprHooks::apply_filters('mepr-who-can-purchase-custom-check', 'no_custom', $who, $this);
+            $custom = MeprHooks::apply_filters('mepr_who_can_purchase_custom_check', 'no_custom', $who, $this);
 
             if ($custom !== 'no_custom' && is_bool($custom)) {
                 return $custom;
             }
 
-            if ($who->user_type == 'disabled') {
+            if ($who->user_type === 'disabled') {
                 return false;
             }
 
-            if ($who->user_type == 'everyone') {
+            if ($who->user_type === 'everyone') {
                 return true;
             }
 
-            if ($who->user_type == 'guests' && !MeprUtils::is_user_logged_in()) {
+            if ($who->user_type === 'guests' && !MeprUtils::is_user_logged_in()) {
                 return true; // If not a logged in member they can purchase.
             }
 
-            if ($who->user_type == 'members' && MeprUtils::is_user_logged_in()) {
+            if ($who->user_type === 'members' && MeprUtils::is_user_logged_in()) {
                 if ($user instanceof MeprUser && $user->can_user_purchase($who, $this->ID)) {
                     return true;
                 }
@@ -1147,35 +1142,28 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
         global $wpdb;
         $mepr_db = new MeprDb();
 
-        $q = "SELECT tr.id AS id
-            FROM {$mepr_db->transactions} AS tr
-           WHERE tr.user_id=%d
-             AND tr.product_id=%d
-             AND tr.status=%s
-             AND tr.expires_at > %s
-           ORDER BY tr.created_at DESC
-           LIMIT 1";
-
-        $lq = "SELECT tr.id AS id
-            FROM {$mepr_db->transactions} AS tr
-           WHERE tr.user_id=%d
-             AND tr.product_id=%d
-             AND tr.status=%s
-             AND tr.expires_at=%s
-             AND tr.txn_type <> %s
-           ORDER BY tr.created_at DESC
-           LIMIT 1";
-
-        $q  = $wpdb->prepare($q, $user_id, $this->ID, MeprTransaction::$complete_str, MeprUtils::db_now());
-        $lq = $wpdb->prepare($lq, $user_id, $this->ID, MeprTransaction::$complete_str, MeprUtils::db_lifetime(), MeprTransaction::$fallback_str);
-
-        $txn_id = $wpdb->get_var($lq);
+        $txn_id = $wpdb->get_var($wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            "SELECT tr.id AS id FROM {$mepr_db->transactions} AS tr WHERE tr.user_id=%d AND tr.product_id=%d AND tr.status=%s AND tr.expires_at=%s AND tr.txn_type <> %s ORDER BY tr.created_at DESC LIMIT 1",
+            $user_id,
+            $this->ID,
+            MeprTransaction::$complete_str,
+            MeprUtils::db_lifetime(),
+            MeprTransaction::$fallback_str
+        ));
         if ($txn_id) {
             // Try for lifetimes.
             return new MeprTransaction($txn_id);
         }
 
-        $txn_id = $wpdb->get_var($q);
+        $txn_id = $wpdb->get_var($wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            "SELECT tr.id AS id FROM {$mepr_db->transactions} AS tr WHERE tr.user_id=%d AND tr.product_id=%d AND tr.status=%s AND tr.expires_at > %s ORDER BY tr.created_at DESC LIMIT 1",
+            $user_id,
+            $this->ID,
+            MeprTransaction::$complete_str,
+            MeprUtils::db_now()
+        ));
         if ($txn_id) {
             // Try for expiring.
             return new MeprTransaction($txn_id);
@@ -1301,13 +1289,13 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
                 $g = $p->group();
                 if (
                     $g && $g instanceof MeprGroup &&
-                    $g->ID == $grp->ID && $this->ID != $p->ID
+                    $g->ID === $grp->ID && $this->ID !== $p->ID
                 ) {
                     if ($type === false) {
                         return true;
-                    } elseif ($type == 'upgrade') {
+                    } elseif ($type === 'upgrade') {
                         return $this->group_order > $p->group_order;
-                    } elseif ($type == 'downgrade') {
+                    } elseif ($type === 'downgrade') {
                         return $this->group_order < $p->group_order;
                     }
                 }
@@ -1330,23 +1318,25 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
 
         if (($date - $last_run) > 86400) { // Runs once at most once a day.
             update_option(self::$last_run_str, $date);
-            $sq1     = "SELECT ID
+            $sq1_res = $wpdb->get_col($wpdb->prepare(
+                "SELECT ID
                 FROM {$wpdb->posts}
-                WHERE post_type = '" . self::$cpt . "' AND
-                      post_status = 'auto-draft'";
-            $sq1_res = $wpdb->get_col($sq1);
+                WHERE post_type = %s AND
+                      post_status = 'auto-draft'",
+                self::$cpt
+            ));
             if (!empty($sq1_res)) {
                 $post_ids = implode(',', $sq1_res);
-                $q1       = "DELETE
+                $q        = "DELETE
                   FROM {$wpdb->postmeta}
                   WHERE post_id IN ({$post_ids})";
-                $q2       = "DELETE
-                  FROM {$wpdb->posts}
-                  WHERE post_type = '" . self::$cpt . "' AND
-                        post_status = 'auto-draft'";
-
-                $wpdb->query($q1);
-                $wpdb->query($q2);
+                $wpdb->query($q); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $wpdb->query($wpdb->prepare(
+                    "DELETE FROM {$wpdb->posts}
+                     WHERE post_type = %s AND
+                           post_status = 'auto-draft'",
+                    self::$cpt
+                ));
             }
         }
     }
@@ -1414,7 +1404,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
      */
     public function edit_url($args = '')
     {
-        if (isset($this->ID) && $this->post_type == self::$cpt) {
+        if (isset($this->ID) && $this->post_type === self::$cpt) {
             return get_edit_post_link($this->ID);
         } else {
             return '';
@@ -1436,7 +1426,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
             if (MeprUtils::is_ssl() && $modify_if_https) {
                 $url = preg_replace('!^http:!', 'https:', $url);
             }
-            $url = MeprHooks::apply_filters('mepr-product-url', $url, $this, $args, $modify_if_https);
+            $url = MeprHooks::apply_filters('mepr_product_url', $url, $this, $args, $modify_if_https);
 
             return $url;
         } else {
@@ -1469,7 +1459,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
         }
 
         foreach ($mepr_options->custom_fields as $row) {
-            if (in_array($row->field_key, $this->custom_profile_fields)) {
+            if (in_array($row->field_key, $this->custom_profile_fields, true)) {
                 $fields[] = $row;
             }
         }
@@ -1492,15 +1482,9 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
         if ($this->trial && MeprUtils::is_user_logged_in()) {
             $current_user = MeprUtils::get_currentuserinfo();
             if ($current_user) {
-                $q = $wpdb->prepare(
-                    "
-                  SELECT COUNT(*)
-                    FROM {$mepr_db->transactions} AS t
-                   WHERE t.user_id=%d
-                     AND t.product_id=%d
-                     AND t.txn_type IN (%s,%s)
-                     AND t.status IN (%s,%s,%s)
-                ",
+                $already_trialled = $wpdb->get_var($wpdb->prepare(
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                    "SELECT COUNT(*) FROM {$mepr_db->transactions} AS t WHERE t.user_id=%d AND t.product_id=%d AND t.txn_type IN (%s,%s) AND t.status IN (%s,%s,%s)",
                     $current_user->ID,
                     $this->ID,
                     MeprTransaction::$subscription_confirmation_str,
@@ -1508,9 +1492,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
                     MeprTransaction::$complete_str,
                     MeprTransaction::$refunded_str,
                     MeprTransaction::$confirmed_str
-                );
-
-                $already_trialled = $wpdb->get_var($q);
+                ));
 
                 return ($already_trialled > 0);
             }
@@ -1529,23 +1511,23 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
     {
         $return = false;
 
-        if (is_object($post) && property_exists($post, 'post_type') && $post->post_type == MeprProduct::$cpt) {
+        if (is_object($post) && property_exists($post, 'post_type') && $post->post_type === MeprProduct::$cpt) {
             $prd    = new MeprProduct($post->ID);
             $return = $prd;
         } elseif (
             is_object($post) && preg_match(
-                '~\[mepr-(product|membership)-registration-form\s+(product_)?id=[\"\\\'](\d+)[\"\\\']~',
+                '~\[(mepr_(product|membership)_registration_form|mepr-(product|membership)-registration-form)\s+(product_)?id=[\"\\\'](\d+)[\"\\\']~',
                 $post->post_content,
                 $m
             )
         ) {
-            if (isset($m[1])) {
-                $prd    = new MeprProduct($m[1]);
+            if (isset($m[5])) {
+                $prd    = new MeprProduct($m[5]);
                 $return = $prd;
             }
         }
 
-        return MeprHooks::apply_filters('mepr-is-product-page', $return, $post);
+        return MeprHooks::apply_filters('mepr_is_product_page', $return, $post);
     }
 
     /**
@@ -1565,22 +1547,22 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
         }
 
         $active_memberships = array_unique($user->active_product_subscriptions('ids'), true);
+        $active_memberships = array_map('absint', $active_memberships);
 
         if (empty($active_memberships)) {
             return false;
         }
 
-        $in = '%d';
-        if (count($active_memberships) > 1) {
-            $placeholders = array_fill(0, count($active_memberships), '%d');
-            $in           = implode(',', $placeholders); // Convert to comma separated string if > 1.
-        }
+        $result = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts}
+                WHERE FIND_IN_SET(ID, %s)
+                ORDER BY menu_order DESC, ID DESC LIMIT 1",
+                implode(',', $active_memberships)
+            )
+        );
 
-        $q = $wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE ID IN({$in}) ORDER BY menu_order DESC, ID DESC LIMIT 1", $active_memberships);
-
-        $result = $wpdb->get_var($q);
-
-        return ( ! is_null($result) ) ? $result : false;
+        return (!is_null($result)) ? (int) $result : false;
     }
 
     /**
@@ -1640,7 +1622,7 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
 
         $plan_id = get_post_meta($this->ID, $meta_key, true);
 
-        return MeprHooks::apply_filters('mepr-product-get-stripe-plan-id', $plan_id, $this, $gateway_id, $amount);
+        return MeprHooks::apply_filters('mepr_product_get_stripe_plan_id', $plan_id, $this, $gateway_id, $amount);
     }
 
     /**
@@ -1706,13 +1688,11 @@ class MeprProduct extends MeprCptModel implements MeprProductInterface
 
         global $wpdb;
 
-        $query = $wpdb->prepare(
+        $meta_ids = $wpdb->get_col($wpdb->prepare(
             "SELECT meta_id FROM {$wpdb->postmeta} WHERE meta_key LIKE %s AND meta_value = %s",
             $wpdb->esc_like('_mepr_stripe_plan_id_' . $gateway_id) . '%',
             $plan_id
-        );
-
-        $meta_ids = $wpdb->get_col($query);
+        ));
 
         if (is_array($meta_ids) && count($meta_ids)) {
             foreach ($meta_ids as $meta_id) {

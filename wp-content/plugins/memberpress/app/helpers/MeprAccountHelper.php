@@ -19,16 +19,16 @@ class MeprAccountHelper
         $action = '';
 
         if (isset($_REQUEST['action'])) {
-            $action = $_REQUEST['action'];
+            $action = sanitize_text_field(wp_unslash($_REQUEST['action']));
         } else {
             $action = 'home';
         }
 
-        if ($tab == $action) {
+        if ($tab === $action) {
             $class = $class . ' ' . $active_class;
         }
 
-        echo MeprHooks::apply_filters('mepr-active-nav-tab', $class, $tab, $active_class);
+        echo MeprHooks::apply_filters('mepr_active_nav_tab', $class, $tab, $active_class);
     }
 
     /**
@@ -64,7 +64,7 @@ class MeprAccountHelper
         <div id="mepr-upgrade-txn-<?php echo $txn->id; ?>" class="mepr-white-popup mfp-hide">
           <center>
             <div class="mepr-upgrade-txn-text">
-              <?php _e('Please select a new plan', 'memberpress'); ?>
+              <?php esc_html_e('Please select a new plan', 'memberpress'); ?>
             </div>
             <br/>
             <div>
@@ -78,17 +78,17 @@ class MeprAccountHelper
             </div>
             <br/>
             <div class="mepr-cancel-txn-buttons">
-              <button class="mepr-btn mepr-upgrade-buy-now" data-id="<?php echo $txn->id; ?>"><?php _e('Select Plan', 'memberpress'); ?></button>
-              <button class="mepr-btn mepr-upgrade-cancel"><?php _e('Cancel', 'memberpress'); ?></button>
+              <button class="mepr-btn mepr-upgrade-buy-now" data-id="<?php echo $txn->id; ?>"><?php esc_html_e('Select Plan', 'memberpress'); ?></button>
+              <button class="mepr-btn mepr-upgrade-cancel"><?php esc_html_e('Cancel', 'memberpress'); ?></button>
             </div>
           </center>
         </div>
 
             <?php ob_start(); ?>
             <?php if (!$grp->disable_change_plan_popup) : ?>
-          <a href="#mepr-upgrade-txn-<?php echo $txn->id; ?>" class="mepr-open-upgrade-popup mepr-account-row-action mepr-account-upgrade"><?php _e('Change Plan', 'memberpress'); ?></a>
+          <a href="#mepr-upgrade-txn-<?php echo $txn->id; ?>" class="mepr-open-upgrade-popup mepr-account-row-action mepr-account-upgrade"><?php esc_html_e('Change Plan', 'memberpress'); ?></a>
             <?php else : ?>
-          <a href="<?php echo $grp->url(); ?>" class="mepr-account-row-action mepr-account-upgrade"><?php _e('Change Plan', 'memberpress'); ?></a>
+          <a href="<?php echo $grp->url(); ?>" class="mepr-account-row-action mepr-account-upgrade"><?php esc_html_e('Change Plan', 'memberpress'); ?></a>
             <?php endif; ?>
             <?php echo MeprHooks::apply_filters('mepr_custom_upgrade_link_txn', ob_get_clean(), $txn); ?>
 

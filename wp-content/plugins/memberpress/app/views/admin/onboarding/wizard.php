@@ -21,11 +21,11 @@
                 $skipped_steps = MeprOnboardingHelper::get_skipped_steps();
                 $css_class     = '';
 
-                if ($progress_key == $key) {
+                if ($progress_key === $key) {
                     $css_class .= ' mepr-wizard-current-step';
                 }
 
-                if (in_array($link_step, $skipped_steps) && $progress_key != $key) {
+                if (in_array($link_step, $skipped_steps, true) && $progress_key !== $key) {
                     $css_class .= ' mepr-wizard-current-step-skipped';
                 }
 
@@ -52,7 +52,7 @@
     foreach ($steps as $key => $step) {
         $extra_class = '';
 
-        if ($key == 0) {
+        if ($key === 0) {
             $li = get_site_transient('mepr_license_info');
 
             if (!$li) {
