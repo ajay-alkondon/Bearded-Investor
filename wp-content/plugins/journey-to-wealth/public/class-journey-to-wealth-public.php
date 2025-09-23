@@ -92,13 +92,20 @@ public function enqueue_scripts() {
     }
 
     public function render_mobile_header_lookup_shortcode( $atts ) {
-        if (!is_user_logged_in()) return '';
-        // This mobile version can simply call the main header lookup's rendering logic.
-        // The difference in appearance can be handled via CSS.
+        if (!is_user_logged_in()) {
+            return '';
+        }
+        // This mobile version now generates its own unique HTML to avoid the CSS conflict.
         ob_start();
         ?>
-        <div class="jtw-mobile-header-lookup-container">
-            <?php echo $this->render_header_lookup_shortcode( $atts ); ?>
+        <div class="jtw-header-lookup-form jtw-mobile-header-lookup-form">
+            <div class="jtw-input-group-seamless">
+                <input type="text" class="jtw-header-ticker-input" placeholder="Search Ticker...">
+                <button type="button" class="jtw-header-fetch-button" title="Analyze Stock">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+            </div>
+            <div class="jtw-header-search-results"></div>
         </div>
         <?php
         return ob_get_clean();
