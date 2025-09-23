@@ -39,14 +39,13 @@ function swa_add_memberpress_user_button() {
                 <li class="menu-item"><a href="<?php echo esc_url( $account_page_url ); ?>">My Profile</a></li>
                 <li class="menu-item"><a href="<?php echo esc_url( $account_page_url . '?action=payments' ); ?>">Payments</a></li>
                 <li class="menu-item"><a href="<?php echo esc_url( $account_page_url . '?action=subscriptions' ); ?>">Subscriptions</a></li>
-                <li class="menu-item"><a href="<?php echo esc_url( $courses_page_url ); ?>">Courses</a></li>
-                <li class="menu-item"><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>">Logout</a></li>
                 <li class="menu-item swa-dark-mode-toggle-container">
                     <div class="swa-dark-mode-toggle">
                         <span>Light Mode</span>
                         <label class="switch"><input type="checkbox" id="swa-dark-mode-checkbox"><span class="slider"></span></label>
                     </div>
                 </li>
+                <li class="menu-item"><a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>">Logout</a></li>
             </ul>
         </li>
         <?php
