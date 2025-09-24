@@ -867,16 +867,14 @@ private function build_case_table_html($group, $args) {
                         <div class="jtw-sws-bar-row current-price-row">
                             <div class="jtw-sws-bar-wrapper">
                                 <div class="jtw-sws-label-group">
-                                    <span>Current Price </span>
-                                    <strong> $0.00</strong>
+                                    <span>Current Price:&nbsp;</span> <strong>$0.00</strong>
                                 </div>
                             </div>
                         </div>
                         <div class="jtw-sws-bar-row fair-value-row">
                             <div class="jtw-sws-bar-wrapper">
                                 <div class="jtw-sws-label-group">
-                                    <span>Fair Value </span>
-                                    <strong> $0.00</strong>
+                                    <span>Fair Value:&nbsp;</span> <strong>$0.00</strong>
                                 </div>
                             </div>
                         </div>

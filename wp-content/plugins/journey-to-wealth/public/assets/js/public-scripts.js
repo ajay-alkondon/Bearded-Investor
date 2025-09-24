@@ -201,11 +201,15 @@
             const overvaluedBoundary = fairValue * 1.2;
             const rangeMax = Math.max(currentPrice, overvaluedBoundary) * 1.2;
             
+            // --- START: MODIFIED ZONE WIDTH CALCULATION ---
             const undervaluedWidthPct = (undervaluedBoundary / rangeMax) * 100;
             const aboutRightWidthPct = ((overvaluedBoundary - undervaluedBoundary) / rangeMax) * 100;
-            
+            const overvaluedWidthPct = 100 - undervaluedWidthPct - aboutRightWidthPct; // Explicitly calculate the remainder
+
             $swsContainer.find('.jtw-sws-zone.undervalued').css('width', undervaluedWidthPct + '%');
             $swsContainer.find('.jtw-sws-zone.about-right').css('width', aboutRightWidthPct + '%');
+            $swsContainer.find('.jtw-sws-zone.overvalued').css('width', overvaluedWidthPct + '%'); // Apply the width to the overvalued zone
+            // --- END: MODIFIED ZONE WIDTH CALCULATION ---
             
             const currentPriceWidthPct = (currentPrice / rangeMax) * 100;
             const fairValueWidthPct = (fairValue / rangeMax) * 100;
