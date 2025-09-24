@@ -2506,3 +2506,58 @@ body.dark-mode .jtw-subsection + .jtw-subsection {
     border-top-color: #334155;
 }
 /* --- END: Corrected Subsection Separator Styles --- */
+
+/* In journey-to-wealth/public/assets/css/public-styles.css,
+   add these new rules to the end of the file. */
+
+/* --- START: Subsection Header with Inline Button --- */
+.jtw-sws-header.jtw-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+.jtw-header-flex .jtw-header-controls {
+    flex-shrink: 0;
+    margin-top: 5px; /* Aligns button with the H2 title */
+}
+/* --- END: Subsection Header with Inline Button --- */
+
+
+/* --- START: Dark Mode Modal Table Fix --- */
+/*
+This block ensures that all tables inside the modal, like the DCF breakdown,
+have the correct dark background and light text when dark mode is active.
+*/
+body.dark-mode .jtw-modal .jtw-sws-modal-table {
+    color: #cbd5e0; /* Light gray text for table body */
+}
+
+/* Table Header */
+body.dark-mode .jtw-modal .jtw-sws-modal-table thead th {
+    background-color: #2a3b5c !important; /* Slightly lighter dark blue */
+    color: #f8fafc !important; /* White text */
+    border-bottom: 1px solid #475569;
+}
+
+/* Table Cells (for both striped and non-striped rows) */
+body.dark-mode .jtw-modal .jtw-sws-modal-table td {
+    background-color: transparent !important;
+    border-bottom: 1px solid #334155; /* Darker border */
+}
+
+/* Total/Result Row */
+body.dark-mode .jtw-modal .jtw-sws-modal-table .jtw-table-total-row td {
+    border-top: 2px solid #475569;
+    color: #f8fafc; /* White text for totals */
+    font-weight: bold;
+}
+
+/* Formula Text Styling */
+body.dark-mode .jtw-modal .jtw-sws-modal-table .jtw-formula {
+    color: #94a3b8;
+}
+body.dark-mode .jtw-modal .jtw-sws-modal-table .jtw-formula-vals {
+    color: #64748b;
+}
+/* --- END: Dark Mode Modal Table Fix --- */
