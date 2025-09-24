@@ -827,14 +827,14 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $available_models = [ 'dcf' => 'Discounted Cash Flow', 'affo' => 'AFFO Model', 'excess_return' => 'Excess Return Model' ];
     if (isset($details['DividendPerShare']) && (float)$details['DividendPerShare'] > 0) { $available_models['ddm'] = 'Dividend Discount Model'; }
     $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'net_income_growth_current_year', 'current_year_eps', 'current_year_pe', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
-
+    
     ob_start();
     ?>
     <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-ratios='<?php echo $component_ratios_json; ?>' data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>">
         
         <div class="jtw-section-header">
             <h4><?php esc_html_e('1. Valuation', 'journey-to-wealth'); ?></h4>
-            </div>
+        </div>
 
         <div class="jtw-subsection-block">
             <div class="jtw-sws-header jtw-header-flex">
@@ -847,10 +847,10 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 </div>
             </div>
             <div class="jtw-valuation-tables-wrapper" style="display: none;">
-                 <?php echo $this->build_case_table_html('revenue', $table_args); ?>
+                <?php echo $this->build_case_table_html('revenue', $table_args); ?>
             </div>
             <div class="jtw-sws-valuation-container" style="display: none;">
-                 <div class="jtw-sws-main-metric">
+                <div class="jtw-sws-main-metric">
                     <div class="jtw-sws-percentage">-%</div>
                     <div class="jtw-sws-status">Calculating...</div>
                 </div>
@@ -894,17 +894,65 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             </div>
         </div>
         
-         <div class="jtw-subsection-block">
+        <div class="jtw-subsection-block">
             <div class="jtw-sws-header">
                 <h2>1.3 Analyst Forward Estimate</h2>
             </div>
-             <?php
+            <?php
             if (!empty($analyst_estimates) && $analyst_estimates['total_analysts'] > 0) {
-                // Analyst estimate HTML content
-            } else { 
-                echo '<div class="jtw-notice notice-info"><p>Analyst estimate data is not available for this stock.</p></div>';
-            } 
+                $target_price = $analyst_estimates['analyst_target_price'];
+                $total_analysts = $analyst_estimates['total_analysts'];
+                $current_price = $valuation_summary['current_price'];
+                
+                $fair_value_text = '';
+                $fair_value_class = '';
+                if (is_numeric($target_price) && is_numeric($current_price) && $current_price > 0) {
+                    $difference_percent = (($target_price - $current_price) / $current_price) * 100;
+                    if ($difference_percent > 5) {
+                        $fair_value_text = abs(round($difference_percent)) . '% undervalued';
+                        $fair_value_class = 'jtw-fair-value-undervalued';
+                    } else if ($difference_percent < -5) {
+                        $fair_value_text = abs(round($difference_percent)) . '% overvalued';
+                        $fair_value_class = 'jtw-fair-value-overvalued';
+                    } else {
+                        $fair_value_text = 'Fairly Valued';
+                        $fair_value_class = 'jtw-fair-value-neutral';
+                    }
+                }
+
+                $strong_buy_percent = ($analyst_estimates['strong_buy'] / $total_analysts) * 100;
+                $buy_percent = ($analyst_estimates['buy'] / $total_analysts) * 100;
+                $hold_percent = ($analyst_estimates['hold'] / $total_analysts) * 100;
+                $sell_percent = ($analyst_estimates['sell'] / $total_analysts) * 100;
+                $strong_sell_percent = ($analyst_estimates['strong_sell'] / $total_analysts) * 100;
             ?>
+            <div class="jtw-analyst-estimates-container">
+                <div class="jtw-analyst-summary">
+                    <div class="jtw-analyst-target">
+                        <div class="jtw-value"><?php echo esc_html($target_price ? '$' . number_format($target_price, 2) : 'N/A'); ?></div>
+                        <div class="jtw-label">Analyst Fair Price</div>
+                    </div>
+                    <div class="jtw-analyst-count">
+                        <div class="jtw-value"><?php echo esc_html($total_analysts); ?></div>
+                        <div class="jtw-label">Number of Analysts</div>
+                    </div>
+                </div>
+                <?php if ($fair_value_text): ?>
+                    <div class="jtw-analyst-fair-value-text <?php echo esc_attr($fair_value_class); ?>">
+                        <?php echo esc_html($fair_value_text); ?>
+                    </div>
+                <?php endif; ?>
+                <div class="jtw-analyst-ratings-bar">
+                    <div class="jtw-rating-segment strong-sell" style="width: <?php echo $strong_sell_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['strong_sell']); ?> Strong Sell"></div>
+                    <div class="jtw-rating-segment sell" style="width: <?php echo $sell_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['sell']); ?> Sell"></div>
+                    <div class="jtw-rating-segment hold" style="width: <?php echo $hold_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['hold']); ?> Hold"></div>
+                    <div class="jtw-rating-segment buy" style="width: <?php echo $buy_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['buy']); ?> Buy"></div>
+                    <div class="jtw-rating-segment strong-buy" style="width: <?php echo $strong_buy_percent; ?>%;" title="<?php echo esc_attr($analyst_estimates['strong_buy']); ?> Strong Buy"></div>
+                </div>
+            </div>
+            <?php } else { ?>
+                <div class="jtw-notice notice-info"><p>Analyst estimate data is not available for this stock.</p></div>
+            <?php } ?>
         </div>
 
         <div class="jtw-subsection-block">
@@ -913,8 +961,41 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
                 <p>Historical Price to Earnings Ratio compares a stock’s price to its earnings over time. Higher ratios indicate that investors are willing to pay more for the stock.</p>
             </div>
             <div id="section-key-metric-valuations-content">
-                <?php if (!empty($historical_ratios_data)): ?>
-                    <?php else: ?>
+                <?php if (!empty($historical_ratios_data)):
+                    $metrics = [
+                        'pe_ratio' => 'Price to Earnings', 'ps_ratio' => 'Price to Sales', 'pb_ratio' => 'Price to Book',
+                        'ev_to_revenue' => 'EV/Revenue', 'ev_to_ebitda' => 'EV/EBITDA',
+                    ];
+                    $key_metric_map = [
+                        'pe_ratio' => 'PERatio', 'ps_ratio' => 'PriceToSalesRatioTTM', 'pb_ratio' => 'PriceToBookRatio',
+                        'ev_to_revenue' => 'EVToRevenue', 'ev_to_ebitda' => 'EVToEBITDA',
+                    ];
+                ?>
+                    <div class="jtw-kmv-controls">
+                        <div class="jtw-kmv-metric-selector-wrapper">
+                            <select id="jtw-kmv-metric-selector">
+                                <?php foreach ($metrics as $key => $label): ?>
+                                    <option value="<?php echo esc_attr($key); ?>" data-key-metric-key="<?php echo esc_attr($key_metric_map[$key]); ?>"><?php echo esc_html($label); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="jtw-kmv-current-value" style="display: none;">
+                            <div class="jtw-sws-percentage">0.0x</div>
+                            <div class="jtw-sws-status">Current P/E Ratio</div>
+                        </div>
+                        <div class="jtw-kmv-time-toggles">
+                            <button class="jtw-kmv-time-btn" data-range="3M">3M</button>
+                            <button class="jtw-kmv-time-btn active" data-range="1Y">1Y</button>
+                            <button class="jtw-kmv-time-btn" data-range="3Y">3Y</button>
+                            <button class="jtw-kmv-time-btn" data-range="5Y">5Y</button>
+                        </div>
+                    </div>
+                    <div class="jtw-kmv-chart-container">
+                        <canvas id="jtw-kmv-chart"></canvas>
+                    </div>
+                    <script type="application/json" id="jtw-historical-ratios-data"><?php echo json_encode($historical_ratios_data); ?></script>
+                    <script type="application/json" id="jtw-current-key-metrics-data"><?php echo json_encode($key_metrics); ?></script>
+                <?php else: ?>
                     <div class="jtw-notice notice-info"><p>Historical ratio data is not available for this stock.</p></div>
                 <?php endif; ?>
             </div>
