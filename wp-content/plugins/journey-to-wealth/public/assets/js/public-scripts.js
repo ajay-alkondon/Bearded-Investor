@@ -565,7 +565,7 @@ function initializeRevenueChart() {
     });
 }
 
-function initializeEpsChart() {
+function initializeEpsChart($container) {
     const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
     if (!$chartCanvas.length) return;
 
@@ -574,7 +574,7 @@ function initializeEpsChart() {
     const parsedData = JSON.parse(chartDataRaw);
     
     let epsChart;
-    let lastHoveredIndex = null; // **FIX**: Moved variable declaration to the parent scope
+    let lastHoveredIndex = null; // Variable to track the last hovered point
 
     const getOrCreateTooltip = (chart) => {
         let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
@@ -655,10 +655,12 @@ function initializeEpsChart() {
                 interaction: { mode: 'index', intersect: false },
                 onHover: (event, activeElements, chart) => {
                     const newIndex = activeElements.length ? activeElements[0].index : null;
+
                     if (newIndex !== lastHoveredIndex) {
+                        // Reset the previously hovered points
                         if (lastHoveredIndex !== null) {
                             chart.data.datasets.forEach((dataset, datasetIndex) => {
-                                if (datasetIndex > 1) {
+                                if (datasetIndex > 1) { // Skip non-visible datasets
                                     const meta = chart.getDatasetMeta(datasetIndex);
                                     if (meta.data[lastHoveredIndex]) {
                                         meta.data[lastHoveredIndex].options.radius = 3;
@@ -666,6 +668,8 @@ function initializeEpsChart() {
                                 }
                             });
                         }
+                        
+                        // Highlight the new points
                         if (newIndex !== null) {
                             chart.data.datasets.forEach((dataset, datasetIndex) => {
                                 if (datasetIndex > 1) {
@@ -676,6 +680,7 @@ function initializeEpsChart() {
                                 }
                             });
                         }
+                        
                         chart.update();
                         lastHoveredIndex = newIndex;
                     }
@@ -686,10 +691,7 @@ function initializeEpsChart() {
                 },
                 plugins: {
                     legend: { display: false },
-                    tooltip: {
-                        enabled: false,
-                        external: externalTooltipHandler
-                    },
+                    tooltip: { enabled: false, external: externalTooltipHandler },
                     annotation: {
                         annotations: {
                             forecastLine: {
@@ -708,7 +710,6 @@ function initializeEpsChart() {
                                 xMin: forecast_start_date,
                                 backgroundColor: 'rgba(54, 162, 235, 0.1)',
                             },
-                            // --- FIX: Use explicit getTime() for correct coordinate calculation ---
                             pastLabel: {
                                 display: annotationsAreVisible,
                                 type: 'label',
@@ -717,7 +718,7 @@ function initializeEpsChart() {
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: -100,
+                                xAdjust: -50,
                                 yAdjust: 0,
                                 textAlign: 'right',
                             },
@@ -758,12 +759,10 @@ function initializeEpsChart() {
         if (epsChart) {
             const isVisible = epsChart.isDatasetVisible(datasetIndex);
             epsChart.setDatasetVisibility(datasetIndex, !isVisible);
-
             if (datasetIndex === 2) {
                 epsChart.setDatasetVisibility(0, !isVisible);
                 epsChart.setDatasetVisibility(1, !isVisible);
             }
-
             epsChart.update();
         }
     });
