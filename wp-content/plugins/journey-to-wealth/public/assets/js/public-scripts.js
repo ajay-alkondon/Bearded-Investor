@@ -367,501 +367,495 @@
     }
 
     function initializePerformanceSection($container) {
-function initializeRevenueChart() {
-    const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
-    if (!$chartCanvas.length) return;
+        function initializeRevenueChart($container) {
+            const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
+            if (!$chartCanvas.length) return;
 
-    const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
-    if (!chartDataRaw) return;
+            const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
+            if (!chartDataRaw) return;
 
-    const parsedData = JSON.parse(chartDataRaw);
-    let revenueChart;
+            const parsedData = JSON.parse(chartDataRaw);
+            let revenueChart;
 
-    function drawRevenueChart(period) {
-        if (revenueChart) {
-            revenueChart.destroy();
-        }
-
-        const periodKey = period === 'annual' ? 'chart_points_annual' : 'chart_points_quarterly';
-        const periodData = parsedData[periodKey] || {};
-        const forecast_start_date = period === 'annual' 
-            ? parsedData.forecast_start_date 
-            : parsedData.forecast_start_date_quarterly;
-
-        const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
-        const revenue = (periodData.revenue || []).filter(isValidDate);
-        const earnings = (periodData.earnings || []).filter(isValidDate);
-        const fcf = (periodData.fcf || []).filter(isValidDate);
-        const op_cash = (periodData.op_cash || []).filter(isValidDate);
-
-        const getOrCreateTooltip = (chart) => {
-            let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
-            if (!tooltipEl) {
-                tooltipEl = document.createElement('div');
-                tooltipEl.className = 'jtw-chart-tooltip';
-                chart.canvas.parentNode.appendChild(tooltipEl);
-            }
-            return tooltipEl;
-        };
-
-        const externalTooltipHandler = (context) => {
-            const { chart, tooltip } = context;
-            const tooltipEl = getOrCreateTooltip(chart);
-
-            if (tooltip.opacity === 0) {
-                tooltipEl.style.opacity = 0;
-                return;
-            }
-
-            const date = new Date(tooltip.dataPoints[0].parsed.x);
-            let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
-            innerHtml += '<div class="tooltip-body">';
-
-            tooltip.body.forEach((body, i) => {
-                if (chart.isDatasetVisible(tooltip.dataPoints[i].datasetIndex)) {
-                    const colors = tooltip.labelColors[i];
-                    const label = body.lines[0].split(':')[0];
-                    const value = body.lines[0].split(':')[1];
-                    const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-                    const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-                    innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
+            function drawRevenueChart(period) {
+                if (revenueChart) {
+                    revenueChart.destroy();
                 }
+
+                const periodKey = period === 'annual' ? 'chart_points_annual' : 'chart_points_quarterly';
+                const periodData = parsedData[periodKey] || {};
+                const forecast_start_date = period === 'annual' 
+                    ? parsedData.forecast_start_date 
+                    : parsedData.forecast_start_date_quarterly;
+
+                const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
+                const revenue = (periodData.revenue || []).filter(isValidDate);
+                const earnings = (periodData.earnings || []).filter(isValidDate);
+                const fcf = (periodData.fcf || []).filter(isValidDate);
+                const op_cash = (periodData.op_cash || []).filter(isValidDate);
+
+                const getOrCreateTooltip = (chart) => {
+                    let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
+                    if (!tooltipEl) {
+                        tooltipEl = document.createElement('div');
+                        tooltipEl.className = 'jtw-chart-tooltip';
+                        chart.canvas.parentNode.appendChild(tooltipEl);
+                    }
+                    return tooltipEl;
+                };
+
+                const externalTooltipHandler = (context) => {
+                    const { chart, tooltip } = context;
+                    const tooltipEl = getOrCreateTooltip(chart);
+
+                    if (tooltip.opacity === 0) {
+                        tooltipEl.style.opacity = 0;
+                        return;
+                    }
+
+                    const date = new Date(tooltip.dataPoints[0].parsed.x);
+                    let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
+                    innerHtml += '<div class="tooltip-body">';
+
+                    tooltip.body.forEach((body, i) => {
+                        if (chart.isDatasetVisible(tooltip.dataPoints[i].datasetIndex)) {
+                            const colors = tooltip.labelColors[i];
+                            const label = body.lines[0].split(':')[0];
+                            const value = body.lines[0].split(':')[1];
+                            const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+                            const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+                            innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
+                        }
+                    });
+
+                    innerHtml += '</div>';
+                    tooltipEl.innerHTML = innerHtml;
+
+                    const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+                    tooltipEl.style.opacity = 1;
+                    tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+                    tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+                };
+
+                const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
+
+                let minDate, maxDate;
+                if (allDates.length > 0) {
+                    minDate = new Date(allDates[0]);
+                    minDate.setMonth(minDate.getMonth() - 1);
+                    maxDate = new Date(allDates[allDates.length - 1]);
+                    maxDate.setMonth(maxDate.getMonth() + 1);
+                }
+
+                const datasets = [
+                    { label: 'Revenue', data: revenue, color: '#007bff' },
+                    { label: 'Earnings', data: earnings, color: '#2ecc71' },
+                    { label: 'Free Cash Flow', data: fcf, color: '#ffc107' },
+                    { label: 'Cash From Op', data: op_cash, color: '#fd7e14' },
+                ].map(ds => ({
+                    label: ds.label,
+                    data: fillMissingPoints(ds.data, allDates),
+                    borderColor: ds.color,
+                    backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, ds.color),
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: 'start'
+                }));
+
+                const annotationsAreVisible = !!forecast_start_date;
+
+                const ctx = $chartCanvas[0].getContext('2d');
+                revenueChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: allDates, datasets: datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: { unit: period === 'annual' ? 'year' : 'quarter' },
+                                grid: { display: false },
+                                min: minDate ? minDate.toISOString() : undefined,
+                                max: maxDate ? maxDate.toISOString() : undefined
+                            },
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: false,
+                                external: externalTooltipHandler
+                            },
+                            annotation: {
+                                annotations: {
+                                    forecastLine: {
+                                        display: annotationsAreVisible,
+                                        type: 'line',
+                                        scaleID: 'x',
+                                        value: forecast_start_date,
+                                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                                        borderWidth: 1,
+                                        borderDash: [6, 6],
+                                    },
+                                    forecastBox: {
+                                        display: annotationsAreVisible,
+                                        type: 'box',
+                                        scaleID: 'x',
+                                        xMin: forecast_start_date,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                                    },
+                                    pastLabel: {
+                                        display: annotationsAreVisible,
+                                        type: 'label',
+                                        xValue: forecast_start_date,
+                                        yValue: 0,
+                                        content: 'Past',
+                                        color: '#aaa',
+                                        font: { size: 12 },
+                                        xAdjust: -50,
+                                        yAdjust: 0,
+                                        textAlign: 'right',
+                                    },
+                                    forecastLabel: {
+                                        display: annotationsAreVisible,
+                                        type: 'label',
+                                        xValue: forecast_start_date + 50,
+                                        yValue: 0,
+                                        content: 'Analysts Forecasts',
+                                        color: '#aaa',
+                                        font: { size: 12 },
+                                        xAdjust: 50,
+                                        yAdjust: 0,
+                                        textAlign: 'left',
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            drawRevenueChart('annual');
+
+            $container.find('.jtw-revenue-period-toggle .jtw-period-button').on('click', function() {
+                const $button = $(this);
+                if ($button.hasClass('active')) return;
+                $container.find('.jtw-revenue-period-toggle .jtw-period-button').removeClass('active');
+                $button.addClass('active');
+                drawRevenueChart($button.data('period'));
             });
 
-            innerHtml += '</div>';
-            tooltipEl.innerHTML = innerHtml;
-
-            const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-            tooltipEl.style.opacity = 1;
-            tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-            tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-        };
-
-        const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
-
-        let minDate, maxDate;
-        if (allDates.length > 0) {
-            minDate = new Date(allDates[0]);
-            minDate.setMonth(minDate.getMonth() - 1);
-            maxDate = new Date(allDates[allDates.length - 1]);
-            maxDate.setMonth(maxDate.getMonth() + 1);
+            $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-earnings-revenue-forecast-chart"]', function() {
+                const $item = $(this);
+                const datasetIndex = $item.data('dataset-index');
+                
+                $item.toggleClass('active');
+                if (revenueChart) {
+                    const isVisible = revenueChart.isDatasetVisible(datasetIndex);
+                    revenueChart.setDatasetVisibility(datasetIndex, !isVisible);
+                    revenueChart.update();
+                }
+            });
         }
 
-        const datasets = [
-            { label: 'Revenue', data: revenue, color: '#007bff' },
-            { label: 'Earnings', data: earnings, color: '#2ecc71' },
-            { label: 'Free Cash Flow', data: fcf, color: '#ffc107' },
-            { label: 'Cash From Op', data: op_cash, color: '#fd7e14' },
-        ].map(ds => ({
-            label: ds.label,
-            data: fillMissingPoints(ds.data, allDates),
-            borderColor: ds.color,
-            backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, ds.color),
-            borderWidth: 2,
-            pointRadius: 0,
-            tension: 0.3,
-            fill: 'start'
-        }));
+        function initializeEpsChart($container) {
+            const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
+            if (!$chartCanvas.length) return;
 
-        const annotationsAreVisible = !!forecast_start_date;
+            const chartDataRaw = $container.find('#jtw-eps-growth-forecast-data').html();
+            if (!chartDataRaw) return;
+            const parsedData = JSON.parse(chartDataRaw);
+            
+            let epsChart;
+            let lastHoveredIndex = null;
 
-        const ctx = $chartCanvas[0].getContext('2d');
-        revenueChart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: allDates, datasets: datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { unit: period === 'annual' ? 'year' : 'quarter' },
-                        grid: { display: false },
-                        min: minDate ? minDate.toISOString() : undefined,
-                        max: maxDate ? maxDate.toISOString() : undefined
-                    },
-                    y: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) }
+            const getOrCreateTooltip = (chart) => {
+                let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
+                if (!tooltipEl) {
+                    tooltipEl = document.createElement('div');
+                    tooltipEl.className = 'jtw-chart-tooltip';
+                    chart.canvas.parentNode.appendChild(tooltipEl);
+                }
+                return tooltipEl;
+            };
+
+            const externalTooltipHandler = (context) => {
+                const { chart, tooltip } = context;
+                const tooltipEl = getOrCreateTooltip(chart);
+
+                if (tooltip.opacity === 0) {
+                    tooltipEl.style.opacity = 0;
+                    return;
+                }
+
+                const date = new Date(tooltip.dataPoints[0].parsed.x);
+                let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
+                innerHtml += '<div class="tooltip-body">';
+
+                tooltip.body.forEach((body, i) => {
+                    const dataPoint = tooltip.dataPoints[i];
+                    if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.datasetIndex > 1) { 
+                        const colors = tooltip.labelColors[i];
+                        const label = body.lines[0].split(':')[0];
+                        const value = body.lines[0].split(':')[1];
+                        const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+                        const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+                        innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
                     }
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        enabled: false,
-                        external: externalTooltipHandler
+                });
+
+                innerHtml += '</div>';
+                tooltipEl.innerHTML = innerHtml;
+
+                const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+                tooltipEl.style.opacity = 1;
+                tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+                tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+            };
+
+            function drawEpsChart(period) {
+                if (epsChart) {
+                    epsChart.destroy();
+                }
+                lastHoveredIndex = null; 
+
+                const periodData = parsedData[period] || {};
+                const actual_eps = periodData.actual_eps || [];
+                const estimated_eps = periodData.estimated_eps || [];
+                const estimate_range_low = periodData.estimate_range_low || [];
+                const estimate_range_high = periodData.estimate_range_high || [];
+                
+                const forecast_start_date = period === 'annual' 
+                    ? parsedData.forecast_start_date_annual
+                    : parsedData.forecast_start_date_quarterly;
+                
+                const annotationsAreVisible = !!forecast_start_date;
+
+                const ctx = $chartCanvas[0].getContext('2d');
+                epsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [
+                            { label: 'Estimate Range', data: estimate_range_high, borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)', pointRadius: 0, hoverRadius: 0, fill: '+1' },
+                            { label: 'Low Estimate', data: estimate_range_low, borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)', pointRadius: 0, hoverRadius: 0, fill: false },
+                            { label: 'Estimated EPS', data: estimated_eps, borderColor: '#007bff', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false },
+                            { label: 'Actual EPS', data: actual_eps, borderColor: '#2ecc71', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false }
+                        ]
                     },
-                    annotation: {
-                        annotations: {
-                            forecastLine: {
-                                display: annotationsAreVisible,
-                                type: 'line',
-                                scaleID: 'x',
-                                value: forecast_start_date,
-                                borderColor: 'rgba(255, 255, 255, 0.3)',
-                                borderWidth: 1,
-                                borderDash: [6, 6],
-                            },
-                            forecastBox: {
-                                display: annotationsAreVisible,
-                                type: 'box',
-                                scaleID: 'x',
-                                xMin: forecast_start_date,
-                                backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            },
-                            // --- FIX: Use explicit getTime() for correct coordinate calculation ---
-                            pastLabel: {
-                                display: annotationsAreVisible,
-                                type: 'label',
-                                xValue: forecast_start_date,
-                                yValue: 0,
-                                content: 'Past',
-                                color: '#aaa',
-                                font: { size: 12 },
-                                xAdjust: -100,
-                                yAdjust: 0,
-                                textAlign: 'right',
-                            },
-                            forecastLabel: {
-                                display: annotationsAreVisible,
-                                type: 'label',
-                                xValue: forecast_start_date,
-                                yValue: 0,
-                                content: 'Analysts Forecasts',
-                                color: '#aaa',
-                                font: { size: 12 },
-                                xAdjust: 100,
-                                yAdjust: 0,
-                                textAlign: 'left',
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        onHover: (event, activeElements, chart) => {
+                            const newIndex = activeElements.length ? activeElements[0].index : null;
+
+                            if (newIndex !== lastHoveredIndex) {
+                                if (lastHoveredIndex !== null) {
+                                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                                        if (datasetIndex > 1) {
+                                            const meta = chart.getDatasetMeta(datasetIndex);
+                                            if (meta.data[lastHoveredIndex]) {
+                                                meta.data[lastHoveredIndex].options.radius = 3;
+                                            }
+                                        }
+                                    });
+                                }
+                                
+                                if (newIndex !== null) {
+                                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                                        if (datasetIndex > 1) {
+                                            const meta = chart.getDatasetMeta(datasetIndex);
+                                            if (meta.data[newIndex]) {
+                                                meta.data[newIndex].options.radius = 6;
+                                            }
+                                        }
+                                    });
+                                }
+                                
+                                chart.update();
+                                lastHoveredIndex = newIndex;
+                            }
+                        },
+                        scales: {
+                            x: { type: 'time', time: { unit: period === 'annual' ? 'year' : 'quarter' }, grid: { display: false } },
+                            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => '$' + val.toFixed(2) } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false, external: externalTooltipHandler },
+                            annotation: {
+                                annotations: {
+                                    forecastLine: {
+                                        display: annotationsAreVisible,
+                                        type: 'line',
+                                        scaleID: 'x',
+                                        value: forecast_start_date,
+                                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                                        borderWidth: 1,
+                                        borderDash: [6, 6]
+                                    },
+                                    forecastBox: {
+                                        display: annotationsAreVisible,
+                                        type: 'box',
+                                        scaleID: 'x',
+                                        xMin: forecast_start_date,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                                    },
+                                    pastLabel: {
+                                        display: annotationsAreVisible,
+                                        type: 'label',
+                                        xValue: forecast_start_date,
+                                        yValue: 0,
+                                        content: 'Past',
+                                        color: '#aaa',
+                                        font: { size: 12 },
+                                        xAdjust: -50,
+                                        yAdjust: 0,
+                                        textAlign: 'right',
+                                    },
+                                    forecastLabel: {
+                                        display: annotationsAreVisible,
+                                        type: 'label',
+                                        xValue: forecast_start_date,
+                                        yValue: 0,
+                                        content: 'Analysts Forecasts',
+                                        color: '#aaa',
+                                        font: { size: 12 },
+                                        xAdjust: 50,
+                                        yAdjust: 0,
+                                        textAlign: 'left',
+                                    }
+                                }
                             }
                         }
                     }
+                });
+            }
+
+            drawEpsChart('annual');
+
+            $container.find('.jtw-eps-period-toggle .jtw-period-button').on('click', function() {
+                const $button = $(this);
+                if ($button.hasClass('active')) return;
+                $container.find('.jtw-eps-period-toggle .jtw-period-button').removeClass('active');
+                $button.addClass('active');
+                drawEpsChart($button.data('period'));
+            });
+
+            $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-eps-growth-forecast-chart"]', function() {
+                const $item = $(this);
+                const datasetIndex = $item.data('dataset-index');
+                
+                $item.toggleClass('active');
+                if (epsChart) {
+                    const isVisible = epsChart.isDatasetVisible(datasetIndex);
+                    epsChart.setDatasetVisibility(datasetIndex, !isVisible);
+                    if (datasetIndex === 2) {
+                        epsChart.setDatasetVisibility(0, !isVisible);
+                        epsChart.setDatasetVisibility(1, !isVisible);
+                    }
+                    epsChart.update();
                 }
-            }
-        });
-    }
-
-    drawRevenueChart('annual');
-
-    $container.find('.jtw-revenue-period-toggle .jtw-period-button').on('click', function() {
-        const $button = $(this);
-        if ($button.hasClass('active')) return;
-        $container.find('.jtw-revenue-period-toggle .jtw-period-button').removeClass('active');
-        $button.addClass('active');
-        drawRevenueChart($button.data('period'));
-    });
-
-    $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-earnings-revenue-forecast-chart"]', function() {
-        const $item = $(this);
-        const datasetIndex = $item.data('dataset-index');
-        
-        $item.toggleClass('active');
-        if (revenueChart) {
-            const isVisible = revenueChart.isDatasetVisible(datasetIndex);
-            revenueChart.setDatasetVisibility(datasetIndex, !isVisible);
-            revenueChart.update();
-        }
-    });
-}
-
-function initializeEpsChart($container) {
-    const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
-    if (!$chartCanvas.length) return;
-
-    const chartDataRaw = $container.find('#jtw-eps-growth-forecast-data').html();
-    if (!chartDataRaw) return;
-    const parsedData = JSON.parse(chartDataRaw);
-    
-    let epsChart;
-    let lastHoveredIndex = null; // Variable to track the last hovered point
-
-    const getOrCreateTooltip = (chart) => {
-        let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
-        if (!tooltipEl) {
-            tooltipEl = document.createElement('div');
-            tooltipEl.className = 'jtw-chart-tooltip';
-            chart.canvas.parentNode.appendChild(tooltipEl);
-        }
-        return tooltipEl;
-    };
-
-    const externalTooltipHandler = (context) => {
-        const { chart, tooltip } = context;
-        const tooltipEl = getOrCreateTooltip(chart);
-
-        if (tooltip.opacity === 0) {
-            tooltipEl.style.opacity = 0;
-            return;
+            });
         }
 
-        const date = new Date(tooltip.dataPoints[0].parsed.x);
-        let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
-        innerHtml += '<div class="tooltip-body">';
+        function initializeSankeyChart($container) {
+            const $chartContainer = $container.find('#jtw-sankey-chart-container');
+            const $dataScript = $container.find('#jtw-sankey-chart-data');
+            if (!$chartContainer.length || !$dataScript.length) return;
 
-        tooltip.body.forEach((body, i) => {
-            const dataPoint = tooltip.dataPoints[i];
-            if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.datasetIndex > 1) { 
-                const colors = tooltip.labelColors[i];
-                const label = body.lines[0].split(':')[0];
-                const value = body.lines[0].split(':')[1];
-                const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-                const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-                innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
-            }
-        });
+            const sankeyDataByYear = JSON.parse($dataScript.html());
+            const availableYears = Object.keys(sankeyDataByYear).sort();
+            if (availableYears.length === 0) return;
 
-        innerHtml += '</div>';
-        tooltipEl.innerHTML = innerHtml;
+            const latestYear = availableYears[availableYears.length - 1];
+            
+            // --- START: SLIDER HTML GENERATION ---
+            const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
+            let sliderHtml = '<div class="jtw-year-slider-labels">';
+            availableYears.forEach(year => {
+                sliderHtml += `<span class="jtw-year-label" data-year="${year}">${year}</span>`;
+            });
+            sliderHtml += '</div>';
+            sliderHtml += `<input type="range" min="0" max="${availableYears.length - 1}" value="${availableYears.length - 1}" class="jtw-year-slider" id="jtw-sankey-year-slider">`;
+            $sliderContainer.html(sliderHtml);
+            // --- END: SLIDER HTML GENERATION ---
 
-        const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-        tooltipEl.style.opacity = 1;
-        tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-        tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-    };
-
-    function drawEpsChart(period) {
-        if (epsChart) {
-            epsChart.destroy();
-        }
-        lastHoveredIndex = null; 
-
-        const periodData = parsedData[period] || {};
-        const actual_eps = periodData.actual_eps || [];
-        const estimated_eps = periodData.estimated_eps || [];
-        const estimate_range_low = periodData.estimate_range_low || [];
-        const estimate_range_high = periodData.estimate_range_high || [];
-        
-        const forecast_start_date = period === 'annual' 
-            ? parsedData.forecast_start_date_annual
-            : parsedData.forecast_start_date_quarterly;
-        
-        const annotationsAreVisible = !!forecast_start_date;
-
-        const ctx = $chartCanvas[0].getContext('2d');
-        epsChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [
-                    { label: 'Estimate Range', data: estimate_range_high, borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)', pointRadius: 0, hoverRadius: 0, fill: '+1' },
-                    { label: 'Low Estimate', data: estimate_range_low, borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)', pointRadius: 0, hoverRadius: 0, fill: false },
-                    { label: 'Estimated EPS', data: estimated_eps, borderColor: '#007bff', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false },
-                    { label: 'Actual EPS', data: actual_eps, borderColor: '#2ecc71', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                onHover: (event, activeElements, chart) => {
-                    const newIndex = activeElements.length ? activeElements[0].index : null;
-
-                    if (newIndex !== lastHoveredIndex) {
-                        // Reset the previously hovered points
-                        if (lastHoveredIndex !== null) {
-                            chart.data.datasets.forEach((dataset, datasetIndex) => {
-                                if (datasetIndex > 1) { // Skip non-visible datasets
-                                    const meta = chart.getDatasetMeta(datasetIndex);
-                                    if (meta.data[lastHoveredIndex]) {
-                                        meta.data[lastHoveredIndex].options.radius = 3;
-                                    }
-                                }
-                            });
+            const formatSankeyTooltip = function() {
+                if (this.point.isNode) {
+                    return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
+                }
+                const { from, to, weight, custom: percentage } = this.point;
+                let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
+                if (percentage) {
+                    tooltipText += `<br/>${percentage} of ${from}`;
+                }
+                return tooltipText;
+            };
+            
+            const sankeyChart = Highcharts.chart($chartContainer[0], {
+                chart: { backgroundColor: 'transparent' },
+                title: { text: null },
+                plotOptions: {
+                    sankey: {
+                        link: {
+                            borderRadius: 0
                         }
-                        
-                        // Highlight the new points
-                        if (newIndex !== null) {
-                            chart.data.datasets.forEach((dataset, datasetIndex) => {
-                                if (datasetIndex > 1) {
-                                    const meta = chart.getDatasetMeta(datasetIndex);
-                                    if (meta.data[newIndex]) {
-                                        meta.data[newIndex].options.radius = 6;
-                                    }
-                                }
-                            });
-                        }
-                        
-                        chart.update();
-                        lastHoveredIndex = newIndex;
                     }
                 },
-                scales: {
-                    x: { type: 'time', time: { unit: period === 'annual' ? 'year' : 'quarter' }, grid: { display: false } },
-                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => '$' + val.toFixed(2) } }
+                series: [{
+                    keys: ['from', 'to', 'weight', 'custom'],
+                    data: sankeyDataByYear[latestYear],
+                    type: 'sankey',
+                    link: { borderRadius: 0 },
+                    name: 'Financial Flow',
+                    nodeWidth: 30,
+                    nodePadding: 120,
+                    dataLabels: {
+                        enabled: true,
+                        nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
+                        style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
+                    },
+                    nodes: [
+                        { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
+                        { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
+                        { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
+                        { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
+                        { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
+                    ]
+                }],
+                tooltip: {
+                    formatter: formatSankeyTooltip,
+                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    style: { color: '#FFFFFF' }
                 },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false, external: externalTooltipHandler },
-                    annotation: {
-                        annotations: {
-                            forecastLine: {
-                                display: annotationsAreVisible,
-                                type: 'line',
-                                scaleID: 'x',
-                                value: forecast_start_date,
-                                borderColor: 'rgba(255, 255, 255, 0.3)',
-                                borderWidth: 1,
-                                borderDash: [6, 6]
-                            },
-                            forecastBox: {
-                                display: annotationsAreVisible,
-                                type: 'box',
-                                scaleID: 'x',
-                                xMin: forecast_start_date,
-                                backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            },
-                            pastLabel: {
-                                display: annotationsAreVisible,
-                                type: 'label',
-                                xValue: forecast_start_date,
-                                yValue: 0,
-                                content: 'Past',
-                                color: '#aaa',
-                                font: { size: 12 },
-                                xAdjust: -50,
-                                yAdjust: 0,
-                                textAlign: 'right',
-                            },
-                            forecastLabel: {
-                                display: annotationsAreVisible,
-                                type: 'label',
-                                xValue: forecast_start_date,
-                                yValue: 0,
-                                content: 'Analysts Forecasts',
-                                color: '#aaa',
-                                font: { size: 12 },
-                                xAdjust: 50,
-                                yAdjust: 0,
-                                textAlign: 'left',
-                            }
-                        }
-                    }
+                credits: { enabled: false }
+            });
+
+            // --- START: SLIDER EVENT LISTENER ---
+            $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
+                const selectedYear = availableYears[$(this).val()];
+                if (sankeyDataByYear[selectedYear]) {
+                    sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
                 }
-            }
-        });
-    }
+                $sliderContainer.find('.jtw-year-label').removeClass('active');
+                $sliderContainer.find(`.jtw-year-label[data-year="${selectedYear}"]`).addClass('active');
+            });
+            // --- END: SLIDER EVENT LISTENER ---
 
-    drawEpsChart('annual');
-
-    $container.find('.jtw-eps-period-toggle .jtw-period-button').on('click', function() {
-        const $button = $(this);
-        if ($button.hasClass('active')) return;
-        $container.find('.jtw-eps-period-toggle .jtw-period-button').removeClass('active');
-        $button.addClass('active');
-        drawEpsChart($button.data('period'));
-    });
-
-    $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-eps-growth-forecast-chart"]', function() {
-        const $item = $(this);
-        const datasetIndex = $item.data('dataset-index');
-        
-        $item.toggleClass('active');
-        if (epsChart) {
-            const isVisible = epsChart.isDatasetVisible(datasetIndex);
-            epsChart.setDatasetVisibility(datasetIndex, !isVisible);
-            if (datasetIndex === 2) {
-                epsChart.setDatasetVisibility(0, !isVisible);
-                epsChart.setDatasetVisibility(1, !isVisible);
-            }
-            epsChart.update();
+            $sliderContainer.find(`.jtw-year-label[data-year="${latestYear}"]`).addClass('active');
         }
-    });
-}
-
-// In journey-to-wealth/public/assets/js/public-scripts.js,
-// replace the entire initializeSankeyChart function with this final version.
-
-function initializeSankeyChart($container) {
-    const $chartContainer = $container.find('#jtw-sankey-chart-container');
-    const $dataScript = $container.find('#jtw-sankey-chart-data');
-    if (!$chartContainer.length || !$dataScript.length) return;
-
-    const sankeyDataByYear = JSON.parse($dataScript.html());
-    const availableYears = Object.keys(sankeyDataByYear).sort();
-    if (availableYears.length === 0) return;
-
-    const latestYear = availableYears[availableYears.length - 1];
-    
-    // --- START: SLIDER HTML GENERATION ---
-    const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
-    let sliderHtml = '<div class="jtw-year-slider-labels">';
-    availableYears.forEach(year => {
-        sliderHtml += `<span class="jtw-year-label" data-year="${year}">${year}</span>`;
-    });
-    sliderHtml += '</div>';
-    sliderHtml += `<input type="range" min="0" max="${availableYears.length - 1}" value="${availableYears.length - 1}" class="jtw-year-slider" id="jtw-sankey-year-slider">`;
-    $sliderContainer.html(sliderHtml);
-    // --- END: SLIDER HTML GENERATION ---
-
-    const formatSankeyTooltip = function() {
-        if (this.point.isNode) {
-            return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
-        }
-        const { from, to, weight, custom: percentage } = this.point;
-        let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
-        if (percentage) {
-            tooltipText += `<br/>${percentage} of ${from}`;
-        }
-        return tooltipText;
-    };
-    
-    const sankeyChart = Highcharts.chart($chartContainer[0], {
-        chart: { backgroundColor: 'transparent' },
-        title: { text: null },
-        plotOptions: {
-            sankey: {
-                link: {
-                    borderRadius: 0
-                }
-            }
-        },
-        series: [{
-            keys: ['from', 'to', 'weight', 'custom'],
-            data: sankeyDataByYear[latestYear],
-            type: 'sankey',
-            link: { borderRadius: 0 },
-            name: 'Financial Flow',
-            nodeWidth: 30,
-            nodePadding: 120,
-            dataLabels: {
-                enabled: true,
-                nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
-                style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
-            },
-            nodes: [
-                { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
-                { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
-                { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
-                { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
-                { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
-            ]
-        }],
-        tooltip: {
-            formatter: formatSankeyTooltip,
-            backgroundColor: 'rgba(30, 41, 59, 0.9)',
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            style: { color: '#FFFFFF' }
-        },
-        credits: { enabled: false }
-    });
-
-    // --- START: SLIDER EVENT LISTENER ---
-    $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
-        const selectedYear = availableYears[$(this).val()];
-        if (sankeyDataByYear[selectedYear]) {
-            sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
-        }
-        $sliderContainer.find('.jtw-year-label').removeClass('active');
-        $sliderContainer.find(`.jtw-year-label[data-year="${selectedYear}"]`).addClass('active');
-    });
-    // --- END: SLIDER EVENT LISTENER ---
-
-    $sliderContainer.find(`.jtw-year-label[data-year="${latestYear}"]`).addClass('active');
-}
 
         // --- Main execution ---
-        initializeRevenueChart();
-        initializeEpsChart();
+        initializeRevenueChart($container);
+        initializeEpsChart($container);
         initializeSankeyChart($container);
     }
 
