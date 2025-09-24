@@ -39,6 +39,61 @@
         };
     }
 
+    // --- START: REUSABLE TOOLTIP FUNCTIONS ---
+    const getOrCreateTooltip = (chart) => {
+        let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
+        if (!tooltipEl) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.className = 'jtw-chart-tooltip';
+            chart.canvas.parentNode.appendChild(tooltipEl);
+        }
+        return tooltipEl;
+    };
+
+    const externalTooltipHandler = (context) => {
+        const { chart, tooltip } = context;
+        const tooltipEl = getOrCreateTooltip(chart);
+
+        if (tooltip.opacity === 0) {
+            tooltipEl.style.opacity = 0;
+            return;
+        }
+
+        const date = new Date(tooltip.dataPoints[0].parsed.x);
+        let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
+        innerHtml += '<div class="tooltip-body">';
+
+        tooltip.body.forEach((body, i) => {
+            const dataPoint = tooltip.dataPoints[i];
+            if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.dataset.label !== 'Hover Highlight') { 
+                const colors = tooltip.labelColors[i];
+                const label = body.lines[0].split(':')[0];
+                const value = body.lines[0].split(':')[1];
+                const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+                const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+                innerHtml += `<div class="tooltip-line"><div>${colorSpan} ${label}</div><strong>${value}</strong></div>`;
+            }
+        });
+
+        innerHtml += '</div>';
+        tooltipEl.innerHTML = innerHtml;
+
+        const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+        const chartWidth = chart.canvas.offsetWidth;
+
+        tooltipEl.style.opacity = 1;
+        
+        let newLeft = positionX + tooltip.caretX + 15;
+        
+        if (newLeft + tooltipEl.offsetWidth > positionX + chartWidth) {
+            newLeft = positionX + tooltip.caretX - tooltipEl.offsetWidth - 15;
+        }
+
+        tooltipEl.style.left = newLeft + 'px';
+        tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+    };
+    // --- END: REUSABLE TOOLTIP FUNCTIONS ---
+
     const fillMissingPoints = (data, dates) => {
         const filledData = [];
         const dataMap = new Map(data.map(d => [d.x, d.y]));
@@ -393,50 +448,6 @@
                 const earnings = (periodData.earnings || []).filter(isValidDate);
                 const fcf = (periodData.fcf || []).filter(isValidDate);
                 const op_cash = (periodData.op_cash || []).filter(isValidDate);
-
-                const getOrCreateTooltip = (chart) => {
-                    let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
-                    if (!tooltipEl) {
-                        tooltipEl = document.createElement('div');
-                        tooltipEl.className = 'jtw-chart-tooltip';
-                        chart.canvas.parentNode.appendChild(tooltipEl);
-                    }
-                    return tooltipEl;
-                };
-
-                const externalTooltipHandler = (context) => {
-                    const { chart, tooltip } = context;
-                    const tooltipEl = getOrCreateTooltip(chart);
-
-                    if (tooltip.opacity === 0) {
-                        tooltipEl.style.opacity = 0;
-                        return;
-                    }
-
-                    const date = new Date(tooltip.dataPoints[0].parsed.x);
-                    let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
-                    innerHtml += '<div class="tooltip-body">';
-
-                    tooltip.body.forEach((body, i) => {
-                        if (chart.isDatasetVisible(tooltip.dataPoints[i].datasetIndex)) {
-                            const colors = tooltip.labelColors[i];
-                            const label = body.lines[0].split(':')[0];
-                            const value = body.lines[0].split(':')[1];
-                            const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-                            const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-                            innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
-                        }
-                    });
-
-                    innerHtml += '</div>';
-                    tooltipEl.innerHTML = innerHtml;
-
-                    const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-                    tooltipEl.style.opacity = 1;
-                    tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-                    tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-                };
-
                 const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
 
                 let minDate, maxDate;
@@ -575,50 +586,6 @@
             let epsChart;
             let lastHoveredIndex = null;
 
-            const getOrCreateTooltip = (chart) => {
-                let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
-                if (!tooltipEl) {
-                    tooltipEl = document.createElement('div');
-                    tooltipEl.className = 'jtw-chart-tooltip';
-                    chart.canvas.parentNode.appendChild(tooltipEl);
-                }
-                return tooltipEl;
-            };
-
-            const externalTooltipHandler = (context) => {
-                const { chart, tooltip } = context;
-                const tooltipEl = getOrCreateTooltip(chart);
-
-                if (tooltip.opacity === 0) {
-                    tooltipEl.style.opacity = 0;
-                    return;
-                }
-
-                const date = new Date(tooltip.dataPoints[0].parsed.x);
-                let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
-                innerHtml += '<div class="tooltip-body">';
-
-                tooltip.body.forEach((body, i) => {
-                    const dataPoint = tooltip.dataPoints[i];
-                    if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.datasetIndex > 1) { 
-                        const colors = tooltip.labelColors[i];
-                        const label = body.lines[0].split(':')[0];
-                        const value = body.lines[0].split(':')[1];
-                        const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-                        const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-                        innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
-                    }
-                });
-
-                innerHtml += '</div>';
-                tooltipEl.innerHTML = innerHtml;
-
-                const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-                tooltipEl.style.opacity = 1;
-                tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-                tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-            };
-
             function drawEpsChart(period) {
                 if (epsChart) {
                     epsChart.destroy();
@@ -652,36 +619,6 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         interaction: { mode: 'index', intersect: false },
-                        /*onHover: (event, activeElements, chart) => {
-                            const newIndex = activeElements.length ? activeElements[0].index : null;
-
-                            if (newIndex !== lastHoveredIndex) {
-                                if (lastHoveredIndex !== null) {
-                                    chart.data.datasets.forEach((dataset, datasetIndex) => {
-                                        if (datasetIndex > 1) {
-                                            const meta = chart.getDatasetMeta(datasetIndex);
-                                            if (meta.data[lastHoveredIndex]) {
-                                                meta.data[lastHoveredIndex].options.radius = 3;
-                                            }
-                                        }
-                                    });
-                                }
-                                
-                                if (newIndex !== null) {
-                                    chart.data.datasets.forEach((dataset, datasetIndex) => {
-                                        if (datasetIndex > 1) {
-                                            const meta = chart.getDatasetMeta(datasetIndex);
-                                            if (meta.data[newIndex]) {
-                                                meta.data[newIndex].options.radius = 6;
-                                            }
-                                        }
-                                    });
-                                }
-                                
-                                chart.update();
-                                lastHoveredIndex = newIndex;
-                            }
-                        },*/
                         scales: {
                             x: { type: 'time', time: { unit: period === 'annual' ? 'year' : 'quarter' }, grid: { display: false } },
                             y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => '$' + val.toFixed(2) } }

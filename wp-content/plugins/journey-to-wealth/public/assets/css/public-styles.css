@@ -2561,3 +2561,17 @@ body.dark-mode .jtw-modal .jtw-sws-modal-table .jtw-formula-vals {
     color: #64748b;
 }
 /* --- END: Dark Mode Modal Table Fix --- */
+
+/* --- START: Tooltip Alignment Fix --- */
+.jtw-chart-tooltip .tooltip-header,
+.jtw-chart-tooltip .tooltip-body {
+    text-align: left;
+}
+
+.jtw-chart-tooltip .tooltip-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* This keeps the value on the right */
+    gap: 15px;
+}
+/* --- END: Tooltip Alignment Fix --- */
