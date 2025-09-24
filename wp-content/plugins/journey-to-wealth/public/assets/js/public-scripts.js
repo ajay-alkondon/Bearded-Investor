@@ -652,7 +652,7 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         interaction: { mode: 'index', intersect: false },
-                        onHover: (event, activeElements, chart) => {
+                        /*onHover: (event, activeElements, chart) => {
                             const newIndex = activeElements.length ? activeElements[0].index : null;
 
                             if (newIndex !== lastHoveredIndex) {
@@ -681,7 +681,7 @@
                                 chart.update();
                                 lastHoveredIndex = newIndex;
                             }
-                        },
+                        },*/
                         scales: {
                             x: { type: 'time', time: { unit: period === 'annual' ? 'year' : 'quarter' }, grid: { display: false } },
                             y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => '$' + val.toFixed(2) } }
