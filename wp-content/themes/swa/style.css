@@ -458,53 +458,34 @@ body.dark-mode .jtw-sws-valuation-container .jtw-sws-label-group.outside strong 
 }
 
 
-/* --- FIX: Dark Mode for Modal Tables --- */
+/* --- START: CORRECTED DARK MODE MODAL TABLE OVERRIDE --- */
 
-/* Style for the table headers inside the modal */
-.jtw-analyzer-wrapper.dark-mode .jtw-modal-table thead th {
+/*
+This block uses high-specificity selectors to forcefully override the Salient theme's
+default white table styles, but ONLY for tables inside the .jtw-modal container
+when dark mode is active.
+*/
+body.dark-mode .jtw-modal table.jtw-sws-modal-table,
+body.dark-mode .jtw-modal table.jtw-sws-modal-table tr,
+body.dark-mode .jtw-modal table.jtw-sws-modal-table tr:nth-child(2n+1) {
+    background-color: transparent !important;
+}
+
+body.dark-mode .jtw-modal table.jtw-sws-modal-table td {
+    background-color: transparent !important;
+    border-bottom: 1px solid #334155;
+    color: #cbd5e0;
+}
+
+body.dark-mode .jtw-modal table.jtw-sws-modal-table thead th {
     background-color: #2a3b5c !important;
-    color: #ffffff !important;
+    color: #f8fafc !important;
+    border-bottom: 1px solid #475569;
 }
 
-/* Style for the table data cells inside the modal */
-.jtw-analyzer-wrapper.dark-mode .jtw-modal-table tbody td {
-    background-color: transparent !important; /* Inherit modal's dark background */
-    border-bottom-color: #2a3b5c !important;
-    color: #b9b9b9 !important;
+body.dark-mode .jtw-modal table.jtw-sws-modal-table .jtw-table-total-row td {
+    border-top: 2px solid #475569;
+    color: #f8fafc;
+    font-weight: bold;
 }
-
-/* Style for bold text inside the modal table */
-.jtw-analyzer-wrapper.dark-mode .jtw-modal-table strong {
-    color: #ffffff !important;
-}
-
-/* --- FIX: Dark Mode for Modal Tables (Corrected Selector) --- */
-
-/* Targets the modal's background when dark mode is active */
-body.dark-mode .jtw-modal {
-    background: #17243f !important;
-}
-
-/* Targets the table headers inside the modal */
-body.dark-mode .jtw-modal-table thead th {
-    background-color: #2a3b5c !important;
-    color: #ffffff !important;
-}
-
-/* Targets the table data cells inside the modal */
-body.dark-mode .jtw-modal-table tbody td {
-    background-color: #17243f !important;
-    border-color: #2a3b5c !important;
-    color: #b9b9b9 !important;
-}
-
-/* Targets the bold text inside the modal tables */
-body.dark-mode .jtw-modal-table strong {
-    color: #ffffff !important;
-}
-
-/* General h4 titles inside the modal */
-body.dark-mode .jtw-modal-content h4 {
-    border-bottom-color: #2a3b5c !important;
-    color: #ffffff !important;
-}
+/* --- END: CORRECTED DARK MODE MODAL TABLE OVERRIDE --- */
