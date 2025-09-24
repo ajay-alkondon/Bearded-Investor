@@ -574,6 +574,7 @@ function initializeEpsChart() {
     const parsedData = JSON.parse(chartDataRaw);
     
     let epsChart;
+    let lastHoveredIndex = null; // **FIX**: Moved variable declaration to the parent scope
 
     const getOrCreateTooltip = (chart) => {
         let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
@@ -623,6 +624,7 @@ function initializeEpsChart() {
         if (epsChart) {
             epsChart.destroy();
         }
+        lastHoveredIndex = null; 
 
         const periodData = parsedData[period] || {};
         const actual_eps = periodData.actual_eps || [];
@@ -641,43 +643,19 @@ function initializeEpsChart() {
             type: 'line',
             data: {
                 datasets: [
-                    {
-                        label: 'Estimate Range', data: estimate_range_high,
-                        borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                        pointRadius: 0, hoverRadius: 0, fill: '+1',
-                    },
-                    {
-                        label: 'Low Estimate', data: estimate_range_low,
-                        borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                        pointRadius: 0, hoverRadius: 0, fill: false,
-                    },
-                    {
-                        label: 'Estimated EPS', data: estimated_eps,
-                        borderColor: '#007bff', borderWidth: 2, pointRadius: 3,
-                        hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false,
-                    },
-                    {
-                        label: 'Actual EPS', data: actual_eps,
-                        borderColor: '#2ecc71', borderWidth: 2, pointRadius: 3,
-                        hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false,
-                    }
+                    { label: 'Estimate Range', data: estimate_range_high, borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)', pointRadius: 0, hoverRadius: 0, fill: '+1' },
+                    { label: 'Low Estimate', data: estimate_range_low, borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)', pointRadius: 0, hoverRadius: 0, fill: false },
+                    { label: 'Estimated EPS', data: estimated_eps, borderColor: '#007bff', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false },
+                    { label: 'Actual EPS', data: actual_eps, borderColor: '#2ecc71', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                // --- START: CORRECTED HOVER LOGIC ---
+                interaction: { mode: 'index', intersect: false },
                 onHover: (event, activeElements, chart) => {
-                    // Get the new index, if any
                     const newIndex = activeElements.length ? activeElements[0].index : null;
-
-                    // If the index has changed, or we've moused off the chart
                     if (newIndex !== lastHoveredIndex) {
-                        // Reset the points at the last hovered index
                         if (lastHoveredIndex !== null) {
                             chart.data.datasets.forEach((dataset, datasetIndex) => {
                                 if (datasetIndex > 1) {
@@ -688,8 +666,6 @@ function initializeEpsChart() {
                                 }
                             });
                         }
-
-                        // Highlight the points at the new index
                         if (newIndex !== null) {
                             chart.data.datasets.forEach((dataset, datasetIndex) => {
                                 if (datasetIndex > 1) {
@@ -700,13 +676,10 @@ function initializeEpsChart() {
                                 }
                             });
                         }
-                        
-                        // Update the chart and the tracker
                         chart.update();
                         lastHoveredIndex = newIndex;
                     }
                 },
-                // --- END: CORRECTED HOVER LOGIC ---
                 scales: {
                     x: { type: 'time', time: { unit: period === 'annual' ? 'year' : 'quarter' }, grid: { display: false } },
                     y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => '$' + val.toFixed(2) } }
