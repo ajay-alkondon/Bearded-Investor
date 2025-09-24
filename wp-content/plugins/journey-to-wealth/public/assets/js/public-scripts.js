@@ -600,7 +600,6 @@ function initializeEpsChart() {
 
         tooltip.body.forEach((body, i) => {
             const dataPoint = tooltip.dataPoints[i];
-            // Only show visible datasets, excluding the transparent range fillers
             if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.datasetIndex > 1) { 
                 const colors = tooltip.labelColors[i];
                 const label = body.lines[0].split(':')[0];
@@ -648,7 +647,7 @@ function initializeEpsChart() {
                         borderColor: 'transparent',
                         backgroundColor: 'rgba(0, 122, 255, 0.2)',
                         pointRadius: 0,
-                        hoverRadius: 0, // No hover effect for the range
+                        hoverRadius: 0,
                         fill: '+1',
                     },
                     {
@@ -657,7 +656,7 @@ function initializeEpsChart() {
                         borderColor: 'transparent',
                         backgroundColor: 'rgba(0, 122, 255, 0.2)',
                         pointRadius: 0,
-                        hoverRadius: 0, // No hover effect for the range
+                        hoverRadius: 0,
                         fill: false,
                     },
                     {
@@ -666,7 +665,7 @@ function initializeEpsChart() {
                         borderColor: '#007bff',
                         borderWidth: 2,
                         pointRadius: 3,
-                        hoverRadius: 6, // Make point bigger on hover
+                        hoverRadius: 6,
                         hoverBorderWidth: 2,
                         tension: 0.3,
                         fill: false,
@@ -677,7 +676,7 @@ function initializeEpsChart() {
                         borderColor: '#2ecc71',
                         borderWidth: 2,
                         pointRadius: 3,
-                        hoverRadius: 6, // Make point bigger on hover
+                        hoverRadius: 6,
                         hoverBorderWidth: 2,
                         tension: 0.3,
                         fill: false,
@@ -687,20 +686,37 @@ function initializeEpsChart() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: { // Ensure interaction is set to find the nearest point
+                interaction: {
                     mode: 'index',
                     intersect: false,
                 },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { unit: period === 'annual' ? 'year' : 'quarter' },
-                        grid: { display: false }
-                    },
-                    y: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { callback: (val) => '$' + val.toFixed(2) }
+                // --- START: NEW HOVER LOGIC ---
+                // This function manually controls the highlighting effect.
+                onHover: (event, chartElement, chart) => {
+                    if (chartElement.length) {
+                        const activeIndex = chartElement[0].index;
+                        // Enlarge the points on all datasets at the hovered index
+                        chart.data.datasets.forEach((dataset, datasetIndex) => {
+                            if (datasetIndex > 1) { // Skip the transparent range fillers
+                                chart.getDatasetMeta(datasetIndex).data[activeIndex].options.radius = 6;
+                            }
+                        });
+                    } else {
+                        // When not hovering, reset all points to their original size
+                        chart.data.datasets.forEach((dataset, datasetIndex) => {
+                             if (datasetIndex > 1) {
+                                for (let i = 0; i < chart.getDatasetMeta(datasetIndex).data.length; i++) {
+                                     chart.getDatasetMeta(datasetIndex).data[i].options.radius = 3;
+                                }
+                             }
+                        });
                     }
+                    chart.update();
+                },
+                // --- END: NEW HOVER LOGIC ---
+                scales: {
+                    x: { type: 'time', time: { unit: period === 'annual' ? 'year' : 'quarter' }, grid: { display: false } },
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => '$' + val.toFixed(2) } }
                 },
                 plugins: {
                     legend: { display: false },
