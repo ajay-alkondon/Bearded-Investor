@@ -575,6 +575,51 @@ function initializeEpsChart() {
     
     let epsChart;
 
+    const getOrCreateTooltip = (chart) => {
+        let tooltipEl = chart.canvas.parentNode.querySelector('div.jtw-chart-tooltip');
+        if (!tooltipEl) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.className = 'jtw-chart-tooltip';
+            chart.canvas.parentNode.appendChild(tooltipEl);
+        }
+        return tooltipEl;
+    };
+
+    const externalTooltipHandler = (context) => {
+        const { chart, tooltip } = context;
+        const tooltipEl = getOrCreateTooltip(chart);
+
+        if (tooltip.opacity === 0) {
+            tooltipEl.style.opacity = 0;
+            return;
+        }
+
+        const date = new Date(tooltip.dataPoints[0].parsed.x);
+        let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
+        innerHtml += '<div class="tooltip-body">';
+
+        tooltip.body.forEach((body, i) => {
+            const dataPoint = tooltip.dataPoints[i];
+            // Only show visible datasets, excluding the transparent range fillers
+            if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.datasetIndex > 1) { 
+                const colors = tooltip.labelColors[i];
+                const label = body.lines[0].split(':')[0];
+                const value = body.lines[0].split(':')[1];
+                const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+                const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+                innerHtml += `<div class="tooltip-line">${colorSpan} ${label}: <strong>${value}</strong></div>`;
+            }
+        });
+
+        innerHtml += '</div>';
+        tooltipEl.innerHTML = innerHtml;
+
+        const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+        tooltipEl.style.opacity = 1;
+        tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+        tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+    };
+
     function drawEpsChart(period) {
         if (epsChart) {
             epsChart.destroy();
@@ -603,6 +648,7 @@ function initializeEpsChart() {
                         borderColor: 'transparent',
                         backgroundColor: 'rgba(0, 122, 255, 0.2)',
                         pointRadius: 0,
+                        hoverRadius: 0, // No hover effect for the range
                         fill: '+1',
                     },
                     {
@@ -611,6 +657,7 @@ function initializeEpsChart() {
                         borderColor: 'transparent',
                         backgroundColor: 'rgba(0, 122, 255, 0.2)',
                         pointRadius: 0,
+                        hoverRadius: 0, // No hover effect for the range
                         fill: false,
                     },
                     {
@@ -619,6 +666,8 @@ function initializeEpsChart() {
                         borderColor: '#007bff',
                         borderWidth: 2,
                         pointRadius: 3,
+                        hoverRadius: 6, // Make point bigger on hover
+                        hoverBorderWidth: 2,
                         tension: 0.3,
                         fill: false,
                     },
@@ -628,6 +677,8 @@ function initializeEpsChart() {
                         borderColor: '#2ecc71',
                         borderWidth: 2,
                         pointRadius: 3,
+                        hoverRadius: 6, // Make point bigger on hover
+                        hoverBorderWidth: 2,
                         tension: 0.3,
                         fill: false,
                     }
@@ -636,6 +687,10 @@ function initializeEpsChart() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { // Ensure interaction is set to find the nearest point
+                    mode: 'index',
+                    intersect: false,
+                },
                 scales: {
                     x: {
                         type: 'time',
@@ -650,8 +705,8 @@ function initializeEpsChart() {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        mode: 'index',
-                        intersect: false,
+                        enabled: false,
+                        external: externalTooltipHandler
                     },
                     annotation: {
                         annotations: {
