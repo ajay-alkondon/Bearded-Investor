@@ -671,29 +671,40 @@ function initializeEpsChart() {
                     intersect: false,
                 },
                 // --- START: CORRECTED HOVER LOGIC ---
-                onHover: (event, chartElement, chart) => {
-                    // First, reset all points on all relevant datasets to their default radius.
-                    chart.data.datasets.forEach((dataset, datasetIndex) => {
-                        if (datasetIndex > 1) { // Skip the transparent range-filler datasets
-                            const meta = chart.getDatasetMeta(datasetIndex);
-                            meta.data.forEach(point => point.options.radius = 3);
-                        }
-                    });
+                onHover: (event, activeElements, chart) => {
+                    // Get the new index, if any
+                    const newIndex = activeElements.length ? activeElements[0].index : null;
 
-                    // Then, if hovering over a point, enlarge only the points at that specific index.
-                    if (chartElement.length > 0) {
-                        const activeIndex = chartElement[0].index;
-                        chart.data.datasets.forEach((dataset, datasetIndex) => {
-                            if (datasetIndex > 1) {
-                                const activeMetaPoint = chart.getDatasetMeta(datasetIndex).data[activeIndex];
-                                if (activeMetaPoint) {
-                                    activeMetaPoint.options.radius = 6;
+                    // If the index has changed, or we've moused off the chart
+                    if (newIndex !== lastHoveredIndex) {
+                        // Reset the points at the last hovered index
+                        if (lastHoveredIndex !== null) {
+                            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                                if (datasetIndex > 1) {
+                                    const meta = chart.getDatasetMeta(datasetIndex);
+                                    if (meta.data[lastHoveredIndex]) {
+                                        meta.data[lastHoveredIndex].options.radius = 3;
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
+
+                        // Highlight the points at the new index
+                        if (newIndex !== null) {
+                            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                                if (datasetIndex > 1) {
+                                    const meta = chart.getDatasetMeta(datasetIndex);
+                                    if (meta.data[newIndex]) {
+                                        meta.data[newIndex].options.radius = 6;
+                                    }
+                                }
+                            });
+                        }
+                        
+                        // Update the chart and the tracker
+                        chart.update();
+                        lastHoveredIndex = newIndex;
                     }
-                    
-                    chart.update();
                 },
                 // --- END: CORRECTED HOVER LOGIC ---
                 scales: {
