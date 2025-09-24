@@ -688,7 +688,6 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
 }
 .jtw-sws-stacked-bar .jtw-sws-zone {
     height: 100%;
-    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 /* **MODIFIED**: Updated colors for better contrast */
 .jtw-sws-stacked-bar .bear-case { background-color: #a9cce3; } /* Light Steel Blue */
@@ -752,7 +751,6 @@ input:checked + .jtw-slider:before { transform: translateX(22px); }
 
 .jtw-sws-zone {
     height: 100%;
-    transition: width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .jtw-sws-zone.undervalued { background-color: rgba(39, 174, 96, 0.7); }
