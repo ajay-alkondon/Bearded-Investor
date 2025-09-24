@@ -642,44 +642,24 @@ function initializeEpsChart() {
             data: {
                 datasets: [
                     {
-                        label: 'Estimate Range',
-                        data: estimate_range_high,
-                        borderColor: 'transparent',
-                        backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                        pointRadius: 0,
-                        hoverRadius: 0,
-                        fill: '+1',
+                        label: 'Estimate Range', data: estimate_range_high,
+                        borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)',
+                        pointRadius: 0, hoverRadius: 0, fill: '+1',
                     },
                     {
-                        label: 'Low Estimate',
-                        data: estimate_range_low,
-                        borderColor: 'transparent',
-                        backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                        pointRadius: 0,
-                        hoverRadius: 0,
-                        fill: false,
+                        label: 'Low Estimate', data: estimate_range_low,
+                        borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)',
+                        pointRadius: 0, hoverRadius: 0, fill: false,
                     },
                     {
-                        label: 'Estimated EPS',
-                        data: estimated_eps,
-                        borderColor: '#007bff',
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        hoverRadius: 6,
-                        hoverBorderWidth: 2,
-                        tension: 0.3,
-                        fill: false,
+                        label: 'Estimated EPS', data: estimated_eps,
+                        borderColor: '#007bff', borderWidth: 2, pointRadius: 3,
+                        hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false,
                     },
                     {
-                        label: 'Actual EPS',
-                        data: actual_eps,
-                        borderColor: '#2ecc71',
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        hoverRadius: 6,
-                        hoverBorderWidth: 2,
-                        tension: 0.3,
-                        fill: false,
+                        label: 'Actual EPS', data: actual_eps,
+                        borderColor: '#2ecc71', borderWidth: 2, pointRadius: 3,
+                        hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false,
                     }
                 ]
             },
@@ -690,30 +670,32 @@ function initializeEpsChart() {
                     mode: 'index',
                     intersect: false,
                 },
-                // --- START: NEW HOVER LOGIC ---
-                // This function manually controls the highlighting effect.
+                // --- START: CORRECTED HOVER LOGIC ---
                 onHover: (event, chartElement, chart) => {
-                    if (chartElement.length) {
+                    // First, reset all points on all relevant datasets to their default radius.
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        if (datasetIndex > 1) { // Skip the transparent range-filler datasets
+                            const meta = chart.getDatasetMeta(datasetIndex);
+                            meta.data.forEach(point => point.options.radius = 3);
+                        }
+                    });
+
+                    // Then, if hovering over a point, enlarge only the points at that specific index.
+                    if (chartElement.length > 0) {
                         const activeIndex = chartElement[0].index;
-                        // Enlarge the points on all datasets at the hovered index
                         chart.data.datasets.forEach((dataset, datasetIndex) => {
-                            if (datasetIndex > 1) { // Skip the transparent range fillers
-                                chart.getDatasetMeta(datasetIndex).data[activeIndex].options.radius = 6;
+                            if (datasetIndex > 1) {
+                                const activeMetaPoint = chart.getDatasetMeta(datasetIndex).data[activeIndex];
+                                if (activeMetaPoint) {
+                                    activeMetaPoint.options.radius = 6;
+                                }
                             }
                         });
-                    } else {
-                        // When not hovering, reset all points to their original size
-                        chart.data.datasets.forEach((dataset, datasetIndex) => {
-                             if (datasetIndex > 1) {
-                                for (let i = 0; i < chart.getDatasetMeta(datasetIndex).data.length; i++) {
-                                     chart.getDatasetMeta(datasetIndex).data[i].options.radius = 3;
-                                }
-                             }
-                        });
                     }
+                    
                     chart.update();
                 },
-                // --- END: NEW HOVER LOGIC ---
+                // --- END: CORRECTED HOVER LOGIC ---
                 scales: {
                     x: { type: 'time', time: { unit: period === 'annual' ? 'year' : 'quarter' }, grid: { display: false } },
                     y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => '$' + val.toFixed(2) } }
