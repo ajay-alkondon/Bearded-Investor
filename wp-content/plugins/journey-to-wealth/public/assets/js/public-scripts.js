@@ -880,8 +880,8 @@ function initializeFinancialHealthSection($container) {
                     categoryPercentage: 0.7
                 }]
             },
-            options: chartOptions,
-            plugins: [ChartDataLabels]
+            options: chartOptions
+            // The root-level 'plugins' array was removed from here
         });
 
         const longTermCtx = document.getElementById('jtw-al-long-term-chart').getContext('2d');
@@ -897,8 +897,8 @@ function initializeFinancialHealthSection($container) {
                     categoryPercentage: 0.7
                 }]
             },
-            options: chartOptions,
-            plugins: [ChartDataLabels]
+            options: chartOptions
+            // The root-level 'plugins' array was removed from here
         });
     }
     // --- END: New Assets & Liabilities Chart Logic ---
