@@ -787,19 +787,23 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     // --- START: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
     $dcf_result_for_ui = $calculated_data['ui_valuation_breakdown'] ?? null;
     $key_metrics = $calculated_data['key_metrics'] ?? [];
-    $historical_ratios_data = $calculated_data['historical_ratios_data'] ?? []; // Get new data
-    $analyst_estimates = $calculated_data['analyst_estimates'] ?? []; // <-- THIS LINE WAS MISSING
-    // --- END: MODIFIED TO RECEIVE FULL $calculated_data OBJECT ---
+    $historical_ratios_data = $calculated_data['historical_ratios_data'] ?? [];
+    $analyst_estimates = $calculated_data['analyst_estimates'] ?? [];
 
+    // Prioritize the specific UI breakdown if available.
     $dcf_result_data = $dcf_result_for_ui['calculation_breakdown'] ?? null;
 
-    if (is_null($dcf_result_data)) {
-        $first_model_key = key($valuation_data);
-        $first_model_result = reset($valuation_data);
-        if (!$first_model_result || isset($first_model_result['error'])) {
-            return '<div class="jtw-content-section"><p>Could not generate valuation projection tables. Required data is missing or contains an error.</p></div>';
+    // If the specific UI breakdown is not available or empty, fall back to the first valid model.
+    if (empty($dcf_result_data)) {
+        $first_model_result = !empty($valuation_data) ? reset($valuation_data) : null;
+        if ($first_model_result && !isset($first_model_result['error'])) {
+            $dcf_result_data = $first_model_result['calculation_breakdown'] ?? null;
         }
-        $dcf_result_data = $first_model_result['calculation_breakdown'];
+    }
+
+    // If after all checks, we still have no data, then show the error.
+    if (empty($dcf_result_data)) {
+        return '<div class="jtw-content-section"><p>Could not generate valuation projection tables. Required data is missing or contains an error.</p></div>';
     }
     
     $component_ratios_json = isset($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_for_ui['calculation_breakdown']['component_ratios']['projection_ratios'])) : '[]';
