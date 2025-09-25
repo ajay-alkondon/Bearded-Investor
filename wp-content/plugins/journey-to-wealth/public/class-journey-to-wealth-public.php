@@ -797,7 +797,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $dcf_result_data = $dcf_is_valid ? ($dcf_result_for_ui['calculation_breakdown'] ?? []) : [];
 
     // This data is needed for the tables. We use the null coalescing operator to provide defaults if DCF data is missing.
-    $component_ratios_json = isset($dcf_result_data['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_data['component_ratios']['projection_ratios'])) : '[]';
+    //$component_ratios_json = isset($dcf_result_data['component_ratios']['projection_ratios']) ? esc_attr(json_encode($dcf_result_data['component_ratios']['projection_ratios'])) : '[]';
     $shares_outstanding = $dcf_result_data['shares_outstanding'] ?? 0;
 
     $analyst_revenue_current_year = $dcf_result_data['analyst_revenue_current_year'] ?? 0;
@@ -825,7 +825,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
             <h4><?php esc_html_e('1. Valuation', 'journey-to-wealth'); ?></h4>
         </div>
 
-        <div class="jtw-subsection-block" data-ratios='<?php echo $component_ratios_json; ?>' data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>">
+        <div class="jtw-subsection-block" data-ratios='<?php echo isset($dcf_result_data['component_ratios']['ttm_ratios']) ? esc_attr(json_encode($dcf_result_data['component_ratios']['ttm_ratios'])) : '[]'; ?>' data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>">
             <div class="jtw-sws-header jtw-header-flex">
                 <div>
                     <h2>1.1 Share Price vs Fair Value</h2>
