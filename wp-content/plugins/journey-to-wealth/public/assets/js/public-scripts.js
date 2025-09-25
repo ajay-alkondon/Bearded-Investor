@@ -280,7 +280,6 @@
         }
 
 const recalculateValuation = debounce(function() {
-    console.log("shares: " + sharesOutstanding);
     if (!sharesOutstanding || sharesOutstanding === 0) {
         return;
     }
@@ -293,7 +292,6 @@ const recalculateValuation = debounce(function() {
     
     // FIX: Target the parent div that contains ALL tables.
     const $allTablesContainer = $container.find('#section-intrinsic-valuation-content');
-    console.log($allTablesContainer);
 
     $allTablesContainer.find('input[data-metric="yearlyRevGrowth"]').each(function() {
         const $input = $(this);
@@ -619,7 +617,7 @@ const recalculateValuation = debounce(function() {
                         datasets: [
                             { label: 'Estimate Range', data: estimate_range_high, borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)', pointRadius: 0, hoverRadius: 0, fill: '+1' },
                             { label: 'Low Estimate', data: estimate_range_low, borderColor: 'transparent', backgroundColor: 'rgba(0, 122, 255, 0.2)', pointRadius: 0, hoverRadius: 0, fill: false },
-                            { label: 'Estimated EPS', data: estimated_eps, borderColor: '#007bff', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false },
+                            { label: 'Estimated EPS', data: estimated_eps, borderColor: '#007bff', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false, spanGaps: true },
                             { label: 'Actual EPS', data: actual_eps, borderColor: '#2ecc71', borderWidth: 2, pointRadius: 3, hoverRadius: 6, hoverBorderWidth: 2, tension: 0.3, fill: false }
                         ]
                     },
