@@ -280,9 +280,13 @@
         }
 
 const recalculateValuation = debounce(function() {
+
+    console.log("ratios: " + componentRatios);
     if (!componentRatios || $.isEmptyObject(componentRatios)) {
         return;
     }
+
+    console.log("shares: " + sharesOutstanding);
     if (!sharesOutstanding || sharesOutstanding === 0) {
         return;
     }
@@ -295,6 +299,7 @@ const recalculateValuation = debounce(function() {
     
     // FIX: Target the parent div that contains ALL tables.
     const $allTablesContainer = $container.find('#section-intrinsic-valuation-content');
+    console.log($allTablesContainer);
 
     $allTablesContainer.find('input[data-metric="yearlyRevGrowth"]').each(function() {
         const $input = $(this);
