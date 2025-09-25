@@ -2586,3 +2586,40 @@ Highcharts Sankey diagram and forcefully removes the rounded corners.
     ry: 0 !important;
 }
 /* --- END: Sankey Chart Border Radius Override --- */
+
+/* --- START: Assets & Liabilities Chart Layout --- */
+.jtw-assets-liabilities-chart-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    gap: 30px; /* Space between the two chart groups */
+    width: 100%;
+    height: 300px; /* Set a fixed height for the container */
+    padding: 20px 0;
+}
+
+.jtw-al-chart-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    width: 45%; /* Each chart takes up part of the container */
+    position: relative;
+}
+
+/* This ensures the canvas respects the container's height */
+.jtw-al-chart-group canvas {
+    max-height: 100%;
+}
+
+.jtw-al-chart-label {
+    margin-top: 15px;
+    font-weight: 600;
+    font-size: 1.1em;
+    color: var(--jtw-text-dark);
+}
+
+body.dark-mode .jtw-al-chart-label {
+    color: #e2e8f0;
+}
+/* --- END: Assets & Liabilities Chart Layout --- */
