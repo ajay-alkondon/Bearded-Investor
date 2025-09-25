@@ -1051,19 +1051,30 @@ private function build_financial_health_section_html($health_data) {
         <div class="jtw-section-header">
             <h4>4. Financial Health</h4>
         </div>
-        <div class="jtw-chart-controls">
-            <div class="jtw-period-toggle jtw-health-period-toggle">
-                <button class="jtw-period-button active" data-period="annual">Annual</button>
-                <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+
+        <div class="jtw-subsection-block">
+            <div class="jtw-sws-header">
+                <h2>4.1 Assets & Liabilities</h2>
             </div>
-            <div class="jtw-chart-filter-toggle jtw-health-chart-toggle">
-                <button class="jtw-category-button active" data-chart="income">Income</button>
-                <button class="jtw-category-button" data-chart="balance-sheet">Balance Sheet</button>
-                <button class="jtw-category-button" data-chart="cash-flow">Cash Flow</button>
-            </div>
+            <div class="jtw-assets-liabilities-chart-container">
+                </div>
         </div>
-        <div class="jtw-historical-charts-grid">
+
+        <div class="jtw-subsection-block">
+            <div class="jtw-chart-controls">
+                <div class="jtw-period-toggle jtw-health-period-toggle">
+                    <button class="jtw-period-button active" data-period="annual">Annual</button>
+                    <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+                </div>
+                <div class="jtw-chart-filter-toggle jtw-health-chart-toggle">
+                    <button class="jtw-category-button active" data-chart="income">Income</button>
+                    <button class="jtw-category-button" data-chart="balance-sheet">Balance Sheet</button>
+                    <button class="jtw-category-button" data-chart="cash-flow">Cash Flow</button>
+                </div>
             </div>
+            <div class="jtw-historical-charts-grid">
+                </div>
+        </div>
     </div>
     <script type="application/json" id="jtw-financial-health-data">
         <?php echo json_encode($health_data); ?>

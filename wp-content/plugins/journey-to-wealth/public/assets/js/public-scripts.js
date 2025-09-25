@@ -831,6 +831,78 @@ function initializeFinancialHealthSection($container) {
     if (!$dataScript.length) return;
 
     const rawData = JSON.parse($dataScript.html());
+    
+    // --- START: New Assets & Liabilities Chart Logic ---
+    function initializeAssetsLiabilitiesChart() {
+        const alData = rawData.assets_liabilities;
+        if (!alData || $.isEmptyObject(alData)) return;
+
+        const $alContainer = $container.find('.jtw-assets-liabilities-chart-container');
+        $alContainer.html(`
+            <div class="jtw-al-chart-group">
+                <canvas id="jtw-al-short-term-chart"></canvas>
+                <div class="jtw-al-chart-label">Short Term</div>
+            </div>
+            <div class="jtw-al-chart-group">
+                <canvas id="jtw-al-long-term-chart"></canvas>
+                <div class="jtw-al-chart-label">Long Term</div>
+            </div>
+        `);
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'x',
+            scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: (value) => 'US$' + formatLargeNumber(value, ''),
+                    color: '#fff',
+                    font: { weight: 'bold' }
+                }
+            }
+        };
+
+        const shortTermCtx = document.getElementById('jtw-al-short-term-chart').getContext('2d');
+        new Chart(shortTermCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Assets', 'Liabilities'],
+                datasets: [{
+                    label: 'Short Term',
+                    data: [alData.short_term_assets, alData.short_term_liabilities],
+                    backgroundColor: ['#3b82f6', '#60a5fa'],
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7
+                }]
+            },
+            options: chartOptions,
+            plugins: [ChartDataLabels]
+        });
+
+        const longTermCtx = document.getElementById('jtw-al-long-term-chart').getContext('2d');
+        new Chart(longTermCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Assets', 'Liabilities'],
+                datasets: [{
+                    label: 'Long Term',
+                    data: [alData.long_term_assets, alData.long_term_liabilities],
+                    backgroundColor: ['#2dd4bf', '#99f6e4'],
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7
+                }]
+            },
+            options: chartOptions,
+            plugins: [ChartDataLabels]
+        });
+    }
+    // --- END: New Assets & Liabilities Chart Logic ---
+
     const $grid = $container.find('.jtw-historical-charts-grid');
     let currentPeriod = 'annual';
     let currentCategory = 'income';
@@ -924,7 +996,8 @@ function initializeFinancialHealthSection($container) {
         renderCharts();
     });
 
-    renderCharts(); // Initial render
+    initializeAssetsLiabilitiesChart(); // Initial render for the new chart
+    renderCharts(); // Initial render for the historical charts
 }
 
 function initializeAnalyticalToolsSection($container) {
