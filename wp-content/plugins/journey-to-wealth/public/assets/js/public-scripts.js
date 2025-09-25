@@ -826,6 +826,107 @@ function initializeEpsChart($container) {
         initializeSankeyChart($container);
     }
 
+function initializeFinancialHealthSection($container) {
+    const $dataScript = $container.find('#jtw-financial-health-data');
+    if (!$dataScript.length) return;
+
+    const rawData = JSON.parse($dataScript.html());
+    const $grid = $container.find('.jtw-historical-charts-grid');
+    let currentPeriod = 'annual';
+    let currentCategory = 'income';
+    let charts = {};
+
+    const chartConfigs = {
+        income: [
+            { title: 'Revenue', key: 'revenue', type: 'bar', color: '#ffc107' },
+            { title: 'Net Income', key: 'net_income', type: 'bar', color: '#fd7e14' },
+            { title: 'EBITDA', key: 'ebitda', type: 'bar', color: '#82ca9d' },
+            { title: 'EPS', key: 'eps', type: 'line', color: '#20c997' }
+        ],
+        'balance-sheet': [
+            { title: 'Cash & Debt', key: 'cash-and-debt', type: 'bar', isStacked: true },
+            { title: 'Shares Outstanding', key: 'shares_outstanding', type: 'line', color: '#6f42c1' }
+        ],
+        'cash-flow': [
+            { title: 'Free Cash Flow', key: 'fcf', type: 'bar', color: '#17a2b8' },
+            { title: 'Dividend Payout', key: 'dividend', type: 'bar', color: '#ffc107' }
+        ]
+    };
+
+    function renderCharts() {
+        $grid.empty();
+        Object.values(charts).forEach(chart => chart.destroy());
+        charts = {};
+
+        const dataForPeriod = rawData[currentPeriod];
+        if (!dataForPeriod) return;
+
+        const chartsToRender = chartConfigs[currentCategory];
+
+        chartsToRender.forEach(config => {
+            const chartData = dataForPeriod[config.key];
+            if (!chartData) return;
+
+            const $item = $('<div class="jtw-chart-item"><h5>' + config.title + '</h5><div class="jtw-chart-wrapper"><canvas id="chart-' + config.key + '-' + currentPeriod + '"></canvas></div></div>');
+            $grid.append($item);
+            const ctx = $item.find('canvas')[0].getContext('2d');
+
+            let datasets;
+            if (config.isStacked) {
+                datasets = chartData.datasets.map((ds, index) => ({
+                    label: ds.label,
+                    data: ds.data,
+                    backgroundColor: ['#007bff', '#6c757d'][index],
+                }));
+            } else {
+                datasets = [{
+                    label: config.title,
+                    data: chartData.data,
+                    backgroundColor: config.color,
+                    borderColor: config.color,
+                    fill: config.type === 'line' ? false : true,
+                }];
+            }
+
+            charts[config.key] = new Chart(ctx, {
+                type: config.type,
+                data: {
+                    labels: chartData.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: config.isStacked },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { stacked: config.isStacked, grid: { display: false } },
+                        y: { stacked: config.isStacked, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: (val) => formatLargeNumber(val, '$', 1) } }
+                    }
+                }
+            });
+        });
+    }
+
+    $container.on('click', '.jtw-health-period-toggle .jtw-period-button', function() {
+        currentPeriod = $(this).data('period');
+        $container.find('.jtw-health-period-toggle .jtw-period-button').removeClass('active');
+        $(this).addClass('active');
+        renderCharts();
+    });
+
+    $container.on('click', '.jtw-health-chart-toggle .jtw-category-button', function() {
+        currentCategory = $(this).data('chart');
+        $container.find('.jtw-health-chart-toggle .jtw-category-button').removeClass('active');
+        $(this).addClass('active');
+        renderCharts();
+    });
+
+    renderCharts(); // Initial render
+}
+
 function initializeAnalyticalToolsSection($container) {
     // Peer Comparison Logic
     let peerDataFetched = false;
@@ -1169,6 +1270,8 @@ function initializeAnalyticalToolsSection($container) {
                                 // START: ADD NEW ELSE IF BLOCK
                                 } else if (section === 'past-performance') {
                                     initializePastPerformanceSection($placeholder);
+                                } else if (section === 'financial-health') {
+                                    initializeFinancialHealthSection($placeholder);
                                 } else if (section === 'analytical-tools') { // Renamed from 'key-metrics-ratios'
                                     initializeAnalyticalToolsSection($placeholder);
                                 }

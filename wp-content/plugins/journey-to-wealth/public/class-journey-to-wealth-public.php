@@ -129,6 +129,7 @@ public function render_analyzer_layout_shortcode( $atts ) {
                     <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
                     <div id="section-future-growth" class="jtw-content-section-placeholder" data-section="future-growth"></div>
                     <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
+                    <div id="section-financial-health" class="jtw-content-section-placeholder" data-section="financial-health"></div>
                     <div id="section-analytical-tools" class="jtw-content-section-placeholder" data-section="analytical-tools"></div>
                 </main>
             </div>
@@ -214,6 +215,9 @@ public function ajax_fetch_section_data() {
             break;
         case 'past-performance':
             $response_data['html'] = $this->build_past_performance_section_html($calculated_data);
+            break;
+        case 'financial-health':
+            $response_data['html'] = $this->build_financial_health_section_html($calculated_data['financial_health_data'] ?? []);
             break;
         case 'analytical-tools': // Renamed from 'key-metrics-ratios'
             $response_data['html'] = $this->build_analytical_tools_section_html($ticker, $calculated_data['key_metrics']);
@@ -1040,6 +1044,34 @@ private function build_past_performance_section_html($calculated_data) {
     return ob_get_clean();
 }
 
+private function build_financial_health_section_html($health_data) {
+    ob_start();
+    ?>
+    <div class="jtw-content-section" id="section-financial-health-content">
+        <div class="jtw-section-header">
+            <h4>4. Financial Health</h4>
+        </div>
+        <div class="jtw-chart-controls">
+            <div class="jtw-period-toggle jtw-health-period-toggle">
+                <button class="jtw-period-button active" data-period="annual">Annual</button>
+                <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+            </div>
+            <div class="jtw-chart-filter-toggle jtw-health-chart-toggle">
+                <button class="jtw-category-button active" data-chart="income">Income</button>
+                <button class="jtw-category-button" data-chart="balance-sheet">Balance Sheet</button>
+                <button class="jtw-category-button" data-chart="cash-flow">Cash Flow</button>
+            </div>
+        </div>
+        <div class="jtw-historical-charts-grid">
+            </div>
+    </div>
+    <script type="application/json" id="jtw-financial-health-data">
+        <?php echo json_encode($health_data); ?>
+    </script>
+    <?php
+    return ob_get_clean();
+}
+
     private function build_key_metric_valuations_section_html($ratios_data, $key_metrics) {
         if (empty($ratios_data)) {
             return ''; // Don't render the section if there's no data
@@ -1108,12 +1140,12 @@ private function build_analytical_tools_section_html($ticker, $primary_metrics) 
     ?>
     <div id="section-analytical-tools-content" class="jtw-content-section">
         <div class="jtw-section-header">
-            <h4>4. Analytical Tools</h4>
+            <h4>5. Analytical Tools</h4>
         </div>
         <div class="jtw-subsection-block">
             <div class="jtw-sws-header jtw-header-flex">
                 <div>
-                    <h2>4.1 Comparative Company Analysis</h2>
+                    <h2>5.1 Comparative Company Analysis</h2>
                 </div>
                 <div class="jtw-header-controls jtw-peer-controls-container">
                     <span><?php esc_html_e('Auto-suggest Peers', 'journey-to-wealth'); ?></span>
