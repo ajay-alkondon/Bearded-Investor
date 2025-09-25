@@ -2575,3 +2575,14 @@ body.dark-mode .jtw-modal .jtw-sws-modal-table .jtw-formula-vals {
     gap: 15px;
 }
 /* --- END: Tooltip Alignment Fix --- */
+
+/* --- START: Sankey Chart Border Radius Override --- */
+/*
+This rule targets the SVG path elements that create the links in the
+Highcharts Sankey diagram and forcefully removes the rounded corners.
+*/
+.highcharts-sankey-link {
+    rx: 0 !important;
+    ry: 0 !important;
+}
+/* --- END: Sankey Chart Border Radius Override --- */
