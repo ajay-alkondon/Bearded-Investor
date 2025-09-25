@@ -348,7 +348,7 @@
                 // FIX: Also set the data-raw-value attribute
                 $tablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]')
                     .text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel))
-                    .data('raw-value', projectedRevenue); 
+                    .attr('data-raw-value', projectedRevenue); 
                 previousRevenue = projectedRevenue;
 
                 const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
@@ -361,7 +361,7 @@
                 // FIX: Also set the data-raw-value attribute
                 $tablesContainer.find('.jtw-net-income-result[data-year="' + i + '"]')
                     .text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel))
-                    .data('raw-value', projectedNetIncome);
+                    .attr('data-raw-value', projectedNetIncome);
                 previousNetIncome = projectedNetIncome;
 
                 const netIncomeMargin = (projectedRevenue > 0) ? (projectedNetIncome / projectedRevenue) * 100 : 0;

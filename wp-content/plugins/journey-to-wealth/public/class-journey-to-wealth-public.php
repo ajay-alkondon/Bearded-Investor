@@ -817,7 +817,6 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $current_year_pe = ($current_year_eps > 0) ? $valuation_summary['current_price'] / $current_year_eps : 'N/A';
     $next_year_pe = ($analyst_eps_next_year > 0) ? $valuation_summary['current_price'] / $analyst_eps_next_year : 'N/A';
     $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'net_income_growth_current_year', 'current_year_eps', 'current_year_pe', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
-    
     ob_start();
     ?>
     <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>">
