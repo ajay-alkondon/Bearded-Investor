@@ -125,13 +125,11 @@ public function render_analyzer_layout_shortcode( $atts ) {
             <div class="jtw-content-container">
                 <main class="jtw-content-main">
                     <div id="jtw-currency-notice-placeholder"></div>
-                    
                     <div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div>
                     <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
-                    <div id="section-performance" class="jtw-content-section-placeholder" data-section="performance"></div>
-
+                    <div id="section-future-growth" class="jtw-content-section-placeholder" data-section="future-growth"></div>
                     <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
-                    <div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div>
+                    <div id="section-analytical-tools" class="jtw-content-section-placeholder" data-section="analytical-tools"></div>
                 </main>
             </div>
         </div>
@@ -211,14 +209,14 @@ public function ajax_fetch_section_data() {
             $this->store_and_map_discovered_company($ticker, $raw_data['overview']['Industry'], $raw_data['overview']['Sector']);
             $response_data['html'] = $this->build_overview_section_html($raw_data['overview'], $raw_data['quote']);
             break;
-        case 'performance': // ADD THIS NEW CASE
-            $response_data['html'] = $this->build_performance_section_html($calculated_data);
+        case 'future-growth': // ADD THIS NEW CASE
+            $response_data['html'] = $this->build_future_growth_section_html($calculated_data);
             break;
         case 'past-performance':
             $response_data['html'] = $this->build_past_performance_section_html($calculated_data);
             break;
-        case 'key-metrics-ratios':
-            $response_data['html'] = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
+        case 'analytical-tools': // Renamed from 'key-metrics-ratios'
+            $response_data['html'] = $this->build_analytical_tools_section_html($ticker, $calculated_data['key_metrics']);
             break;
     }
 
@@ -932,23 +930,23 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     return ob_get_clean();
 }
 
-private function build_performance_section_html($calculated_data) {
+private function build_future_growth_section_html($calculated_data) {
     // Extract data for both charts
     $revenue_forecast_data = $calculated_data['earnings_revenue_forecasts'] ?? [];
     $eps_forecast_data = $calculated_data['eps_growth_forecasts'] ?? [];
 
     ob_start();
     ?>
-    <div class="jtw-content-section" id="section-performance-content">
+    <div class="jtw-content-section" id="section-future-growth-content">
         <div class="jtw-section-header">
-            <h4>2. Performance</h4>
+            <h4>2. Future Growth</h4>
         </div>
         <div class="jtw-subsection-block">
             <div class="jtw-sws-header">
                 <h2>2.1 Earnings and Revenue Growth Forecasts</h2>
                 <p>This chart shows the company's historical and estimated future earnings and revenue, providing insight into its growth trajectory.</p>
             </div>
-
+            
             <?php 
             if (empty($revenue_forecast_data) || empty($revenue_forecast_data['chart_points_annual']['revenue'])) { 
             ?>
@@ -980,7 +978,7 @@ private function build_performance_section_html($calculated_data) {
                 <h2>2.2 EPS Growth Forecasts</h2>
                 <p>This chart shows historical reported EPS against analyst estimates, including the high and low range of forecasts.</p>
             </div>
-
+            
             <?php if (empty($eps_forecast_data) || (empty($eps_forecast_data['annual']['estimated_eps']) && empty($eps_forecast_data['quarterly']['estimated_eps']))) { ?>
                 <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
             <?php } else { ?>
@@ -1105,13 +1103,19 @@ private function build_past_performance_section_html($calculated_data) {
         return ob_get_clean();
     }
 
-    private function build_key_metrics_ratios_section_html($ticker, $primary_metrics) {
-        ob_start();
-        ?>
-        <div id="section-key-metrics-ratios-content" class="jtw-content-section">
-            <div class="jtw-section-header">
-                <h4><?php esc_html_e('Comparative Company Analysis', 'journey-to-wealth'); ?></h4>
-                <div class="jtw-peer-controls-container">
+private function build_analytical_tools_section_html($ticker, $primary_metrics) {
+    ob_start();
+    ?>
+    <div id="section-analytical-tools-content" class="jtw-content-section">
+        <div class="jtw-section-header">
+            <h4>4. Analytical Tools</h4>
+        </div>
+        <div class="jtw-subsection-block">
+            <div class="jtw-sws-header jtw-header-flex">
+                <div>
+                    <h2>4.1 Comparative Company Analysis</h2>
+                </div>
+                <div class="jtw-header-controls jtw-peer-controls-container">
                     <span><?php esc_html_e('Auto-suggest Peers', 'journey-to-wealth'); ?></span>
                     <label class="jtw-switch"><input type="checkbox" id="jtw-peer-toggle"><span class="jtw-slider round"></span></label>
                     <button id="jtw-compare-peers-btn" class="jtw-compare-button"><?php esc_html_e('Compare', 'journey-to-wealth'); ?></button>
@@ -1129,7 +1133,6 @@ private function build_past_performance_section_html($calculated_data) {
                     </thead>
                     <tbody>
                         <?php
-                        // --- START: UPDATED METRIC GROUPS ---
                         $metric_groups = [
                             'Relative Valuation' => [
                                 'PERatio' => ['label' => 'TTM P/E Ratio', 'suffix' => 'x'], 
@@ -1152,7 +1155,6 @@ private function build_past_performance_section_html($calculated_data) {
                                 'returnOnCapitalTTM' => ['label' => 'Return on Capital', 'suffix' => '%']
                             ],
                         ];
-                        // --- END: UPDATED METRIC GROUPS ---
                         foreach ($metric_groups as $group_name => $metrics) :
                         ?>
                             <tr class="jtw-metric-group-header"><td colspan="4"><?php echo esc_html($group_name); ?></td></tr>
@@ -1171,9 +1173,10 @@ private function build_past_performance_section_html($calculated_data) {
                 <div class="jtw-peer-error-message" style="display:none;"></div>
             </div>
         </div>
-        <?php
-        return ob_get_clean();
-    }
+    </div>
+    <?php
+    return ob_get_clean();
+}
 
 private function build_dcf_modal_content($result) {
     $data = $result['calculation_breakdown'] ?? [];
