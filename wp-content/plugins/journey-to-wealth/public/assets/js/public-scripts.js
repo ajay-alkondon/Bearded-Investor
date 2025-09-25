@@ -756,10 +756,10 @@ const recalculateValuation = debounce(function() {
                     keys: ['from', 'to', 'weight', 'custom'],
                     data: sankeyDataByYear[latestYear],
                     type: 'sankey',
-                    link: { borderRadius: 0 }, // This also ensures no rounding
                     name: 'Financial Flow',
                     nodeWidth: 30,
                     nodePadding: 120,
+                    borderRadius: 0, // FIX: This is the correct property for the nodes
                     dataLabels: {
                         enabled: true,
                         nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
