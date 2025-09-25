@@ -348,6 +348,7 @@ const recalculateValuation = debounce(function() {
         
         const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
         const projectedRevenue = previousRevenue * (1 + growthRate);
+        console.log(projectedRevenue);
         $allTablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]')
             .text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel))
             .attr('data-raw-value', projectedRevenue);
