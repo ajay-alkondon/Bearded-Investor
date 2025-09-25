@@ -832,7 +832,6 @@ function initializeFinancialHealthSection($container) {
 
     const rawData = JSON.parse($dataScript.html());
     
-    // --- START: New Assets & Liabilities Chart Logic ---
     function initializeAssetsLiabilitiesChart() {
         const alData = rawData.assets_liabilities;
         if (!alData || $.isEmptyObject(alData)) return;
@@ -849,6 +848,7 @@ function initializeFinancialHealthSection($container) {
             </div>
         `);
 
+        // --- START: Corrected Chart Options ---
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -857,15 +857,29 @@ function initializeFinancialHealthSection($container) {
             plugins: {
                 legend: { display: false },
                 tooltip: { enabled: false },
+                // Configure multiple data labels: one for the value, one for the category
                 datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    formatter: (value) => 'US$' + formatLargeNumber(value, ''),
-                    color: '#fff',
-                    font: { weight: 'bold' }
+                    // Config for the VALUE label (e.g., US$1.36b)
+                    value: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: -2, // Push it down slightly from the very top
+                        formatter: (value) => 'US$' + formatLargeNumber(value, ''),
+                        color: '#fff',
+                        font: { weight: '600', size: 13 }
+                    },
+                    // Config for the CATEGORY label (e.g., Assets)
+                    category: {
+                        anchor: 'center',
+                        align: 'center',
+                        formatter: (value, context) => context.chart.data.labels[context.dataIndex],
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        font: { weight: 'bold', size: 14 }
+                    }
                 }
             }
         };
+        // --- END: Corrected Chart Options ---
 
         const shortTermCtx = document.getElementById('jtw-al-short-term-chart').getContext('2d');
         new Chart(shortTermCtx, {
@@ -873,15 +887,14 @@ function initializeFinancialHealthSection($container) {
             data: {
                 labels: ['Assets', 'Liabilities'],
                 datasets: [{
-                    label: 'Short Term',
                     data: [alData.short_term_assets, alData.short_term_liabilities],
                     backgroundColor: ['#3b82f6', '#60a5fa'],
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.7
+                    barPercentage: 1.0,      // FIX: Make bars wider
+                    categoryPercentage: 0.7  // FIX: Adjust spacing
                 }]
             },
-            options: chartOptions
-            // The root-level 'plugins' array was removed from here
+            options: chartOptions,
+            plugins: [ChartDataLabels]
         });
 
         const longTermCtx = document.getElementById('jtw-al-long-term-chart').getContext('2d');
@@ -890,15 +903,14 @@ function initializeFinancialHealthSection($container) {
             data: {
                 labels: ['Assets', 'Liabilities'],
                 datasets: [{
-                    label: 'Long Term',
                     data: [alData.long_term_assets, alData.long_term_liabilities],
                     backgroundColor: ['#2dd4bf', '#99f6e4'],
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.7
+                    barPercentage: 1.0,      // FIX: Make bars wider
+                    categoryPercentage: 0.7  // FIX: Adjust spacing
                 }]
             },
-            options: chartOptions
-            // The root-level 'plugins' array was removed from here
+            options: chartOptions,
+            plugins: [ChartDataLabels]
         });
     }
     // --- END: New Assets & Liabilities Chart Logic ---
