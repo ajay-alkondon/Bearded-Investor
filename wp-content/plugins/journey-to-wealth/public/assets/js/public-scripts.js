@@ -748,7 +748,7 @@ const recalculateValuation = debounce(function() {
                 plotOptions: {
                     sankey: {
                         link: {
-                            borderRadius: 0
+                            borderRadius: 0 // This ensures no rounding on the links
                         }
                     }
                 },
@@ -756,7 +756,7 @@ const recalculateValuation = debounce(function() {
                     keys: ['from', 'to', 'weight', 'custom'],
                     data: sankeyDataByYear[latestYear],
                     type: 'sankey',
-                    link: { borderRadius: 0 },
+                    link: { borderRadius: 0 }, // This also ensures no rounding
                     name: 'Financial Flow',
                     nodeWidth: 30,
                     nodePadding: 120,
