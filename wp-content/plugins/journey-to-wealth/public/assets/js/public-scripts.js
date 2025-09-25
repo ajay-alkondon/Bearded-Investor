@@ -832,87 +832,108 @@ function initializeFinancialHealthSection($container) {
 
     const rawData = JSON.parse($dataScript.html());
     
-    function initializeAssetsLiabilitiesChart() {
-        const alData = rawData.assets_liabilities;
-        if (!alData || $.isEmptyObject(alData)) return;
+function initializeAssetsLiabilitiesChart() {
+    const alData = rawData.assets_liabilities;
+    if (!alData || $.isEmptyObject(alData)) return;
 
-        const $alContainer = $container.find('.jtw-assets-liabilities-chart-container');
-        $alContainer.html(`
-            <div class="jtw-al-chart-group">
-                <canvas id="jtw-al-short-term-chart"></canvas>
-                <div class="jtw-al-chart-label">Short Term</div>
-            </div>
-            <div class="jtw-al-chart-group">
-                <canvas id="jtw-al-long-term-chart"></canvas>
-                <div class="jtw-al-chart-label">Long Term</div>
-            </div>
-        `);
+    const $alContainer = $container.find('.jtw-assets-liabilities-chart-container');
+    // Add a third chart group for "Total"
+    $alContainer.html(`
+        <div class="jtw-al-chart-group">
+            <canvas id="jtw-al-short-term-chart"></canvas>
+            <div class="jtw-al-chart-label">Short Term</div>
+        </div>
+        <div class="jtw-al-chart-group">
+            <canvas id="jtw-al-long-term-chart"></canvas>
+            <div class="jtw-al-chart-label">Long Term</div>
+        </div>
+        <div class="jtw-al-chart-group">
+            <canvas id="jtw-al-total-chart"></canvas>
+            <div class="jtw-al-chart-label">Total</div>
+        </div>
+    `);
 
-        // --- START: Corrected Chart Options ---
-        const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'x',
-            scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: false },
-                // Configure multiple data labels: one for the value, one for the category
-                datalabels: {
-                    // Config for the VALUE label (e.g., US$1.36b)
-                    value: {
-                        anchor: 'end',
-                        align: 'top',
-                        offset: -2, // Push it down slightly from the very top
-                        formatter: (value) => 'US$' + formatLargeNumber(value, ''),
-                        color: '#fff',
-                        font: { weight: '600', size: 13 }
-                    },
-                    // Config for the CATEGORY label (e.g., Assets)
-                    category: {
-                        anchor: 'center',
-                        align: 'center',
-                        formatter: (value, context) => context.chart.data.labels[context.dataIndex],
-                        color: 'rgba(255, 255, 255, 0.9)',
-                        font: { weight: 'bold', size: 14 }
-                    }
+    // Define a reusable options object with the correct datalabel configuration
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'x',
+        scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+        plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false },
+            datalabels: {
+                // Config for the VALUE label (e.g., US$1.36b) on top
+                value: {
+                    anchor: 'end',
+                    align: 'top',
+                    offset: -2,
+                    formatter: (value) => 'US$' + formatLargeNumber(value, ''),
+                    color: '#fff',
+                    font: { weight: '600', size: 13 }
+                },
+                // Config for the CATEGORY label (e.g., Assets) in the center
+                category: {
+                    anchor: 'center',
+                    align: 'center',
+                    formatter: (value, context) => context.chart.data.labels[context.dataIndex],
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    font: { weight: 'bold', size: 14 }
                 }
             }
-        };
-        // --- END: Corrected Chart Options ---
+        }
+    };
 
-        const shortTermCtx = document.getElementById('jtw-al-short-term-chart').getContext('2d');
-        new Chart(shortTermCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Assets', 'Liabilities'],
-                datasets: [{
-                    data: [alData.short_term_assets, alData.short_term_liabilities],
-                    backgroundColor: ['#3b82f6', '#60a5fa'],
-                    barPercentage: 1.0,      // FIX: Make bars wider
-                    categoryPercentage: 0.7  // FIX: Adjust spacing
-                }]
-            },
-            options: chartOptions,
-            plugins: [ChartDataLabels]
-        });
+    // --- Create the three charts ---
 
-        const longTermCtx = document.getElementById('jtw-al-long-term-chart').getContext('2d');
-        new Chart(longTermCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Assets', 'Liabilities'],
-                datasets: [{
-                    data: [alData.long_term_assets, alData.long_term_liabilities],
-                    backgroundColor: ['#2dd4bf', '#99f6e4'],
-                    barPercentage: 1.0,      // FIX: Make bars wider
-                    categoryPercentage: 0.7  // FIX: Adjust spacing
-                }]
-            },
-            options: chartOptions,
-            plugins: [ChartDataLabels]
-        });
-    }
+    const shortTermCtx = document.getElementById('jtw-al-short-term-chart').getContext('2d');
+    new Chart(shortTermCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Assets', 'Liabilities'],
+            datasets: [{
+                data: [alData.short_term_assets, alData.short_term_liabilities],
+                backgroundColor: ['#3b82f6', '#60a5fa'],
+                barPercentage: 1.0,
+                categoryPercentage: 0.7
+            }]
+        },
+        options: chartOptions,
+        plugins: [ChartDataLabels]
+    });
+
+    const longTermCtx = document.getElementById('jtw-al-long-term-chart').getContext('2d');
+    new Chart(longTermCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Assets', 'Liabilities'],
+            datasets: [{
+                data: [alData.long_term_assets, alData.long_term_liabilities],
+                backgroundColor: ['#2dd4bf', '#99f6e4'],
+                barPercentage: 1.0,
+                categoryPercentage: 0.7
+            }]
+        },
+        options: chartOptions,
+        plugins: [ChartDataLabels]
+    });
+
+    const totalCtx = document.getElementById('jtw-al-total-chart').getContext('2d');
+    new Chart(totalCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Assets', 'Liabilities'],
+            datasets: [{
+                data: [alData.total_assets, alData.total_liabilities],
+                backgroundColor: ['#8b5cf6', '#c4b5fd'],
+                barPercentage: 1.0,
+                categoryPercentage: 0.7
+            }]
+        },
+        options: chartOptions,
+        plugins: [ChartDataLabels]
+    });
+}
     // --- END: New Assets & Liabilities Chart Logic ---
 
     const $grid = $container.find('.jtw-historical-charts-grid');
