@@ -793,7 +793,7 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
 
     // Check for valid DCF data but DON'T return early.
     $dcf_is_valid = $dcf_result_for_ui && empty($dcf_result_for_ui['error']);
-    var_dump($dcf_result_for_ui['error']);
+    var_dump($calculated_data['ui_valuation_breakdown']);
     $dcf_result_data = $dcf_is_valid ? ($dcf_result_for_ui['calculation_breakdown'] ?? []) : [];
 
     // This data is needed for the tables. We use the null coalescing operator to provide defaults if DCF data is missing.
