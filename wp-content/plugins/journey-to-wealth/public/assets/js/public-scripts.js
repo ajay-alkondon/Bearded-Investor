@@ -345,7 +345,10 @@
                 
                 const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
                 const projectedRevenue = previousRevenue * (1 + growthRate);
-                $tablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel));
+                // FIX: Also set the data-raw-value attribute
+                $tablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]')
+                    .text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel))
+                    .data('raw-value', projectedRevenue); 
                 previousRevenue = projectedRevenue;
 
                 const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
@@ -354,8 +357,11 @@
                 if (projectedNetIncome > projectedRevenue) {
                     projectedNetIncome = projectedRevenue;
                 }
-                
-                $tablesContainer.find('.jtw-net-income-result[data-year="' + i + '"]').text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel));
+
+                // FIX: Also set the data-raw-value attribute
+                $tablesContainer.find('.jtw-net-income-result[data-year="' + i + '"]')
+                    .text(formatNumberForDisplay(projectedNetIncome, revenueUnitLabel))
+                    .data('raw-value', projectedNetIncome);
                 previousNetIncome = projectedNetIncome;
 
                 const netIncomeMargin = (projectedRevenue > 0) ? (projectedNetIncome / projectedRevenue) * 100 : 0;
