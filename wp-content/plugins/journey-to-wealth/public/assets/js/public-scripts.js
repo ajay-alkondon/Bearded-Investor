@@ -280,12 +280,6 @@
         }
 
 const recalculateValuation = debounce(function() {
-
-    console.log("ratios: " + componentRatios);
-    if (!componentRatios || $.isEmptyObject(componentRatios)) {
-        return;
-    }
-
     console.log("shares: " + sharesOutstanding);
     if (!sharesOutstanding || sharesOutstanding === 0) {
         return;
