@@ -819,13 +819,13 @@ private function build_intrinsic_valuation_section_html($valuation_data, $valuat
     $table_args = compact('current_year', 'current_year_revenue_growth', 'analyst_revenue_current_year', 'divisor', 'unit', 'current_year_net_income', 'net_income_growth_current_year', 'current_year_eps', 'current_year_pe', 'analyst_revenue_next_year', 'revenue_growth_next_year', 'net_income_next_year', 'net_income_growth_next_year', 'analyst_eps_next_year', 'next_year_pe');
     ob_start();
     ?>
-    <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>">
-        
+    <div id="section-intrinsic-valuation-content" class="jtw-content-section" data-current-price="<?php echo esc_attr($valuation_summary['current_price']); ?>" data-ticker="<?php echo esc_attr($details['Symbol'] ?? ''); ?>" data-ratios='<?php echo $component_ratios_json; ?>' data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>">
+
         <div class="jtw-section-header">
             <h4><?php esc_html_e('1. Valuation', 'journey-to-wealth'); ?></h4>
         </div>
 
-        <div class="jtw-subsection-block" data-ratios='<?php echo isset($dcf_result_data['component_ratios']['ttm_ratios']) ? esc_attr(json_encode($dcf_result_data['component_ratios']['ttm_ratios'])) : '[]'; ?>' data-shares-outstanding="<?php echo esc_attr($shares_outstanding); ?>">
+        <div class="jtw-subsection-block">
             <div class="jtw-sws-header jtw-header-flex">
                 <div>
                     <h2>1.1 Share Price vs Fair Value</h2>
