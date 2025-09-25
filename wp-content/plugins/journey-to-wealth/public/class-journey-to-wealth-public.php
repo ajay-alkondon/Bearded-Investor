@@ -129,6 +129,8 @@ public function render_analyzer_layout_shortcode( $atts ) {
                     <div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div>
                     <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
                     <div id="section-performance" class="jtw-content-section-placeholder" data-section="performance"></div>
+
+                    <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
                     <div id="section-key-metrics-ratios" class="jtw-content-section-placeholder" data-section="key-metrics-ratios"></div>
                 </main>
             </div>
@@ -211,6 +213,9 @@ public function ajax_fetch_section_data() {
             break;
         case 'performance': // ADD THIS NEW CASE
             $response_data['html'] = $this->build_performance_section_html($calculated_data);
+            break;
+        case 'past-performance':
+            $response_data['html'] = $this->build_past_performance_section_html($calculated_data);
             break;
         case 'key-metrics-ratios':
             $response_data['html'] = $this->build_key_metrics_ratios_section_html($ticker, $calculated_data['key_metrics']);
@@ -931,7 +936,6 @@ private function build_performance_section_html($calculated_data) {
     // Extract data for both charts
     $revenue_forecast_data = $calculated_data['earnings_revenue_forecasts'] ?? [];
     $eps_forecast_data = $calculated_data['eps_growth_forecasts'] ?? [];
-    $sankey_data = $calculated_data['sankey_data'] ?? [];
 
     ob_start();
     ?>
@@ -944,9 +948,8 @@ private function build_performance_section_html($calculated_data) {
                 <h2>2.1 Earnings and Revenue Growth Forecasts</h2>
                 <p>This chart shows the company's historical and estimated future earnings and revenue, providing insight into its growth trajectory.</p>
             </div>
-            
+
             <?php 
-            // --- FIX: Check for data inside the new 'chart_points_annual' key ---
             if (empty($revenue_forecast_data) || empty($revenue_forecast_data['chart_points_annual']['revenue'])) { 
             ?>
                 <div class="jtw-notice notice-info"><p>Earnings and Revenue forecast data is not available for this stock.</p></div>
@@ -977,7 +980,7 @@ private function build_performance_section_html($calculated_data) {
                 <h2>2.2 EPS Growth Forecasts</h2>
                 <p>This chart shows historical reported EPS against analyst estimates, including the high and low range of forecasts.</p>
             </div>
-            
+
             <?php if (empty($eps_forecast_data) || (empty($eps_forecast_data['annual']['estimated_eps']) && empty($eps_forecast_data['quarterly']['estimated_eps']))) { ?>
                 <div class="jtw-notice notice-info"><p>EPS forecast data is not available for this stock.</p></div>
             <?php } else { ?>
@@ -1003,10 +1006,22 @@ private function build_performance_section_html($calculated_data) {
                 </div>
             <?php } ?>
         </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
 
+private function build_past_performance_section_html($calculated_data) {
+    $sankey_data = $calculated_data['sankey_data'] ?? [];
+    ob_start();
+    ?>
+    <div class="jtw-content-section" id="section-past-performance-content">
+        <div class="jtw-section-header">
+            <h4>3. Past Performance</h4>
+        </div>
         <div class="jtw-subsection-block">
             <div class="jtw-sws-header">
-                <h2>2.3 Revenue & Expenses Breakdown</h2>
+                <h2>3.1 Revenue & Expenses Breakdown</h2>
                 <p>How the company makes and spends money, based on latest reported earnings on an LTM basis.</p>
             </div>
 

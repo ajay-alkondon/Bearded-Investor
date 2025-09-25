@@ -708,6 +708,12 @@ const recalculateValuation = debounce(function() {
             });
         }
 
+        // --- Main execution ---
+        initializeRevenueChart($container);
+        initializeEpsChart($container);
+    }
+
+    function initializePastPerformanceSection($container) {
         function initializeSankeyChart($container) {
             const $chartContainer = $container.find('#jtw-sankey-chart-container');
             const $dataScript = $container.find('#jtw-sankey-chart-data');
@@ -718,8 +724,7 @@ const recalculateValuation = debounce(function() {
             if (availableYears.length === 0) return;
 
             const latestYear = availableYears[availableYears.length - 1];
-            
-            // --- START: SLIDER HTML GENERATION ---
+
             const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
             let sliderHtml = '<div class="jtw-year-slider-labels">';
             availableYears.forEach(year => {
@@ -728,7 +733,6 @@ const recalculateValuation = debounce(function() {
             sliderHtml += '</div>';
             sliderHtml += `<input type="range" min="0" max="${availableYears.length - 1}" value="${availableYears.length - 1}" class="jtw-year-slider" id="jtw-sankey-year-slider">`;
             $sliderContainer.html(sliderHtml);
-            // --- END: SLIDER HTML GENERATION ---
 
             const formatSankeyTooltip = function() {
                 if (this.point.isNode) {
@@ -741,17 +745,10 @@ const recalculateValuation = debounce(function() {
                 }
                 return tooltipText;
             };
-            
+
             const sankeyChart = Highcharts.chart($chartContainer[0], {
                 chart: { backgroundColor: 'transparent' },
                 title: { text: null },
-                plotOptions: {
-                    sankey: {
-                        link: {
-                            borderRadius: 0 // This ensures no rounding on the links
-                        }
-                    }
-                },
                 series: [{
                     keys: ['from', 'to', 'weight', 'custom'],
                     data: sankeyDataByYear[latestYear],
@@ -759,7 +756,7 @@ const recalculateValuation = debounce(function() {
                     name: 'Financial Flow',
                     nodeWidth: 30,
                     nodePadding: 120,
-                    borderRadius: 0, // FIX: This is the correct property for the nodes
+                    borderRadius: 0,
                     dataLabels: {
                         enabled: true,
                         nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
@@ -782,7 +779,6 @@ const recalculateValuation = debounce(function() {
                 credits: { enabled: false }
             });
 
-            // --- START: SLIDER EVENT LISTENER ---
             $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
                 const selectedYear = availableYears[$(this).val()];
                 if (sankeyDataByYear[selectedYear]) {
@@ -791,14 +787,9 @@ const recalculateValuation = debounce(function() {
                 $sliderContainer.find('.jtw-year-label').removeClass('active');
                 $sliderContainer.find(`.jtw-year-label[data-year="${selectedYear}"]`).addClass('active');
             });
-            // --- END: SLIDER EVENT LISTENER ---
 
             $sliderContainer.find(`.jtw-year-label[data-year="${latestYear}"]`).addClass('active');
         }
-
-        // --- Main execution ---
-        initializeRevenueChart($container);
-        initializeEpsChart($container);
         initializeSankeyChart($container);
     }
 
@@ -1193,6 +1184,9 @@ const recalculateValuation = debounce(function() {
                                     initializeValuationSection($placeholder); 
                                 } else if (section === 'performance') {
                                     initializePerformanceSection($placeholder);
+                                // START: ADD NEW ELSE IF BLOCK
+                                } else if (section === 'past-performance') {
+                                    initializePastPerformanceSection($placeholder);
                                 } else if (section === 'key-metrics-ratios') {
                                     initializeKeyMetricsRatiosSection($placeholder);
                                 }
