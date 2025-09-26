@@ -1299,7 +1299,7 @@ function initializeAnalyticalToolsSection($container) {
                         plugins: {
                             legend: { display: false },
                             tooltip: { 
-                                enabled: false, 
+                                enabled: true, 
                                 external: externalTooltipHandler 
                             }
                         }
