@@ -863,26 +863,39 @@ function initializeFinancialHealthSection($container) {
                 tooltip: { enabled: false },
                 // This is the correct, detailed configuration for the datalabels
                 datalabels: {
-                    display: true, // Make sure datalabels are displayed by default
+                    // This is the default datalabel configuration for *all* labels.
+                    // We will override 'display' for individual label types if needed.
+                    color: 'rgba(255, 255, 255, 0.9)', // Default color for labels inside bars
 
-                    // Specific configuration for the VALUE label (on top of the bar)
+                    // --- Label for Value (above the bar) ---
+                    // This configuration tells Chart.js Datalabels to create a label
+                    // specifically for the value, positioned above the bar.
+                    // The actual styling (left-align, color) will be handled by CSS.
                     value: {
-                        display: true, // Explicitly enable this sub-plugin
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 4,
+                        align: 'left', // Align to the left within its own rendering area
+                        anchor: 'end', // Position at the end (top) of the bar
+                        offset: 10, // Offset from the end of the bar
                         formatter: (value) => 'US$' + formatLargeNumber(value, ''),
-                        color: '#fff',
-                        font: { weight: '600', size: 13 }
+                        font: { weight: '600', size: 13 },
+                        // Use a custom class for CSS styling
+                        // This requires a minor modification to the ChartDataLabels plugin or custom rendering
+                        // For simplicity and direct control, we'll assign color here and use CSS for alignment.
+                        color: (context) => {
+                            // Determine color based on dark mode or light mode
+                            return $('body').hasClass('dark-mode') ? '#e2e8f0' : '#475569';
+                        },
                     },
-                    // Specific configuration for the CATEGORY label (inside the bar)
+
+                    // --- Label for Category (inside the bar) ---
+                    // This configuration tells Chart.js Datalabels to create a label
+                    // specifically for the category name, positioned inside the bar.
                     category: {
-                        display: true, // Explicitly enable this sub-plugin
+                        align: 'center', // Center inside the bar
                         anchor: 'center',
-                        align: 'center',
+                        offset: 0,
                         formatter: (value, context) => context.chart.data.labels[context.dataIndex],
-                        color: 'rgba(255, 255, 255, 0.9)',
-                        font: { weight: 'bold', size: 14 }
+                        font: { weight: 'bold', size: 14 },
+                        color: '#fff' // Always white for contrast inside the bar
                     }
                 }
             }

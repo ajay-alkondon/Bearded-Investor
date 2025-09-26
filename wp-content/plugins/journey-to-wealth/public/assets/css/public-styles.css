@@ -2623,3 +2623,30 @@ body.dark-mode .jtw-al-chart-label {
     color: #e2e8f0;
 }
 /* --- END: Assets & Liabilities Chart Layout --- */
+
+/* --- START: Datalabels Specific Styling for Assets & Liabilities Chart --- */
+
+/* Style for the value labels (above the bar) */
+.jtw-assets-liabilities-chart-container .chartjs-datalabels-group .chartjs-datalabels-item[data-label="value"] {
+    /* Adjust position to truly left-align above the bar. */
+    /* This makes the label's left edge align with the bar's left edge */
+    transform: translateX(-50%) !important; /* Counteract default centering by datalabels */
+}
+
+/* Style for the category labels (inside the bar) */
+.jtw-assets-liabilities-chart-container .chartjs-datalabels-group .chartjs-datalabels-item[data-label="category"] {
+    color: #ffffff !important; /* Ensure white color inside bars */
+    font-weight: bold !important;
+}
+
+/* Ensure the light color for value labels in dark mode */
+body.dark-mode .jtw-assets-liabilities-chart-container .chartjs-datalabels-group .chartjs-datalabels-item[data-label="value"] {
+    color: #e2e8f0 !important;
+}
+
+/* Ensure the dark color for value labels in light mode */
+body:not(.dark-mode) .jtw-assets-liabilities-chart-container .chartjs-datalabels-group .chartjs-datalabels-item[data-label="value"] {
+    color: #475569 !important;
+}
+
+/* --- END: Datalabels Specific Styling for Assets & Liabilities Chart --- */
