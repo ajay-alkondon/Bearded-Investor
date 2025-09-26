@@ -428,7 +428,8 @@ const recalculateValuation = debounce(function() {
     }
 
 function initializeFutureGrowthSection($container) {
-function initializeRevenueChart($container) {
+
+    function initializeRevenueChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
     if (!$chartCanvas.length) return;
 
@@ -445,13 +446,25 @@ function initializeRevenueChart($container) {
 
         const periodKey = period === 'annual' ? 'chart_points_annual' : 'chart_points_quarterly';
         const periodData = parsedData[periodKey] || {};
-        const forecast_start_date = parsedData.forecast_start_date; // Always use the full date for logic
+        const forecast_start_date = parsedData.forecast_start_date; 
 
-        // --- START: Corrected Chart Configuration ---
-        const allLabels = [...new Set(periodData.revenue.map(d => d.x))].sort();
+        const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
+        const revenue = (periodData.revenue || []).filter(isValidDate);
+        const earnings = (periodData.earnings || []).filter(isValidDate);
+        const fcf = (periodData.fcf || []).filter(isValidDate);
+        const op_cash = (periodData.op_cash || []).filter(isValidDate);
+        
+        // --- START: Corrected Label Generation ---
+        // FIX: Rebuild the master list of labels from ALL FOUR data series to prevent misalignment and null/1969 dates.
+        const allLabels = [...new Set([
+            ...revenue.map(d => d.x), 
+            ...earnings.map(d => d.x), 
+            ...fcf.map(d => d.x), 
+            ...op_cash.map(d => d.x)
+        ])].sort();
 
         const datasets = ['revenue', 'earnings', 'fcf', 'op_cash'].map((key, index) => {
-            const seriesData = periodData[key] || [];
+            const seriesData = {revenue, earnings, fcf, op_cash}[key] || [];
             const dataMap = new Map(seriesData.map(d => [d.x, d.y]));
             return {
                 label: {revenue: 'Revenue', earnings: 'Earnings', fcf: 'Free Cash Flow', op_cash: 'Cash From Op'}[key],
@@ -459,6 +472,7 @@ function initializeRevenueChart($container) {
                 backgroundColor: ['#60a5fa', '#10b981', '#2dd4bf', '#f59e0b'][index]
             };
         });
+        // --- END: Corrected Label Generation ---
 
         let maxYValue = -Infinity;
         for (let i = 0; i < allLabels.length; i++) {
@@ -470,9 +484,9 @@ function initializeRevenueChart($container) {
         if (maxYValue === -Infinity || maxYValue === 0) { maxYValue = 1; }
         const labelYPosition = maxYValue * 0.95;
         
-        // Determine the forecast line value based on period type
+        // FIX: Correctly determine the value for the forecast line based on period type
         const forecastLineValue = period === 'annual' && forecast_start_date 
-                                  ? forecast_start_date.substring(0, 4) 
+                                  ? String(new Date(forecast_start_date).getFullYear())
                                   : forecast_start_date;
         const annotationsAreVisible = !!forecastLineValue;
         
@@ -486,7 +500,6 @@ function initializeRevenueChart($container) {
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     x: {
-                        // FIX: Use 'category' for annual, 'time' for quarterly
                         type: period === 'annual' ? 'category' : 'time', 
                         time: period === 'quarterly' ? { unit: 'quarter' } : undefined,
                         grid: { display: false },
@@ -500,7 +513,10 @@ function initializeRevenueChart($container) {
                 },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { enabled: false, external: externalTooltipHandler },
+                    tooltip: {
+                        enabled: false,
+                        external: externalTooltipHandler
+                    },
                     annotation: {
                         annotations: {
                             forecastLine: {
@@ -512,65 +528,58 @@ function initializeRevenueChart($container) {
                                 borderWidth: 1,
                                 borderDash: [6, 6],
                             },
-                                pastLabel: {
-                                    display: annotationsAreVisible,
-                                    type: 'label',
-                                    xValue: forecast_start_date,
-                                    yValue: labelYPosition,
-                                    content: 'Past',
-                                    color: '#aaa',
-                                    font: { size: 12 },
-                                    xAdjust: -50,
-                                    yAdjust: -15,
-                                    textAlign: 'right',
-                                },
-                                forecastLabel: {
-                                    display: annotationsAreVisible,
-                                    type: 'label',
-                                    xValue: forecast_start_date,
-                                    yValue: labelYPosition,
-                                    content: 'Analysts Forecasts',
-                                    color: '#aaa',
-                                    font: { size: 12 },
-                                    xAdjust: 50,
-                                    yAdjust: -15,
-                                    textAlign: 'left',
-                                }
+                            pastLabel: {
+                                display: annotationsAreVisible,
+                                type: 'label',
+                                xValue: forecastLineValue,
+                                yValue: labelYPosition,
+                                content: 'Past',
+                                color: '#aaa',
+                                font: { size: 12 },
+                                xAdjust: -10,
+                                textAlign: 'right',
+                            },
+                            forecastLabel: {
+                                display: annotationsAreVisible,
+                                type: 'label',
+                                xValue: forecastLineValue,
+                                yValue: labelYPosition,
+                                content: 'Analysts Forecasts',
+                                color: '#aaa',
+                                font: { size: 12 },
+                                xAdjust: 10,
+                                textAlign: 'left',
                             }
                         }
                     }
                 }
-            });
-        }
-
-        drawRevenueChart('annual');
-
-        $container.find('.jtw-revenue-period-toggle .jtw-period-button').on('click', function() {
-            const $button = $(this);
-            if ($button.hasClass('active')) return;
-            $container.find('.jtw-revenue-period-toggle .jtw-period-button').removeClass('active');
-            $button.addClass('active');
-
-            // --- START: Reset Toggles ---
-            // Find all legend items for this chart and reset them to the active (visible) state.
-            $container.find('.jtw-chart-legend .jtw-legend-item[data-chart-id="jtw-earnings-revenue-forecast-chart"]').addClass('active');
-            // --- END: Reset Toggles ---
-
-            drawRevenueChart($button.data('period'));
-        });
-
-        $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-earnings-revenue-forecast-chart"]', function() {
-            const $item = $(this);
-            const datasetIndex = $item.data('dataset-index');
-            
-            $item.toggleClass('active');
-            if (revenueChart) {
-                const isVisible = revenueChart.isDatasetVisible(datasetIndex);
-                revenueChart.setDatasetVisibility(datasetIndex, !isVisible);
-                revenueChart.update();
             }
         });
     }
+
+    drawRevenueChart('annual');
+
+    $container.find('.jtw-revenue-period-toggle .jtw-period-button').on('click', function() {
+        const $button = $(this);
+        if ($button.hasClass('active')) return;
+        $container.find('.jtw-revenue-period-toggle .jtw-period-button').removeClass('active');
+        $button.addClass('active');
+        $container.find('.jtw-chart-legend .jtw-legend-item[data-chart-id="jtw-earnings-revenue-forecast-chart"]').addClass('active');
+        drawRevenueChart($button.data('period'));
+    });
+
+    $container.find('.jtw-chart-legend').on('click', '.jtw-legend-item[data-chart-id="jtw-earnings-revenue-forecast-chart"]', function() {
+        const $item = $(this);
+        const datasetIndex = $item.data('dataset-index');
+        
+        $item.toggleClass('active');
+        if (revenueChart) {
+            const isVisible = revenueChart.isDatasetVisible(datasetIndex);
+            revenueChart.setDatasetVisibility(datasetIndex, !isVisible);
+            revenueChart.update();
+        }
+    });
+}
 
     function initializeEpsChart($container) {
         const $chartCanvas = $container.find('#jtw-eps-growth-forecast-chart');
