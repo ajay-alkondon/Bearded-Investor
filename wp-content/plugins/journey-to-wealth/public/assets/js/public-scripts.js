@@ -764,10 +764,8 @@ function initializeSankeyChart($container) {
     const availableYears = Object.keys(sankeyDataByYear).sort();
     if (availableYears.length === 0) return;
 
-    // --- START: New Draggable Slider Implementation ---
     const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
     
-    // Build the HTML for the new slider
     let labelsHtml = '';
     availableYears.forEach(year => {
         const yearLabel = year.replace(' (Est.)', '<em>e</em>');
@@ -788,12 +786,40 @@ function initializeSankeyChart($container) {
     const yearCount = availableYears.length;
     let activeIndex = yearCount - 1;
 
-    const sankeyChart = Highcharts.chart($chartContainer[0], {
+    // --- START: Corrected Code Order ---
+    // 1. Declare the sankeyChart variable first.
+    let sankeyChart;
+
+    // 2. Define the functions that will use the chart.
+    function updateChartAndSlider(index, animate) {
+        if (index < 0 || index >= yearCount) return;
+        activeIndex = index;
+        const selectedYear = availableYears[activeIndex];
+
+        // This check prevents errors if the chart hasn't been created yet.
+        if (sankeyChart && sankeyDataByYear[selectedYear]) {
+            sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
+        }
+
+        const stepWidth = $slider.width() / yearCount;
+        const thumbWidth = $thumb.width();
+        const newLeft = (index * stepWidth) + (stepWidth / 2) - (thumbWidth / 2);
+        
+        if (animate) {
+            $thumb.css('transition', 'left 0.3s ease');
+        } else {
+            $thumb.css('transition', 'none');
+        }
+        $thumb.css('left', `${newLeft}px`);
+    }
+
+    // 3. Now, create the chart and assign it to the sankeyChart variable.
+    sankeyChart = Highcharts.chart($chartContainer[0], {
         chart: { backgroundColor: 'transparent' },
         title: { text: null },
         series: [{
             keys: ['from', 'to', 'weight', 'custom'],
-            data: sankeyDataByYear[latestYear],
+            data: sankeyDataByYear[availableYears[activeIndex]],
             type: 'sankey',
             name: 'Financial Flow',
             nodeWidth: 30,
@@ -813,37 +839,26 @@ function initializeSankeyChart($container) {
             ]
         }],
         tooltip: {
-            formatter: formatSankeyTooltip,
+            formatter: function() {
+                if (this.point.isNode) {
+                    return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
+                }
+                const { from, to, weight, custom: percentage } = this.point;
+                let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
+                if (percentage) {
+                    tooltipText += `<br/>${percentage} of ${from}`;
+                }
+                return tooltipText;
+            },
             backgroundColor: 'rgba(30, 41, 59, 0.9)',
             borderColor: 'rgba(255, 255, 255, 0.1)',
             style: { color: '#FFFFFF' }
         },
         credits: { enabled: false }
     });
+    // --- END: Corrected Code Order ---
 
-    // Function to update the chart and slider position
-    function updateChartAndSlider(index, animate) {
-        if (index < 0 || index >= yearCount) return;
-        activeIndex = index;
-        const selectedYear = availableYears[activeIndex];
-
-        if (sankeyDataByYear[selectedYear]) {
-            sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
-        }
-
-        const stepWidth = $slider.width() / yearCount;
-        const thumbWidth = $thumb.width();
-        const newLeft = (index * stepWidth) + (stepWidth / 2) - (thumbWidth / 2);
-        
-        if (animate) {
-            $thumb.css('transition', 'left 0.3s ease');
-        } else {
-            $thumb.css('transition', 'none');
-        }
-        $thumb.css('left', `${newLeft}px`);
-    }
-
-    // Dragging logic
+    // 4. The rest of the event handlers can now be defined.
     let isDragging = false;
     let startX, startLeft;
     $thumb.on('mousedown', function(e) {
@@ -875,27 +890,11 @@ function initializeSankeyChart($container) {
         updateChartAndSlider(closestIndex, true);
     }
     
-    // Click logic
     $slider.on('click', '.jtw-year-label', function() {
         const clickedIndex = $(this).index();
         updateChartAndSlider(clickedIndex, true);
     });
-    // --- END: New Draggable Slider Implementation ---
-
-    const formatSankeyTooltip = function() {
-        if (this.point.isNode) {
-            return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
-        }
-        const { from, to, weight, custom: percentage } = this.point;
-        let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
-        if (percentage) {
-            tooltipText += `<br/>${percentage} of ${from}`;
-        }
-        return tooltipText;
-    };
-
-    // Set initial state
-    // Use a small timeout to ensure the browser has rendered the slider and calculated its width
+    
     setTimeout(() => {
         updateChartAndSlider(activeIndex, false);
     }, 100);
