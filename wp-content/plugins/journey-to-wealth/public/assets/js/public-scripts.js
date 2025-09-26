@@ -454,49 +454,30 @@ function initializeRevenueChart($container) {
         const earnings = (periodData.earnings || []).filter(isValidDate);
         const fcf = (periodData.fcf || []).filter(isValidDate);
         const op_cash = (periodData.op_cash || []).filter(isValidDate);
+        
+        // --- START: Chart Configuration Update ---
+
+        // For a bar chart, we need a master list of all labels (dates)
         const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
 
-        // --- START: Dynamic Y-Value Calculation ---
-        let maxYValue = -Infinity;
-        [...revenue, ...earnings, ...fcf, ...op_cash].forEach(point => {
-            if (typeof point.y === 'number' && point.y > maxYValue) {
-                maxYValue = point.y;
-            }
-        });
-
-        if (maxYValue === -Infinity) { maxYValue = 1; } // Default if no data
-        const labelYPosition = maxYValue * 0.95; // Position labels at 95% of the max chart height
-        // --- END: Dynamic Y-Value Calculation ---
-
-        let minDate, maxDate;
-        if (allDates.length > 0) {
-            minDate = new Date(allDates[0]);
-            minDate.setMonth(minDate.getMonth() - 1);
-            maxDate = new Date(allDates[allDates.length - 1]);
-            maxDate.setMonth(maxDate.getMonth() + 1);
-        }
+        // Map data to the master labels to ensure alignment
+        const revenueData = allDates.map(date => revenue.find(d => d.x === date)?.y || 0);
+        const earningsData = allDates.map(date => earnings.find(d => d.x === date)?.y || 0);
+        const fcfData = allDates.map(date => fcf.find(d => d.x === date)?.y || 0);
+        const opCashData = allDates.map(date => op_cash.find(d => d.x === date)?.y || 0);
 
         const datasets = [
-            { label: 'Revenue', data: revenue, color: '#007bff' },
-            { label: 'Earnings', data: earnings, color: '#2ecc71' },
-            { label: 'Free Cash Flow', data: fcf, color: '#ffc107' },
-            { label: 'Cash From Op', data: op_cash, color: '#fd7e14' },
-        ].map(ds => ({
-            label: ds.label,
-            data: fillMissingPoints(ds.data, allDates),
-            borderColor: ds.color,
-            backgroundColor: (context) => createGradient(context.chart.ctx, context.chart.chartArea, ds.color),
-            borderWidth: 2,
-            pointRadius: 0,
-            tension: 0.3,
-            fill: 'start'
-        }));
-
+            { label: 'Revenue', data: revenueData, backgroundColor: '#007bff' },
+            { label: 'Earnings', data: earningsData, backgroundColor: '#2ecc71' },
+            { label: 'Free Cash Flow', data: fcfData, backgroundColor: '#ffc107' },
+            { label: 'Cash From Op', data: opCashData, backgroundColor: '#fd7e14' },
+        ];
+        
         const annotationsAreVisible = !!forecast_start_date;
 
         const ctx = $chartCanvas[0].getContext('2d');
         revenueChart = new Chart(ctx, {
-            type: 'bar',
+            type: 'bar', // Changed from 'line' to 'bar'
             data: { labels: allDates, datasets: datasets },
             options: {
                 responsive: true,
@@ -507,21 +488,18 @@ function initializeRevenueChart($container) {
                         type: 'time',
                         time: { unit: period === 'annual' ? 'year' : 'quarter' },
                         grid: { display: false },
-                        min: minDate ? minDate.toISOString() : undefined,
-                        max: maxDate ? maxDate.toISOString() : undefined,
-                        stacked: true
+                        stacked: true, // Enable stacking on the x-axis
                     },
                     y: {
                         grid: { color: 'rgba(255, 255, 255, 0.05)' },
                         ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) },
-                        stacked: true
+                        stacked: true, // Enable stacking on the y-axis
                     }
                 },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        enabled: false,
-                        external: externalTooltipHandler
+                        enabled: true, // Re-enable tooltip for bar charts
                     },
                     annotation: {
                         annotations: {
