@@ -428,7 +428,8 @@ const recalculateValuation = debounce(function() {
     }
 
 function initializeFutureGrowthSection($container) {
-function initializeRevenueChart($container) {
+
+    function initializeRevenueChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
     if (!$chartCanvas.length) return;
 
@@ -455,16 +456,24 @@ function initializeRevenueChart($container) {
         const fcf = (periodData.fcf || []).filter(isValidDate);
         const op_cash = (periodData.op_cash || []).filter(isValidDate);
         
-        // --- START: Chart Configuration Update ---
-
-        // For a bar chart, we need a master list of all labels (dates)
         const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
 
-        // Map data to the master labels to ensure alignment
-        const revenueData = allDates.map(date => revenue.find(d => d.x === date)?.y || 0);
-        const earningsData = allDates.map(date => earnings.find(d => d.x === date)?.y || 0);
-        const fcfData = allDates.map(date => fcf.find(d => d.x === date)?.y || 0);
-        const opCashData = allDates.map(date => op_cash.find(d => d.x === date)?.y || 0);
+        const revenueData = allDates.map(date => revenue.find(d => d.x === date)?.y || null);
+        const earningsData = allDates.map(date => earnings.find(d => d.x === date)?.y || null);
+        const fcfData = allDates.map(date => fcf.find(d => d.x === date)?.y || null);
+        const opCashData = allDates.map(date => op_cash.find(d => d.x === date)?.y || null);
+
+        // --- START: Corrected Y-Value Calculation for Stacked Bar Chart ---
+        let maxYValue = -Infinity;
+        for (let i = 0; i < allDates.length; i++) {
+            const stackTotal = (revenueData[i] || 0) + (earningsData[i] || 0) + (fcfData[i] || 0) + (opCashData[i] || 0);
+            if (stackTotal > maxYValue) {
+                maxYValue = stackTotal;
+            }
+        }
+        if (maxYValue === -Infinity) { maxYValue = 1; }
+        const labelYPosition = maxYValue * 0.95; // Position labels at 95% of the max chart height
+        // --- END: Corrected Y-Value Calculation ---
 
         const datasets = [
             { label: 'Revenue', data: revenueData, backgroundColor: '#007bff' },
@@ -477,7 +486,7 @@ function initializeRevenueChart($container) {
 
         const ctx = $chartCanvas[0].getContext('2d');
         revenueChart = new Chart(ctx, {
-            type: 'bar', // Changed from 'line' to 'bar'
+            type: 'bar',
             data: { labels: allDates, datasets: datasets },
             options: {
                 responsive: true,
@@ -488,18 +497,18 @@ function initializeRevenueChart($container) {
                         type: 'time',
                         time: { unit: period === 'annual' ? 'year' : 'quarter' },
                         grid: { display: false },
-                        stacked: true, // Enable stacking on the x-axis
+                        stacked: true,
                     },
                     y: {
                         grid: { color: 'rgba(255, 255, 255, 0.05)' },
                         ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) },
-                        stacked: true, // Enable stacking on the y-axis
+                        stacked: true,
                     }
                 },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        enabled: true, // Re-enable tooltip for bar charts
+                        enabled: true,
                     },
                     annotation: {
                         annotations: {
@@ -512,35 +521,28 @@ function initializeRevenueChart($container) {
                                 borderWidth: 1,
                                 borderDash: [6, 6],
                             },
-                            forecastBox: {
-                                display: annotationsAreVisible,
-                                type: 'box',
-                                scaleID: 'x',
-                                xMin: forecast_start_date,
-                                backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            },
                             pastLabel: {
                                 display: annotationsAreVisible,
                                 type: 'label',
                                 xValue: forecast_start_date,
-                                yValue: labelYPosition, // Use dynamic value
+                                yValue: labelYPosition, // Restored dynamic value
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
                                 xAdjust: -50,
-                                yAdjust: -15, // Adjust vertical position slightly
+                                yAdjust: -15,
                                 textAlign: 'right',
                             },
                             forecastLabel: {
                                 display: annotationsAreVisible,
                                 type: 'label',
                                 xValue: forecast_start_date,
-                                yValue: labelYPosition, // Use dynamic value
+                                yValue: labelYPosition, // Restored dynamic value
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
                                 font: { size: 12 },
                                 xAdjust: 50,
-                                yAdjust: -15, // Adjust vertical position slightly
+                                yAdjust: -15,
                                 textAlign: 'left',
                             }
                         }
