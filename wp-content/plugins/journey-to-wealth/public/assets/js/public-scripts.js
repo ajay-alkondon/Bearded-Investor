@@ -59,18 +59,13 @@ const externalTooltipHandler = (context) => {
         return;
     }
 
-    // --- START: Tooltip Date/Label Fix ---
     let title = '';
-    // Check if the x-axis is a 'category' axis (used for Annual view) or 'time' axis
     if (chart.config.options.scales.x.type === 'category') {
-        // If it's a category, the title is just the label string itself (e.g., "2025")
         title = tooltip.dataPoints[0].label || '';
     } else {
-        // Otherwise, it's a time axis, so we parse the date as before
         const date = new Date(tooltip.dataPoints[0].parsed.x);
         title = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
-    // --- END: Tooltip Date/Label Fix ---
 
     let innerHtml = '<div class="tooltip-header">' + title + '</div>';
     innerHtml += '<div class="tooltip-body">';
@@ -79,8 +74,20 @@ const externalTooltipHandler = (context) => {
         const dataPoint = tooltip.dataPoints[i];
         if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.dataset.label !== 'Hover Highlight') { 
             const colors = tooltip.labelColors[i];
-            const label = dataPoint.dataset.label; // Use dataset label for clarity
-            const value = formatLargeNumber(dataPoint.raw, '$'); // Format the raw number
+            const label = dataPoint.dataset.label;
+            
+            // --- START: Corrected Value Formatting ---
+            let value;
+            // Check the ID of the chart canvas to apply specific formatting
+            if (chart.canvas.id === 'jtw-eps-growth-forecast-chart') {
+                // For the EPS chart, format as currency with 2 decimal places
+                value = '$' + dataPoint.raw.toFixed(2);
+            } else {
+                // For all other charts (like revenue), use the large number formatter
+                value = formatLargeNumber(dataPoint.raw, '$');
+            }
+            // --- END: Corrected Value Formatting ---
+
             const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
             const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
             innerHtml += `<div class="tooltip-line"><div>${colorSpan} ${label}</div><strong>${value}</strong></div>`;
@@ -781,6 +788,39 @@ function initializeSankeyChart($container) {
     const yearCount = availableYears.length;
     let activeIndex = yearCount - 1;
 
+    const sankeyChart = Highcharts.chart($chartContainer[0], {
+        chart: { backgroundColor: 'transparent' },
+        title: { text: null },
+        series: [{
+            keys: ['from', 'to', 'weight', 'custom'],
+            data: sankeyDataByYear[latestYear],
+            type: 'sankey',
+            name: 'Financial Flow',
+            nodeWidth: 30,
+            nodePadding: 120,
+            borderRadius: 0,
+            dataLabels: {
+                enabled: true,
+                nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
+                style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
+            },
+            nodes: [
+                { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
+                { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
+                { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
+                { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
+                { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
+            ]
+        }],
+        tooltip: {
+            formatter: formatSankeyTooltip,
+            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            style: { color: '#FFFFFF' }
+        },
+        credits: { enabled: false }
+    });
+
     // Function to update the chart and slider position
     function updateChartAndSlider(index, animate) {
         if (index < 0 || index >= yearCount) return;
@@ -853,39 +893,6 @@ function initializeSankeyChart($container) {
         }
         return tooltipText;
     };
-    
-    const sankeyChart = Highcharts.chart($chartContainer[0], {
-        chart: { backgroundColor: 'transparent' },
-        title: { text: null },
-        series: [{
-            keys: ['from', 'to', 'weight', 'custom'],
-            data: sankeyDataByYear[latestYear],
-            type: 'sankey',
-            name: 'Financial Flow',
-            nodeWidth: 30,
-            nodePadding: 120,
-            borderRadius: 0,
-            dataLabels: {
-                enabled: true,
-                nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
-                style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
-            },
-            nodes: [
-                { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
-                { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
-                { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
-                { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
-                { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
-            ]
-        }],
-        tooltip: {
-            formatter: formatSankeyTooltip,
-            backgroundColor: 'rgba(30, 41, 59, 0.9)',
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            style: { color: '#FFFFFF' }
-        },
-        credits: { enabled: false }
-    });
 
     // Set initial state
     // Use a small timeout to ensure the browser has rendered the slider and calculated its width
