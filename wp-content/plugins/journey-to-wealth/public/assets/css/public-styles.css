@@ -2405,107 +2405,59 @@ body.dark-mode .jtw-legend-item:not(.active) {
     opacity: 0.8 !important;
 }
 
-/* --- START: New Sankey Draggable Slider --- */
+/* --- START: Final Sankey Draggable Slider --- */
 .jtw-sankey-chart-controls {
     padding: 0 15px;
 }
-
-#jtw-sankey-year-slider-container {
+.jtw-draggable-slider {
     width: 100%;
     max-width: 600px;
     margin: 25px auto 10px;
     position: relative;
-    height: 40px;
-}
-
-.jtw-year-slider-labels {
+    height: 30px;
     display: flex;
-    justify-content: space-between;
-    padding: 0 5px; /* Small padding to align with slider track */
-    pointer-events: none; /* Labels are not clickable */
+    align-items: center;
 }
-
+.jtw-slider-track {
+    width: 100%;
+    height: 6px;
+    background: #4a5568;
+    border-radius: 3px;
+    position: absolute;
+}
+.jtw-slider-labels {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    pointer-events: none; /* Text is not interactive, only thumb is */
+    z-index: 1;
+}
 .jtw-year-label {
     font-size: 0.9em;
     font-weight: 500;
     color: #a0aec0;
     text-align: center;
-    flex: 1;
-    transition: color 0.3s ease, font-weight 0.3s ease;
 }
-
-.jtw-year-label.active {
-    color: #fff;
-    font-weight: 700;
+.jtw-slider-thumb {
+    position: absolute;
+    height: 100%;
+    width: calc(100% / 5); /* Adjust based on number of years */
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    cursor: grab;
+    z-index: 2;
+    left: 0; /* Initial position set by JS */
 }
-
+.jtw-slider-thumb.dragging {
+    cursor: grabbing;
+}
 .jtw-year-label em {
     font-style: italic;
     font-size: 0.8em;
     font-weight: 400;
 }
-
-/* Main Slider Styles */
-input[type="range"].jtw-year-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    position: absolute;
-    top: 0;
-    left: 0;
-    cursor: pointer;
-    margin: 0;
-}
-input[type="range"].jtw-year-slider:focus {
-    outline: none;
-}
-
-/* Track Styling (Chrome, Safari, Edge) */
-input[type="range"].jtw-year-slider::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 6px;
-    background: linear-gradient(to right, #3b82f6 var(--slider-progress, 100%), #4a5568 var(--slider-progress, 100%));
-    border-radius: 3px;
-}
-
-/* Thumb Styling (Chrome, Safari, Edge) */
-input[type="range"].jtw-year-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 18px;
-    width: 18px;
-    border-radius: 50%;
-    background: #3b82f6;
-    border: 3px solid #fff;
-    margin-top: -6px; /* (thumb height - track height) / 2 */
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
-}
-
-/* Track Styling (Firefox) */
-input[type="range"].jtw-year-slider::-moz-range-track {
-    width: 100%;
-    height: 6px;
-    background: #4a5568;
-    border-radius: 3px;
-}
-
-/* Progress Fill Styling (Firefox) */
-input[type="range"].jtw-year-slider::-moz-range-progress {
-    background-color: #3b82f6;
-    height: 6px;
-    border-radius: 3px;
-}
-
-/* Thumb Styling (Firefox) */
-input[type="range"].jtw-year-slider::-moz-range-thumb {
-    height: 18px;
-    width: 18px;
-    border-radius: 50%;
-    background: #3b82f6;
-    border: 3px solid #fff;
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
-}
+/* --- END: Final Sankey Draggable Slider --- */
 
 /* --- END: New Sankey Draggable Slider --- */
 
