@@ -429,7 +429,7 @@ const recalculateValuation = debounce(function() {
 
 function initializeFutureGrowthSection($container) {
 
-    function initializeRevenueChart($container) {
+function initializeRevenueChart($container) {
     const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
     if (!$chartCanvas.length) return;
 
@@ -463,7 +463,6 @@ function initializeFutureGrowthSection($container) {
         const fcfData = allDates.map(date => fcf.find(d => d.x === date)?.y || null);
         const opCashData = allDates.map(date => op_cash.find(d => d.x === date)?.y || null);
 
-        // --- START: Corrected Y-Value Calculation for Stacked Bar Chart ---
         let maxYValue = -Infinity;
         for (let i = 0; i < allDates.length; i++) {
             const stackTotal = (revenueData[i] || 0) + (earningsData[i] || 0) + (fcfData[i] || 0) + (opCashData[i] || 0);
@@ -471,16 +470,17 @@ function initializeFutureGrowthSection($container) {
                 maxYValue = stackTotal;
             }
         }
-        if (maxYValue === -Infinity) { maxYValue = 1; }
-        const labelYPosition = maxYValue * 0.95; // Position labels at 95% of the max chart height
-        // --- END: Corrected Y-Value Calculation ---
+        if (maxYValue === -Infinity || maxYValue === 0) { maxYValue = 1; }
+        const labelYPosition = maxYValue * 0.95;
 
+        // --- START: Updated Datasets with Sankey Colors ---
         const datasets = [
-            { label: 'Revenue', data: revenueData, backgroundColor: '#007bff' },
-            { label: 'Earnings', data: earningsData, backgroundColor: '#2ecc71' },
-            { label: 'Free Cash Flow', data: fcfData, backgroundColor: '#ffc107' },
-            { label: 'Cash From Op', data: opCashData, backgroundColor: '#fd7e14' },
+            { label: 'Revenue', data: revenueData, backgroundColor: '#60a5fa' },
+            { label: 'Earnings', data: earningsData, backgroundColor: '#10b981' },
+            { label: 'Free Cash Flow', data: fcfData, backgroundColor: '#2dd4bf' },
+            { label: 'Cash From Op', data: opCashData, backgroundColor: '#f59e0b' },
         ];
+        // --- END: Updated Datasets ---
         
         const annotationsAreVisible = !!forecast_start_date;
 
@@ -507,9 +507,12 @@ function initializeFutureGrowthSection($container) {
                 },
                 plugins: {
                     legend: { display: false },
+                    // --- START: Correct Tooltip Configuration ---
                     tooltip: {
-                        enabled: true,
+                        enabled: false, // Disable the default tooltip
+                        external: externalTooltipHandler // Use the custom handler
                     },
+                    // --- END: Correct Tooltip Configuration ---
                     annotation: {
                         annotations: {
                             forecastLine: {
@@ -525,7 +528,7 @@ function initializeFutureGrowthSection($container) {
                                 display: annotationsAreVisible,
                                 type: 'label',
                                 xValue: forecast_start_date,
-                                yValue: labelYPosition, // Restored dynamic value
+                                yValue: labelYPosition,
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
@@ -537,7 +540,7 @@ function initializeFutureGrowthSection($container) {
                                 display: annotationsAreVisible,
                                 type: 'label',
                                 xValue: forecast_start_date,
-                                yValue: labelYPosition, // Restored dynamic value
+                                yValue: labelYPosition,
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
                                 font: { size: 12 },
