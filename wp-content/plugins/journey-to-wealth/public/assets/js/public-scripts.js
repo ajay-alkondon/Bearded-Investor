@@ -64,7 +64,11 @@ const externalTooltipHandler = (context) => {
         title = tooltip.dataPoints[0].label || '';
     } else {
         const date = new Date(tooltip.dataPoints[0].parsed.x);
-        title = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        if (chart.config.options.scales.x.time.unit === 'year') {
+            title = date.getUTCFullYear();
+        } else {
+            title = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
     }
 
     let innerHtml = '<div class="tooltip-header">' + title + '</div>';
@@ -72,26 +76,30 @@ const externalTooltipHandler = (context) => {
 
     tooltip.body.forEach((body, i) => {
         const dataPoint = tooltip.dataPoints[i];
-        if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.dataset.label !== 'Hover Highlight') { 
-            const colors = tooltip.labelColors[i];
-            const label = dataPoint.dataset.label;
-            
-            // --- START: Corrected Value Formatting ---
-            let value;
-            // Check the ID of the chart canvas to apply specific formatting
-            if (chart.canvas.id === 'jtw-eps-growth-forecast-chart') {
-                // For the EPS chart, format as currency with 2 decimal places
-                value = '$' + dataPoint.raw.toFixed(2);
-            } else {
-                // For all other charts (like revenue), use the large number formatter
-                value = formatLargeNumber(dataPoint.raw, '$');
-            }
-            // --- END: Corrected Value Formatting ---
+        const label = dataPoint.dataset.label;
+        const value_y = dataPoint.parsed.y;
 
-            const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-            const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-            innerHtml += `<div class="tooltip-line"><div>${colorSpan} ${label}</div><strong>${value}</strong></div>`;
+        if (!chart.isDatasetVisible(dataPoint.datasetIndex) || value_y === null || label === 'Estimate Range' || label === 'Low Estimate') {
+            return;
         }
+
+        const colors = tooltip.labelColors[i];
+        
+        let value;
+        // Check the ID of the chart canvas to apply specific formatting
+        if (chart.canvas.id === 'jtw-eps-growth-forecast-chart') {
+            value = '$' + value_y.toFixed(2);
+        } else if (chart.canvas.id === 'jtw-kmv-chart') {
+            // Add specific formatting for the Key Metric Valuations chart
+            value = value_y.toFixed(1) + 'x';
+        } 
+        else {
+            value = formatLargeNumber(value_y, '$');
+        }
+
+        const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+        const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+        innerHtml += `<div class="tooltip-line"><div>${colorSpan} ${label}</div><strong>${value}</strong></div>`;
     });
 
     innerHtml += '</div>';
