@@ -50,48 +50,60 @@
         return tooltipEl;
     };
 
-    const externalTooltipHandler = (context) => {
-        const { chart, tooltip } = context;
-        const tooltipEl = getOrCreateTooltip(chart);
+const externalTooltipHandler = (context) => {
+    const { chart, tooltip } = context;
+    const tooltipEl = getOrCreateTooltip(chart);
 
-        if (tooltip.opacity === 0) {
-            tooltipEl.style.opacity = 0;
-            return;
-        }
+    if (tooltip.opacity === 0) {
+        tooltipEl.style.opacity = 0;
+        return;
+    }
 
+    // --- START: Tooltip Date/Label Fix ---
+    let title = '';
+    // Check if the x-axis is a 'category' axis (used for Annual view) or 'time' axis
+    if (chart.config.options.scales.x.type === 'category') {
+        // If it's a category, the title is just the label string itself (e.g., "2025")
+        title = tooltip.dataPoints[0].label || '';
+    } else {
+        // Otherwise, it's a time axis, so we parse the date as before
         const date = new Date(tooltip.dataPoints[0].parsed.x);
-        let innerHtml = '<div class="tooltip-header">' + date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div>';
-        innerHtml += '<div class="tooltip-body">';
+        title = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    // --- END: Tooltip Date/Label Fix ---
 
-        tooltip.body.forEach((body, i) => {
-            const dataPoint = tooltip.dataPoints[i];
-            if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.dataset.label !== 'Hover Highlight') { 
-                const colors = tooltip.labelColors[i];
-                const label = body.lines[0].split(':')[0];
-                const value = body.lines[0].split(':')[1];
-                const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
-                const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
-                innerHtml += `<div class="tooltip-line"><div>${colorSpan} ${label}</div><strong>${value}</strong></div>`;
-            }
-        });
+    let innerHtml = '<div class="tooltip-header">' + title + '</div>';
+    innerHtml += '<div class="tooltip-body">';
 
-        innerHtml += '</div>';
-        tooltipEl.innerHTML = innerHtml;
-
-        const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
-        const chartWidth = chart.canvas.offsetWidth;
-
-        tooltipEl.style.opacity = 1;
-        
-        let newLeft = positionX + tooltip.caretX + 15;
-        
-        if (newLeft + tooltipEl.offsetWidth > positionX + chartWidth) {
-            newLeft = positionX + tooltip.caretX - tooltipEl.offsetWidth - 15;
+    tooltip.body.forEach((body, i) => {
+        const dataPoint = tooltip.dataPoints[i];
+        if (chart.isDatasetVisible(dataPoint.datasetIndex) && dataPoint.dataset.label !== 'Hover Highlight') { 
+            const colors = tooltip.labelColors[i];
+            const label = dataPoint.dataset.label; // Use dataset label for clarity
+            const value = formatLargeNumber(dataPoint.raw, '$'); // Format the raw number
+            const style = `background: ${colors.backgroundColor}; border-color: ${colors.borderColor};`;
+            const colorSpan = `<span class="tooltip-color-box" style="${style}"></span>`;
+            innerHtml += `<div class="tooltip-line"><div>${colorSpan} ${label}</div><strong>${value}</strong></div>`;
         }
+    });
 
-        tooltipEl.style.left = newLeft + 'px';
-        tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-    };
+    innerHtml += '</div>';
+    tooltipEl.innerHTML = innerHtml;
+
+    const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+    const chartWidth = chart.canvas.offsetWidth;
+
+    tooltipEl.style.opacity = 1;
+    
+    let newLeft = positionX + tooltip.caretX + 15;
+    
+    if (newLeft + tooltipEl.offsetWidth > positionX + chartWidth) {
+        newLeft = positionX + tooltip.caretX - tooltipEl.offsetWidth - 15;
+    }
+
+    tooltipEl.style.left = newLeft + 'px';
+    tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+};
     // --- END: REUSABLE TOOLTIP FUNCTIONS ---
 
     const fillMissingPoints = (data, dates) => {
