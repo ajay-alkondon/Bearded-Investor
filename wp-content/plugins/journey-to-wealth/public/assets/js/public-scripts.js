@@ -731,82 +731,102 @@ function initializeFutureGrowthSection($container) {
 }
 
     function initializePastPerformanceSection($container) {
-        function initializeSankeyChart($container) {
-            const $chartContainer = $container.find('#jtw-sankey-chart-container');
-            const $dataScript = $container.find('#jtw-sankey-chart-data');
-            if (!$chartContainer.length || !$dataScript.length) return;
 
-            const sankeyDataByYear = JSON.parse($dataScript.html());
-            const availableYears = Object.keys(sankeyDataByYear).sort();
-            if (availableYears.length === 0) return;
+function initializeSankeyChart($container) {
+    const $chartContainer = $container.find('#jtw-sankey-chart-container');
+    const $dataScript = $container.find('#jtw-sankey-chart-data');
+    if (!$chartContainer.length || !$dataScript.length) return;
 
-            const latestYear = availableYears[availableYears.length - 1];
+    const sankeyDataByYear = JSON.parse($dataScript.html());
+    const availableYears = Object.keys(sankeyDataByYear).sort();
+    if (availableYears.length === 0) return;
 
-            const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
-            let sliderHtml = '<div class="jtw-year-slider-labels">';
-            availableYears.forEach(year => {
-                sliderHtml += `<span class="jtw-year-label" data-year="${year}">${year}</span>`;
-            });
-            sliderHtml += '</div>';
-            sliderHtml += `<input type="range" min="0" max="${availableYears.length - 1}" value="${availableYears.length - 1}" class="jtw-year-slider" id="jtw-sankey-year-slider">`;
-            $sliderContainer.html(sliderHtml);
+    const latestYear = availableYears[availableYears.length - 1];
+    
+    // --- START: New Timeline Generation Logic ---
+    const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
+    let timelineHtml = '<div class="jtw-timeline-track"></div><div class="jtw-timeline-progress"></div><div class="jtw-timeline-labels">';
+    availableYears.forEach((year, index) => {
+        // Format the "(Est.)" text to be smaller and italic
+        const yearLabel = year.replace(' (Est.)', '<em>e</em>');
+        timelineHtml += `<div class="jtw-year-label" data-year="${year}" data-index="${index}">${yearLabel}</div>`;
+    });
+    timelineHtml += '</div>';
+    $sliderContainer.html(timelineHtml);
+    // --- END: New Timeline Generation Logic ---
 
-            const formatSankeyTooltip = function() {
-                if (this.point.isNode) {
-                    return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
-                }
-                const { from, to, weight, custom: percentage } = this.point;
-                let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
-                if (percentage) {
-                    tooltipText += `<br/>${percentage} of ${from}`;
-                }
-                return tooltipText;
-            };
-
-            const sankeyChart = Highcharts.chart($chartContainer[0], {
-                chart: { backgroundColor: 'transparent' },
-                title: { text: null },
-                series: [{
-                    keys: ['from', 'to', 'weight', 'custom'],
-                    data: sankeyDataByYear[latestYear],
-                    type: 'sankey',
-                    name: 'Financial Flow',
-                    nodeWidth: 30,
-                    nodePadding: 120,
-                    borderRadius: 0,
-                    dataLabels: {
-                        enabled: true,
-                        nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
-                        style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
-                    },
-                    nodes: [
-                        { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
-                        { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
-                        { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
-                        { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
-                        { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
-                    ]
-                }],
-                tooltip: {
-                    formatter: formatSankeyTooltip,
-                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    style: { color: '#FFFFFF' }
-                },
-                credits: { enabled: false }
-            });
-
-            $sliderContainer.on('input', '#jtw-sankey-year-slider', function() {
-                const selectedYear = availableYears[$(this).val()];
-                if (sankeyDataByYear[selectedYear]) {
-                    sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
-                }
-                $sliderContainer.find('.jtw-year-label').removeClass('active');
-                $sliderContainer.find(`.jtw-year-label[data-year="${selectedYear}"]`).addClass('active');
-            });
-
-            $sliderContainer.find(`.jtw-year-label[data-year="${latestYear}"]`).addClass('active');
+    const formatSankeyTooltip = function() {
+        if (this.point.isNode) {
+            return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
         }
+        const { from, to, weight, custom: percentage } = this.point;
+        let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
+        if (percentage) {
+            tooltipText += `<br/>${percentage} of ${from}`;
+        }
+        return tooltipText;
+    };
+    
+    const sankeyChart = Highcharts.chart($chartContainer[0], {
+        chart: { backgroundColor: 'transparent' },
+        title: { text: null },
+        series: [{
+            keys: ['from', 'to', 'weight', 'custom'],
+            data: sankeyDataByYear[latestYear],
+            type: 'sankey',
+            name: 'Financial Flow',
+            nodeWidth: 30,
+            nodePadding: 120,
+            borderRadius: 0,
+            dataLabels: {
+                enabled: true,
+                nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
+                style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
+            },
+            nodes: [
+                { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
+                { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
+                { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
+                { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
+                { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
+            ]
+        }],
+        tooltip: {
+            formatter: formatSankeyTooltip,
+            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            style: { color: '#FFFFFF' }
+        },
+        credits: { enabled: false }
+    });
+
+    // --- START: New Timeline Update and Event Handler Logic ---
+    function updateTimeline(index) {
+        const $labels = $sliderContainer.find('.jtw-year-label');
+        $labels.removeClass('active');
+        $labels.eq(index).addClass('active');
+
+        // Calculate progress, handling the case of a single year
+        const progressPercentage = (availableYears.length > 1) ? (index / (availableYears.length - 1)) * 100 : 100;
+        $sliderContainer.find('.jtw-timeline-progress').css('width', `${progressPercentage}%`);
+    }
+
+    $sliderContainer.on('click', '.jtw-year-label', function() {
+        const $label = $(this);
+        const selectedYear = $label.data('year');
+        const selectedIndex = $label.data('index');
+
+        if (sankeyDataByYear[selectedYear]) {
+            sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
+        }
+        updateTimeline(selectedIndex);
+    });
+    
+    // Set the initial state to the latest year
+    updateTimeline(availableYears.length - 1);
+    // --- END: New Timeline Update and Event Handler Logic ---
+}
+
         initializeSankeyChart($container);
     }
 

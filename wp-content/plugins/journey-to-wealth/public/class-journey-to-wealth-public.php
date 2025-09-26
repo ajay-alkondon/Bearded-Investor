@@ -1031,7 +1031,8 @@ private function build_past_performance_section_html($calculated_data) {
                 <div class="jtw-notice notice-info"><p>Sankey data is not available for this stock.</p></div>
             <?php } else { ?>
                 <div class="jtw-sankey-chart-controls">
-                    <div id="jtw-sankey-year-slider-container"></div>
+                    <div id="jtw-sankey-year-slider-container" class="jtw-timeline-slider">
+                        </div>
                 </div>
                 <div id="jtw-sankey-chart-container"></div>
                 <script type="application/json" id="jtw-sankey-chart-data">

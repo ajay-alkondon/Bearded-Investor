@@ -2405,85 +2405,85 @@ body.dark-mode .jtw-legend-item:not(.active) {
     opacity: 0.8 !important;
 }
 
-/* Year Slider Controls */
+/* --- START: Sankey Timeline Slider --- */
 .jtw-sankey-chart-controls {
     padding: 0 15px;
 }
-
-#jtw-sankey-year-slider-container {
+.jtw-timeline-slider {
     width: 100%;
     max-width: 600px;
-    margin: 15px auto 0;
+    margin: 25px auto 10px;
     position: relative;
-    padding-top: 25px;
+    height: 40px; /* Increased height for click area */
 }
-
-.jtw-year-slider-labels {
+.jtw-timeline-track, .jtw-timeline-progress {
     position: absolute;
-    top: 0;
-    left: 10px;
-    right: 10px;
-    display: flex;
-    justify-content: space-between;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 4px;
+    border-radius: 2px;
     pointer-events: none;
 }
-
-.jtw-year-label {
-    font-size: 0.8em;
-    font-weight: 500;
-    color: var(--jtw-text-light);
-    transition: color 0.2s ease;
+.jtw-timeline-track {
+    background-color: #4a5568; /* Use a dark mode friendly gray */
+    width: 100%;
+}
+.jtw-timeline-progress {
+    background-color: #3b82f6; /* Blue for the progress */
+    width: 100%; /* Default to full */
+    transition: width 0.3s ease;
+    z-index: 1;
+}
+.jtw-timeline-labels {
+    display: flex;
+    justify-content: space-between;
     position: relative;
+    height: 100%;
 }
-
-.jtw-year-label.active {
-    color: var(--jtw-primary-blue);
-    font-weight: 700;
+.jtw-year-label {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: #a0aec0; /* Lighter gray for inactive years */
+    cursor: pointer;
+    position: relative;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: 5px;
 }
-
 .jtw-year-label::before {
     content: '';
     position: absolute;
-    width: 1px;
-    height: 5px;
-    background-color: #4a5568;
-    top: -10px;
+    bottom: 15px; /* Position above the text */
     left: 50%;
     transform: translateX(-50%);
-}
-
-input[type="range"].jtw-year-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 3px;
-    background: #4a5568;
-    border-radius: 5px;
-    outline: none;
-    padding: 0;
-    margin: 0;
-}
-
-input[type="range"].jtw-year-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--jtw-primary-blue);
-    border: 3px solid var(--jtw-content-bg);
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    cursor: pointer;
-    margin-top: -6.5px;
+    background-color: var(--jtw-content-bg, #1e293b); /* Match the background */
+    border: 3px solid #4a5568;
+    transition: all 0.3s ease;
+    z-index: 2;
 }
-
-input[type="range"].jtw-year-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: var(--jtw-primary-blue);
-    border: 3px solid var(--jtw-content-bg);
-    border-radius: 50%;
-    cursor: pointer;
+.jtw-year-label:hover::before {
+    border-color: #718096;
 }
+.jtw-year-label.active {
+    color: #fff;
+    font-weight: 700;
+}
+.jtw-year-label.active::before {
+    border-color: #3b82f6;
+    background-color: #3b82f6;
+}
+.jtw-year-label em {
+    font-style: italic;
+    font-size: 0.8em;
+    font-weight: 400;
+}
+/* --- END: Sankey Timeline Slider --- */
 
 /* In journey-to-wealth/public/assets/css/public-styles.css,
    replace the entire "Subsection Separator Styles" block with this corrected version. */
