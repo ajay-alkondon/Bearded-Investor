@@ -747,7 +747,6 @@ function initializeSankeyChart($container) {
     const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
     let timelineHtml = '<div class="jtw-timeline-track"></div><div class="jtw-timeline-progress"></div><div class="jtw-timeline-labels">';
     availableYears.forEach((year, index) => {
-        // Format the "(Est.)" text to be smaller and italic
         const yearLabel = year.replace(' (Est.)', '<em>e</em>');
         timelineHtml += `<div class="jtw-year-label" data-year="${year}" data-index="${index}">${yearLabel}</div>`;
     });
@@ -806,7 +805,6 @@ function initializeSankeyChart($container) {
         $labels.removeClass('active');
         $labels.eq(index).addClass('active');
 
-        // Calculate progress, handling the case of a single year
         const progressPercentage = (availableYears.length > 1) ? (index / (availableYears.length - 1)) * 100 : 100;
         $sliderContainer.find('.jtw-timeline-progress').css('width', `${progressPercentage}%`);
     }
@@ -822,7 +820,6 @@ function initializeSankeyChart($container) {
         updateTimeline(selectedIndex);
     });
     
-    // Set the initial state to the latest year
     updateTimeline(availableYears.length - 1);
     // --- END: New Timeline Update and Event Handler Logic ---
 }
