@@ -1221,7 +1221,10 @@ function initializeAnalyticalToolsSection($container) {
                         },
                         plugins: {
                             legend: { display: false },
-                            tooltip: { mode: 'index', intersect: false, callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}x` } }
+                            tooltip: { 
+                                enabled: false, 
+                                external: externalTooltipHandler 
+                            }
                         }
                     }
                 });
