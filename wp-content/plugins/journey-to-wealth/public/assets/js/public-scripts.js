@@ -863,8 +863,11 @@ function initializeFinancialHealthSection($container) {
                 tooltip: { enabled: false },
                 // This is the correct, detailed configuration for the datalabels
                 datalabels: {
-                    // Config for the VALUE label (e.g., US$1.36b)
+                    display: true, // Make sure datalabels are displayed by default
+
+                    // Specific configuration for the VALUE label (on top of the bar)
                     value: {
+                        display: true, // Explicitly enable this sub-plugin
                         anchor: 'end',
                         align: 'top',
                         offset: 4,
@@ -872,8 +875,9 @@ function initializeFinancialHealthSection($container) {
                         color: '#fff',
                         font: { weight: '600', size: 13 }
                     },
-                    // Config for the CATEGORY label (e.g., Assets)
+                    // Specific configuration for the CATEGORY label (inside the bar)
                     category: {
+                        display: true, // Explicitly enable this sub-plugin
                         anchor: 'center',
                         align: 'center',
                         formatter: (value, context) => context.chart.data.labels[context.dataIndex],
