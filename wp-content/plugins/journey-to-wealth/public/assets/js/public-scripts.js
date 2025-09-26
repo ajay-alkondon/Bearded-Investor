@@ -428,97 +428,90 @@ const recalculateValuation = debounce(function() {
     }
 
 function initializeFutureGrowthSection($container) {
-    function initializeRevenueChart($container) {
-        const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
-        if (!$chartCanvas.length) return;
+function initializeRevenueChart($container) {
+    const $chartCanvas = $container.find('#jtw-earnings-revenue-forecast-chart');
+    if (!$chartCanvas.length) return;
 
-        const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
-        if (!chartDataRaw) return;
+    const chartDataRaw = $container.find('#jtw-earnings-revenue-forecast-data').html();
+    if (!chartDataRaw) return;
 
-        const parsedData = JSON.parse(chartDataRaw);
-        let revenueChart;
+    const parsedData = JSON.parse(chartDataRaw);
+    let revenueChart;
 
-        function drawRevenueChart(period) {
-            if (revenueChart) {
-                revenueChart.destroy();
+    function drawRevenueChart(period) {
+        if (revenueChart) {
+            revenueChart.destroy();
+        }
+
+        const periodKey = period === 'annual' ? 'chart_points_annual' : 'chart_points_quarterly';
+        const periodData = parsedData[periodKey] || {};
+        const forecast_start_date = parsedData.forecast_start_date; // Always use the full date for logic
+
+        // --- START: Corrected Chart Configuration ---
+        const allLabels = [...new Set(periodData.revenue.map(d => d.x))].sort();
+
+        const datasets = ['revenue', 'earnings', 'fcf', 'op_cash'].map((key, index) => {
+            const seriesData = periodData[key] || [];
+            const dataMap = new Map(seriesData.map(d => [d.x, d.y]));
+            return {
+                label: {revenue: 'Revenue', earnings: 'Earnings', fcf: 'Free Cash Flow', op_cash: 'Cash From Op'}[key],
+                data: allLabels.map(label => dataMap.get(label) || null),
+                backgroundColor: ['#60a5fa', '#10b981', '#2dd4bf', '#f59e0b'][index]
+            };
+        });
+
+        let maxYValue = -Infinity;
+        for (let i = 0; i < allLabels.length; i++) {
+            const stackTotal = datasets.reduce((sum, ds) => sum + (ds.data[i] || 0), 0);
+            if (stackTotal > maxYValue) {
+                maxYValue = stackTotal;
             }
-
-            const periodKey = period === 'annual' ? 'chart_points_annual' : 'chart_points_quarterly';
-            const periodData = parsedData[periodKey] || {};
-            const forecast_start_date = period === 'annual' 
-                ? parsedData.forecast_start_date 
-                : parsedData.forecast_start_date_quarterly;
-
-            const isValidDate = (d) => d && d.x && !isNaN(new Date(d.x).getTime());
-            const revenue = (periodData.revenue || []).filter(isValidDate);
-            const earnings = (periodData.earnings || []).filter(isValidDate);
-            const fcf = (periodData.fcf || []).filter(isValidDate);
-            const op_cash = (periodData.op_cash || []).filter(isValidDate);
-            
-            const allDates = [...new Set([...revenue.map(d => d.x), ...earnings.map(d => d.x), ...fcf.map(d => d.x), ...op_cash.map(d => d.x)])].sort();
-
-            const revenueData = allDates.map(date => revenue.find(d => d.x === date)?.y || null);
-            const earningsData = allDates.map(date => earnings.find(d => d.x === date)?.y || null);
-            const fcfData = allDates.map(date => fcf.find(d => d.x === date)?.y || null);
-            const opCashData = allDates.map(date => op_cash.find(d => d.x === date)?.y || null);
-
-            let maxYValue = -Infinity;
-            for (let i = 0; i < allDates.length; i++) {
-                const stackTotal = (revenueData[i] || 0) + (earningsData[i] || 0) + (fcfData[i] || 0) + (opCashData[i] || 0);
-                if (stackTotal > maxYValue) {
-                    maxYValue = stackTotal;
-                }
-            }
-            if (maxYValue === -Infinity || maxYValue === 0) { maxYValue = 1; }
-            const labelYPosition = maxYValue * 0.95;
-
-            const datasets = [
-                { label: 'Revenue', data: revenueData, backgroundColor: '#60a5fa' },
-                { label: 'Earnings', data: earningsData, backgroundColor: '#10b981' },
-                { label: 'Free Cash Flow', data: fcfData, backgroundColor: '#2dd4bf' },
-                { label: 'Cash From Op', data: opCashData, backgroundColor: '#f59e0b' },
-            ];
-            
-            const annotationsAreVisible = !!forecast_start_date;
-
-            const ctx = $chartCanvas[0].getContext('2d');
-            revenueChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: allDates, datasets: datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: { unit: period === 'annual' ? 'year' : 'quarter' },
-                            grid: { display: false },
-                            stacked: true,
-                        },
-                        y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) },
-                            stacked: true,
-                        }
+        }
+        if (maxYValue === -Infinity || maxYValue === 0) { maxYValue = 1; }
+        const labelYPosition = maxYValue * 0.95;
+        
+        // Determine the forecast line value based on period type
+        const forecastLineValue = period === 'annual' && forecast_start_date 
+                                  ? forecast_start_date.substring(0, 4) 
+                                  : forecast_start_date;
+        const annotationsAreVisible = !!forecastLineValue;
+        
+        const ctx = $chartCanvas[0].getContext('2d');
+        revenueChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: allLabels, datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: {
+                        // FIX: Use 'category' for annual, 'time' for quarterly
+                        type: period === 'annual' ? 'category' : 'time', 
+                        time: period === 'quarterly' ? { unit: 'quarter' } : undefined,
+                        grid: { display: false },
+                        stacked: true,
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            enabled: false,
-                            external: externalTooltipHandler
-                        },
-                        annotation: {
-                            annotations: {
-                                forecastLine: {
-                                    display: annotationsAreVisible,
-                                    type: 'line',
-                                    scaleID: 'x',
-                                    value: forecast_start_date,
-                                    borderColor: 'rgba(255, 255, 255, 0.3)',
-                                    borderWidth: 1,
-                                    borderDash: [6, 6],
-                                },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) },
+                        stacked: true,
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false, external: externalTooltipHandler },
+                    annotation: {
+                        annotations: {
+                            forecastLine: {
+                                display: annotationsAreVisible,
+                                type: 'line',
+                                scaleID: 'x',
+                                value: forecastLineValue,
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                borderWidth: 1,
+                                borderDash: [6, 6],
+                            },
                                 pastLabel: {
                                     display: annotationsAreVisible,
                                     type: 'label',
