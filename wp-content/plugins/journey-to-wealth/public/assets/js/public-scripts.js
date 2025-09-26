@@ -759,16 +759,23 @@ function initializeSankeyChart($container) {
 
     const latestYear = availableYears[availableYears.length - 1];
     
-    // --- START: New Timeline Generation Logic ---
+    // --- START: New Draggable Slider Generation ---
     const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
-    let timelineHtml = '<div class="jtw-timeline-track"></div><div class="jtw-timeline-progress"></div><div class="jtw-timeline-labels">';
-    availableYears.forEach((year, index) => {
+    
+    // Create the HTML for the year labels
+    let labelsHtml = '';
+    availableYears.forEach(year => {
         const yearLabel = year.replace(' (Est.)', '<em>e</em>');
-        timelineHtml += `<div class="jtw-year-label" data-year="${year}" data-index="${index}">${yearLabel}</div>`;
+        labelsHtml += `<span class="jtw-year-label" data-year="${year}">${yearLabel}</span>`;
     });
-    timelineHtml += '</div>';
-    $sliderContainer.html(timelineHtml);
-    // --- END: New Timeline Generation Logic ---
+
+    // Create the slider input and inject it with the labels
+    $sliderContainer.html(`
+        <div class="jtw-year-slider-labels">${labelsHtml}</div>
+        <input type="range" min="0" max="${availableYears.length - 1}" value="${availableYears.length - 1}" class="jtw-year-slider" id="jtw-sankey-year-slider">
+    `);
+    const $sliderInput = $sliderContainer.find('#jtw-sankey-year-slider');
+    // --- END: New Draggable Slider Generation ---
 
     const formatSankeyTooltip = function() {
         if (this.point.isNode) {
@@ -815,29 +822,33 @@ function initializeSankeyChart($container) {
         credits: { enabled: false }
     });
 
-    // --- START: New Timeline Update and Event Handler Logic ---
-    function updateTimeline(index) {
-        const $labels = $sliderContainer.find('.jtw-year-label');
-        $labels.removeClass('active');
-        $labels.eq(index).addClass('active');
+    // --- START: New Slider Event Handler ---
+    function updateSliderAppearance(selectedIndex) {
+        // Update the active state on the text labels
+        $sliderContainer.find('.jtw-year-label').each(function(index) {
+            $(this).toggleClass('active', index === selectedIndex);
+        });
 
-        const progressPercentage = (availableYears.length > 1) ? (index / (availableYears.length - 1)) * 100 : 100;
-        $sliderContainer.find('.jtw-timeline-progress').css('width', `${progressPercentage}%`);
+        // Update the CSS variable for the track progress
+        const progressPercentage = (availableYears.length > 1) 
+            ? (selectedIndex / (availableYears.length - 1)) * 100 
+            : 100;
+        $sliderInput.css('--slider-progress', `${progressPercentage}%`);
     }
 
-    $sliderContainer.on('click', '.jtw-year-label', function() {
-        const $label = $(this);
-        const selectedYear = $label.data('year');
-        const selectedIndex = $label.data('index');
-
+    $sliderInput.on('input', function() {
+        const selectedIndex = parseInt($(this).val(), 10);
+        const selectedYear = availableYears[selectedIndex];
+        
         if (sankeyDataByYear[selectedYear]) {
             sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
         }
-        updateTimeline(selectedIndex);
+        updateSliderAppearance(selectedIndex);
     });
     
-    updateTimeline(availableYears.length - 1);
-    // --- END: New Timeline Update and Event Handler Logic ---
+    // Set the initial state
+    updateSliderAppearance(availableYears.length - 1);
+    // --- END: New Slider Event Handler ---
 }
 
         initializeSankeyChart($container);
