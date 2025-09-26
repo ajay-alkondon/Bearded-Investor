@@ -548,7 +548,8 @@ function initializeFutureGrowthSection($container) {
                                 content: 'Past',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: -10,
+                                xAdjust: -50,
+                                yAdjust: -15,
                                 textAlign: 'right',
                             },
                             forecastLabel: {
@@ -559,7 +560,8 @@ function initializeFutureGrowthSection($container) {
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: 10,
+                                xAdjust: 100,
+                                yAdjust: -15,
                                 textAlign: 'left',
                             }
                         }
@@ -701,7 +703,7 @@ function initializeFutureGrowthSection($container) {
                                     content: 'Analysts Forecasts',
                                     color: '#aaa',
                                     font: { size: 12 },
-                                    xAdjust: 50,
+                                    xAdjust: 100,
                                     yAdjust: -15,
                                     textAlign: 'left',
                                 }
