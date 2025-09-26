@@ -496,7 +496,7 @@ function initializeRevenueChart($container) {
 
         const ctx = $chartCanvas[0].getContext('2d');
         revenueChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: { labels: allDates, datasets: datasets },
             options: {
                 responsive: true,
@@ -508,11 +508,13 @@ function initializeRevenueChart($container) {
                         time: { unit: period === 'annual' ? 'year' : 'quarter' },
                         grid: { display: false },
                         min: minDate ? minDate.toISOString() : undefined,
-                        max: maxDate ? maxDate.toISOString() : undefined
+                        max: maxDate ? maxDate.toISOString() : undefined,
+                        stacked: true
                     },
                     y: {
                         grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) }
+                        ticks: { callback: (val) => formatLargeNumber(val, 'US$', 1) },
+                        stacked: true
                     }
                 },
                 plugins: {
