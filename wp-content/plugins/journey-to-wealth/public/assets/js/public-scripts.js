@@ -364,11 +364,9 @@ const recalculateValuation = debounce(function() {
         
         const growthRate = parseFloat(growthRateInput.val()) / 100 || 0;
         const projectedRevenue = previousRevenue * (1 + growthRate);
-        console.log(projectedRevenue);
         $allTablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]')
             .text(formatNumberForDisplay(projectedRevenue, revenueUnitLabel))
             .attr('data-raw-value', projectedRevenue);
-            console.log($allTablesContainer.find('.jtw-revenue-result[data-year="' + i + '"]'));
         previousRevenue = projectedRevenue;
 
         const niGrowthRate = parseFloat(niGrowthRateInput.val()) / 100 || 0;
@@ -567,7 +565,7 @@ function initializeFutureGrowthSection($container) {
                                 content: 'Analysts Forecasts',
                                 color: '#aaa',
                                 font: { size: 12 },
-                                xAdjust: 100,
+                                xAdjust: 75,
                                 yAdjust: -15,
                                 textAlign: 'left',
                             }
@@ -710,7 +708,7 @@ function initializeFutureGrowthSection($container) {
                                     content: 'Analysts Forecasts',
                                     color: '#aaa',
                                     font: { size: 12 },
-                                    xAdjust: 100,
+                                    xAdjust: 75,
                                     yAdjust: -15,
                                     textAlign: 'left',
                                 }
@@ -755,150 +753,150 @@ function initializeFutureGrowthSection($container) {
 
     function initializePastPerformanceSection($container) {
 
-function initializeSankeyChart($container) {
-    const $chartContainer = $container.find('#jtw-sankey-chart-container');
-    const $dataScript = $container.find('#jtw-sankey-chart-data');
-    if (!$chartContainer.length || !$dataScript.length) return;
+        function initializeSankeyChart($container) {
+            const $chartContainer = $container.find('#jtw-sankey-chart-container');
+            const $dataScript = $container.find('#jtw-sankey-chart-data');
+            if (!$chartContainer.length || !$dataScript.length) return;
 
-    const sankeyDataByYear = JSON.parse($dataScript.html());
-    const availableYears = Object.keys(sankeyDataByYear).sort();
-    if (availableYears.length === 0) return;
+            const sankeyDataByYear = JSON.parse($dataScript.html());
+            const availableYears = Object.keys(sankeyDataByYear).sort();
+            if (availableYears.length === 0) return;
 
-    const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
-    
-    let labelsHtml = '';
-    availableYears.forEach(year => {
-        const yearLabel = year.replace(' (Est.)', '<em>e</em>');
-        labelsHtml += `<div class="jtw-year-label" data-year="${year}">${yearLabel}</div>`;
-    });
+            const $sliderContainer = $container.find('#jtw-sankey-year-slider-container');
+            
+            let labelsHtml = '';
+            availableYears.forEach(year => {
+                const yearLabel = year.replace(' (Est.)', '<em>e</em>');
+                labelsHtml += `<div class="jtw-year-label" data-year="${year}">${yearLabel}</div>`;
+            });
 
-    $sliderContainer.html(`
-        <div class="jtw-draggable-slider">
-            <div class="jtw-slider-track"></div>
-            <div class="jtw-slider-labels">${labelsHtml}</div>
-            <div class="jtw-slider-thumb"></div>
-        </div>
-    `);
+            $sliderContainer.html(`
+                <div class="jtw-draggable-slider">
+                    <div class="jtw-slider-track"></div>
+                    <div class="jtw-slider-labels">${labelsHtml}</div>
+                    <div class="jtw-slider-thumb"></div>
+                </div>
+            `);
 
-    const $slider = $sliderContainer.find('.jtw-draggable-slider');
-    const $thumb = $slider.find('.jtw-slider-thumb');
-    const $labels = $slider.find('.jtw-year-label');
-    const yearCount = availableYears.length;
-    let activeIndex = yearCount - 1;
+            const $slider = $sliderContainer.find('.jtw-draggable-slider');
+            const $thumb = $slider.find('.jtw-slider-thumb');
+            const $labels = $slider.find('.jtw-year-label');
+            const yearCount = availableYears.length;
+            let activeIndex = yearCount - 1;
 
-    // --- START: Corrected Code Order ---
-    // 1. Declare the sankeyChart variable first.
-    let sankeyChart;
+            // --- START: Corrected Code Order ---
+            // 1. Declare the sankeyChart variable first.
+            let sankeyChart;
 
-    // 2. Define the functions that will use the chart.
-    function updateChartAndSlider(index, animate) {
-        if (index < 0 || index >= yearCount) return;
-        activeIndex = index;
-        const selectedYear = availableYears[activeIndex];
+            // 2. Define the functions that will use the chart.
+            function updateChartAndSlider(index, animate) {
+                if (index < 0 || index >= yearCount) return;
+                activeIndex = index;
+                const selectedYear = availableYears[activeIndex];
 
-        // This check prevents errors if the chart hasn't been created yet.
-        if (sankeyChart && sankeyDataByYear[selectedYear]) {
-            sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
-        }
-
-        const stepWidth = $slider.width() / yearCount;
-        const thumbWidth = $thumb.width();
-        const newLeft = (index * stepWidth) + (stepWidth / 2) - (thumbWidth / 2);
-        
-        if (animate) {
-            $thumb.css('transition', 'left 0.3s ease');
-        } else {
-            $thumb.css('transition', 'none');
-        }
-        $thumb.css('left', `${newLeft}px`);
-    }
-
-    // 3. Now, create the chart and assign it to the sankeyChart variable.
-    sankeyChart = Highcharts.chart($chartContainer[0], {
-        chart: { backgroundColor: 'transparent' },
-        title: { text: null },
-        series: [{
-            keys: ['from', 'to', 'weight', 'custom'],
-            data: sankeyDataByYear[availableYears[activeIndex]],
-            type: 'sankey',
-            name: 'Financial Flow',
-            nodeWidth: 30,
-            nodePadding: 120,
-            borderRadius: 0,
-            dataLabels: {
-                enabled: true,
-                nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
-                style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
-            },
-            nodes: [
-                { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
-                { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
-                { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
-                { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
-                { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
-            ]
-        }],
-        tooltip: {
-            formatter: function() {
-                if (this.point.isNode) {
-                    return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
+                // This check prevents errors if the chart hasn't been created yet.
+                if (sankeyChart && sankeyDataByYear[selectedYear]) {
+                    sankeyChart.series[0].setData(sankeyDataByYear[selectedYear], true);
                 }
-                const { from, to, weight, custom: percentage } = this.point;
-                let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
-                if (percentage) {
-                    tooltipText += `<br/>${percentage} of ${from}`;
+
+                const stepWidth = $slider.width() / yearCount;
+                const thumbWidth = $thumb.width();
+                const newLeft = (index * stepWidth) + (stepWidth / 2) - (thumbWidth / 2);
+                
+                if (animate) {
+                    $thumb.css('transition', 'left 0.3s ease');
+                } else {
+                    $thumb.css('transition', 'none');
                 }
-                return tooltipText;
-            },
-            backgroundColor: 'rgba(30, 41, 59, 0.9)',
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            style: { color: '#FFFFFF' }
-        },
-        credits: { enabled: false }
-    });
-    // --- END: Corrected Code Order ---
+                $thumb.css('left', `${newLeft}px`);
+            }
 
-    // 4. The rest of the event handlers can now be defined.
-    let isDragging = false;
-    let startX, startLeft;
-    $thumb.on('mousedown', function(e) {
-        isDragging = true;
-        startX = e.pageX;
-        startLeft = $thumb.position().left;
-        $thumb.addClass('dragging');
-        $(document).on('mousemove.sankey', handleMouseMove);
-        $(document).on('mouseup.sankey', handleMouseUp);
-    });
+            // 3. Now, create the chart and assign it to the sankeyChart variable.
+            sankeyChart = Highcharts.chart($chartContainer[0], {
+                chart: { backgroundColor: 'transparent' },
+                title: { text: null },
+                series: [{
+                    keys: ['from', 'to', 'weight', 'custom'],
+                    data: sankeyDataByYear[availableYears[activeIndex]],
+                    type: 'sankey',
+                    name: 'Financial Flow',
+                    nodeWidth: 30,
+                    nodePadding: 120,
+                    borderRadius: 0,
+                    dataLabels: {
+                        enabled: true,
+                        nodeFormatter: function() { return `<b>${this.point.id}</b><br/>${formatLargeNumber(this.point.sum, '$', 2)}`; },
+                        style: { color: '#e2e8f0', textOutline: 'none', fontWeight: '500', fontSize: '13px' }
+                    },
+                    nodes: [
+                        { id: 'Revenue Streams', color: '#3b82f6' }, { id: 'Revenue', color: '#60a5fa' },
+                        { id: 'Gross Profit', color: '#2dd4bf' }, { id: 'Cost of Sales', color: '#f59e0b' },
+                        { id: 'Expenses', color: '#d97706' }, { id: 'Earnings', color: '#10b981' },
+                        { id: 'Sales & Marketing', color: '#8b5cf6' }, { id: 'Research & Development', color: '#a855f7' },
+                        { id: 'General & Admin', color: '#d8b4fe' }, { id: 'Non-Operating Expenses', color: '#fca5a5' }
+                    ]
+                }],
+                tooltip: {
+                    formatter: function() {
+                        if (this.point.isNode) {
+                            return `<b>${this.point.name}</b><br/>Total: ${formatLargeNumber(this.point.sum, '$', 2)}`;
+                        }
+                        const { from, to, weight, custom: percentage } = this.point;
+                        let tooltipText = `<b>${from} → ${to}</b><br/>Value: ${formatLargeNumber(weight, '$', 2)}`;
+                        if (percentage) {
+                            tooltipText += `<br/>${percentage} of ${from}`;
+                        }
+                        return tooltipText;
+                    },
+                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    style: { color: '#FFFFFF' }
+                },
+                credits: { enabled: false }
+            });
+            // --- END: Corrected Code Order ---
 
-    function handleMouseMove(e) {
-        if (!isDragging) return;
-        const dx = e.pageX - startX;
-        const maxLeft = $slider.width() - $thumb.width();
-        let newLeft = Math.max(0, Math.min(maxLeft, startLeft + dx));
-        $thumb.css('left', `${newLeft}px`);
-    }
+            // 4. The rest of the event handlers can now be defined.
+            let isDragging = false;
+            let startX, startLeft;
+            $thumb.on('mousedown', function(e) {
+                isDragging = true;
+                startX = e.pageX;
+                startLeft = $thumb.position().left;
+                $thumb.addClass('dragging').css('transition', 'none');
+                $(document).on('mousemove.sankey', handleMouseMove);
+                $(document).on('mouseup.sankey', handleMouseUp);
+            });
 
-    function handleMouseUp(e) {
-        if (!isDragging) return;
-        isDragging = false;
-        $thumb.removeClass('dragging');
-        $(document).off('.sankey');
+            function handleMouseMove(e) {
+                if (!isDragging) return;
+                const dx = e.pageX - startX;
+                const maxLeft = $slider.width() - $thumb.width();
+                let newLeft = Math.max(0, Math.min(maxLeft, startLeft + dx));
+                $thumb.css('left', `${newLeft}px`);
+            }
 
-        const currentLeft = $thumb.position().left;
-        const stepWidth = $slider.width() / yearCount;
-        const closestIndex = Math.round(currentLeft / stepWidth);
-        updateChartAndSlider(closestIndex, true);
-    }
-    
-    $slider.on('click', '.jtw-year-label', function() {
-        const clickedIndex = $(this).index();
-        updateChartAndSlider(clickedIndex, true);
-    });
-    
-    setTimeout(() => {
-        updateChartAndSlider(activeIndex, false);
-    }, 100);
-}
+            function handleMouseUp(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                $thumb.removeClass('dragging');
+                $(document).off('.sankey');
+
+                const currentLeft = $thumb.position().left;
+                const stepWidth = $slider.width() / yearCount;
+                const closestIndex = Math.round(currentLeft / stepWidth);
+                updateChartAndSlider(closestIndex, true);
+            }
+            
+            $slider.on('click', '.jtw-year-label', function() {
+                const clickedIndex = $(this).index();
+                updateChartAndSlider(clickedIndex, true);
+            });
+            
+            setTimeout(() => {
+                updateChartAndSlider(activeIndex, false);
+            }, 100);
+        }
 
         initializeSankeyChart($container);
     }
