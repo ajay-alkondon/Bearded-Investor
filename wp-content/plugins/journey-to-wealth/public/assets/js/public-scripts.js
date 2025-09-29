@@ -759,7 +759,7 @@ function initializeFutureGrowthSection($container) {
     initializeEpsChart($container);
 }
 
-    function initializePastPerformanceSection($container) {
+    function initializePastPerformanceSection($container, chartData) {
 
         function initializeSankeyChart($container) {
             const $chartContainer = $container.find('#jtw-sankey-chart-container');
