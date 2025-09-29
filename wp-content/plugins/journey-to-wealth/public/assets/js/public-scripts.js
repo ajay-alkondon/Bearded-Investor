@@ -914,6 +914,77 @@ function initializeFinancialHealthSection($container) {
     if (!$dataScript.length) return;
 
     const rawData = JSON.parse($dataScript.html());
+
+    function initializeBalanceSheetTreemap(healthData) {
+        const $container = $('#jtw-balance-sheet-treemap-container');
+        if (!$container.length) return;
+
+        const treemapData = healthData.balance_sheet_treemap;
+        if (!treemapData || treemapData.length === 0) {
+            $container.html('<div class="jtw-notice notice-info"><p>Balance sheet breakdown is not available for this stock.</p></div>');
+            return;
+        }
+
+        const borderColor = $('body').hasClass('dark-mode') ? '#1a202c' : '#ffffff';
+
+        Highcharts.chart($container[0], {
+            chart: {
+                backgroundColor: 'transparent'
+            },
+            series: [{
+                type: "treemap",
+                layoutAlgorithm: 'squarified',
+                allowDrillToNode: true,
+                animationLimit: 1000,
+                dataLabels: {
+                    enabled: false
+                },
+                levelIsConstant: false,
+                levels: [{
+                    level: 1,
+                    dataLabels: {
+                        enabled: true,
+                        align: 'left',
+                        verticalAlign: 'top',
+                        style: {
+                            fontSize: '15px',
+                            fontWeight: 'bold',
+                            color: 'white',
+                            textOutline: 'none'
+                        }
+                    },
+                    borderWidth: 3,
+                    borderColor: borderColor
+                }, {
+                    level: 2,
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function() {
+                            return this.point.name + '<br>US$' + formatLargeNumber(this.point.value, 1);
+                        },
+                        style: {
+                            fontSize: '12px',
+                            color: 'white',
+                            textOutline: 'none',
+                            fontWeight: 'normal'
+                        }
+                    },
+                    borderWidth: 1,
+                    borderColor: borderColor
+                }],
+                data: treemapData
+            }],
+            title: {
+                text: null
+            },
+            credits: {
+                enabled: false
+            },
+            tooltip: {
+                enabled: false
+            }
+        });
+    }
     
     function initializeAssetsLiabilitiesChart() {
         const alData = rawData.assets_liabilities;
@@ -1123,6 +1194,7 @@ function initializeFinancialHealthSection($container) {
     });
 
     initializeAssetsLiabilitiesChart();
+    initializeBalanceSheetTreemap(rawData);
     renderCharts();
 }
 

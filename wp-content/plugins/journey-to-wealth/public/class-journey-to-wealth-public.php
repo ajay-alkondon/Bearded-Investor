@@ -41,19 +41,16 @@ public function enqueue_scripts() {
     wp_enqueue_script( 'chartjs-adapter-date-fns', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', array('chartjs'), '1.1.0', true );
     wp_enqueue_script( 'chartjs-plugin-datalabels', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js', array('chartjs'), '2.2.0', true );
     
-    // --- START: CORRECTED SCRIPT ENQUEUE ---
-    // Use the correct, modern CDN link for the annotation plugin
     wp_enqueue_script( 'chartjs-annotation', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js', array('chartjs'), '3.0.1', true );
-    // --- END: CORRECTED SCRIPT ENQUEUE ---
 
     wp_enqueue_script( 'highcharts', 'https://code.highcharts.com/highcharts.js', array(), '11.1.0', true );
     wp_enqueue_script( 'highcharts-sankey', 'https://code.highcharts.com/modules/sankey.js', array('highcharts'), '11.1.0', true );
+    wp_enqueue_script( 'highcharts-treemap', 'https://code.highcharts.com/modules/treemap.js', array('highcharts'), '11.1.0', true );
 
     $script_path = plugin_dir_path( __FILE__ ) . 'assets/js/public-scripts.js';
     $script_version = file_exists($script_path) ? $this->version . '.' . filemtime( $script_path ) : $this->version;
 
-    // Ensure 'chartjs-annotation' is in the dependency array
-    $dependencies = array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels', 'chartjs-annotation', 'highcharts', 'highcharts-sankey' ); // Add dependencies
+    $dependencies = array( 'jquery', 'chartjs', 'chartjs-adapter-date-fns', 'chartjs-plugin-datalabels', 'chartjs-annotation', 'highcharts', 'highcharts-sankey', 'highcharts-treemap' );
     
     wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', $dependencies, $script_version, true );
     
@@ -1059,6 +1056,13 @@ private function build_financial_health_section_html($health_data) {
             </div>
             <div class="jtw-assets-liabilities-chart-container">
                 </div>
+        </div>
+        
+        <div class="jtw-subsection-block">
+            <div class="jtw-sws-header">
+                <h2>4.2 Balance Sheet</h2>
+            </div>
+            <div id="jtw-balance-sheet-treemap-container"></div>
         </div>
 
         <div class="jtw-subsection-block">
