@@ -916,74 +916,66 @@ function initializeFinancialHealthSection($container) {
     const rawData = JSON.parse($dataScript.html());
 
     function initializeBalanceSheetTreemap(healthData) {
-        const $container = $('#jtw-balance-sheet-treemap-container');
-        if (!$container.length) return;
+        const $assetsContainer = $('#jtw-assets-treemap-container');
+        const $liabilitiesContainer = $('#jtw-liabilities-treemap-container');
+        if (!$assetsContainer.length || !$liabilitiesContainer.length) return;
 
-        const treemapData = healthData.balance_sheet_treemap;
-        if (!treemapData || treemapData.length === 0) {
-            $container.html('<div class="jtw-notice notice-info"><p>Balance sheet breakdown is not available for this stock.</p></div>');
+        const allTreemapData = healthData.balance_sheet_treemap;
+        if (!allTreemapData || allTreemapData.length === 0) {
+            $assetsContainer.parent().html('<div class="jtw-notice notice-info"><p>Balance sheet breakdown is not available for this stock.</p></div>');
             return;
         }
 
-        const borderColor = $('body').hasClass('dark-mode') ? '#1a202c' : '#ffffff';
+        const assetsData = allTreemapData.filter(d => d.parent === 'Assets');
+        const liabilitiesData = allTreemapData.filter(d => d.parent === 'Liabilities + Equity');
+        
+        const borderColor = $('body').hasClass('dark-mode') ? '#1e293b' : '#ffffff';
 
-        Highcharts.chart($container[0], {
-            chart: {
-                backgroundColor: 'transparent'
-            },
+        const treemapOptions = {
+            chart: { backgroundColor: 'transparent' },
             series: [{
                 type: "treemap",
                 layoutAlgorithm: 'squarified',
-                allowDrillToNode: true,
-                animationLimit: 1000,
+                borderWidth: 2,
+                borderColor: borderColor,
                 dataLabels: {
-                    enabled: false
+                    enabled: true,
+                    formatter: function() {
+                        return this.point.name + '<br>US$' + formatLargeNumber(this.point.value, 1);
+                    },
+                    style: {
+                        fontSize: '13px',
+                        color: 'white',
+                        textOutline: 'none',
+                        fontWeight: '500'
+                    }
                 },
-                levelIsConstant: false,
-                levels: [{
-                    level: 1,
-                    dataLabels: {
-                        enabled: true,
-                        align: 'left',
-                        verticalAlign: 'top',
-                        style: {
-                            fontSize: '15px',
-                            fontWeight: 'bold',
-                            color: 'white',
-                            textOutline: 'none'
-                        }
-                    },
-                    borderWidth: 3,
-                    borderColor: borderColor
-                }, {
-                    level: 2,
-                    dataLabels: {
-                        enabled: true,
-                        formatter: function() {
-                            return this.point.name + '<br>US$' + formatLargeNumber(this.point.value, 1);
-                        },
-                        style: {
-                            fontSize: '12px',
-                            color: 'white',
-                            textOutline: 'none',
-                            fontWeight: 'normal'
-                        }
-                    },
-                    borderWidth: 1,
-                    borderColor: borderColor
-                }],
-                data: treemapData
             }],
             title: {
-                text: null
+                align: 'left',
+                style: {
+                    color: $('body').hasClass('dark-mode') ? '#cbd5e1' : '#475569',
+                    fontWeight: '600',
+                    fontSize: '16px'
+                }
             },
-            credits: {
-                enabled: false
-            },
-            tooltip: {
-                enabled: false
-            }
-        });
+            credits: { enabled: false },
+            tooltip: { enabled: false }
+        };
+
+        if (assetsData.length > 0) {
+            Highcharts.chart($assetsContainer[0], Highcharts.merge(treemapOptions, {
+                series: [{ data: assetsData }],
+                title: { text: 'Assets' }
+            }));
+        }
+
+        if (liabilitiesData.length > 0) {
+            Highcharts.chart($liabilitiesContainer[0], Highcharts.merge(treemapOptions, {
+                series: [{ data: liabilitiesData }],
+                title: { text: 'Liabilities + Equity' }
+            }));
+        }
     }
     
     function initializeAssetsLiabilitiesChart() {

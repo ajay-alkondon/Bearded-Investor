@@ -2627,10 +2627,26 @@ body:not(.dark-mode) .jtw-assets-liabilities-chart-container .chartjs-datalabels
 
 /* --- END: Datalabels Specific Styling for Assets & Liabilities Chart --- */
 
-/* --- START: Balance Sheet Treemap --- */
+/* --- START: Balance Sheet Treemap Grid --- */
 #jtw-balance-sheet-treemap-container {
-    width: 100%;
-    height: 400px;
+    display: none; /* Hide the old single container */
+}
+
+.jtw-treemap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     margin-top: 20px;
 }
-/* --- END: Balance Sheet Treemap --- */
+
+.jtw-treemap-container {
+    width: 100%;
+    height: 400px;
+}
+
+@media (max-width: 900px) {
+    .jtw-treemap-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* --- END: Balance Sheet Treemap Grid --- */

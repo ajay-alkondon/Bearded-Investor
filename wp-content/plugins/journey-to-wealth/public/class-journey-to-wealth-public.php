@@ -1062,7 +1062,10 @@ private function build_financial_health_section_html($health_data) {
             <div class="jtw-sws-header">
                 <h2>4.2 Balance Sheet</h2>
             </div>
-            <div id="jtw-balance-sheet-treemap-container"></div>
+            <div class="jtw-treemap-grid">
+                <div id="jtw-assets-treemap-container" class="jtw-treemap-container"></div>
+                <div id="jtw-liabilities-treemap-container" class="jtw-treemap-container"></div>
+            </div>
         </div>
 
         <div class="jtw-subsection-block">
