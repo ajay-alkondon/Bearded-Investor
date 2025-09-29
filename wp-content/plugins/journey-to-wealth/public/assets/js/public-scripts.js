@@ -914,7 +914,7 @@ function initializeFinancialHealthSection($container) {
     if (!$dataScript.length) return;
 
     const rawData = JSON.parse($dataScript.html());
-
+    
     function initializeBalanceSheetTreemap(healthData) {
         const $assetsContainer = $('#jtw-assets-treemap-container');
         const $liabilitiesContainer = $('#jtw-liabilities-treemap-container');
@@ -964,20 +964,20 @@ function initializeFinancialHealthSection($container) {
         };
 
         if (assetsData.length > 0) {
-            Highcharts.chart($assetsContainer[0], Highcharts.merge(treemapOptions, {
-                series: [{ data: assetsData }],
-                title: { text: 'Assets' }
-            }));
+            let assetOptions = Highcharts.merge(treemapOptions);
+            assetOptions.series[0].data = assetsData;
+            assetOptions.title.text = 'Assets';
+            Highcharts.chart($assetsContainer[0], assetOptions);
         }
 
         if (liabilitiesData.length > 0) {
-            Highcharts.chart($liabilitiesContainer[0], Highcharts.merge(treemapOptions, {
-                series: [{ data: liabilitiesData }],
-                title: { text: 'Liabilities + Equity' }
-            }));
+            let liabilityOptions = Highcharts.merge(treemapOptions);
+            liabilityOptions.series[0].data = liabilitiesData;
+            liabilityOptions.title.text = 'Liabilities + Equity';
+            Highcharts.chart($liabilitiesContainer[0], liabilityOptions);
         }
     }
-    
+
     function initializeAssetsLiabilitiesChart() {
         const alData = rawData.assets_liabilities;
         if (!alData || $.isEmptyObject(alData)) return;
@@ -998,7 +998,6 @@ function initializeFinancialHealthSection($container) {
             </div>
         `);
 
-        // This is the correct, reusable options object for all three charts
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -1007,47 +1006,29 @@ function initializeFinancialHealthSection($container) {
             plugins: {
                 legend: { display: false },
                 tooltip: { enabled: false },
-                // This is the correct, detailed configuration for the datalabels
                 datalabels: {
-                    // This is the default datalabel configuration for *all* labels.
-                    // We will override 'display' for individual label types if needed.
-                    color: 'rgba(255, 255, 255, 0.9)', // Default color for labels inside bars
-
-                    // --- Label for Value (above the bar) ---
-                    // This configuration tells Chart.js Datalabels to create a label
-                    // specifically for the value, positioned above the bar.
-                    // The actual styling (left-align, color) will be handled by CSS.
+                    color: 'rgba(255, 255, 255, 0.9)',
                     value: {
-                        align: 'left', // Align to the left within its own rendering area
-                        anchor: 'end', // Position at the end (top) of the bar
-                        offset: 10, // Offset from the end of the bar
+                        align: 'left',
+                        anchor: 'end',
+                        offset: 10,
                         formatter: (value) => 'US$' + formatLargeNumber(value, ''),
                         font: { weight: '600', size: 13 },
-                        // Use a custom class for CSS styling
-                        // This requires a minor modification to the ChartDataLabels plugin or custom rendering
-                        // For simplicity and direct control, we'll assign color here and use CSS for alignment.
                         color: (context) => {
-                            // Determine color based on dark mode or light mode
                             return $('body').hasClass('dark-mode') ? '#e2e8f0' : '#475569';
                         },
                     },
-
-                    // --- Label for Category (inside the bar) ---
-                    // This configuration tells Chart.js Datalabels to create a label
-                    // specifically for the category name, positioned inside the bar.
                     category: {
-                        align: 'center', // Center inside the bar
+                        align: 'center',
                         anchor: 'center',
                         offset: 0,
                         formatter: (value, context) => context.chart.data.labels[context.dataIndex],
                         font: { weight: 'bold', size: 14 },
-                        color: '#fff' // Always white for contrast inside the bar
+                        color: '#fff'
                     }
                 }
             }
         };
-
-        // --- Create the three charts, passing the plugin correctly ---
 
         const shortTermCtx = document.getElementById('jtw-al-short-term-chart').getContext('2d');
         new Chart(shortTermCtx, {
@@ -1062,7 +1043,7 @@ function initializeFinancialHealthSection($container) {
                 }]
             },
             options: chartOptions,
-            plugins: [ChartDataLabels] // This line is crucial
+            plugins: [ChartDataLabels]
         });
 
         const longTermCtx = document.getElementById('jtw-al-long-term-chart').getContext('2d');
@@ -1078,7 +1059,7 @@ function initializeFinancialHealthSection($container) {
                 }]
             },
             options: chartOptions,
-            plugins: [ChartDataLabels] // This line is crucial
+            plugins: [ChartDataLabels]
         });
 
         const totalCtx = document.getElementById('jtw-al-total-chart').getContext('2d');
@@ -1094,7 +1075,7 @@ function initializeFinancialHealthSection($container) {
                 }]
             },
             options: chartOptions,
-            plugins: [ChartDataLabels] // This line is crucial
+            plugins: [ChartDataLabels]
         });
     }
 
