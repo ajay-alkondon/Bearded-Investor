@@ -163,7 +163,7 @@ const externalTooltipHandler = (context) => {
         return 'N/A';
     }
 
-    function initializeOverviewSection($container) {
+    function initializeOverviewSection($container, chartData) {
         // Animate the 52-Week Price Range indicator and fill
         const $priceRangeBar = $container.find('.jtw-price-range-bar');
         if ($priceRangeBar.length) {
