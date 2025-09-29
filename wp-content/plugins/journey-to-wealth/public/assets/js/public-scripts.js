@@ -906,7 +906,84 @@ function initializeFutureGrowthSection($container) {
             }, 100);
         }
 
+    function initializeSharesChart(historicalData) {
+        const $chartCanvas = $container.find('#jtw-shares-outstanding-chart');
+        if (!$chartCanvas.length || !historicalData) return;
+
+        let sharesChart;
+
+        function drawSharesChart(period) {
+            if (sharesChart) {
+                sharesChart.destroy();
+            }
+            const periodData = historicalData[period]?.shares_outstanding;
+            if (!periodData || !periodData.data) return;
+
+            const ctx = $chartCanvas[0].getContext('2d');
+            sharesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: periodData.labels,
+                    datasets: [{
+                        label: 'Shares Outstanding',
+                        data: periodData.data,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: (context) => {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) return null;
+                            // Note: createGradient is a helper function defined elsewhere in your file
+                            return createGradient(ctx, chartArea, '#6f42c1'); 
+                        },
+                        fill: 'start',
+                        tension: 0.1,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { 
+                            type: period === 'quarterly' ? 'time' : 'category',
+                            time: period === 'quarterly' ? { unit: 'quarter' } : undefined,
+                            grid: { display: false } 
+                        },
+                        y: { 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { callback: (val) => formatLargeNumber(val, '') }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'end'
+                        },
+                        tooltip: { 
+                            enabled: false,
+                            external: externalTooltipHandler
+                        }
+                    }
+                }
+            });
+        }
+
+        drawSharesChart('annual');
+
+        $container.find('.jtw-shares-period-toggle .jtw-period-button').on('click', function() {
+            const $button = $(this);
+            if ($button.hasClass('active')) return;
+            $container.find('.jtw-shares-period-toggle .jtw-period-button').removeClass('active');
+            $button.addClass('active');
+            drawSharesChart($button.data('period'));
+        });
+    }
+
         initializeSankeyChart($container);
+        initializeSharesChart(chartData);
     }
 
 function initializeFinancialHealthSection($container) {
@@ -1464,80 +1541,75 @@ function initializeAnalyticalToolsSection($container) {
         });
     }
 
-    function initializeAnalyzerPage() {
-        const $container = $('.jtw-analyzer-wrapper').first();
-        if (!$container.length) return;
+function initializeAnalyzerPage() {
+    const $container = $('.jtw-analyzer-wrapper').first();
+    if (!$container.length) return;
 
-        const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
-        if (!ticker) return;
+    const ticker = new URLSearchParams(window.location.search).get('jtw_selected_symbol');
+    if (!ticker) return;
 
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const $placeholder = $(entry.target);
-                    const section = $placeholder.data('section');
-                    
-                    // Prevent reloading if already loaded
-                    if ($placeholder.data('loaded')) {
-                        observer.unobserve(entry.target);
-                        return;
-                    }
-                    
-                    $placeholder.data('loaded', true).html('<div class="jtw-loading-spinner"></div>');
-                    
-                    // --- AJAX Call Logic is now directly inside the observer ---
-                    $.ajax({
-                        url: jtw_public_params.ajax_url,
-                        type: 'POST',
-                        data: { 
-                            action: 'jtw_fetch_section_data', 
-                            nonce: jtw_public_params.section_nonce, 
-                            ticker: ticker.toUpperCase(), 
-                            section: section 
-                        },
-                        dataType: 'json',
-                        success: function(response) {
-                            if (response.success && response.data) {
-                                if (response.data.currency_notice) {
-                                    $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
-                                }
-
-                                if (response.data.html) {
-                                    $placeholder.html(response.data.html);
-                                }
-                                
-                                // Call the appropriate initializer function for the loaded section
-                                if (section === 'overview') {
-                                    initializeOverviewSection($placeholder);
-                                } else if (section === 'intrinsic-valuation') {
-                                    // This now correctly calls the renamed function
-                                    initializeValuationSection($placeholder); 
-                                } else if (section === 'future-growth') {
-                                    initializeFutureGrowthSection($placeholder);
-                                // START: ADD NEW ELSE IF BLOCK
-                                } else if (section === 'past-performance') {
-                                    initializePastPerformanceSection($placeholder);
-                                } else if (section === 'financial-health') {
-                                    initializeFinancialHealthSection($placeholder);
-                                } else if (section === 'analytical-tools') { // Renamed from 'key-metrics-ratios'
-                                    initializeAnalyticalToolsSection($placeholder);
-                                }
-
-                            } else {
-                                $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data ? response.data.message : getLocalizedText('text_error', 'An error occurred.')) + '</p></div>');
-                            }
-                        },
-                        error: function(jqXHR) {
-                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>AJAX request failed. Server responded: <br><small><code>' + (jqXHR.responseText || getLocalizedText('text_error')) + '</code></small></p></div>');
-                        }
-                    });
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const $placeholder = $(entry.target);
+                const section = $placeholder.data('section');
+                
+                if ($placeholder.data('loaded')) {
                     observer.unobserve(entry.target);
+                    return;
                 }
-            });
-        }, { rootMargin: "200px" });
+                
+                $placeholder.data('loaded', true).html('<div class="jtw-loading-spinner"></div>');
+                
+                $.ajax({
+                    url: jtw_public_params.ajax_url,
+                    type: 'POST',
+                    data: { 
+                        action: 'jtw_fetch_section_data', 
+                        nonce: jtw_public_params.section_nonce, 
+                        ticker: ticker.toUpperCase(), 
+                        section: section 
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success && response.data) {
+                            if (response.data.currency_notice) {
+                                $('#jtw-currency-notice-placeholder').html(response.data.currency_notice).show();
+                            }
 
-        document.querySelectorAll('.jtw-content-section-placeholder').forEach(p => observer.observe(p));
-    }
+                            if (response.data.html) {
+                                $placeholder.html(response.data.html);
+                            }
+                            
+                            if (section === 'overview') {
+                                initializeOverviewSection($placeholder);
+                            } else if (section === 'intrinsic-valuation') {
+                                initializeValuationSection($placeholder); 
+                            } else if (section === 'future-growth') {
+                                initializeFutureGrowthSection($placeholder);
+                            } else if (section === 'past-performance') {
+                                initializePastPerformanceSection($placeholder, response.data.chart_data);
+                            } else if (section === 'financial-health') {
+                                initializeFinancialHealthSection($placeholder);
+                            } else if (section === 'analytical-tools') {
+                                initializeAnalyticalToolsSection($placeholder);
+                            }
+
+                        } else {
+                            $placeholder.html('<div class="jtw-error notice notice-error inline"><p>' + (response.data ? response.data.message : getLocalizedText('text_error', 'An error occurred.')) + '</p></div>');
+                        }
+                    },
+                    error: function(jqXHR) {
+                        $placeholder.html('<div class="jtw-error notice notice-error inline"><p>AJAX request failed. Server responded: <br><small><code>' + (jqXHR.responseText || getLocalizedText('text_error')) + '</code></small></p></div>');
+                    }
+                });
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { rootMargin: "200px" });
+
+    document.querySelectorAll('.jtw-content-section-placeholder').forEach(p => observer.observe(p));
+}
 
     $(document).ready(function() {
         initializeHeaderSearch();

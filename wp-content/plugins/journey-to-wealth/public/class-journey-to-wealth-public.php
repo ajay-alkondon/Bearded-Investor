@@ -212,6 +212,7 @@ public function ajax_fetch_section_data() {
             break;
         case 'past-performance':
             $response_data['html'] = $this->build_past_performance_section_html($calculated_data);
+            $response_data['chart_data'] = $python_data['calculated_data']['financial_health_data']; 
             break;
         case 'financial-health':
             $response_data['html'] = $this->build_financial_health_section_html($calculated_data['financial_health_data'] ?? []);
@@ -1036,6 +1037,21 @@ private function build_past_performance_section_html($calculated_data) {
                     <?php echo json_encode($sankey_data); ?>
                 </script>
             <?php } ?>
+        </div>
+
+        <div class="jtw-subsection-block">
+            <div class="jtw-sws-header">
+                <h2>3.2 Shares Outstanding History</h2>
+            </div>
+            <div class="jtw-chart-controls">
+                <div class="jtw-period-toggle jtw-shares-period-toggle">
+                    <button class="jtw-period-button active" data-period="annual">Annual</button>
+                    <button class="jtw-period-button" data-period="quarterly">Quarterly</button>
+                </div>
+            </div>
+            <div class="jtw-kmv-chart-container" style="position: relative;">
+                <canvas id="jtw-shares-outstanding-chart"></canvas>
+            </div>
         </div>
     </div>
     <?php
