@@ -631,11 +631,10 @@ private function build_overview_section_html($overview, $quote) {
                     <?php if (!empty($description) && strcasecmp(trim($description), 'none') !== 0) : ?>
                         <p><?php echo esc_html($description); ?></p>
                     <?php endif; ?>
-                    <?php if ($website): ?>
-                        <a href="<?php echo esc_url($website); ?>" target="_blank" rel="noopener noreferrer" class="jtw-website-link"><?php echo esc_url($website); ?></a>
-                    <?php endif; ?>
-
                     <div class="jtw-footer-links">
+                        <?php if ($website): ?>
+                            <a href="<?php echo esc_url($website); ?>" target="_blank" rel="noopener noreferrer" class="jtw-website-link">Company Website</a>
+                        <?php endif; ?>
                         <?php if (!empty($overview['CIK'])): ?>
                             <a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $overview['CIK'] . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer">Corporate Filings</a>
                         <?php endif; ?>
@@ -677,9 +676,6 @@ private function build_overview_section_html($overview, $quote) {
         </div>
 
         <div class="jtw-subsection-block">
-            <div class="jtw-sws-header">
-                <h2>Historical Performance</h2>
-            </div>
             <div class="jtw-chart-controls">
                 <div class="jtw-period-toggle jtw-health-period-toggle">
                     <button class="jtw-period-button active" data-period="annual">Annual</button>
@@ -704,7 +700,6 @@ private function build_overview_section_html($overview, $quote) {
         <div class="jtw-modal-overlay"></div>
         </div>
     <?php
-    
     return ob_get_clean();
 }
 
