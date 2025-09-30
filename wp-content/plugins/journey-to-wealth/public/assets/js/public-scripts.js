@@ -220,7 +220,8 @@ const externalTooltipHandler = (context) => {
             ],
             'cash-flow': [
                 { title: 'Free Cash Flow', key: 'fcf', type: 'bar', color: '#17a2b8' },
-                { title: 'Dividend Payout', key: 'dividend', type: 'bar', color: '#ffc107' }
+                { title: 'Dividend Payout', key: 'dividend', type: 'bar', color: '#ffc107' },
+                { title: 'Share Buybacks', key: 'share_buybacks', type: 'bar', color: '#6610f2' }
             ]
         };
 
