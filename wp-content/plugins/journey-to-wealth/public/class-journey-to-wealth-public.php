@@ -635,9 +635,6 @@ private function build_overview_section_html($overview, $quote) {
                         <?php if ($website): ?>
                             <a href="<?php echo esc_url($website); ?>" target="_blank" rel="noopener noreferrer" class="jtw-website-link">Company Website</a>
                         <?php endif; ?>
-                        <?php if (!empty($overview['CIK'])): ?>
-                            <a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $overview['CIK'] . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer">Corporate Filings</a>
-                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="jtw-overview-footer-details">
@@ -686,9 +683,14 @@ private function build_overview_section_html($overview, $quote) {
                     <button class="jtw-category-button" data-chart="balance-sheet">Balance Sheet</button>
                     <button class="jtw-category-button" data-chart="cash-flow">Cash Flow</button>
                 </div>
+                <div class="jtw-chart-external-link">
+                    <?php if (!empty($overview['CIK'])): ?>
+                        <a href="<?php echo esc_url('https://www.sec.gov/edgar/browse/?CIK=' . $overview['CIK'] . '&owner=exclude'); ?>" target="_blank" rel="noopener noreferrer">Corporate Filings</a>
+                    <?php endif; ?>
+                </div>
             </div>
             <div class="jtw-historical-charts-grid">
-                </div>
+            </div>
         </div>
         
         <div id="jtw-transcript-modal" class="jtw-modal jtw-fullscreen-modal">

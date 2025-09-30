@@ -2650,3 +2650,32 @@ body:not(.dark-mode) .jtw-assets-liabilities-chart-container .chartjs-datalabels
     }
 }
 /* --- END: Balance Sheet Treemap Grid --- */
+
+/* --- START: Chart Controls External Link --- */
+.jtw-chart-controls {
+    flex-wrap: wrap; /* Allows items to wrap on smaller screens */
+    justify-content: flex-start; /* Aligns items to the start */
+    gap: 20px;
+}
+
+.jtw-chart-filter-toggle {
+    margin-right: auto; /* Pushes the external link to the right */
+}
+
+.jtw-chart-external-link a {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--jtw-text-medium);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--jtw-text-light);
+    transition: color 0.2s ease;
+}
+
+.jtw-chart-external-link a:hover {
+    color: var(--jtw-primary-blue);
+}
+
+body.dark-mode .jtw-chart-external-link a {
+    color: #a0aec0;
+}
+/* --- END: Chart Controls External Link --- */
