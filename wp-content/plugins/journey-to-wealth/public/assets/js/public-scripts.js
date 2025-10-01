@@ -1693,7 +1693,8 @@ function initializeAnalyticalToolsSection($container) {
                     if (response.success) {
                         const data = response.data;
                         $peInput.val(data.pe_ratio ? data.pe_ratio.toFixed(1) : '');
-                        $growthInput.val(data.eps_growth ? data.eps_growth.toFixed(1) : '');
+                        // The EPS Growth input is intentionally NOT populated
+                        $growthInput.val(''); // Ensure it's cleared
                         $yieldInput.val(data.dividend_yield ? data.dividend_yield.toFixed(1) : '');
                         calculateAndDisplay();
                     } else {

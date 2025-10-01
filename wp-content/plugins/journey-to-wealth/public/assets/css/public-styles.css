@@ -2698,7 +2698,6 @@ body.dark-mode .jtw-chart-external-link a {
 .jtw-peg-ticker-lookup {
     display: flex;
     gap: 10px;
-    max-width: 400px;
     margin: 0 auto 30px;
     align-items: center;
 }
@@ -2707,6 +2706,7 @@ body.dark-mode .jtw-chart-external-link a {
     padding: 10px 15px;
     border: 1px solid var(--jtw-border-color);
     border-radius: 4px;
+    background-color: var(--jtw-content-bg); /* White background */
 }
 #jtw-peg-fetch-btn {
     padding: 10px 20px;
@@ -2748,7 +2748,18 @@ body.dark-mode .jtw-chart-external-link a {
     border: 1px solid var(--jtw-border-color);
     border-radius: 4px;
     font-size: 1em;
+    background-color: #f8f9fa; /* Light grey background */
 }
+/* Hide number input spinners */
+.jtw-peg-input[type=number] {
+  -moz-appearance: textfield;
+}
+.jtw-peg-input[type=number]::-webkit-inner-spin-button,
+.jtw-peg-input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 
 .jtw-peg-results {
     display: grid;
@@ -2776,16 +2787,14 @@ body.dark-mode .jtw-chart-external-link a {
     height: 100%;
     width: 0;
     border-radius: 4px;
-    background-color: var(--jtw-text-light);
-    transition: width 0.5s ease-out, background-color 0.5s ease;
+    background-color: #d97706; /* Brownish-orange color */
+    transition: width 0.5s ease-out;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center; /* Center the value in the bar */
     overflow: hidden;
 }
-.jtw-peg-bar.good { background-color: var(--jtw-green-positive); }
-.jtw-peg-bar.fair { background-color: var(--jtw-yellow-neutral); }
-.jtw-peg-bar.poor { background-color: var(--jtw-red-negative); }
+
 .jtw-bar-value {
     padding: 0 10px;
     color: white;
