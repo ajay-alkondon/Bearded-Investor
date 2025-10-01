@@ -152,3 +152,10 @@ function swa_add_dark_mode_script() {
     <?php
 }
 add_action( 'wp_footer', 'swa_add_dark_mode_script' );
+
+    function mepr_remove_redirect_params( $redirect_url ) {
+        // Remove all query parameters from the URL
+        $redirect_url = strtok( $redirect_url, '?' );
+        return $redirect_url;
+    }
+    add_filter( 'mepr-unauthorized-redirect-url', 'mepr_remove_redirect_params' );
