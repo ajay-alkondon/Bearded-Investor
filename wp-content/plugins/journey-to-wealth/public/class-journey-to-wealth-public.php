@@ -26,6 +26,8 @@ class Journey_To_Wealth_Public {
         add_action('wp_ajax_nopriv_jtw_recalculate_valuation', array($this, 'ajax_recalculate_valuation'));
         add_action('wp_ajax_jtw_fetch_transcript', array($this, 'ajax_fetch_transcript'));
         add_action('wp_ajax_nopriv_jtw_fetch_transcript', array($this, 'ajax_fetch_transcript'));
+        add_action('wp_ajax_jtw_fetch_peg_data', array($this, 'ajax_fetch_peg_data'));
+        add_action('wp_ajax_nopriv_jtw_fetch_peg_data', array($this, 'ajax_fetch_peg_data'));
     }
 
     public function enqueue_styles() {
@@ -40,9 +42,7 @@ public function enqueue_scripts() {
     wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js', array(), '4.4.1', true );
     wp_enqueue_script( 'chartjs-adapter-date-fns', 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js', array('chartjs'), '1.1.0', true );
     wp_enqueue_script( 'chartjs-plugin-datalabels', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js', array('chartjs'), '2.2.0', true );
-    
     wp_enqueue_script( 'chartjs-annotation', 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js', array('chartjs'), '3.0.1', true );
-
     wp_enqueue_script( 'highcharts', 'https://code.highcharts.com/highcharts.js', array(), '11.1.0', true );
     wp_enqueue_script( 'highcharts-sankey', 'https://code.highcharts.com/modules/sankey.js', array('highcharts'), '11.1.0', true );
     wp_enqueue_script( 'highcharts-treemap', 'https://code.highcharts.com/modules/treemap.js', array('highcharts'), '11.1.0', true );
@@ -54,7 +54,7 @@ public function enqueue_scripts() {
     
     wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'assets/js/public-scripts.js', $dependencies, $script_version, true );
     
-    $analysis_page_slug = get_option('jtw_analysis_page_slug', 'stock-valuation-analysis');
+    $analysis_page_slug = get_option('jtw_analysis_page_slug', 'analysis');
     $analysis_page_url = site_url( '/' . $analysis_page_slug . '/' );
 
     wp_localize_script( $this->plugin_name, 'jtw_public_params', array(
@@ -64,6 +64,7 @@ public function enqueue_scripts() {
             'recalculate_nonce' => wp_create_nonce('jtw_recalculate_valuation_nonce'),
             'transcript_nonce' => wp_create_nonce('jtw_fetch_transcript_nonce'),
             'symbol_search_nonce' => wp_create_nonce('jtw_symbol_search_nonce_action'),
+            'peg_nonce' => wp_create_nonce('jtw_fetch_peg_data_nonce'),
             'analysis_page_url' => $analysis_page_url,
             'text_loading' => __('Fetching data...', 'journey-to-wealth'),
             'text_error' => __('An error occurred. Please check the ticker and try again.', 'journey-to-wealth'),
@@ -108,33 +109,115 @@ public function enqueue_scripts() {
         return ob_get_clean();
     }
     
-public function render_analyzer_layout_shortcode( $atts ) {
-    if (!is_user_logged_in()) {
-        return '<p>' . esc_html__('You must be logged in to use the stock analyzer.', 'journey-to-wealth') . '</p>';
+    public function render_analyzer_layout_shortcode( $atts ) {
+        if (!is_user_logged_in()) {
+            return '<p>' . esc_html__('You must be logged in to use the stock analyzer.', 'journey-to-wealth') . '</p>';
+        }
+
+        ob_start();
+        if ( !isset($_GET['jtw_selected_symbol']) || empty($_GET['jtw_selected_symbol']) ) {
+            echo '<p class="jtw-initial-prompt">' . esc_html__('Please use the search bar in the header to analyze a stock.', 'journey-to-wealth') . '</p>';
+        } else {
+            ?>
+            <div class="jtw-analyzer-wrapper">
+                <div class="jtw-content-container">
+                    <main class="jtw-content-main">
+                        <div id="jtw-currency-notice-placeholder"></div>
+                        <div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div>
+                        <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
+                        <div id="section-future-growth" class="jtw-content-section-placeholder" data-section="future-growth"></div>
+                        <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
+                        <div id="section-financial-health" class="jtw-content-section-placeholder" data-section="financial-health"></div>
+                        <div id="section-analytical-tools" class="jtw-content-section-placeholder" data-section="analytical-tools"></div>
+                    </main>
+                </div>
+            </div>
+            <?php
+        }
+        return ob_get_clean();
     }
 
-    ob_start();
-    if ( !isset($_GET['jtw_selected_symbol']) || empty($_GET['jtw_selected_symbol']) ) {
-        echo '<p class="jtw-initial-prompt">' . esc_html__('Please use the search bar in the header to analyze a stock.', 'journey-to-wealth') . '</p>';
-    } else {
+    public function render_peg_calculator_shortcode($atts) {
+        if (!is_user_logged_in()) {
+            return '<p>' . esc_html__('You must be logged in to use this calculator.', 'journey-to-wealth') . '</p>';
+        }
+
+        ob_start();
         ?>
-        <div class="jtw-analyzer-wrapper">
-            <div class="jtw-content-container">
-                <main class="jtw-content-main">
-                    <div id="jtw-currency-notice-placeholder"></div>
-                    <div id="section-overview" class="jtw-content-section-placeholder" data-section="overview"></div>
-                    <div id="section-intrinsic-valuation" class="jtw-content-section-placeholder" data-section="intrinsic-valuation"></div>
-                    <div id="section-future-growth" class="jtw-content-section-placeholder" data-section="future-growth"></div>
-                    <div id="section-past-performance" class="jtw-content-section-placeholder" data-section="past-performance"></div>
-                    <div id="section-financial-health" class="jtw-content-section-placeholder" data-section="financial-health"></div>
-                    <div id="section-analytical-tools" class="jtw-content-section-placeholder" data-section="analytical-tools"></div>
-                </main>
+        <div class="jtw-peg-calculator-wrapper">
+            <div class="jtw-content-section">
+                <h2>PEG & PEGY Calculator</h2>
+                <p>Enter a stock ticker to automatically fetch its P/E Ratio, estimated EPS Growth, and Dividend Yield, or enter the values manually to calculate the PEG and PEGY ratios.</p>
+                
+                <div class="jtw-peg-ticker-lookup">
+                    <input type="text" id="jtw-peg-ticker-input" placeholder="Enter Ticker (e.g., AAPL)">
+                    <button id="jtw-peg-fetch-btn">Fetch Data</button>
+                    <div class="jtw-peg-loader" style="display: none;"></div>
+                </div>
+                 <div id="jtw-peg-error-message" class="jtw-error" style="display: none;"></div>
+
+                <div class="jtw-peg-inputs-grid">
+                    <div class="jtw-form-group">
+                        <label for="jtw-pe-ratio-input">P/E Ratio (TTM)</label>
+                        <input type="number" id="jtw-pe-ratio-input" class="jtw-peg-input" step="0.1">
+                    </div>
+                    <div class="jtw-form-group">
+                        <label for="jtw-eps-growth-input">EPS Growth (Est. %)</label>
+                        <input type="number" id="jtw-eps-growth-input" class="jtw-peg-input" step="0.1">
+                    </div>
+                    <div class="jtw-form-group">
+                        <label for="jtw-dividend-yield-input">Dividend Yield (%)</label>
+                        <input type="number" id="jtw-dividend-yield-input" class="jtw-peg-input" step="0.1">
+                    </div>
+                </div>
+
+                <div class="jtw-peg-results">
+                    <div class="jtw-bar-result">
+                        <div class="jtw-result-label">PEG Ratio</div>
+                        <div class="jtw-bar-container">
+                            <div id="jtw-peg-bar" class="jtw-peg-bar"><span class="jtw-bar-value">0.0</span></div>
+                        </div>
+                    </div>
+                    <div class="jtw-bar-result">
+                        <div class="jtw-result-label">PEGY Ratio</div>
+                        <div class="jtw-bar-container">
+                            <div id="jtw-pegy-bar" class="jtw-peg-bar"><span class="jtw-bar-value">0.0</span></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <?php
+        return ob_get_clean();
     }
-    return ob_get_clean();
-}
+
+    public function ajax_fetch_peg_data() {
+        check_ajax_referer('jtw_fetch_peg_data_nonce', 'nonce');
+        $ticker = isset($_POST['ticker']) ? sanitize_text_field(strtoupper($_POST['ticker'])) : '';
+
+        if (empty($ticker)) {
+            wp_send_json_error(['message' => 'Missing ticker.']);
+            return;
+        }
+
+        $python_data = $this->call_python_calculation_engine($ticker);
+        if (is_wp_error($python_data)) {
+            wp_send_json_error(['message' => $python_data->get_error_message()]);
+            return;
+        }
+        
+        $key_metrics = $python_data['calculated_data']['key_metrics'] ?? [];
+
+        $pe_ratio = $key_metrics['PERatio'] ?? null;
+        $eps_growth = $key_metrics['nextYearEpsGrowth'] ?? null;
+        $dividend_yield = isset($key_metrics['DividendYield']) ? $key_metrics['DividendYield'] * 100 : null;
+
+        wp_send_json_success([
+            'pe_ratio' => $pe_ratio,
+            'eps_growth' => $eps_growth,
+            'dividend_yield' => $dividend_yield
+        ]);
+    }
 
     public function ajax_symbol_search() {
         check_ajax_referer('jtw_symbol_search_nonce_action', 'jtw_symbol_search_nonce');
