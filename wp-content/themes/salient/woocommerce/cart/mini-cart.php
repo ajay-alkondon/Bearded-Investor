@@ -14,7 +14,7 @@
  *
  * @see     https://docs.woocommerce.com/document/template-structure/
  * @package WooCommerce\Templates
- * @version 9.5.0
+ * @version 10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -53,7 +53,7 @@ $mini_cart_style = ( isset($nectar_options['ajax-cart-style']) && 'slide_in_clic
 	  				$default_remove = apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	  						'woocommerce_cart_item_remove_link',
 	  						sprintf(
-	  							'<a href="%s" class="remove remove_from_cart_button" aria-label="%s" data-product_id="%s" data-cart_item_key="%s" data-product_sku="%s" data-success_message="%s">&times;</a>',
+	  							'<a role="button" href="%s" class="remove remove_from_cart_button" aria-label="%s" data-product_id="%s" data-cart_item_key="%s" data-product_sku="%s" data-success_message="%s">&times;</a>',
 	  							esc_url( wc_get_cart_remove_url( $cart_item_key ) ),
 	  							/* translators: %s is the product name */
 								esc_attr( sprintf( __( 'Remove %s from cart', 'woocommerce' ), wp_strip_all_tags( $product_name ) ) ),
@@ -108,7 +108,7 @@ $mini_cart_style = ( isset($nectar_options['ajax-cart-style']) && 'slide_in_clic
 
             // Remove link.
             $remove_link = sprintf(
-                '<a href="%s" class="remove remove_from_cart_button with_text" aria-label="%s" data-product_id="%s" data-cart_item_key="%s" data-product_sku="%s" data-success_message="%s">%s</a>',
+                '<a role="button" href="%s" class="remove remove_from_cart_button with_text" aria-label="%s" data-product_id="%s" data-cart_item_key="%s" data-product_sku="%s" data-success_message="%s">%s</a>',
                 esc_url( wc_get_cart_remove_url( $cart_item_key ) ),
                 /* translators: %s is the product name */
 				esc_attr( sprintf( __( 'Remove %s from cart', 'woocommerce' ), wp_strip_all_tags( $product_name ) ) ),
@@ -162,7 +162,7 @@ $mini_cart_style = ( isset($nectar_options['ajax-cart-style']) && 'slide_in_clic
 	<?php do_action( 'woocommerce_widget_shopping_cart_after_buttons' ); ?>
 
 <?php else : ?>
-	
+
 	<?php if( 'slide_in_click' !== $mini_cart_style ) { ?>
 		<p class="woocommerce-mini-cart__empty-message"><?php esc_html_e( 'No products in the cart.', 'woocommerce' ); ?></p>
 		<?php do_action( 'nectar_woocommerce_mini_cart_empty' ); ?>
